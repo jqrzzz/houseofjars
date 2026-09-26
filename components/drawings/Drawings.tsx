@@ -19,7 +19,7 @@ function Drawing({ className, title, children }: DrawingProps & { children: Reac
       viewBox="0 0 64 64"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.5}
+      strokeWidth={1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
       role={title ? "img" : undefined}

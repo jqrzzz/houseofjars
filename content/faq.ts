@@ -117,7 +117,7 @@ export const faq: readonly FaqGroup[] = [
         id: "prices",
         question: "How much is a bed?",
         answer: [
-          "Prices change with the dates and the season, so we don't list them here. You can see live prices on Booking.com and Agoda, or ",
+          "Prices change with the dates and the season, so we don’t list them here. You can see live prices on Booking.com and Agoda, or ",
           { text: "ask us directly", href: "/book" },
           ".",
         ],

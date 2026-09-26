@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatAddress, identity, whatsappUrl } from "@/content/identity";
+import { addressLines, identity, whatsappUrl } from "@/content/identity";
 import { pages, primaryNav } from "@/lib/site";
 import { TextileBand } from "../brand/TextileBand";
 import { Wordmark } from "../brand/Wordmark";
@@ -24,22 +24,29 @@ export function SiteFooter() {
           <p className={styles.owner}>Owned and run by {identity.owner.name.value}.</p>
         </div>
 
-        <div className={styles.column}>
+        <div className={`${styles.column} ${styles.wide}`}>
           <h2 className={styles.heading}>Visit</h2>
-          <address className={styles.address}>{formatAddress()}</address>
+          <address className={styles.address}>
+            {addressLines().map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </address>
         </div>
 
-        <div className={styles.column}>
+        <div className={`${styles.column} ${styles.wide}`}>
           <h2 className={styles.heading}>Contact</h2>
+          <p className={`${styles.phone} tnum`}>{phone.value.display}</p>
           <ul role="list" className={styles.list}>
             <li>
               <a href={whatsappUrl()} rel="noopener noreferrer" target="_blank">
-                WhatsApp <span className="tnum">{phone.value.display}</span>
-                <span className="visually-hidden"> (opens in a new tab)</span>
+                WhatsApp
+                <span className="visually-hidden"> {phone.value.display} (opens in a new tab)</span>
               </a>
             </li>
             <li>
-              <a href={`tel:${phone.value.e164}`}>Call {phone.value.display}</a>
+              <a href={`tel:${phone.value.e164}`}>
+                Call<span className="visually-hidden"> {phone.value.display}</span>
+              </a>
             </li>
             <li>
               <a href={`mailto:${email.value}`}>{email.value}</a>
@@ -78,11 +85,15 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className={`container ${styles.base}`}>
-        <p>© {new Date().getFullYear()} {identity.fullName.value}</p>
-        <p>
-          Questions answered by Shadow, our AI concierge. <Link href={pages.privacy.path}>How we use your data</Link>
-        </p>
+      <div className="container">
+        <div className={styles.base}>
+          <p>
+            © {new Date().getFullYear()} {identity.fullName.value}
+          </p>
+          <p>
+            Questions answered by Shadow, our AI concierge. <Link href={pages.privacy.path}>How we use your data</Link>
+          </p>
+        </div>
       </div>
     </footer>
   );

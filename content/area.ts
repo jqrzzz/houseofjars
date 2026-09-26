@@ -11,8 +11,8 @@ export const location = {
   /** Map coordinates are unknown. Add them here to enable geo data. */
   geo: null as Fact<{ latitude: number; longitude: number }> | null,
   nearby: {
-    mekong: fact<Distance>({ place: "Mekong riverside", distance: "7 minutes' walk" }, sources.booking),
-    museum: fact<Distance>({ place: "Lao National Museum", distance: "8 minutes' walk" }, sources.booking),
+    mekong: fact<Distance>({ place: "Mekong riverside", distance: "7 minutes’ walk" }, sources.booking),
+    museum: fact<Distance>({ place: "Lao National Museum", distance: "8 minutes’ walk" }, sources.booking),
     nightMarket: fact<Distance>({ place: "Night food market", distance: "Next door" }, sources.reviews),
     airport: fact<Distance>(
       { place: "Wattay International Airport", distance: "About 3 km (1.9 mi)" },

@@ -16,7 +16,18 @@
   font-size: 0.975rem;
   transition:
     transform 220ms var(--ease-out),
+    opacity 220ms ease,
+    visibility 220ms,
     box-shadow 220ms ease;
+}
+
+/* Hidden while the home hero is on screen (and until that has been checked). */
+:global(body:has([data-hides-launcher])) .launcher:not([data-hidden="false"]),
+.launcher[data-hidden="true"] {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.75rem);
+  pointer-events: none;
 }
 
 .launcher:hover {

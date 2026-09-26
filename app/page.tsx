@@ -240,7 +240,7 @@ export default function HomePage() {
               <ArrowIcon />
             </Link>
           </div>
-          <Ledger rows={distances} />
+          <Ledger rows={distances} variant="places" />
         </div>
       </Section>
 

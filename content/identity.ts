@@ -58,6 +58,12 @@ export function formatAddress(): string {
   return [a.street, a.village, a.district, a.city, a.country].map((f) => f.value).join(", ");
 }
 
+/** The address in three lines, for the footer and contact cards. */
+export function addressLines(): string[] {
+  const a = identity.address;
+  return [a.street.value, `${a.village.value}, ${a.district.value}`, `${a.city.value}, ${a.country.value}`];
+}
+
 /** WhatsApp click-to-chat link for the house's number. */
 export function whatsappUrl(): string {
   return `https://wa.me/${identity.contact.phone.value.e164.replace(/\D/g, "")}`;

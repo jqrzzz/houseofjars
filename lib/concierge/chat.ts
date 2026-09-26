@@ -24,14 +24,14 @@ export interface ChatState {
 
 export const shadowLines = {
   greeting:
-    "Sabaidee! I'm Shadow, the house's AI concierge. Ask me about the beds, breakfast, check-in or getting here, and I can pass a message to the team.",
-  refusal: "I'm sorry, that's one I can't help with. The team can: their WhatsApp and email are below.",
-  busy: "I'm looking after a lot of guests at once. Please try again in a moment.",
-  slowDown: "That's a lot of questions in a short time. Please wait a minute, then ask again.",
-  offline: "I'm not taking questions at the moment, but the team is. Their WhatsApp and email are below.",
+    "Sabaidee! I’m Shadow, the house’s AI concierge. Ask me about the beds, breakfast, check-in or getting here, and I can pass a message to the team.",
+  refusal: "I’m sorry, that’s one I can’t help with. The team can: their WhatsApp and email are below.",
+  busy: "I’m looking after a lot of guests at once. Please try again in a moment.",
+  slowDown: "That’s a lot of questions in a short time. Please wait a minute, then ask again.",
+  offline: "I’m not taking questions at the moment, but the team is. Their WhatsApp and email are below.",
   unavailable: "Something went wrong on my side. Please try again, or message the team directly.",
   empty: "Sorry, I lost my thread there. Could you ask me again?",
-  confirmSend: "I've ticked the privacy box. Please send my request to the team.",
+  confirmSend: "I’ve ticked the privacy box. Please send my request to the team.",
 } as const;
 
 export function newChat(sessionId: string): ChatState {

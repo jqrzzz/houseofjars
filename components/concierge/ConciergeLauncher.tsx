@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import styles from "./ConciergeLauncher.module.css";
 import { shadowBust } from "./mascot";
@@ -16,12 +17,29 @@ function loadPanel() {
 /**
  * The floating butler button, on every page. Any element with a
  * `data-ask-shadow` attribute also opens the concierge, pre-filled with the
- * attribute's text.
+ * attribute's text. While an element marked `data-hides-launcher` (the home
+ * hero, which has its own Ask Shadow button) is on screen, the button steps
+ * aside; CSS hides it until the first check, so it never flashes.
  */
 export function ConciergeLauncher() {
   const [Panel, setPanel] = useState<ComponentType<ConciergePanelProps> | null>(null);
   const [open, setOpen] = useState(false);
   const [prefill, setPrefill] = useState<{ text: string; id: number } | null>(null);
+  const [heroInView, setHeroInView] = useState<boolean | undefined>(undefined);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const hero = document.querySelector("[data-hides-launcher]");
+    if (!hero) return;
+    const observer = new IntersectionObserver(([entry]) => setHeroInView(entry?.isIntersecting ?? false), {
+      threshold: 0.3,
+    });
+    observer.observe(hero);
+    return () => {
+      observer.disconnect();
+      setHeroInView(undefined);
+    };
+  }, [pathname]);
 
   const openPanel = useCallback(async (text?: string) => {
     const component = await loadPanel();
@@ -46,6 +64,7 @@ export function ConciergeLauncher() {
       <button
         type="button"
         className={styles.launcher}
+        data-hidden={heroInView === undefined ? undefined : String(heroInView)}
         aria-label="Ask Shadow, our AI concierge"
         aria-haspopup="dialog"
         aria-expanded={open}

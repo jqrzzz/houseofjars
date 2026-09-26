@@ -9,16 +9,17 @@
   mask-position: center;
 }
 
+/* The tile is 48 x 28; both sizes keep its proportions. */
 .m {
-  height: 16px;
-  -webkit-mask-size: 48px 16px;
-  mask-size: 48px 16px;
+  height: 28px;
+  -webkit-mask-size: 48px 28px;
+  mask-size: 48px 28px;
 }
 
 .s {
-  height: 12px;
-  -webkit-mask-size: 36px 12px;
-  mask-size: 36px 12px;
+  height: 20px;
+  -webkit-mask-size: 34.29px 20px;
+  mask-size: 34.29px 20px;
 }
 
 .saffron {

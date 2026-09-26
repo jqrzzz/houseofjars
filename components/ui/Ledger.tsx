@@ -11,9 +11,18 @@ export interface LedgerRow {
  * The house's standards and distances, set like a register: a label, the
  * figure, and a short note. Times use tabular numerals so they line up.
  */
-export function Ledger({ rows, className }: { rows: readonly LedgerRow[]; className?: string }) {
+export function Ledger({
+  rows,
+  variant = "standards",
+  className,
+}: {
+  rows: readonly LedgerRow[];
+  /** "places" sets the terms as names, for lists of places and distances. */
+  variant?: "standards" | "places";
+  className?: string;
+}) {
   return (
-    <dl className={[styles.ledger, className].filter(Boolean).join(" ")}>
+    <dl className={[styles.ledger, styles[variant], className].filter(Boolean).join(" ")}>
       {rows.map((row) => (
         <div key={row.term} className={styles.row}>
           <dt className={styles.term}>{row.term}</dt>

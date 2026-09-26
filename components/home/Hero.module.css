@@ -9,7 +9,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  gap: var(--space-2xl);
+  gap: var(--space-xl);
   align-items: end;
 }
 
@@ -88,6 +88,25 @@
   fill: var(--jar-3);
 }
 
+.groove {
+  fill: rgb(20 12 6 / 0.32);
+}
+
+.lightStop {
+  stop-color: #fff;
+  stop-opacity: var(--jar-light, 0.26);
+}
+
+.clearStop {
+  stop-color: #fff;
+  stop-opacity: 0;
+}
+
+.shadeStop {
+  stop-color: #140c06;
+  stop-opacity: var(--jar-shade, 0.14);
+}
+
 /* The one hero moment: jars rise from behind the horizon, left to right. */
 .rise {
   transform-box: fill-box;
@@ -152,13 +171,15 @@
 @media (prefers-color-scheme: dark) {
   .hero {
     --dawn-haze: 0.7;
+    --jar-light: 0.12;
+    --jar-shade: 0.3;
   }
 }
 
 @media (min-width: 60rem) {
   .grid {
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
-    gap: var(--space-3xl);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+    gap: var(--space-2xl);
   }
 
   .copy {
@@ -167,7 +188,7 @@
 
   .jars {
     width: 100%;
-    max-width: 34rem;
+    max-width: 40rem;
     margin-inline: auto 0;
   }
 
