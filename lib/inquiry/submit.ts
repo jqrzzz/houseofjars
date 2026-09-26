@@ -20,7 +20,7 @@ export interface SubmitDeps {
 }
 
 /** Reads Shadow's endpoint and key from the environment; null if either is missing. */
-export function readShadowConfig(env: NodeJS.ProcessEnv = process.env): ShadowConfig | null {
+export function readShadowConfig(env: Readonly<Record<string, string | undefined>> = process.env): ShadowConfig | null {
   const apiUrl = env.SHADOW_API_URL?.trim();
   const key = env.SHADOW_INQUIRY_KEY?.trim();
   if (!apiUrl || !key) return null;
