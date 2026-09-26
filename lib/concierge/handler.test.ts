@@ -23,7 +23,12 @@ const post = (payload: unknown, headers: Record<string, string> = {}) =>
     body: JSON.stringify(payload),
   });
 
-function handler(streamer: StreamMessages | null, capacity = 5, budget = createDailyBudget({ limit: 10_000_000 })) {
+function handler(
+  streamer: StreamMessages | null,
+  capacity = 5,
+  budget = createDailyBudget({ limit: 10_000_000 }),
+  log: (message: string) => void = () => {},
+) {
   return createConciergeHandler({
     streamer: () => streamer,
     signer: () => (streamer ? signer : null),
@@ -33,7 +38,7 @@ function handler(streamer: StreamMessages | null, capacity = 5, budget = createD
     model: () => "claude-opus-5",
     siteUrl: "https://thehouseofjars.com",
     now: () => new Date("2026-09-26T03:00:00Z"),
-    log: () => {},
+    log,
   });
 }
 
@@ -178,6 +183,30 @@ describe("POST /api/concierge", () => {
     expect(calls).toHaveLength(MAX_CONVERSATION_TURNS);
     // A new conversation starts afresh.
     expect((await handle(post({ ...body, session_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7" }))).status).toBe(200);
+  });
+
+  it("logs failures without guest data (R4-08)", async () => {
+    const lines: string[] = [];
+    const unparseable = new Anthropic.AnthropicError(
+      'Unable to parse tool parameter JSON from model. JSON: {"name": "Mai", "email": "mai@example.com", "phone": "+856 20 5555 1234"',
+    );
+    const { streamer } = fakeClaude([
+      { stopReason: "tool_use", error: unparseable },
+      { stopReason: "tool_use", error: unparseable },
+    ]);
+    await (await handler(streamer, 5, undefined, (line) => lines.push(line))(post(body))).text();
+
+    const upstream = new Anthropic.InternalServerError(
+      500,
+      { type: "error", error: { type: "api_error", message: "detail for mai@example.com" } },
+      "500 detail for mai@example.com",
+      new Headers({ "request-id": "req_123" }),
+    );
+    const failing = fakeClaude([{ stopReason: "end_turn", error: upstream }]);
+    await (await handler(failing.streamer, 5, undefined, (line) => lines.push(line))(post(body))).text();
+
+    expect(lines).toEqual(["[concierge] tool_input_unparseable", "[concierge] api_error status=500 request_id=req_123"]);
+    expect(lines.join(" ")).not.toMatch(/Mai|mai@example\.com|5555/);
   });
 
   it("rate-limits per IP", async () => {

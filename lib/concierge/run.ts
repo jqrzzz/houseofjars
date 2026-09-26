@@ -216,3 +216,21 @@ export function classifyError(error: unknown): "busy" | "unavailable" | "resting
   }
   return "unavailable";
 }
+
+/**
+ * A log line with no guest data. SDK messages can quote the raw tool input
+ * (a guest's name, email, phone) or an upstream error body, so only a fixed
+ * code, the HTTP status, the API's error type and request id are logged.
+ */
+export function describeFailure(error: unknown): string {
+  if (error instanceof SpendLimitReached) return "[concierge] budget_spent";
+  if (isMalformedStream(error)) return "[concierge] tool_input_unparseable";
+  if (error instanceof Anthropic.APIError) {
+    const parts = [error instanceof Anthropic.APIConnectionError ? "connection_error" : "api_error"];
+    if (error.status !== undefined) parts.push(`status=${error.status}`);
+    if (error.type) parts.push(`type=${error.type}`);
+    if (error.requestID) parts.push(`request_id=${error.requestID}`);
+    return `[concierge] ${parts.join(" ")}`;
+  }
+  return `[concierge] unexpected_error${error instanceof Error ? ` ${error.name}` : ""}`;
+}

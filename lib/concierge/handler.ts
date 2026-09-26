@@ -6,7 +6,7 @@ import { buildSystemPrompt } from "./prompt";
 import { encodeEvent, type ConciergeEvent } from "./protocol";
 import { MAX_REQUEST_BYTES } from "./limits";
 import { conciergeRequestSchema } from "./request";
-import { buildParams, classifyError, runConcierge, type StreamMessages } from "./run";
+import { buildParams, classifyError, describeFailure, runConcierge, type StreamMessages } from "./run";
 import type { Signer } from "./signing";
 
 export interface ConciergeHandlerDeps {
@@ -94,7 +94,7 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
         } catch (error) {
           const code = classifyError(error);
           if (code) {
-            log(`[concierge] ${error instanceof Error ? `${error.name}: ${error.message}` : "unknown error"}`);
+            log(describeFailure(error));
             emit({ type: "error", code });
           }
         } finally {
