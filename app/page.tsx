@@ -13,12 +13,12 @@ import { Stamp } from "@/components/ui/Stamp";
 import { Eyebrow, Section } from "@/components/ui/Section";
 import buttons from "@/components/ui/button.module.css";
 import { ArrowIcon, ExternalIcon } from "@/components/ui/icons";
+import { PageJsonLd } from "@/components/PageJsonLd";
 import { location } from "@/content/area";
 import { identity } from "@/content/identity";
 import { praise, ratings } from "@/content/reviews";
 import { bathrooms, beds, breakfast, staff, times } from "@/content/stay";
-import { joinList, lowerFirst } from "@/content/text";
-import { formatDate } from "@/lib/format";
+import { formatDate, joinList, lowerFirst } from "@/content/text";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
 import styles from "./home.module.css";
@@ -54,7 +54,7 @@ const standards: LedgerRow[] = [
     note: `Early check-in: ${lowerFirst(times.earlyCheckIn.value)}.`,
   },
   { term: "Check-out", value: <>Until {times.checkOut.value}</>, note: "Luggage storage if you leave later in the day." },
-  { term: "Reception", value: staff.hours.value, note: `The team speaks ${joinList(staff.languages.value)}.` },
+  { term: "Reception", value: staff.hours.value.summary, note: `The team speaks ${joinList(staff.languages.value)}.` },
   {
     term: "Bathrooms",
     value: bathrooms.cleaning.value,
@@ -282,6 +282,7 @@ export default function HomePage() {
       </Section>
 
       <BookingCard />
+      <PageJsonLd path={pages.home.path} />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { HouseCutaway } from "@/components/house/HouseCutaway";
 import { PodDiagram } from "@/components/house/PodDiagram";
 import { Block, Prose, TickList } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
+import { PageJsonLd } from "@/components/PageJsonLd";
 import { honestNotes } from "@/content/reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building } from "@/content/stay";
 import { countWord, joinList, lowerFirst } from "@/content/text";
@@ -87,6 +88,7 @@ export default function TheHousePage() {
       </Block>
 
       <BookingCard />
+      <PageJsonLd path={pages.house.path} />
     </>
   );
 }

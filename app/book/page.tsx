@@ -3,6 +3,7 @@ import { ContactDetails } from "@/components/contact/ContactDetails";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ExternalIcon } from "@/components/ui/icons";
+import { PageJsonLd } from "@/components/PageJsonLd";
 import { addressLines, identity } from "@/content/identity";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
@@ -55,6 +56,7 @@ export default function BookPage() {
           </address>
         </Prose>
       </Block>
+      <PageJsonLd path={pages.book.path} />
     </>
   );
 }

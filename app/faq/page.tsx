@@ -2,6 +2,7 @@ import { BookingCard } from "@/components/BookingCard";
 import { InlineText } from "@/components/InlineText";
 import { Block } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
+import { PageJsonLd } from "@/components/PageJsonLd";
 import { faq } from "@/content/faq";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
@@ -47,6 +48,7 @@ export default function FaqPage() {
       ))}
 
       <BookingCard />
+      <PageJsonLd path={pages.faq.path} />
     </>
   );
 }

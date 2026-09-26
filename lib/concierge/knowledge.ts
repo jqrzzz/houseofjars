@@ -37,7 +37,7 @@ export function buildHouseKnowledge(siteUrl: string): string {
         `WhatsApp or phone: ${phone.value.display}`,
         `Email: ${email.value}`,
         `Booking page with a message form: ${url(pages.book.path)}`,
-        `Staff: ${staff.hours.value}. Reception speaks ${joinList(staff.languages.value)}. ${staff.replies.value}.`,
+        `Staff: ${staff.hours.value.summary}. Reception speaks ${joinList(staff.languages.value)}. ${staff.replies.value}.`,
       ]),
     ],
     [

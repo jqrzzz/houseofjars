@@ -33,7 +33,7 @@ export function buildLlmsTxt(siteUrl: string): string {
     `- Dorms: include ${joinList(beds.dorms.value)}`,
     `- Breakfast included: ${joinList(breakfast.items.value.map((i) => i.toLowerCase()))}`,
     `- Amenities: ${amenities.map((a) => a.value.name).join("; ")}`,
-    `- Staff: ${staff.hours.value.toLowerCase()}; languages: ${joinList(staff.languages.value)}`,
+    `- Staff: ${staff.hours.value.summary.toLowerCase()}; languages: ${joinList(staff.languages.value)}`,
     `- Nearby: ${Object.values(location.nearby).map((d) => `${d.value.place}: ${d.value.distance.toLowerCase()}`).join("; ")}`,
     `- Airport: ${airportTransport.value}`,
     `- Arriving in Laos: ${immigration.ldif.value.summary} ${immigration.ldif.value.url}`,

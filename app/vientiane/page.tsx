@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import buttons from "@/components/ui/button.module.css";
 import { Ledger } from "@/components/ui/Ledger";
 import { WhatsAppIcon } from "@/components/ui/icons";
+import { PageJsonLd } from "@/components/PageJsonLd";
 import { airportTransport, immigration, location } from "@/content/area";
 import { addressLines, formatAddress, whatsappUrl } from "@/content/identity";
 import { lowerFirst } from "@/content/text";
@@ -80,6 +81,7 @@ export default function VientianePage() {
       </Block>
 
       <BookingCard />
+      <PageJsonLd path={pages.vientiane.path} />
     </>
   );
 }

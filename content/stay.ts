@@ -27,6 +27,13 @@ export const beds = {
   dorms: fact(["a mixed dorm", "a 14-bed dorm"] as const, sources.booking, {
     note: "A mixed dorm is listed and a 14-bed dorm is mentioned (they may be the same dorm). Other dorm types and sizes are not published.",
   }),
+  /**
+   * The room types guests can book, by name. Search engines read them from
+   * the structured data, so list only rooms that certainly exist.
+   */
+  roomTypes: fact(["Mixed dorm"] as const, sources.booking, {
+    note: "The listing shows a mixed dorm (the 14-bed dorm in beds.dorms may be the same room, so it is not listed separately). Add a female-only dorm or private rooms only once the house confirms them.",
+  }),
 } as const;
 
 export const bathrooms = {
@@ -41,7 +48,8 @@ export const breakfast = {
 } as const;
 
 export const staff = {
-  hours: fact("On site 24 hours", sources.booking),
+  /** `opens` and `closes` (HH:MM) give search engines the opening hours; 00:00 to 23:59 means around the clock. */
+  hours: fact({ summary: "On site 24 hours", opens: "00:00", closes: "23:59" }, sources.booking),
   languages: fact(["English", "Lao", "Thai"] as const, sources.booking),
   transport: fact("Staff can arrange transport, including from the airport", sources.reviews),
   replies: fact("Quick replies to messages", sources.reviews),

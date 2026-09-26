@@ -3,6 +3,7 @@ import { Drawing } from "@/components/art/Drawing";
 import { Block } from "@/components/page/Block";
 import { RuleList, Steps, type Step } from "@/components/page/Lists";
 import { PageHeader } from "@/components/page/PageHeader";
+import { PageJsonLd } from "@/components/PageJsonLd";
 import { airportTransport, immigration } from "@/content/area";
 import { whatsappUrl } from "@/content/identity";
 import { beds, rules, times } from "@/content/stay";
@@ -84,6 +85,7 @@ export default function HouseRulesPage() {
       </Block>
 
       <BookingCard />
+      <PageJsonLd path={pages.rules.path} />
     </>
   );
 }

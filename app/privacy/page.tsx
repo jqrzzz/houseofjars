@@ -1,8 +1,9 @@
 import { Block, Prose, TickList } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
+import { PageJsonLd } from "@/components/PageJsonLd";
 import { formatAddress, identity, whatsappUrl } from "@/content/identity";
 import { PRIVACY_UPDATED, privacy } from "@/content/privacy";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@/content/text";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
 
@@ -125,6 +126,7 @@ export default function PrivacyPage() {
           <p>If this notice changes, we will update the date at the top.</p>
         </Prose>
       </Block>
+      <PageJsonLd path={pages.privacy.path} />
     </>
   );
 }

@@ -10,7 +10,18 @@ export interface OpenQuestion {
  * `npm run content:check` prints these alongside unconfirmed facts.
  */
 export const openQuestions: readonly OpenQuestion[] = [
-  { ask: "Map coordinates of the front door (enables geo data for maps and search engines).", guestTopic: "the exact map pin" },
+  {
+    ask: "Map coordinates of the front door, and the house's Google Maps link (they add a map pin and a map link to the structured data search engines read).",
+    guestTopic: "the exact map pin",
+  },
+  {
+    ask: "Airport transport: how the team arranges it (taxi, tuk-tuk or car), what it costs and how long the ride takes (for the airport guide).",
+    guestTopic: "what airport transport costs and how long the ride takes",
+  },
+  {
+    ask: "Other places guests often walk to from the house, with walking times (for the guide to what is nearby).",
+    guestTopic: "walking times to places other than the Mekong riverside, the Lao National Museum and the night food market",
+  },
   { ask: "Quiet hours, if the house has set times (times.quietHours).", guestTopic: "set quiet hours" },
   {
     ask: "Whether there is a female-only dorm, and which other dorm sizes exist.",

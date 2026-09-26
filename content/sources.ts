@@ -15,3 +15,30 @@ export const sources = {
   laoLaw: "General practice for guesthouses in Laos",
   assumption: "Assumption made while writing the site",
 } as const;
+
+/**
+ * What a source can carry before the house confirms a fact from it (see
+ * content/certainty.ts for how each kind may be presented):
+ * - listing: the house's own public listings;
+ * - official: an official body;
+ * - guests: what many guest reviews say;
+ * - one-source: seen in one place only;
+ * - practice: general practice in Laos, not a fact about this house;
+ * - assumption: our own guess.
+ */
+export type SourceKind = "listing" | "official" | "guests" | "one-source" | "practice" | "assumption";
+
+export const sourceKinds: Readonly<Record<string, SourceKind>> = {
+  [sources.booking]: "listing",
+  [sources.agoda]: "listing",
+  [sources.google]: "listing",
+  [sources.tripadvisor]: "listing",
+  [sources.hostelz]: "listing",
+  [sources.facebook]: "listing",
+  [sources.reviews]: "guests",
+  [sources.oneReview]: "one-source",
+  [sources.immigration]: "official",
+  [sources.unesco]: "official",
+  [sources.laoLaw]: "practice",
+  [sources.assumption]: "assumption",
+};

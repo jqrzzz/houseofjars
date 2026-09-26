@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useId, useState } from "react";
 import type { ChatDraft } from "@/lib/concierge/chat";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@/content/text";
 import { replyChannel } from "@/lib/inquiry/reply";
 import { pages } from "@/lib/site";
 import { ContactDetails } from "../contact/ContactDetails";

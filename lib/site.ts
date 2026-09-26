@@ -3,60 +3,87 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://thehouseofj
 
 export interface PageInfo {
   readonly path: string;
+  /**
+   * The page's name in search results, before " · House of Jars Hostel,
+   * Vientiane" (see lib/pages.ts); also the heading of its link preview.
+   * Written for what people search for, and never claiming more than the
+   * content does. Facts in titles and descriptions are checked against the
+   * content layer by lib/pages.test.ts.
+   */
   readonly title: string;
+  /** The whole title in search results, when the site's name reads better inside it. */
+  readonly fullTitle?: string;
+  /** The page's summary in search results and link previews: 70 to 160 characters. */
   readonly description: string;
-  /** Short label for navigation. */
+  /** Short label for navigation and breadcrumbs. */
   readonly nav?: string;
+  /** One line for links to the page from elsewhere on the site. */
+  readonly teaser?: string;
 }
 
 export const pages = {
   home: {
     path: "/",
-    title: "House of Jars, a calm hostel in the heart of Vientiane",
+    title: "Calm, clean pod hostel in central Vientiane",
+    fullTitle: "House of Jars · Calm, clean pod hostel in central Vientiane",
     description:
-      "A calm, very clean dorm hostel in Ban Anou, central Vientiane: curtained pod beds, strong air-conditioning, breakfast in our café and a team on site 24 hours. Owned and run by Nang.",
+      "A calm, very clean dorm hostel in Ban Anou, central Vientiane: curtained pod beds, breakfast in the café and a team on site 24 hours. Owned and run by Nang.",
   },
   house: {
     path: "/the-house",
     nav: "The house",
-    title: "The house",
+    title: "Pod beds and breakfast",
     description:
-      "Pod beds with privacy curtains, reading lights, sockets and lockers; shared bathrooms with hot showers; breakfast in the café downstairs. What to expect at House of Jars.",
+      "Every bed is a pod with a privacy curtain, reading light, power socket and locker. Shared bathrooms with hot showers, and breakfast in the café downstairs.",
+    teaser: "Pod beds, shared bathrooms with hot showers, and breakfast in the café.",
   },
   rules: {
     path: "/house-rules",
     nav: "House rules",
-    title: "House rules",
+    title: "House rules and check-in times",
     description:
-      "The few rules that keep House of Jars calm and clean, each with the reason behind it, plus what to bring to check-in.",
+      "Check-in from 14:00 and check-out until 11:30, the few rules that keep House of Jars calm, each with its reason, and what to bring to check-in.",
+    teaser: "Check-in and check-out times, and the few rules that keep the house calm.",
   },
   vientiane: {
     path: "/vientiane",
     nav: "Vientiane",
-    title: "Getting here and around Vientiane",
+    title: "Location and getting here",
     description:
-      "From Wattay International Airport to Ban Anou, walking times to the Mekong and the National Museum, and the Lao Digital Immigration Form.",
+      "House of Jars is in Ban Anou, central Vientiane: about 3 km from Wattay International Airport and 7 minutes’ walk from the Mekong riverside.",
+    teaser: "The airport, walking distances and arriving in Laos.",
   },
   faq: {
     path: "/faq",
     nav: "Questions",
     title: "Questions and answers",
     description:
-      "Check-in times, beds, breakfast, bathrooms, the airport, passports and booking: plain answers about staying at House of Jars.",
+      "Check-in times, pod beds, breakfast, bathrooms, the airport, passports and booking: plain answers about staying at House of Jars in Vientiane.",
+    teaser: "Plain answers about beds, breakfast, passports and booking.",
   },
   about: {
     path: "/about",
     nav: "About",
     title: "About the house",
     description:
-      "House of Jars is a calm hostel in Vientiane, owned and run by Nang. Why it is called House of Jars, and the team behind it.",
+      "House of Jars is a calm dorm hostel in Ban Anou, Vientiane, owned and run by Nang. Why it is called House of Jars, and the team behind it.",
+    teaser: "Owned and run by Nang, and why it is called House of Jars.",
   },
   book: {
     path: "/book",
     nav: "Book",
-    title: "Prices and booking",
+    title: "Prices, booking and contact",
     description:
-      "See live prices and availability on Booking.com and Agoda, or send the House of Jars team a message and they will reply by email or WhatsApp.",
+      "Live prices and free beds on Booking.com and Agoda, or message the House of Jars team on WhatsApp (+856 20 23 978 946) or by email. No payment on this site.",
+    teaser: "Live prices on Booking.com and Agoda, or a message to the team.",
+  },
+  guides: {
+    path: "/guides",
+    nav: "Guides",
+    title: "Guides for your stay",
+    description:
+      "Short answers for your trip to House of Jars in Vientiane: from Wattay Airport to the house, the Lao immigration form, what’s nearby and a quiet stay.",
+    teaser: "The airport, the immigration form, what’s nearby and a quiet stay.",
   },
   privacy: {
     path: "/privacy",

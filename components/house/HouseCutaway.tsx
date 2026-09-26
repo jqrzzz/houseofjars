@@ -42,7 +42,7 @@ const spots: readonly Spot[] = [
   {
     id: "team",
     title: "The team",
-    text: `${staff.hours.value}, speaking ${joinList(staff.languages.value)}.`,
+    text: `${staff.hours.value.summary}, speaking ${joinList(staff.languages.value)}.`,
     x: 20.5,
     y: 68.5,
   },

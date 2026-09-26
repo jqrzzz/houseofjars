@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
-import { CONTENT_UPDATED } from "@/content";
-import { absoluteUrl, pages } from "@/lib/site";
+import { allPages } from "@/lib/pages";
+import { absoluteUrl } from "@/lib/site";
 
+/** Every page, with lastmod from the content's own dates (lib/pages.ts). */
 export default function sitemap(): MetadataRoute.Sitemap {
-  return Object.values(pages).map((page) => ({
+  return allPages.map((page) => ({
     url: absoluteUrl(page.path),
-    lastModified: CONTENT_UPDATED,
+    lastModified: page.updated,
     changeFrequency: "monthly",
     priority: page.path === "/" ? 1 : page.path === "/privacy" ? 0.3 : 0.7,
   }));

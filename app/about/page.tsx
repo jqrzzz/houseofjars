@@ -5,6 +5,7 @@ import { PhotoFrame } from "@/components/PhotoFrame";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import buttons from "@/components/ui/button.module.css";
+import { PageJsonLd } from "@/components/PageJsonLd";
 import { location, plainOfJars } from "@/content/area";
 import { identity } from "@/content/identity";
 import { building, staff } from "@/content/stay";
@@ -59,7 +60,7 @@ export default function AboutPage() {
       <Block id="team" title="The team">
         <Prose>
           <p>
-            The team is {lowerFirst(staff.hours.value)} and speaks {joinList(staff.languages.value)}.{" "}
+            The team is {lowerFirst(staff.hours.value.summary)} and speaks {joinList(staff.languages.value)}.{" "}
             {staff.transport.value}. They are known for replying to messages quickly.
           </p>
         </Prose>
@@ -77,6 +78,7 @@ export default function AboutPage() {
       </Block>
 
       <BookingCard />
+      <PageJsonLd path={pages.about.path} />
     </>
   );
 }

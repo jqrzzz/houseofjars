@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { content } from "@/content";
 import { fact } from "@/content/fact";
-import { collectFacts, describeValue, unconfirmedFacts } from "./content-audit";
+import { collectFacts, describeValue, factStrings, factsMentionedIn, unconfirmedFacts } from "./content-audit";
 
 describe("content audit", () => {
   const tree = {
@@ -23,6 +23,24 @@ describe("content audit", () => {
     expect(describeValue("short")).toBe("short");
     expect(describeValue({ a: 1 })).toBe('{"a":1}');
     expect(describeValue("x".repeat(200))).toHaveLength(110);
+  });
+
+  it("finds a fact's words in a text, whatever the case and closing punctuation", () => {
+    const found = collectFacts(
+      { rule: fact({ rule: "Shoes off indoors.", why: "Clean floors." }, "s"), short: fact("Tea", "s") },
+      "t",
+    );
+    expect(factStrings(found[0]!.fact)).toEqual(["shoes off indoors", "clean floors"]);
+    // Three letters is too short to find reliably.
+    expect(factStrings(found[1]!.fact)).toEqual([]);
+    expect(factsMentionedIn("Please take your  SHOES OFF INDOORS, thank you", found).map((f) => f.path)).toEqual([
+      "t.rule",
+    ]);
+    expect(factsMentionedIn("Keep your shoes on", found)).toEqual([]);
+    // Whole words only: "bread" is not in "breadcrumb".
+    const bread = collectFacts({ items: fact(["Bread"], "s") }, "t");
+    expect(factsMentionedIn('{"breadcrumb":1}', bread)).toEqual([]);
+    expect(factsMentionedIn("Eggs, bread and fruit", bread)).toHaveLength(1);
   });
 
   it("finds the site's real facts, each with a source", () => {

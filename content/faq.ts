@@ -58,7 +58,7 @@ export const faq: readonly FaqGroup[] = [
         id: "reception",
         question: "Is reception open all night?",
         answer: [
-          `Yes. The team is ${lowerFirst(staff.hours.value)}, and reception speaks ${joinList(staff.languages.value)}.`,
+          `Yes. The team is ${lowerFirst(staff.hours.value.summary)}, and reception speaks ${joinList(staff.languages.value)}.`,
         ],
       },
     ],
