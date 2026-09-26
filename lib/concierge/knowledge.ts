@@ -1,9 +1,10 @@
 import { airportTransport, immigration, location, plainOfJars } from "@/content/area";
-import { faq, joinList } from "@/content/faq";
+import { faq } from "@/content/faq";
 import { formatAddress, identity } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
 import { openQuestions } from "@/content/open-questions";
 import { honestNotes, praise, ratings } from "@/content/reviews";
+import { joinList } from "@/content/text";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, staff, times } from "@/content/stay";
 import { pages } from "../site";
 

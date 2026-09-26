@@ -1,0 +1,348 @@
+/* Phones: a full-height sheet. Wider screens: a panel in the bottom-right corner. */
+.panel {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--page);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.panel[open] {
+  display: flex;
+  animation: sheet-in 260ms var(--ease-out);
+}
+
+.panel::backdrop {
+  background: rgb(20 14 9 / 0.4);
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+}
+
+@media (min-width: 48rem) {
+  .panel {
+    inset: auto max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) auto;
+    width: 25.5rem;
+    height: min(41rem, calc(100dvh - 2rem));
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-l);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .panel::backdrop {
+    background: rgb(20 14 9 / 0.18);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  padding: var(--space-s) var(--space-s) var(--space-s) var(--space-m);
+  padding-top: max(var(--space-s), env(safe-area-inset-top));
+  background: var(--deep);
+  color: var(--deep-text);
+}
+
+.avatar {
+  display: block;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--brown-deep);
+  box-shadow: 0 0 0 2px var(--deep-accent);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translateY(6%) scale(1.06);
+}
+
+.heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--step-1);
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: var(--step--1);
+  color: var(--deep-text-soft);
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--deep-text);
+  transition: background-color 160ms ease;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: rgb(247 238 221 / 0.12);
+}
+
+.iconButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.iconButton:focus-visible {
+  outline-color: var(--deep-accent);
+  outline-offset: -2px;
+}
+
+.iconButton svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.disclaimer {
+  padding: var(--space-xs) var(--space-m);
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  line-height: 1.45;
+}
+
+.log {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-s);
+  padding: var(--space-m);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.bubble {
+  max-width: 88%;
+  padding: 0.65rem 0.9rem;
+  border-radius: 1.1rem;
+  font-size: var(--step-0);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.shadow {
+  align-self: flex-start;
+  border-bottom-left-radius: 0.3rem;
+  background: var(--surface);
+}
+
+.user {
+  align-self: flex-end;
+  border-bottom-right-radius: 0.3rem;
+  background: color-mix(in srgb, var(--saffron) 24%, var(--page));
+}
+
+.failed {
+  background: transparent;
+  border: 1px dashed var(--rule-strong);
+  color: var(--text-soft);
+}
+
+.typing {
+  display: inline-flex;
+  gap: 0.3rem;
+  padding-block: 0.35rem;
+}
+
+.typing span {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--stone-dark);
+  animation: typing 1.2s ease-in-out infinite;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+  }
+
+  30% {
+    opacity: 1;
+  }
+}
+
+.starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: var(--space-xs) 0 0;
+}
+
+.starter {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--step--1);
+  font-weight: 550;
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.starter:hover {
+  border-color: var(--accent-text);
+  background: var(--surface);
+}
+
+.consent {
+  display: grid;
+  gap: var(--space-s);
+  padding: var(--space-m);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  font-size: var(--step--1);
+  line-height: 1.5;
+}
+
+.consentLabel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-s);
+  align-items: start;
+  cursor: pointer;
+}
+
+.consentLabel input {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0.1rem 0 0;
+  accent-color: var(--saffron);
+}
+
+.consentButton {
+  justify-self: start;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--saffron);
+  border-radius: 999px;
+  background: var(--saffron);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.consentButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sent {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--saffron) 18%, var(--page));
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+.sent svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.contacts {
+  padding: 0 var(--space-2xs);
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-xs);
+  padding: var(--space-s) var(--space-m);
+  padding-bottom: max(var(--space-s), env(safe-area-inset-bottom));
+  border-top: 1px solid var(--rule);
+  background: var(--page);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.75rem;
+  max-height: 8.5rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 1.4rem;
+  background: var(--page);
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.45;
+  resize: none;
+  field-sizing: content;
+}
+
+.input::placeholder {
+  color: var(--text-soft);
+  opacity: 0.85;
+}
+
+.input:focus-visible {
+  outline-offset: 1px;
+  border-radius: 1.4rem;
+}
+
+.send {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--saffron);
+  color: var(--ink);
+  transition: opacity 160ms ease;
+}
+
+.send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.send svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}

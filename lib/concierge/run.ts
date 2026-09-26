@@ -17,6 +17,8 @@ import { runSendInquiry, SEND_INQUIRY, sendInquiryTool } from "./tool";
 
 /** Tool rounds per request: enough for "consent missing" then "sent". */
 export const MAX_TOOL_ROUNDS = 2;
+/** Times a round is re-issued because its streamed tool input could not be parsed. */
+export const MAX_MALFORMED_RETRIES = 1;
 /** Caps thinking plus reply; replies are two to four sentences. */
 export const MAX_TOKENS = 4096;
 export const DEFAULT_MODEL = "claude-opus-5";
@@ -83,6 +85,16 @@ export function echoableContent(content: readonly BetaContentBlock[]): BetaConte
 }
 
 /**
+ * With eager input streaming the API no longer validates tool input while it
+ * streams. When the SDK cannot parse a tool input at all it throws a plain
+ * AnthropicError, never an APIError (HTTP, connection and abort failures are
+ * all APIErrors), so this is the only kind of failure worth re-issuing.
+ */
+export function isMalformedStream(error: unknown): boolean {
+  return error instanceof Anthropic.AnthropicError && !(error instanceof Anthropic.APIError);
+}
+
+/**
  * One concierge turn: stream Claude's reply to the client, run send_inquiry
  * when asked (at most MAX_TOOL_ROUNDS times), and stop cleanly on refusal or
  * truncation. Throws the SDK's typed errors; the caller maps them.
@@ -90,23 +102,37 @@ export function echoableContent(content: readonly BetaContentBlock[]): BetaConte
 export async function runConcierge(options: RunConciergeOptions): Promise<void> {
   const { request, emit } = options;
   const messages: BetaMessageParam[] = request.messages.map((m) => ({ role: m.role, content: m.content }));
-  let wroteText = false;
+  /** Characters of reply text sent to the client so far. */
+  let sent = 0;
+  const sendText = (text: string) => {
+    emit({ type: "text", text });
+    sent += text.length;
+  };
 
-  for (let round = 0; ; round++) {
-    const stream = options.stream(buildParams(options, messages), { signal: options.signal });
-    let needsSeparator = wroteText;
-
-    for await (const event of stream) {
-      if (event.type === "content_block_delta" && event.delta.type === "text_delta" && event.delta.text) {
-        if (needsSeparator) {
-          emit({ type: "text", text: "\n\n" });
-          needsSeparator = false;
+  for (let round = 0, retries = 0; ; ) {
+    const keep = sent;
+    let message: BetaMessage;
+    try {
+      const stream = options.stream(buildParams(options, messages), { signal: options.signal });
+      let needsSeparator = sent > 0;
+      for await (const event of stream) {
+        if (event.type === "content_block_delta" && event.delta.type === "text_delta" && event.delta.text) {
+          if (needsSeparator) {
+            sendText("\n\n");
+            needsSeparator = false;
+          }
+          sendText(event.delta.text);
         }
-        emit({ type: "text", text: event.delta.text });
-        wroteText = true;
       }
+      message = await stream.finalMessage();
+    } catch (error) {
+      if (!isMalformedStream(error) || retries >= MAX_MALFORMED_RETRIES) throw error;
+      // Nothing from this round reached a tool; take back its text and ask again.
+      retries++;
+      sent = keep;
+      emit({ type: "rewind", keep });
+      continue;
     }
-    const message = await stream.finalMessage();
 
     // Check why the model stopped before using anything it produced.
     if (message.stop_reason === "refusal") {
@@ -144,6 +170,7 @@ export async function runConcierge(options: RunConciergeOptions): Promise<void> 
       });
     }
     messages.push({ role: "user", content: results });
+    round++;
   }
 }
 
@@ -151,6 +178,12 @@ export async function runConcierge(options: RunConciergeOptions): Promise<void> 
 export function classifyError(error: unknown): "busy" | "unavailable" | null {
   if (error instanceof Anthropic.APIUserAbortError) return null;
   if (error instanceof Anthropic.RateLimitError) return "busy";
-  if (error instanceof Anthropic.APIError && error.status === 529) return "busy";
+  // Mid-stream errors carry no HTTP status, only the API's error type.
+  if (
+    error instanceof Anthropic.APIError &&
+    (error.status === 529 || error.type === "overloaded_error" || error.type === "rate_limit_error")
+  ) {
+    return "busy";
+  }
   return "unavailable";
 }

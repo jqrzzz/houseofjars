@@ -1,8 +1,9 @@
 import { airportTransport, immigration, location } from "@/content/area";
-import { faq, joinList } from "@/content/faq";
+import { faq } from "@/content/faq";
 import { formatAddress, identity } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
 import { ratings } from "@/content/reviews";
+import { joinList } from "@/content/text";
 import { amenities, beds, breakfast, staff, times } from "@/content/stay";
 import { CONTENT_UPDATED } from "@/content";
 import { pages } from "./site";

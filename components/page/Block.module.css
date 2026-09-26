@@ -1,0 +1,97 @@
+.block {
+  --block-space: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  padding-block: var(--block-space);
+}
+
+.paper {
+  background: var(--page);
+}
+
+.cream {
+  background: var(--surface);
+}
+
+/* Paper blocks in a row share the page, divided by a hairline. */
+.paper + .paper {
+  padding-top: 0;
+}
+
+.paper + .paper .grid {
+  border-top: 1px solid var(--rule);
+  padding-top: var(--block-space);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-l) var(--space-3xl);
+}
+
+.title {
+  font-size: var(--step-3);
+  line-height: 1.1;
+  max-width: 16ch;
+}
+
+.aside {
+  margin-top: var(--space-m);
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  max-width: 24rem;
+}
+
+.body {
+  min-width: 0;
+  max-width: 42rem;
+}
+
+.prose {
+  display: grid;
+  gap: var(--space-m);
+}
+
+.prose p {
+  max-width: var(--measure);
+}
+
+.prose h3 {
+  margin-top: var(--space-m);
+  font-size: var(--step-1);
+}
+
+.prose h3:first-child {
+  margin-top: 0;
+}
+
+.ticks {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.ticks li {
+  position: relative;
+  padding-left: 1.6rem;
+}
+
+.ticks li::before {
+  content: "";
+  position: absolute;
+  left: 0.1rem;
+  top: 0.8em;
+  width: 0.7rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--saffron);
+}
+
+@media (min-width: 60rem) {
+  .grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  .head {
+    position: sticky;
+    top: var(--space-xl);
+    align-self: start;
+  }
+}

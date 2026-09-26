@@ -3,7 +3,8 @@ import type { SubmitResult } from "../inquiry/submit";
 import { clientIp, type RateLimitDecision } from "../rate-limit";
 import { buildSystemPrompt } from "./prompt";
 import { encodeEvent, type ConciergeEvent } from "./protocol";
-import { conciergeRequestSchema, MAX_REQUEST_BYTES } from "./request";
+import { MAX_REQUEST_BYTES } from "./limits";
+import { conciergeRequestSchema } from "./request";
 import { classifyError, runConcierge, type StreamMessages } from "./run";
 
 export interface ConciergeHandlerDeps {

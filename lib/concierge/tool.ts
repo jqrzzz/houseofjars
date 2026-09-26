@@ -13,10 +13,12 @@ const nullableString = (description: string, extra: Record<string, unknown> = {}
 /**
  * The concierge's only tool. Its schema mirrors the inquiry contract minus
  * client_ref, source and consent, which the server sets. The server validates
- * every call with sendInquiryInputSchema before anything is sent.
+ * every call with sendInquiryInputSchema before anything is sent, which is
+ * also what makes eager input streaming (no server-side buffering) safe.
  */
 export const sendInquiryTool: BetaTool = {
   name: SEND_INQUIRY,
+  eager_input_streaming: true,
   description:
     "Send the guest's message to the House of Jars team, who reply by email, WhatsApp or phone. " +
     "Call this only when all of these are true: (1) the guest wants the team to contact them; " +

@@ -5,6 +5,8 @@
 export type ConciergeEvent =
   /** A piece of Shadow's reply. */
   | { type: "text"; text: string }
+  /** A round is being retried: cut the reply back to its first `keep` characters. */
+  | { type: "rewind"; keep: number }
   /** Shadow tried to send an inquiry but the guest has not ticked the privacy box. */
   | { type: "consent_required" }
   /** The inquiry reached the team. */
@@ -24,7 +26,16 @@ export function encodeEvent(event: ConciergeEvent): string {
   return `${JSON.stringify(event)}\n`;
 }
 
-const EVENT_TYPES = new Set(["text", "consent_required", "inquiry_sent", "inquiry_failed", "notice", "error", "done"]);
+const EVENT_TYPES = new Set([
+  "text",
+  "rewind",
+  "consent_required",
+  "inquiry_sent",
+  "inquiry_failed",
+  "notice",
+  "error",
+  "done",
+]);
 
 /**
  * Splits a buffer of NDJSON into complete events and the unfinished tail.

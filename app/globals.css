@@ -161,6 +161,16 @@ main {
   flex: 1;
 }
 
+/* The skip link focuses <main>; it needs no ring of its own. */
+main:focus {
+  outline: none;
+}
+
+/* Keep the page still behind the concierge window. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
 h1,
 h2,
 h3,

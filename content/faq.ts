@@ -2,6 +2,7 @@ import { airportTransport, immigration, location } from "./area";
 import { identity } from "./identity";
 import type { Inline } from "./inline";
 import { atmosphere, bathrooms, beds, breakfast, staff, times } from "./stay";
+import { joinList, lowerFirst } from "./text";
 
 export interface FaqEntry {
   readonly id: string;
@@ -13,14 +14,6 @@ export interface FaqGroup {
   readonly title: string;
   readonly entries: readonly FaqEntry[];
 }
-
-/** "a, b and c" */
-export function joinList(items: readonly string[]): string {
-  if (items.length < 2) return items.join("");
-  return `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
-}
-
-const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
 
 const { mekong, museum, nightMarket, airport } = location.nearby;
 

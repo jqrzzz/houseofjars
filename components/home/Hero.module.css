@@ -1,0 +1,182 @@
+.hero {
+  position: relative;
+  padding-top: clamp(2.75rem, 1.25rem + 6vw, 6.5rem);
+  padding-bottom: var(--space-2xl);
+  overflow: hidden;
+}
+
+.grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-2xl);
+  align-items: end;
+}
+
+.copy {
+  max-width: 38rem;
+}
+
+.greeting {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: var(--space-l);
+  color: var(--accent-text);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.lao {
+  font-family: var(--font-lao-stack);
+  font-size: 1.15em;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.dot {
+  color: var(--text-soft);
+}
+
+.title {
+  font-size: var(--step-5);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  max-width: 13ch;
+}
+
+.lede {
+  margin-top: var(--space-l);
+  max-width: 34rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+.owner {
+  margin-top: var(--space-m);
+  font-family: var(--font-display-stack);
+  font-size: var(--step-1);
+  color: var(--text);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  margin-top: var(--space-xl);
+}
+
+/* The jars stand on the horizon: the svg's bottom edge is the horizon line. */
+.jars {
+  width: min(100%, 27rem);
+  height: auto;
+  margin-inline: auto;
+  overflow: hidden;
+}
+
+.tone1 {
+  fill: var(--jar-1);
+}
+
+.tone2 {
+  fill: var(--jar-2);
+}
+
+.tone3 {
+  fill: var(--jar-3);
+}
+
+/* The one hero moment: jars rise from behind the horizon, left to right. */
+.rise {
+  transform-box: fill-box;
+  animation: rise 420ms var(--ease-out) both;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(104%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
+}
+
+/* Shadow's sunrise, once: a thin Mekong dawn along the horizon. */
+.horizon {
+  position: relative;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+.horizon::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: -1px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--dawn-1) 20%,
+    var(--dawn-2) 50%,
+    var(--dawn-3) 78%,
+    transparent
+  );
+}
+
+.horizon::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 1px;
+  height: clamp(5rem, 3rem + 8vw, 9rem);
+  background: radial-gradient(
+    40% 100% at 50% 100%,
+    color-mix(in srgb, var(--dawn-3) 50%, transparent),
+    color-mix(in srgb, var(--dawn-2) 22%, transparent) 45%,
+    transparent 75%
+  );
+  opacity: var(--dawn-haze, 0.55);
+  pointer-events: none;
+}
+
+.band {
+  margin-top: 0.625rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .hero {
+    --dawn-haze: 0.7;
+  }
+}
+
+@media (min-width: 60rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+    gap: var(--space-3xl);
+  }
+
+  .copy {
+    padding-bottom: clamp(3rem, 1rem + 4vw, 5.5rem);
+  }
+
+  .jars {
+    width: 100%;
+    max-width: 34rem;
+    margin-inline: auto 0;
+  }
+
+  .horizon::after {
+    background: radial-gradient(
+      30% 100% at 74% 100%,
+      color-mix(in srgb, var(--dawn-3) 50%, transparent),
+      color-mix(in srgb, var(--dawn-2) 22%, transparent) 45%,
+      transparent 75%
+    );
+  }
+}

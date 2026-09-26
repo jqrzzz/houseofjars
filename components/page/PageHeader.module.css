@@ -1,0 +1,45 @@
+.header {
+  padding-top: clamp(2.5rem, 1rem + 5vw, 5.5rem);
+  padding-bottom: clamp(2rem, 1rem + 3vw, 3.5rem);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-xl);
+  align-items: end;
+}
+
+.text {
+  max-width: 44rem;
+}
+
+.title {
+  font-size: var(--step-4);
+  line-height: 1.04;
+  letter-spacing: -0.018em;
+  max-width: 18ch;
+}
+
+.lede {
+  margin-top: var(--space-l);
+  max-width: 38rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+.art {
+  display: none;
+}
+
+@media (min-width: 60rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr) 13rem;
+  }
+
+  .art {
+    display: block;
+    width: 100%;
+    color: var(--stone-dark);
+  }
+}

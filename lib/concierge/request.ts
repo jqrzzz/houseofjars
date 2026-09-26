@@ -1,9 +1,5 @@
 import { z } from "zod";
-
-export const MAX_TURNS = 12;
-export const MAX_MESSAGE_CHARS = 1500;
-export const MAX_TOTAL_CHARS = 12_000;
-export const MAX_REQUEST_BYTES = 64 * 1024;
+import { MAX_MESSAGE_CHARS, MAX_TOTAL_CHARS, MAX_TURNS } from "./limits";
 
 const message = z.strictObject({
   role: z.enum(["user", "assistant"]),
