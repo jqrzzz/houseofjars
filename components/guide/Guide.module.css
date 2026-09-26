@@ -1,0 +1,231 @@
+/* At a glance: the guide's facts in the house's ledger, on the brown field, set in the same columns as the blocks below. */
+.glance {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.glanceTitle {
+  font-size: var(--step-3);
+  line-height: 1.1;
+}
+
+.glanceNote {
+  margin-top: var(--space-m);
+  max-width: 24rem;
+  font-size: var(--step--1);
+  color: var(--text-soft);
+}
+
+@media (min-width: 60rem) {
+  .glance {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--space-3xl);
+    align-items: start;
+  }
+}
+
+/* A phone number or web address in the ledger stays on one line. */
+.nowrap {
+  white-space: nowrap;
+}
+
+/* Read next: cards on cream, the whole card a link. */
+.readNextTitle {
+  margin-bottom: var(--space-xl);
+  font-size: var(--step-3);
+  line-height: 1.1;
+}
+
+.cards {
+  display: grid;
+  gap: var(--space-m);
+  margin: 0;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-xs);
+  padding: var(--space-l) var(--space-l) calc(var(--space-l) + 2rem);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  transition: border-color 180ms ease;
+}
+
+.card:hover {
+  border-color: var(--accent-text);
+}
+
+.kind {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.cardTitle {
+  font-size: var(--step-2);
+  line-height: 1.2;
+}
+
+.cardLink {
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* The link covers its card, so the whole card is one target; the card shows the focus ring. */
+.cardLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.cardLink:focus-visible {
+  outline: none;
+}
+
+.card:has(.cardLink:focus-visible),
+.guide:has(.cardLink:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-m);
+}
+
+.cardText {
+  color: var(--text-soft);
+}
+
+.cardArrow {
+  position: absolute;
+  left: var(--space-l);
+  bottom: var(--space-l);
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--accent-text);
+  transition: transform 200ms var(--ease-out);
+}
+
+.card:hover .cardArrow {
+  transform: translateX(3px);
+}
+
+@media (min-width: 48rem) {
+  .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-l);
+  }
+}
+
+/* Sources: a quiet footnote under a hairline, in the blocks' columns. */
+.sources {
+  display: grid;
+  gap: var(--space-s);
+  padding-bottom: var(--space-3xl);
+  font-size: var(--step--1);
+  color: var(--text-soft);
+}
+
+.sources::before {
+  content: "";
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--rule);
+  margin-bottom: var(--space-l);
+}
+
+.sourcesTitle {
+  font-family: var(--font-body-stack);
+  font-size: var(--step--2);
+  font-weight: 650;
+  line-height: 1.6;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.sourceList {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+}
+
+.sourceList,
+.sourceStatus {
+  max-width: 42rem;
+}
+
+@media (min-width: 60rem) {
+  .sources {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: var(--space-3xl);
+  }
+
+  .sourcesTitle {
+    grid-row: span 2;
+  }
+}
+
+/* The guides index: each guide in an arched niche, like the rooms on the home page. */
+.guides {
+  display: grid;
+  gap: var(--space-2xl);
+  margin: 0;
+  padding-bottom: var(--space-3xl);
+}
+
+.guide {
+  position: relative;
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  column-gap: var(--space-l);
+  align-items: start;
+}
+
+.niche {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 5;
+  padding: 30% 6% 10%;
+  border-radius: 999px 999px var(--radius-s) var(--radius-s);
+  background: var(--surface);
+  transition: background-color 180ms ease;
+}
+
+.guide:hover .niche {
+  background: color-mix(in srgb, var(--surface), var(--saffron) 12%);
+}
+
+.nicheDrawing {
+  width: 100%;
+}
+
+.guideText {
+  display: grid;
+  gap: var(--space-xs);
+  padding-top: var(--space-xs);
+}
+
+.guideTitle {
+  font-size: var(--step-2);
+  line-height: 1.2;
+}
+
+@media (min-width: 48rem) {
+  .guides {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2xl) clamp(1.5rem, 0.5rem + 2.5vw, 3rem);
+  }
+
+  .guide {
+    grid-template-columns: 10rem minmax(0, 1fr);
+    column-gap: var(--space-xl);
+  }
+}
+
+@media (min-width: 72rem) {
+  .guide {
+    grid-template-columns: 12rem minmax(0, 1fr);
+  }
+}

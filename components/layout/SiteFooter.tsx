@@ -64,6 +64,9 @@ export function SiteFooter() {
               </li>
             ))}
             <li>
+              <Link href={pages.guides.path}>Guides</Link>
+            </li>
+            <li>
               <Link href={pages.book.path}>Prices and booking</Link>
             </li>
             <li>

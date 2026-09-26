@@ -20,7 +20,7 @@ export const openQuestions: readonly OpenQuestion[] = [
   },
   {
     ask: "Other places guests often walk to from the house, with walking times (for the guide to what is nearby).",
-    guestTopic: "walking times to places other than the Mekong riverside, the Lao National Museum and the night food market",
+    guestTopic: "walking times to places the website doesn't list",
   },
   { ask: "Quiet hours, if the house has set times (times.quietHours).", guestTopic: "set quiet hours" },
   {

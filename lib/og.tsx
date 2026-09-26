@@ -55,10 +55,10 @@ const SCENE_SHOWN = 2000;
 const SCENE_HEIGHT = Math.round((ogSize.width / SCENE_SHOWN) * SCENE.height);
 const BAND_HEIGHT = 36;
 
-export async function renderOgImage(page: PageInfo): Promise<ImageResponse> {
+export async function renderOgImage(page: PageInfo, options: { eyebrow?: string } = {}): Promise<ImageResponse> {
   const isHome = page.path === "/";
   const title = isHome ? "A calm house in the heart of Vientiane." : page.title;
-  const eyebrow = isHome ? "Sabaidee" : page.nav ?? "House of Jars";
+  const eyebrow = isHome ? "Sabaidee" : (options.eyebrow ?? page.nav ?? "House of Jars");
   const band = await bandSvg(ogSize.width);
 
   return new ImageResponse(

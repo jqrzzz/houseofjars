@@ -272,10 +272,16 @@ export default function HomePage() {
             <p className={styles.lede}>
               The house is in {location.neighbourhood.value}, a few minutes’ walk from the river.
             </p>
-            <Link href={pages.vientiane.path} className={buttons.textLink}>
-              <span>Getting here</span>
-              <ArrowIcon />
-            </Link>
+            <div className={styles.links}>
+              <Link href={pages.vientiane.path} className={buttons.textLink}>
+                <span>Getting here</span>
+                <ArrowIcon />
+              </Link>
+              <Link href="/guides/whats-nearby" className={buttons.textLink}>
+                <span>What’s nearby</span>
+                <ArrowIcon />
+              </Link>
+            </div>
           </div>
           <Ledger rows={distances} variant="places" />
         </div>

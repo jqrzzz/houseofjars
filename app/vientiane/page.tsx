@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { BookingCard } from "@/components/BookingCard";
-import { CopyButton } from "@/components/contact/CopyButton";
+import { DriverAddress } from "@/components/contact/DriverAddress";
 import { Drawing } from "@/components/art/Drawing";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { Block, Prose } from "@/components/page/Block";
@@ -8,8 +9,9 @@ import buttons from "@/components/ui/button.module.css";
 import { Ledger } from "@/components/ui/Ledger";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import { PageJsonLd } from "@/components/PageJsonLd";
+import { ReadNext } from "@/components/guide/ReadNext";
 import { airportTransport, immigration, location } from "@/content/area";
-import { addressLines, formatAddress, whatsappUrl } from "@/content/identity";
+import { whatsappUrl } from "@/content/identity";
 import { lowerFirst } from "@/content/text";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
@@ -48,15 +50,7 @@ export default function VientianePage() {
           Message the team
           <span className="visually-hidden"> on WhatsApp (opens in a new tab)</span>
         </a>
-        <div className={styles.address}>
-          <p className={styles.addressLabel}>The address, to show a driver</p>
-          <address className={styles.addressText}>
-            {addressLines().map((line) => (
-              <span key={line}>{line}</span>
-            ))}
-          </address>
-          <CopyButton value={formatAddress()} what="address" />
-        </div>
+        <DriverAddress />
       </Block>
 
       <Block id="on-foot" title="On foot" aside="Distances from the front door.">
@@ -76,10 +70,13 @@ export default function VientianePage() {
               <span className="visually-hidden"> (opens in a new tab)</span>
             </a>
           </p>
-          <p>{registration.value}</p>
+          <p>
+            {registration.value} <Link href={`${pages.rules.path}#your-stay`}>What to bring to check-in</Link>.
+          </p>
         </Prose>
       </Block>
 
+      <ReadNext paths={["/guides/from-wattay-airport", "/guides/lao-digital-immigration-form", "/guides/whats-nearby"]} />
       <BookingCard />
       <PageJsonLd path={pages.vientiane.path} />
     </>

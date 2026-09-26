@@ -6,6 +6,7 @@ import { PodDiagram } from "@/components/house/PodDiagram";
 import { Block, Prose, TickList } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageJsonLd } from "@/components/PageJsonLd";
+import { ReadNext } from "@/components/guide/ReadNext";
 import { honestNotes } from "@/content/reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building } from "@/content/stay";
 import { countWord, joinList, lowerFirst } from "@/content/text";
@@ -79,7 +80,10 @@ export default function TheHousePage() {
       <Block id="who" title="Who the house suits">
         <Prose>
           <p>Travellers who want a clean bed, a quiet night and breakfast before the day starts.</p>
-          <p>{atmosphere.summary.value} Hen and stag parties are not accepted.</p>
+          <p>
+            {atmosphere.summary.value} Hen and stag parties are not accepted.{" "}
+            <Link href="/guides/quiet-hostel-vientiane">Why guests call it quiet</Link>.
+          </p>
         </Prose>
       </Block>
 
@@ -87,6 +91,7 @@ export default function TheHousePage() {
         <TickList items={honestNotes.map((note) => note.value)} />
       </Block>
 
+      <ReadNext paths={["/guides/quiet-hostel-vientiane", pages.rules.path, pages.vientiane.path]} />
       <BookingCard />
       <PageJsonLd path={pages.house.path} />
     </>

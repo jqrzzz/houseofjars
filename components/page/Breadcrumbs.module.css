@@ -1,0 +1,38 @@
+.trail {
+  display: flex;
+  align-items: center;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.55rem;
+  margin: 0;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* A drawn chevron between levels: no text for screen readers to announce. */
+.crumb + .crumb::before {
+  content: "";
+  width: 0.36em;
+  height: 0.36em;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  rotate: 45deg;
+  opacity: 0.6;
+}
+
+.crumb a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.crumb [aria-current] {
+  color: var(--text-soft);
+}

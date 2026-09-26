@@ -87,6 +87,7 @@ const luggage = amenity("Luggage storage");
 const airConditioning = amenity("Air conditioning");
 const [noSmoking, calmNights, noParties] = rules.house;
 const earlyCheckIn = rules.stay[2]!;
+const passport = rules.stay[3]!;
 const address = Object.values(identity.address);
 const podHas = joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`));
 
@@ -166,6 +167,7 @@ const fromTheAirport: Guide = {
     earlyCheckIn,
     luggage,
     registration,
+    passport,
     ...address,
   ],
   reviewed: "2026-09-26",
@@ -245,7 +247,7 @@ const immigrationForm: Guide = {
     },
   ],
   related: ["/guides/from-wattay-airport", "/house-rules", "/faq"],
-  facts: [ldif, registration],
+  facts: [ldif, registration, passport],
   reviewed: "2026-09-26",
 };
 

@@ -23,6 +23,14 @@
   margin-top: var(--space-xl);
 }
 
+/* Two links under a section's words, side by side where they fit. */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-xl);
+  margin-top: var(--space-xl);
+}
+
 .split {
   display: grid;
   gap: var(--space-xl);

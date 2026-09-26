@@ -1,0 +1,57 @@
+.card {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-s);
+  padding: var(--space-l);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+}
+
+.label {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.address {
+  display: grid;
+  font-family: var(--font-display-stack);
+  font-size: var(--step-1);
+  font-style: normal;
+  line-height: 1.35;
+  font-variant-numeric: lining-nums;
+}
+
+@media (min-width: 48rem) {
+  .address {
+    font-size: var(--step-2);
+  }
+}
+
+/* Printed, the card is large and plain, to hand to a driver. */
+@media print {
+  .card {
+    padding: 12mm;
+    border: 1.5pt solid #000;
+    border-radius: 0;
+    background: none;
+    break-inside: avoid;
+  }
+
+  .label {
+    font-size: 11pt;
+    color: #000;
+  }
+
+  .address {
+    font-size: 24pt;
+    line-height: 1.3;
+  }
+
+  .card button {
+    display: none;
+  }
+}

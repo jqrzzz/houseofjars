@@ -44,6 +44,8 @@ export const faq: readonly FaqGroup[] = [
         answer: [
           `${immigration.ldif.value.summary} `,
           { text: "Official information from the Lao Department of Immigration", href: immigration.ldif.value.url },
+          ". ",
+          { text: "The form, in brief", href: "/guides/lao-digital-immigration-form" },
           ".",
         ],
       },
@@ -51,7 +53,9 @@ export const faq: readonly FaqGroup[] = [
         id: "airport",
         question: "How far is the airport, and can you arrange transport?",
         answer: [
-          `${airport.value.place} is ${lowerFirst(airport.value.distance)} from the house. ${airportTransport.value} Message them with your arrival time.`,
+          `${airport.value.place} is ${lowerFirst(airport.value.distance)} from the house. ${airportTransport.value} Message them with your arrival time. `,
+          { text: "From the airport, step by step", href: "/guides/from-wattay-airport" },
+          ".",
         ],
       },
       {
@@ -105,7 +109,9 @@ export const faq: readonly FaqGroup[] = [
         id: "quiet",
         question: "Is it a party hostel?",
         answer: [
-          `No. ${atmosphere.summary.value} Hen and stag parties are not accepted, and there is no smoking anywhere in the house.`,
+          `No. ${atmosphere.summary.value} Hen and stag parties are not accepted, and there is no smoking anywhere in the house. `,
+          { text: "A quiet stay, in brief", href: "/guides/quiet-hostel-vientiane" },
+          ".",
         ],
       },
     ],
@@ -140,7 +146,9 @@ export const faq: readonly FaqGroup[] = [
         id: "nearby",
         question: "What is nearby?",
         answer: [
-          `The house is in ${location.neighbourhood.value}. The ${mekong.value.place} is ${lowerFirst(mekong.value.distance)}, the ${museum.value.place} is ${lowerFirst(museum.value.distance)}, and the ${lowerFirst(nightMarket.value.place)} is ${lowerFirst(nightMarket.value.distance)}.`,
+          `The house is in ${location.neighbourhood.value}. The ${mekong.value.place} is ${lowerFirst(mekong.value.distance)}, the ${museum.value.place} is ${lowerFirst(museum.value.distance)}, and the ${lowerFirst(nightMarket.value.place)} is ${lowerFirst(nightMarket.value.distance)}. `,
+          { text: "What’s nearby", href: "/guides/whats-nearby" },
+          ".",
         ],
       },
     ],

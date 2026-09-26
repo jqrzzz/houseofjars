@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { BookingCard } from "@/components/BookingCard";
 import { Drawing } from "@/components/art/Drawing";
 import { Block } from "@/components/page/Block";
 import { RuleList, Steps, type Step } from "@/components/page/Lists";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageJsonLd } from "@/components/PageJsonLd";
+import { ReadNext } from "@/components/guide/ReadNext";
 import { airportTransport, immigration } from "@/content/area";
 import { whatsappUrl } from "@/content/identity";
 import { beds, rules, times } from "@/content/stay";
@@ -42,7 +44,8 @@ const arrival: Step[] = [
           Message the team on WhatsApp
           <span className="visually-hidden"> (opens in a new tab)</span>
         </a>{" "}
-        with your arrival time. {airportTransport.value}
+        with your arrival time. {airportTransport.value}{" "}
+        <Link href="/guides/from-wattay-airport">From the airport, step by step</Link>.
       </p>
     ),
   },
@@ -55,7 +58,8 @@ const arrival: Step[] = [
     body: (
       <p>
         Check-in is from {times.checkIn.value}. Early check-in: {lowerFirst(times.earlyCheckIn.value)}. Your pod has{" "}
-        {joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`))}.
+        {joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`))}.{" "}
+        <Link href={pages.house.path}>More about the house</Link>.
       </p>
     ),
   },
@@ -84,6 +88,7 @@ export default function HouseRulesPage() {
         <Steps steps={arrival} />
       </Block>
 
+      <ReadNext paths={["/guides/quiet-hostel-vientiane", "/guides/from-wattay-airport", pages.house.path]} />
       <BookingCard />
       <PageJsonLd path={pages.rules.path} />
     </>

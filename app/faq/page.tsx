@@ -3,6 +3,7 @@ import { InlineText } from "@/components/InlineText";
 import { Block } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageJsonLd } from "@/components/PageJsonLd";
+import { ReadNext } from "@/components/guide/ReadNext";
 import { faq } from "@/content/faq";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
@@ -47,6 +48,7 @@ export default function FaqPage() {
         </Block>
       ))}
 
+      <ReadNext paths={["/guides/from-wattay-airport", "/guides/lao-digital-immigration-form", "/guides/quiet-hostel-vientiane"]} />
       <BookingCard />
       <PageJsonLd path={pages.faq.path} />
     </>
