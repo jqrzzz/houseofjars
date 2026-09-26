@@ -123,6 +123,11 @@ function Arriving() {
   const id = useId();
   return (
     <Frame headingId={`${id}-step`} stub={<StayStub stay={null} beds={null} price={null} />}>
+      <noscript>
+        <p className={styles.notice}>
+          Online booking needs JavaScript. You can still book on Booking.com or Agoda, or send the team a message below.
+        </p>
+      </noscript>
       <div inert className={styles.stack}>
         <StepList current="dates" />
         <h2 id={`${id}-step`} className={styles.title}>

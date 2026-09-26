@@ -174,7 +174,14 @@ export function DatesStep({
 
       <div className={styles.hints}>
         <p aria-live="polite">{hint}</p>
-        {rules && rulesKnown ? <p>{rulesText(rules)}</p> : null}
+        {rules && rulesKnown ? (
+          <p>{rulesText(rules)}</p>
+        ) : rules ? null : (
+          // Holds the line the house's rules will fill, so the calendar doesn't move when they arrive.
+          <p aria-hidden="true" className={styles.reserve}>
+            Online booking is open until Wednesday 29 September 2027, for stays of up to 30 nights.
+          </p>
+        )}
         {maxGuests && guests >= maxGuests ? (
           <p>
             Online booking takes up to {plural(maxGuests, "guest")}. For a bigger group,{" "}
@@ -184,11 +191,9 @@ export function DatesStep({
       </div>
 
       <DateRangePicker rules={rules} range={range} onChange={onRange} labelledBy={headingId} />
-      {rules ? null : (
-        <p role="status" className={styles.hints}>
-          Opening the calendar…
-        </p>
-      )}
+      <p role="status" className="visually-hidden">
+        {rules ? "" : "Opening the calendar…"}
+      </p>
 
       <div className={styles.actions}>
         <button
@@ -537,7 +542,7 @@ export function DetailsStep({
 
       <fieldset className={styles.choice} aria-describedby={errors.preferred_contact ? `${fieldId("preferred_contact")}-error` : undefined}>
         <legend className={form.label}>How should the team reply?</legend>
-        <span className={styles.choices} id={fieldId("preferred_contact")}>
+        <span className={styles.choices}>
           {(
             [
               ["", "Either is fine"],
@@ -548,6 +553,7 @@ export function DetailsStep({
           ).map(([value, label]) => (
             <label key={value || "either"} className={styles.chip}>
               <input
+                id={value === "" ? fieldId("preferred_contact") : undefined}
                 type="radio"
                 name="preferred_contact"
                 value={value}

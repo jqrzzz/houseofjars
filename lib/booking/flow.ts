@@ -101,14 +101,17 @@ export function kindLabel(room: Pick<RoomType, "kind" | "name">): string | null 
   return label && label.toLowerCase() !== room.name.trim().toLowerCase() ? label : null;
 }
 
-/** "LAK 360,000", "USD 18", "USD 18.50": the code first, as the house's currencies are written on receipts. */
-export function formatMoney(amount: number, currency: Currency): string {
-  const cents = currency === "USD" && !Number.isInteger(amount);
-  const number = new Intl.NumberFormat("en-GB", {
+/** "360,000", "18", "18.50": kip in whole numbers, dollars with cents when there are any. */
+function formatAmount(amount: number, currency: Currency, cents = currency === "USD" && !Number.isInteger(amount)): string {
+  return new Intl.NumberFormat("en-GB", {
     minimumFractionDigits: cents ? 2 : 0,
     maximumFractionDigits: cents ? 2 : 0,
   }).format(amount);
-  return `${currency} ${number}`;
+}
+
+/** "LAK 360,000", "USD 18", "USD 18.50": the code first (and a no-break space), as receipts write them. */
+export function formatMoney(amount: number, currency: Currency): string {
+  return `${currency}\u00a0${formatAmount(amount, currency)}`;
 }
 
 const plural = (count: number, one: string, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
@@ -124,10 +127,12 @@ export interface PriceLines {
 export function priceLines(price: Price, stay: Stay): PriceLines {
   const amounts = price.per_guest_per_night.map((night) => night.amount);
   const [low, high] = [Math.min(...amounts), Math.max(...amounts)];
+  // Both ends of a range in cents if either has them.
+  const cents = price.currency === "USD" && !(Number.isInteger(low) && Number.isInteger(high));
   const perNight =
     amounts.length === 0 || low === high
       ? formatMoney(amounts[0] ?? 0, price.currency)
-      : `${formatMoney(low, price.currency)} to ${new Intl.NumberFormat("en-GB").format(high)}`;
+      : `${price.currency}\u00a0${formatAmount(low, price.currency, cents)} to ${formatAmount(high, price.currency, cents)}`;
   return {
     perNight,
     total: formatMoney(price.total, price.currency),
@@ -285,8 +290,17 @@ export function saveBooking(saved: SavedBooking): void {
 
 export function loadBooking(): SavedBooking | null {
   try {
-    const saved = JSON.parse(sessionStorage.getItem(SAVED_KEY) ?? "null") as SavedBooking | null;
-    return saved && typeof saved.confirmation?.reference === "string" ? saved : null;
+    const saved = JSON.parse(sessionStorage.getItem(SAVED_KEY) ?? "null") as Partial<SavedBooking> | null;
+    // Only what this page saved, in the shape it saves now; anything else is forgotten.
+    const whole =
+      typeof saved?.confirmation?.reference === "string" &&
+      typeof saved.confirmation.status === "string" &&
+      typeof saved.stay?.check_in === "string" &&
+      typeof saved.stay.check_out === "string" &&
+      typeof saved.stay.guests === "number" &&
+      typeof saved.roomName === "string" &&
+      typeof saved.replyBy === "string";
+    return whole ? (saved as SavedBooking) : null;
   } catch {
     return null;
   }

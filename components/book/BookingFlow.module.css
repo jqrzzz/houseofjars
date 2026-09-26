@@ -218,6 +218,10 @@
   font-weight: 600;
 }
 
+.reserve {
+  visibility: hidden;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

@@ -101,6 +101,15 @@ describe("rooms and prices", () => {
       total: "LAK 380,000",
       totalFor: "2 guests, 2 nights",
     });
+    const dollars = {
+      currency: "USD" as const,
+      per_guest_per_night: [
+        { date: "2026-10-03", amount: 18.5 },
+        { date: "2026-10-04", amount: 20 },
+      ],
+      total: 77,
+    };
+    expect(priceLines(dollars, stay).perNight).toBe("USD\u00a018.50 to 20.00");
     const flat = { ...price, per_guest_per_night: price.per_guest_per_night.map((n) => ({ ...n, amount: 90_000 })) };
     expect(priceLines(flat, { ...stay, guests: 1 }).perNight).toBe("LAK 90,000");
   });
