@@ -63,8 +63,12 @@ function today(): string {
   return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
 
-/** The direct inquiry form on /book. The server validates; its answers are shown next to each field. */
-export function InquiryForm() {
+/**
+ * The direct inquiry form on /book. The server validates; its answers are
+ * shown next to each field. A link can fill in the dates and guests
+ * (lib/inquiry/prefill.ts); the field names match the link's parameters.
+ */
+export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [errors, setErrors] = useState<Partial<Record<FieldName | "form", string>>>({});
   const [checkIn, setCheckIn] = useState("");
@@ -189,7 +193,15 @@ export function InquiryForm() {
   const errorList = [...FIELDS.filter((field) => errors[field]), ...(errors.form ? (["form"] as const) : [])];
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate aria-describedby={`${id}-privacy`}>
+    // POST, so a guest who sends before the page's script has loaded never puts their details in the address bar.
+    <form
+      className={styles.form}
+      method="post"
+      onSubmit={onSubmit}
+      noValidate
+      aria-labelledby={labelledBy}
+      aria-describedby={`${id}-privacy`}
+    >
       {status.kind === "problem" && status.problem === "invalid" ? (
         <div ref={summaryRef} tabIndex={-1} className={styles.summary} role="alert">
           <p className={styles.summaryTitle}>Please check {errorList.length === 1 ? "one thing" : "a few things"}:</p>

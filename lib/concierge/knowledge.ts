@@ -1,5 +1,6 @@
 import { airportTransport, immigration, location, plainOfJars } from "@/content/area";
 import { faq } from "@/content/faq";
+import { guideList, guidePath } from "@/content/guides";
 import { formatAddress, identity } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
 import { openQuestions } from "@/content/open-questions";
@@ -106,6 +107,10 @@ export function buildHouseKnowledge(siteUrl: string): string {
         .flatMap((group) => group.entries)
         .map((entry) => `Q: ${entry.question}\nA: ${inlineToTextWithUrls(entry.answer, siteUrl)}`)
         .join("\n\n"),
+    ],
+    [
+      "Guides on this website (link one when it answers the question)",
+      bullet(guideList.map((guide) => `${guide.question} ${url(guidePath(guide))}`)),
     ],
     [
       "Not published yet (say you don't know and offer to ask the team)",

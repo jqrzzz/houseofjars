@@ -26,20 +26,25 @@ const wholeNumber = (value: string | null, max: number): number | undefined => {
   return number >= 1 && number <= max ? number : undefined;
 };
 
+/** The first of these parameters the link carries. */
+const first = (params: URLSearchParams, ...names: string[]): string | null =>
+  names.map((name) => params.get(name)).find((value) => value !== null) ?? null;
+
 /**
  * Reads a /book link, as the booking card sends it (check_in, nights,
- * guests) or as an assistant might write it (check_in, check_out, guests),
+ * guests) or as an assistant might write it (check_in, check_out, guests,
+ * as llms.txt documents; checkin, checkout and adults are understood too),
  * into values for the message form. Anything malformed or outside the dates
  * an inquiry may name is left out, never guessed.
  */
 export function inquiryPrefill(search: string, now = Date.now()): InquiryPrefill {
   const params = new URLSearchParams(search);
   const { earliest, latest } = dateWindow(now);
-  const guests = wholeNumber(params.get("guests"), MAX_GUESTS);
-  const checkIn = params.get("check_in");
+  const guests = wholeNumber(first(params, "guests", "adults"), MAX_GUESTS);
+  const checkIn = first(params, "check_in", "checkin");
   if (!isDate(checkIn) || checkIn < earliest || checkIn > latest) return guests ? { guests } : {};
 
-  const checkOut = params.get("check_out");
+  const checkOut = first(params, "check_out", "checkout");
   const nights = wholeNumber(params.get("nights"), MAX_PREFILL_NIGHTS);
   const out = isDate(checkOut) && checkOut > checkIn ? checkOut : nights ? addDays(checkIn, nights) : undefined;
   return {

@@ -23,6 +23,19 @@ describe("inquiryPrefill", () => {
     });
   });
 
+  it("understands the spellings assistants guess from other booking sites", () => {
+    expect(inquiryPrefill("?checkin=2026-10-01&checkout=2026-10-03&adults=2", now)).toEqual({
+      check_in: "2026-10-01",
+      check_out: "2026-10-03",
+      guests: 2,
+    });
+    // The documented names win when both are given.
+    expect(inquiryPrefill("?check_in=2026-10-01&checkin=2026-11-01&guests=1&adults=3", now)).toEqual({
+      check_in: "2026-10-01",
+      guests: 1,
+    });
+  });
+
   it("counts nights across months and years", () => {
     expect(inquiryPrefill("?check_in=2027-02-27&nights=2", now).check_out).toBe("2027-03-01");
   });

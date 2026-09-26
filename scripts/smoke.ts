@@ -4,21 +4,32 @@
  *   npm run build && npm run start -- -p 3000     # in one terminal
  *   BASE_URL=http://localhost:3000 npm run smoke  # in another
  *
- * Visits every page on a phone (390 x 844) and a desktop (1440 x 900), in
- * light and dark, and checks the HTTP status, console errors, exactly one
- * h1, JSON-LD that parses, canonical and Open Graph tags, and sideways
- * scrolling, plus the security headers and that the API routes refuse
- * cross-site posts. Then it opens Shadow's window and tries the booking form.
- * Without API keys both must fall back to the team's contact details; if
- * Shadow Check-in is configured, the form is not submitted (no test
- * inquiries reach the team). Screenshots are saved to ./screenshots.
+ * Visits every page, guides included, on a phone (390 x 844) and a desktop
+ * (1440 x 900), in light and dark, and checks the HTTP status, console
+ * errors, exactly one h1, the title, canonical and Open Graph tags,
+ * sideways scrolling, and the page's JSON-LD: one graph, valid against the
+ * schema.org types the site uses (test/schema-org.ts), describing this page,
+ * and stating no fact that isn't firm (content/certainty.ts). Also the
+ * sitemap, robots.txt, llms.txt, llms-full.txt, the logo and the IndexNow key
+ * file, the security headers, and that the API routes refuse cross-site
+ * posts. Then it opens Shadow's window, checks that a /book link fills in the
+ * dates and guests, and tries the booking form. Without API keys Shadow and
+ * the form must fall back to the team's contact details; if Shadow Check-in is
+ * configured, the form is not submitted (no test inquiries reach the team).
+ * Screenshots are saved to ./screenshots.
  *
  * Uses the Chromium at CHROMIUM_PATH (default /opt/pw-browsers/chromium)
  * and never downloads a browser.
  */
 import { mkdir } from "node:fs/promises";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
-import { pages, siteUrl } from "../lib/site";
+import { content } from "../content";
+import { isFirm } from "../content/certainty";
+import { dateWindow } from "../lib/inquiry/dates";
+import { collectFacts, factsMentionedIn } from "../lib/content-audit";
+import { allPages, metaTitle } from "../lib/pages";
+import { siteUrl } from "../lib/site";
+import { typesOf, isA, validateJsonLd } from "../test/schema-org";
 
 const base = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 const executablePath = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
@@ -33,9 +44,16 @@ const schemes = ["light", "dark"] as const;
 type Scheme = (typeof schemes)[number];
 
 const routes = [
-  ...Object.entries(pages).map(([name, page]) => ({ name, path: page.path, status: 200 })),
-  { name: "not-found", path: "/this-page-does-not-exist", status: 404 },
+  ...allPages.map((page) => ({
+    name: page.path === "/" ? "home" : page.path.slice(1).replaceAll("/", "-"),
+    path: page.path,
+    title: metaTitle(page),
+    status: 200,
+  })),
+  { name: "not-found", path: "/this-page-does-not-exist", title: null, status: 404 },
 ];
+
+const softFacts = collectFacts(content, "content").filter((found) => !isFirm(found.fact));
 
 const failures: string[] = [];
 let checks = 0;
@@ -88,6 +106,7 @@ async function visit(browser: Browser, route: (typeof routes)[number], viewport:
   await settle(page);
 
   const found = await page.evaluate(() => ({
+    title: document.title,
     h1: document.querySelectorAll("h1").length,
     jsonLd: [...document.querySelectorAll('script[type="application/ld+json"]')].map((node) => node.textContent ?? ""),
     overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -99,25 +118,60 @@ async function visit(browser: Browser, route: (typeof routes)[number], viewport:
   const unexpected = errors.filter((error) => !(route.status === 404 && error.includes("404")));
   check(unexpected.length === 0, `${label}: console errors: ${unexpected.join(" | ")}`);
   check(found.h1 === 1, `${label}: ${found.h1} h1 elements, expected 1`);
-  check(
-    found.jsonLd.length > 0 &&
-      found.jsonLd.every((text) => {
-        try {
-          return typeof JSON.parse(text) === "object";
-        } catch {
-          return false;
-        }
-      }),
-    `${label}: JSON-LD missing or invalid`,
-  );
   check(found.overflow <= 0, `${label}: scrolls sideways by ${found.overflow}px`);
   if (route.status === 200) {
     const expected = trimSlash(new URL(route.path, `${siteUrl}/`).toString());
+    check(found.title === route.title, `${label}: title "${found.title}", expected "${route.title}"`);
     check(trimSlash(found.canonical) === expected, `${label}: canonical ${found.canonical}, expected ${expected}`);
     check(Boolean(found.ogImage), `${label}: no og:image`);
+    checkJsonLd(label, found.jsonLd, new URL(route.path, `${siteUrl}/`).toString());
+  } else {
+    check(found.jsonLd.length === 0, `${label}: structured data on a page that doesn't exist`);
   }
 
   await page.screenshot({ path: `${outDir}/${route.name}-${viewport.width}-${scheme}.png`, fullPage: true });
+  await context.close();
+}
+
+/** One JSON-LD graph, valid schema.org, about this page, with no fact stated that isn't firm. */
+function checkJsonLd(label: string, scripts: string[], url: string) {
+  check(scripts.length === 1, `${label}: ${scripts.length} JSON-LD scripts, expected 1`);
+  let data: unknown;
+  try {
+    data = JSON.parse(scripts[0] ?? "");
+  } catch {
+    check(false, `${label}: JSON-LD does not parse`);
+    return;
+  }
+  const problems = validateJsonLd(data);
+  check(problems.length === 0, `${label}: JSON-LD: ${problems.join("; ")}`);
+  const graph = ((data as { "@graph"?: unknown[] })["@graph"] ?? []) as Record<string, unknown>[];
+  const webpages = graph.filter((node) => typesOf(node).some((type) => isA(type, "WebPage")));
+  check(webpages.length === 1 && webpages[0]!.url === url, `${label}: JSON-LD does not describe ${url}`);
+  const soft = factsMentionedIn(scripts[0] ?? "", softFacts).map((found) => found.path);
+  check(soft.length === 0, `${label}: JSON-LD states facts that aren't firm: ${soft.join(", ")}`);
+}
+
+/** A /book link fills in the message form, as llms.txt tells assistants; the form is named for them. */
+async function bookingLink(browser: Browser) {
+  const { context, page, errors } = await open(browser, viewports[0], "light");
+  const { earliest } = dateWindow();
+  const day = (offset: number) => new Date(Date.parse(`${earliest}T00:00:00Z`) + offset * 86_400_000).toISOString().slice(0, 10);
+  const [checkIn, checkOut] = [day(10), day(13)];
+  await page.goto(`${base}/book?check_in=${checkIn}&check_out=${checkOut}&guests=2#message`, { waitUntil: "networkidle" });
+  const form = page.getByRole("form", { name: "Send the team a message" });
+  await form.getByLabel("Check-in").waitFor();
+  await page.waitForFunction(() => (document.querySelector<HTMLInputElement>('input[name="guests"]')?.value ?? "") !== "");
+  const values = [
+    await form.getByLabel("Check-in").inputValue(),
+    await form.getByLabel("Check-out").inputValue(),
+    await form.getByLabel("Guests").inputValue(),
+  ];
+  check(
+    values.join() === [checkIn, checkOut, "2"].join(),
+    `booking link: form shows ${values.join(", ")}, expected ${checkIn}, ${checkOut}, 2`,
+  );
+  check(errors.length === 0, `booking link: console errors: ${errors.join(" | ")}`);
   await context.close();
 }
 
@@ -202,11 +256,13 @@ async function bookingForm(browser: Browser, viewport: Viewport) {
 async function files(context: BrowserContext) {
   const expectations = [
     { path: "/robots.txt", type: "text/plain", contains: "Sitemap:" },
-    { path: "/sitemap.xml", type: "xml", contains: "<urlset" },
+    { path: "/sitemap.xml", type: "xml", contains: "<lastmod>" },
     { path: "/llms.txt", type: "text/plain", contains: "# House of Jars" },
+    { path: "/llms-full.txt", type: "text/plain", contains: "## Questions and answers" },
     { path: "/icon.svg", type: "image/svg+xml" },
     { path: "/apple-icon", type: "image/png" },
-    ...Object.values(pages).map((page) => ({
+    { path: "/logo.png", type: "image/png" },
+    ...allPages.map((page) => ({
       path: `${page.path === "/" ? "" : page.path}/opengraph-image`,
       type: "image/png",
     })),
@@ -219,6 +275,20 @@ async function files(context: BrowserContext) {
       (!contains || (await response.text()).includes(contains));
     check(ok, `${path}: HTTP ${response.status()} ${response.headers()["content-type"]}`);
   }
+
+  const sitemap = await (await context.request.get(`${base}/sitemap.xml`)).text();
+  for (const page of allPages) {
+    const url = new URL(page.path, `${siteUrl}/`).toString();
+    check(sitemap.includes(`<loc>${url}</loc>`), `sitemap.xml: no ${url}`);
+  }
+
+  // Served once INDEXNOW_KEY is set on the server; until then, not found.
+  const key = await context.request.get(`${base}/indexnow-key.txt`);
+  const keyText = (await key.text()).trim();
+  check(
+    key.status() === 404 || (key.status() === 200 && /^[A-Za-z0-9-]{8,128}$/.test(keyText)),
+    `/indexnow-key.txt: HTTP ${key.status()} "${keyText.slice(0, 40)}"`,
+  );
 }
 
 /** Security headers on pages, files and images, and the API routes refusing requests from other sites. */
@@ -258,6 +328,7 @@ async function main() {
       }
     }
     await skipLink(browser);
+    await bookingLink(browser);
     await concierge(browser, viewports[0], "light");
     await concierge(browser, viewports[1], "dark");
     for (const viewport of viewports) await bookingForm(browser, viewport);

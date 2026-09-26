@@ -23,6 +23,7 @@ npm run dev                  # http://localhost:3000
 | `npm test` | Vitest unit tests |
 | `npm run content:check` | Lists every fact the house has not confirmed yet (`-- --strict` fails if any remain) |
 | `npm run smoke` | Browser smoke test against a running server (see below) |
+| `npm run indexnow` | After a deploy: tells Bing and the other IndexNow search engines which pages changed (see [docs/SEO.md](docs/SEO.md)) |
 
 ### Smoke test
 
@@ -31,7 +32,7 @@ npm run build && npm run start -- -p 3000
 BASE_URL=http://localhost:3000 npm run smoke   # in a second terminal
 ```
 
-It visits every page at 390 × 844 and 1440 × 900 in light and dark mode and checks the status code, console errors, a single `h1`, valid JSON-LD, canonical and Open Graph tags, and sideways scrolling. It also opens Shadow and tries the booking form. Screenshots go to `./screenshots` (git-ignored). It drives the Chromium at `CHROMIUM_PATH` (default `/opt/pw-browsers/chromium`) through `playwright-core` and never downloads a browser.
+It visits every page, guides included, at 390 × 844 and 1440 × 900 in light and dark mode and checks the status code, console errors, a single `h1`, the title, canonical and Open Graph tags, sideways scrolling, and the page's JSON-LD (valid against the schema.org types the site uses, and stating no fact that isn't firm). It checks the sitemap, `llms.txt`, `llms-full.txt`, the logo and the IndexNow key file, that a `/book?check_in=…` link fills in the form, then opens Shadow and tries the booking form. Screenshots go to `./screenshots` (git-ignored). It drives the Chromium at `CHROMIUM_PATH` (default `/opt/pw-browsers/chromium`) through `playwright-core` and never downloads a browser.
 
 ## Environment
 
@@ -45,6 +46,8 @@ All optional. See `.env.example`.
 | `CONCIERGE_DAILY_TOKEN_BUDGET` | Shadow's daily spending ceiling per server instance, in input-token equivalents. Defaults to 1,000,000 (about US$5 a day at Claude Opus 5 list prices); `0` keeps Shadow resting. |
 | `SHADOW_API_URL`, `SHADOW_INQUIRY_KEY` | Where inquiries go (Shadow Check-in) and the property's inbound key. Without both, `/api/inquiry` answers `503` and the form shows the contact details instead. |
 | `SHADOW_APP_URL` | Where the team signs in to Shadow Check-in. Read at build time; when set (https only), the footer shows a small "Team sign in" link, otherwise it is hidden. |
+| `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | Verification tags for Google Search Console and Bing Webmaster Tools. Read at build time; unset, no tag. |
+| `INDEXNOW_KEY` | The IndexNow key the site serves at `/indexnow-key.txt` (404 until set) and `npm run indexnow` uses. |
 
 ## How it is built
 
@@ -55,6 +58,6 @@ All optional. See `.env.example`.
 - **Inquiries** (`lib/inquiry/`, `app/api/inquiry`): validated with zod against the contract in [docs/INQUIRY_API.md](docs/INQUIRY_API.md), then forwarded server-side to Shadow Check-in with the property's key.
 - **Rate limits** are in-memory token buckets (`lib/rate-limit.ts`) keyed on the client's IPv4 address or IPv6 /64. Inquiries from the form and from Shadow share one gate (`lib/inquiry/gate.ts`) that stays strictly inside Shadow Check-in's 30-an-hour limit for the website's key; the numbers on both sides are in [docs/INQUIRY_API.md](docs/INQUIRY_API.md). On serverless hosting each instance keeps its own buckets; if abuse becomes a problem, move them to a shared store such as Redis. The API routes accept only JSON from the site's own pages (`rejectCrossSite` in `lib/http.ts`).
 - **Security headers** (`next.config.ts`): a Content-Security-Policy that keeps every page static (Next's "without nonces" variant: inline scripts allowed, everything else only from this site, no framing, no plugins), HSTS, nosniff, Referrer-Policy, Cross-Origin-Opener-Policy and Permissions-Policy.
-- **Search and AI assistants**: every fact is in the server-rendered HTML; `app/robots.ts` welcomes search and AI crawlers; `app/sitemap.ts`; `/llms.txt` (an optional convention, built from the same content). JSON-LD describes the Hostel and the WebSite, with no self-serving review markup.
+- **Search and AI assistants** ([docs/SEO.md](docs/SEO.md)): every fact is in the server-rendered HTML. Each page carries one JSON-LD graph (`lib/structured-data.ts`: the WebSite, the Hostel, the page and its breadcrumbs) built only from firm facts (`content/certainty.ts`), checked against schema.org by `test/schema-org.ts`. Answer-first guides live in `content/guides.ts` and render at `/guides/…`. Titles and descriptions are in `lib/site.ts`, the full page list with dates in `lib/pages.ts` (sitemap `lastmod`). `app/robots.ts` welcomes search and AI crawlers; `/llms.txt` and `/llms-full.txt` (`lib/llms.ts`) give assistants the same content as text; `/book?check_in=…&check_out=…&guests=…` fills in the message form; IndexNow and search-engine verification come from env.
 
 No payment is taken on the site: bookings happen on Booking.com and Agoda, or by talking to the team.

@@ -29,7 +29,12 @@ export function BookingCard() {
         <div className={styles.ticket}>
           <div className={styles.main}>
             <TextileBand pattern="lozenge" weave="view" />
-            <form className={styles.form} action={`${pages.book.path}#message`} method="get">
+            <form
+              className={styles.form}
+              action={`${pages.book.path}#message`}
+              method="get"
+              aria-labelledby="booking-card-title"
+            >
               <h2 id="booking-card-title" className={styles.title}>
                 Find a bed for your dates.
               </h2>

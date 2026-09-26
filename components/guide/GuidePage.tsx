@@ -63,7 +63,12 @@ function GlanceValue({ row }: { row: GlanceRow }) {
   if (!row.href) return row.value;
   if (row.href.startsWith("/")) return <Link href={row.href}>{row.value}</Link>;
   return (
-    <a href={row.href} target="_blank" rel="noopener noreferrer" className={styles.nowrap}>
+    <a
+      href={row.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={/^\+[\d ]+$/.test(row.value) ? styles.phone : styles.address}
+    >
       {row.value}
       <span className="visually-hidden"> (opens in a new tab)</span>
     </a>

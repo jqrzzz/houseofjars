@@ -12,6 +12,7 @@ Everything the site says about the house comes from a few TypeScript files in `c
 | `content/reviews.ts` | Ratings on other sites (with the date they were read), what guests praise, honest notes |
 | `content/faq.ts` | The questions and answers on /faq (answers are built from the facts above) |
 | `content/privacy.ts` | Statements in the privacy notice the house must decide, such as how long messages are kept |
+| `content/guides.ts` | The guides on /guides: each question, its answer, the facts at a glance and the steps, built from the facts above |
 | `content/open-questions.ts` | Things the site deliberately leaves out until the house tells us |
 | `lib/site.ts` | Page titles and descriptions (used in search results and link previews) |
 
@@ -35,6 +36,14 @@ checkIn: fact("14:00", sources.booking, { note: "Check-in from this time." }),
 
 - `note` is for whoever reviews it.
 
+Until a fact is confirmed, its source decides how the site may say it (`content/certainty.ts`, and [SEO.md](SEO.md) for why):
+
+- from the house's own listings (Booking.com, Agoda, Google, Tripadvisor, Hostelz, Facebook) or an official source: stated plainly, and included in the structured data search engines read;
+- from guest reviews: said as guests say it ("Guests say…"), never in the structured data;
+- seen in one source only, general practice in Laos, or an assumption: hedged, and never in the structured data.
+
+A new kind of source has to be added to `sourceKinds` in `content/sources.ts`; until then, and for anything the house tells you directly, set `confirmed: true` once it is right.
+
 Most facts were taken from public listings on 25 September 2026, so almost everything starts unconfirmed. To see the list:
 
 ```bash
@@ -53,6 +62,7 @@ It prints each unconfirmed fact with its value, source and note, then the open q
 - **A new rating.** Add an entry to `ratings` in `content/reviews.ts` with the platform, score, what it is out of, a link and the date you read it. Never add quotes from reviews unless the guest has agreed.
 - **Dorms.** `beds.dorms` is a list that follows "The dorms include …", for example `["a mixed dorm", "a 14-bed dorm"]`. When the house tells us about a female-only dorm or private rooms, add them here and remove the matching line from `content/open-questions.ts`.
 - **An open question is answered.** Add the fact where it belongs and delete the question from `content/open-questions.ts`. Questions with a `guestTopic` are the ones Shadow tells guests he doesn't know yet.
+- **A guide.** Guides in `content/guides.ts` read their facts from the files above, so most changes need no edit there. When you have re-checked a guide's facts, set its `reviewed` date; the page shows it and search engines see it. `facts` lists every fact the guide uses: its "Sources" footnote is built from it, and the tests fail if a guide uses a fact that isn't listed, or says what only guests say without saying so.
 
 ## Photos
 

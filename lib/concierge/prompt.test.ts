@@ -31,6 +31,7 @@ describe("house knowledge", () => {
 
   it("writes site links as absolute URLs and never leaks placeholders", () => {
     expect(knowledge).toContain(`${site}/book`);
+    expect(knowledge).toContain(`${site}/guides/from-wattay-airport`);
     expect(knowledge).not.toMatch(/undefined|\[object Object\]|NaN/);
   });
 

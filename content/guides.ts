@@ -189,8 +189,8 @@ const immigrationForm: Guide = {
   glance: {
     variant: "standards",
     rows: [
-      { term: "The form", value: ldif.value.name },
-      { term: "Where", value: "Online, before arrival" },
+      { term: "The form", value: /\(([^)]+)\)$/.exec(ldif.value.name)?.[1] ?? ldif.value.name, note: `${ldif.value.name}.` },
+      { term: "Where", value: "Online", note: "Before arrival." },
       {
         term: "Introduced",
         value: "September 2025",

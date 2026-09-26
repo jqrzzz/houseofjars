@@ -42,7 +42,7 @@ export default function BookPage() {
       </Block>
 
       <Block id="message" title="Send the team a message" aside="For dates, questions or anything you need before you arrive.">
-        <InquiryForm />
+        <InquiryForm labelledBy="message-title" />
       </Block>
 
       <Block id="contact" title="Contact the team" tone="cream">

@@ -15,7 +15,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "content:check": "tsx scripts/content-check.ts",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "indexnow": "tsx scripts/indexnow.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

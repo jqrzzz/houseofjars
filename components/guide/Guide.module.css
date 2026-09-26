@@ -24,9 +24,13 @@
   }
 }
 
-/* A phone number or web address in the ledger stays on one line. */
-.nowrap {
+/* In the ledger, a phone number stays on one line; a web address may break anywhere rather than overflow. */
+.phone {
   white-space: nowrap;
+}
+
+.address {
+  overflow-wrap: anywhere;
 }
 
 /* Read next: cards on cream, the whole card a link. */
