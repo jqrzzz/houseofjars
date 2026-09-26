@@ -1,6 +1,6 @@
-import { BookingFlow } from "@/components/book/BookingFlow";
 import type { HouseNotes } from "@/components/book/BookingSteps";
 import { InquiryForm } from "@/components/book/InquiryForm";
+import { OnlineBooking } from "@/components/book/OnlineBooking";
 import { ContactDetails } from "@/components/contact/ContactDetails";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -46,7 +46,7 @@ export default function BookPage() {
             title="Book a bed"
             lede="Choose your dates to see the free beds, and book directly with the house. There is nothing to pay online: you pay when you arrive."
           />
-          <BookingFlow house={house} />
+          <OnlineBooking house={house} />
         </>
       ) : (
         <PageHeader
