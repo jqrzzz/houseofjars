@@ -20,6 +20,7 @@ export default function BookPage() {
     <>
       <PageHeader
         eyebrow="Book"
+        morph="book"
         title="Prices and booking"
         lede="Live prices and free beds are on Booking.com and Agoda. Or send the team a message, and they will reply by email or WhatsApp."
       />

@@ -31,17 +31,6 @@
   --focus: var(--saffron-on-brown);
 }
 
-.band {
-  background: var(--band);
-  color: var(--band-text);
-  --text: var(--band-text);
-  --text-soft: var(--band-text-soft);
-  --accent-text: var(--band-text);
-  --rule: var(--band-rule);
-  --rule-strong: var(--band-text-soft);
-  --focus: var(--band-text);
-}
-
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -52,6 +41,21 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent-text);
+}
+
+/* The section's number in Lao digits, larger than the label, in stone. */
+.number {
+  margin-right: 0.35rem;
+  font-family: var(--font-lao-stack);
+  font-size: 1.7em;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--stone-dark);
+}
+
+.deep .number {
+  color: var(--stone);
 }
 
 .eyebrowMark {

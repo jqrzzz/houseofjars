@@ -2,12 +2,17 @@ import styles from "./ShadowWriting.module.css";
 
 /**
  * Shadow's clipboard with a pencil at work: shown while he writes a reply,
- * in place of the usual three dots. Decorative; the chat window announces
- * "Shadow is writing" in words.
+ * in place of the usual three dots, and (still) on the booking card.
+ * Decorative; the chat window announces "Shadow is writing" in words.
  */
-export function ShadowWriting() {
+export function ShadowWriting({ still = false, className }: { still?: boolean; className?: string }) {
   return (
-    <svg className={styles.writing} viewBox="0 0 40 30" aria-hidden="true" focusable="false">
+    <svg
+      className={[styles.writing, still ? styles.still : "", className].filter(Boolean).join(" ")}
+      viewBox="0 0 40 30"
+      aria-hidden="true"
+      focusable="false"
+    >
       <rect className={styles.board} x="3" y="3" width="21" height="26" rx="2.6" />
       <rect className={styles.paper} x="5.6" y="6.6" width="15.8" height="19.8" rx="1" />
       <rect className={styles.clip} x="9.5" y="1" width="8" height="4.4" rx="1.2" />

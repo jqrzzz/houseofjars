@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { addressLines, identity, whatsappUrl } from "@/content/identity";
-import { pages, primaryNav } from "@/lib/site";
+import { pages, primaryNav, teamSignInUrl } from "@/lib/site";
 import { TextileBand } from "../brand/TextileBand";
 import { Wordmark } from "../brand/Wordmark";
 import styles from "./SiteFooter.module.css";
@@ -14,6 +14,7 @@ const elsewhere = [
 
 export function SiteFooter() {
   const { phone, email } = identity.contact;
+  const signIn = teamSignInUrl();
   return (
     <footer className={styles.footer}>
       <TextileBand pattern="hooks" weave="view" />
@@ -93,6 +94,13 @@ export function SiteFooter() {
           <p>
             Questions answered by Shadow, our AI concierge. <Link href={pages.privacy.path}>How we use your data</Link>
           </p>
+          {signIn ? (
+            <p>
+              <a href={signIn} rel="nofollow">
+                Team sign in
+              </a>
+            </p>
+          ) : null}
         </div>
       </div>
     </footer>

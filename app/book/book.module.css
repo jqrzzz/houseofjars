@@ -39,7 +39,7 @@
 .platform:hover .platformName {
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
+  text-underline-offset: var(--underline-offset);
   text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
 }
 

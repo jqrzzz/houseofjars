@@ -1,4 +1,4 @@
-import { BookingBand } from "@/components/BookingBand";
+import { BookingCard } from "@/components/BookingCard";
 import { InlineText } from "@/components/InlineText";
 import { Block } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -16,6 +16,7 @@ export default function FaqPage() {
     <>
       <PageHeader
         eyebrow="Questions"
+        morph="faq"
         title="Questions and answers"
         lede="Plain answers about staying at House of Jars. If yours isn’t here, ask Shadow or message the team."
       />
@@ -45,7 +46,7 @@ export default function FaqPage() {
         </Block>
       ))}
 
-      <BookingBand />
+      <BookingCard />
     </>
   );
 }

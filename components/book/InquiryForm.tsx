@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { inquiryPrefill } from "@/lib/inquiry/prefill";
 import { replyChannel } from "@/lib/inquiry/reply";
 import { pages } from "@/lib/site";
 import { uuid } from "@/lib/uuid";
@@ -70,14 +71,24 @@ export function InquiryForm() {
   // One reference per inquiry: a retry after a failure can't create a duplicate.
   const clientRef = useRef<string | null>(null);
   const checkInRef = useRef<HTMLInputElement>(null);
+  const checkOutRef = useRef<HTMLInputElement>(null);
+  const guestsRef = useRef<HTMLInputElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const fieldId = (field: FieldName) => `${id}-${field}`;
 
   // Dates in the past make no sense here; set the floor once the browser knows today's date.
+  // A link from the booking card (or an assistant) may carry dates and guests: fill them in.
   useEffect(() => {
     if (checkInRef.current) checkInRef.current.min = today();
+    const prefill = inquiryPrefill(window.location.search);
+    if (prefill.check_in && checkInRef.current && checkOutRef.current) {
+      checkInRef.current.value = prefill.check_in;
+      checkOutRef.current.min = prefill.check_in;
+      if (prefill.check_out) checkOutRef.current.value = prefill.check_out;
+    }
+    if (prefill.guests && guestsRef.current) guestsRef.current.value = String(prefill.guests);
   }, []);
 
   useEffect(() => {
@@ -261,6 +272,7 @@ export function InquiryForm() {
         </Field>
         <Field label="Check-out" optional htmlFor={fieldId("check_out")} error={error("check_out")}>
           <input
+            ref={checkOutRef}
             id={fieldId("check_out")}
             name="check_out"
             type="date"
@@ -274,6 +286,7 @@ export function InquiryForm() {
       <div className={styles.pair}>
         <Field label="Guests" optional htmlFor={fieldId("guests")} error={error("guests")}>
           <input
+            ref={guestsRef}
             id={fieldId("guests")}
             name="guests"
             type="number"

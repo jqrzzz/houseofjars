@@ -71,3 +71,22 @@ export const primaryNav = [pages.house, pages.rules, pages.vientiane, pages.faq,
 export function absoluteUrl(path: string): string {
   return new URL(path, `${siteUrl}/`).toString();
 }
+
+/**
+ * Where the team signs in to Shadow Check-in, the house's operations system:
+ * SHADOW_APP_URL, read when the site is built. Only an https address (or
+ * http on this machine, for development) is used; anything else hides the
+ * footer link rather than pointing it somewhere odd.
+ */
+export function teamSignInUrl(value = process.env.SHADOW_APP_URL): string | null {
+  if (!value?.trim()) return null;
+  try {
+    const url = new URL(value.trim());
+    const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (url.protocol !== "https:" && !(url.protocol === "http:" && local)) return null;
+    if (url.username || url.password) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}

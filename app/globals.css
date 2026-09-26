@@ -36,13 +36,6 @@
   --deep-text-soft: var(--on-brown-soft);
   --deep-accent: var(--saffron-on-brown);
   --deep-rule: rgb(247 238 221 / 0.18);
-  --band: var(--saffron);
-  --band-text: var(--ink);
-  --band-text-soft: var(--brown-deep);
-  --band-rule: rgb(35 23 16 / 0.22);
-  --band-button-bg: var(--brown);
-  --band-button-hover: var(--brown-deep);
-  --band-button-fg: var(--on-brown);
   --jar-1: #cdbfaa;
   --jar-2: #b7a68e;
   --jar-3: #9d8b73;
@@ -109,13 +102,6 @@
     --deep-text-soft: #d2c2a9;
     --deep-accent: var(--saffron-on-brown);
     --deep-rule: rgb(247 238 221 / 0.14);
-    --band: #2a1d13;
-    --band-text: #f7eedd;
-    --band-text-soft: #d2c2a9;
-    --band-rule: rgb(247 238 221 / 0.16);
-    --band-button-bg: var(--saffron);
-    --band-button-hover: #f0a445;
-    --band-button-fg: var(--ink);
     --jar-1: #8c7b66;
     --jar-2: #74644f;
     --jar-3: #5e503f;
@@ -261,8 +247,14 @@ a:hover {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--saffron) 35%, transparent);
+  background: color-mix(in srgb, var(--saffron) 30%, transparent);
   color: inherit;
+}
+
+/* Quotation marks hang outside the measure, where the browser can. */
+blockquote,
+blockquote p {
+  hanging-punctuation: first allow-end last;
 }
 
 strong {
@@ -308,6 +300,55 @@ strong {
 
 .tnum {
   font-variant-numeric: tabular-nums lining-nums;
+}
+
+/*
+ * Moving between pages (React's <ViewTransition>: app/layout.tsx and the
+ * Eyebrow component). A quick cross-fade; a section's eyebrow glides into
+ * the next page's header; the site header holds still; clicks pass through.
+ */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(*) {
+  animation-duration: 300ms;
+  animation-timing-function: var(--ease-out);
+}
+
+::view-transition-group(site-header) {
+  z-index: 10;
+  animation: none;
+}
+
+::view-transition-old(site-header) {
+  display: none;
+}
+
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+/* With reduced motion nothing moves: things only fade. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation-name: none !important;
+  }
+}
+
+/* Printing: ink on white, without the page's furniture. */
+@media print {
+  :root {
+    --page: #fff;
+    --surface: #fff;
+    --text: #000;
+    --text-soft: #333;
+    --accent-text: #000;
+  }
+
+  body {
+    background: #fff;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

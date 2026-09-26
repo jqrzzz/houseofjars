@@ -1,4 +1,4 @@
-import { BookingBand } from "@/components/BookingBand";
+import { BookingCard } from "@/components/BookingCard";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import { Drawing } from "@/components/art/Drawing";
 import { PhotoFrame } from "@/components/PhotoFrame";
@@ -23,6 +23,7 @@ export default function AboutPage() {
     <>
       <PageHeader
         eyebrow="About"
+        morph="about"
         title="About the house"
         lede={`${identity.name.value} is a calm dorm hostel in ${location.neighbourhood.value}: ${countWord(building.floors.value).toLowerCase()} floors of pod beds, with a café downstairs.`}
         art={<Drawing name="plain" />}
@@ -75,7 +76,7 @@ export default function AboutPage() {
         <AskShadowButton className={`${buttons.button} ${buttons.secondary} ${styles.ask}`}>Ask Shadow</AskShadowButton>
       </Block>
 
-      <BookingBand />
+      <BookingCard />
     </>
   );
 }

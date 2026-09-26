@@ -17,3 +17,9 @@ const WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eig
 export function countWord(count: number): string {
   return WORDS[count] ?? String(count);
 }
+
+/** 3 -> "໓": Lao digits, for decorative section numbers. */
+export function laoNumeral(value: number): string {
+  if (!Number.isInteger(value) || value < 0) throw new RangeError(`Not a whole number: ${value}`);
+  return String(value).replace(/\d/g, (digit) => String.fromCodePoint(0x0ed0 + Number(digit)));
+}

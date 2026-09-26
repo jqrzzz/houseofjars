@@ -34,26 +34,26 @@
   fill: #3a2313;
 }
 
-/* A line at a time, then a fresh page. */
+/* A line at a time, then a fresh page (unless the clipboard is only a picture). */
 @media (prefers-reduced-motion: no-preference) {
-  .line {
+  .writing:not(.still) .line {
     stroke-dashoffset: 14;
     animation: 1.8s linear infinite;
   }
 
-  .first {
+  .writing:not(.still) .first {
     animation-name: write-first;
   }
 
-  .second {
+  .writing:not(.still) .second {
     animation-name: write-second;
   }
 
-  .third {
+  .writing:not(.still) .third {
     animation-name: write-third;
   }
 
-  .pencil {
+  .writing:not(.still) .pencil {
     animation: pencil 1.8s linear infinite;
   }
 }

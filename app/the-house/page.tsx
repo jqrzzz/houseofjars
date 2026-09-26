@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookingBand } from "@/components/BookingBand";
+import { BookingCard } from "@/components/BookingCard";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { HouseCutaway } from "@/components/house/HouseCutaway";
 import { PodDiagram } from "@/components/house/PodDiagram";
@@ -19,6 +19,7 @@ export default function TheHousePage() {
     <>
       <PageHeader
         eyebrow="The house"
+        morph="the-house"
         title="Inside the house"
         lede={`${countWord(building.floors.value)} floors of curtained pod beds, shared bathrooms with hot showers, and a café downstairs where breakfast is included. Here is what to expect.`}
       />
@@ -85,7 +86,7 @@ export default function TheHousePage() {
         <TickList items={honestNotes.map((note) => note.value)} />
       </Block>
 
-      <BookingBand />
+      <BookingCard />
     </>
   );
 }

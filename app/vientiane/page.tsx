@@ -1,4 +1,4 @@
-import { BookingBand } from "@/components/BookingBand";
+import { BookingCard } from "@/components/BookingCard";
 import { CopyButton } from "@/components/contact/CopyButton";
 import { Drawing } from "@/components/art/Drawing";
 import { PhotoFrame } from "@/components/PhotoFrame";
@@ -24,6 +24,7 @@ export default function VientianePage() {
     <>
       <PageHeader
         eyebrow="Vientiane"
+        morph="vientiane"
         title="Getting here and around Vientiane"
         lede={`The house is in ${location.neighbourhood.value}: ${lowerFirst(airport.value.distance)} from the airport and a few minutes’ walk from the Mekong.`}
         art={<Drawing name="tuktuk" />}
@@ -78,7 +79,7 @@ export default function VientianePage() {
         </Prose>
       </Block>
 
-      <BookingBand />
+      <BookingCard />
     </>
   );
 }

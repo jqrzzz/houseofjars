@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookingBand } from "@/components/BookingBand";
+import { BookingCard } from "@/components/BookingCard";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { Drawing } from "@/components/art/Drawing";
 import type { DrawingName } from "@/components/art/drawings";
@@ -9,6 +9,7 @@ import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import { shadowFull } from "@/components/concierge/mascot";
 import { Hero } from "@/components/home/Hero";
 import { Ledger, type LedgerRow } from "@/components/ui/Ledger";
+import { Stamp } from "@/components/ui/Stamp";
 import { Eyebrow, Section } from "@/components/ui/Section";
 import buttons from "@/components/ui/button.module.css";
 import { ArrowIcon, ExternalIcon } from "@/components/ui/icons";
@@ -54,7 +55,12 @@ const standards: LedgerRow[] = [
   },
   { term: "Check-out", value: <>Until {times.checkOut.value}</>, note: "Luggage storage if you leave later in the day." },
   { term: "Reception", value: staff.hours.value, note: `The team speaks ${joinList(staff.languages.value)}.` },
-  { term: "Bathrooms", value: bathrooms.cleaning.value, note: "Shared, with hot showers." },
+  {
+    term: "Bathrooms",
+    value: bathrooms.cleaning.value,
+    note: "Shared, with hot showers.",
+    mark: <Stamp text={bathrooms.cleaning.value} />,
+  },
   { term: "Smoking", value: "Not anywhere in the house", note: "Clean air in every dorm." },
   {
     term: "Nights",
@@ -86,7 +92,9 @@ export default function HomePage() {
         <div className="container">
           <div className={styles.houseTop}>
             <div className={styles.intro}>
-              <Eyebrow>The house</Eyebrow>
+              <Eyebrow number={1} morph="the-house">
+                The house
+              </Eyebrow>
               <h2 id="house-title" className={styles.heading}>
                 Made for a good night’s sleep.
               </h2>
@@ -123,7 +131,9 @@ export default function HomePage() {
       <Section tone="deep" labelledBy="standards-title">
         <div className={`container ${styles.split}`}>
           <div className={styles.intro}>
-            <Eyebrow>How we run the house</Eyebrow>
+            <Eyebrow number={2} morph="house-rules">
+              How we run the house
+            </Eyebrow>
             <h2 id="standards-title" className={styles.heading}>
               Small things, done well, every day.
             </h2>
@@ -136,14 +146,14 @@ export default function HomePage() {
               <ArrowIcon />
             </Link>
           </div>
-          <Ledger rows={standards} />
+          <Ledger rows={standards} ticks />
         </div>
       </Section>
 
       <Section labelledBy="ratings-title">
         <div className="container">
           <div className={styles.intro}>
-            <Eyebrow>Guest ratings</Eyebrow>
+            <Eyebrow number={3}>Guest ratings</Eyebrow>
             <h2 id="ratings-title" className={styles.heading}>
               What guests say
             </h2>
@@ -227,7 +237,7 @@ export default function HomePage() {
             />
           </div>
           <div>
-            <Eyebrow>Ask Shadow</Eyebrow>
+            <Eyebrow number={4}>Ask Shadow</Eyebrow>
             <h2 id="shadow-title" className={styles.heading}>
               Questions at any hour? Ask Shadow.
             </h2>
@@ -253,7 +263,9 @@ export default function HomePage() {
       <Section tone="cream" labelledBy="area-title">
         <div className={`container ${styles.split}`}>
           <div className={styles.intro}>
-            <Eyebrow>The neighbourhood</Eyebrow>
+            <Eyebrow number={5} morph="vientiane">
+              The neighbourhood
+            </Eyebrow>
             <h2 id="area-title" className={styles.heading}>
               In {identity.address.village.value}, a short walk from the Mekong.
             </h2>
@@ -269,7 +281,7 @@ export default function HomePage() {
         </div>
       </Section>
 
-      <BookingBand />
+      <BookingCard />
     </>
   );
 }

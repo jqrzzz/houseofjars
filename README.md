@@ -44,6 +44,7 @@ All optional. See `.env.example`.
 | `CONCIERGE_MODEL` | The Claude model for Shadow. Defaults to `claude-opus-5`. |
 | `CONCIERGE_DAILY_TOKEN_BUDGET` | Shadow's daily spending ceiling per server instance, in input-token equivalents. Defaults to 1,000,000 (about US$5 a day at Claude Opus 5 list prices); `0` keeps Shadow resting. |
 | `SHADOW_API_URL`, `SHADOW_INQUIRY_KEY` | Where inquiries go (Shadow Check-in) and the property's inbound key. Without both, `/api/inquiry` answers `503` and the form shows the contact details instead. |
+| `SHADOW_APP_URL` | Where the team signs in to Shadow Check-in. Read at build time; when set (https only), the footer shows a small "Team sign in" link, otherwise it is hidden. |
 
 ## How it is built
 

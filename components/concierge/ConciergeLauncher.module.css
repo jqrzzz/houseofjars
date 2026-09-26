@@ -74,3 +74,9 @@
     border-color: rgb(232 149 43 / 0.45);
   }
 }
+
+@media print {
+  .launcher {
+    display: none;
+  }
+}

@@ -142,3 +142,10 @@
     display: none;
   }
 }
+
+@media print {
+  .desktopNav,
+  .actions {
+    display: none;
+  }
+}

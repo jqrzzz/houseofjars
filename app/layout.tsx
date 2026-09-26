@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
+import { ViewTransition, type ReactNode } from "react";
 import { JsonLd } from "@/components/JsonLd";
 import { ConciergeLauncher } from "@/components/concierge/ConciergeLauncher";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -34,7 +34,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         <SiteHeader />
         <main id="main" tabIndex={-1}>
-          {children}
+          {/* Pages cross-fade into each other; section eyebrows glide into the next page's header (see Eyebrow). */}
+          <ViewTransition>{children}</ViewTransition>
         </main>
         <SiteFooter />
         <ConciergeLauncher />

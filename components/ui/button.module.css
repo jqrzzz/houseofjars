@@ -71,18 +71,6 @@
   --button-border: var(--deep-text);
 }
 
-/* Primary action on the closing band (brown on saffron; saffron at night) */
-.bandFill {
-  --button-bg: var(--band-button-bg);
-  --button-fg: var(--band-button-fg);
-  --button-border: var(--band-button-bg);
-}
-
-.bandFill:hover {
-  --button-bg: var(--band-button-hover);
-  --button-border: var(--band-button-hover);
-}
-
 .small {
   min-height: 2.5rem;
   padding: 0.5rem 1rem;
@@ -111,7 +99,7 @@
 .textLink span {
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.22em;
+  text-underline-offset: var(--underline-offset);
   text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
 }
 
