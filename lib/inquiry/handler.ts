@@ -1,5 +1,5 @@
 import { json, readJsonBody, rejectCrossSite } from "../http";
-import { clientIp, type RateLimitDecision } from "../rate-limit";
+import { clientKey, type RateLimitDecision } from "../rate-limit";
 import { buildPayload, inquiryFormSchema, toFieldIssues } from "./schema";
 import { submitInquiry, type ShadowConfig, type SubmitError } from "./submit";
 
@@ -39,7 +39,7 @@ export function createInquiryHandler(deps: InquiryHandlerDeps) {
     if (!form.success) return json({ error: "invalid_request", issues: toFieldIssues(form.error) }, 400);
 
     // Only requests that would reach Shadow count, so fixing a typo never locks a guest out.
-    const decision = deps.limiter.take(clientIp(request.headers));
+    const decision = deps.limiter.take(clientKey(request.headers));
     if (!decision.allowed) {
       return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
     }

@@ -1,3 +1,5 @@
+import { isIP } from "node:net";
+
 export interface RateLimiterOptions {
   /** Requests allowed in a burst. */
   readonly capacity: number;
@@ -62,8 +64,64 @@ export function createRateLimiter(options: RateLimiterOptions) {
   };
 }
 
-/** Best-effort client IP. On Vercel the platform sets x-forwarded-for. */
+/**
+ * The client's address as the hosting platform saw it. Vercel overwrites
+ * x-forwarded-for with the one address it saw; behind another proxy the last
+ * entry is the one that proxy added, while earlier entries come from the
+ * client and can be anything. Without any proxy, both headers are whatever
+ * the client sent.
+ */
 export function clientIp(headers: Headers): string {
-  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const forwarded = headers.get("x-forwarded-for")?.split(",").at(-1)?.trim();
   return forwarded || headers.get("x-real-ip")?.trim() || "unknown";
+}
+
+/**
+ * What rate limits count against: an IPv4 address, or the /64 network of an
+ * IPv6 address. A home or phone connection is usually given a whole /64, so
+ * counting single IPv6 addresses would let one client rotate freely.
+ */
+export function rateLimitKey(address: string): string {
+  let host = address.trim().toLowerCase();
+  // Some proxies add a port: "203.0.113.9:1234" or "[2001:db8::1]:443".
+  const bracketed = /^\[([^\]]+)\](?::\d+)?$/.exec(host);
+  if (bracketed) host = bracketed[1]!;
+  else if (/^[\d.]+:\d+$/.test(host)) host = host.slice(0, host.lastIndexOf(":"));
+  host = host.split("%")[0]!; // an IPv6 zone index
+
+  const version = isIP(host);
+  if (version === 4) return host;
+  if (version !== 6) return host || "unknown";
+
+  const groups = ipv6Groups(host);
+  // An IPv4-mapped address (::ffff:203.0.113.9) is an IPv4 client.
+  if (groups.slice(0, 5).every((group) => group === 0) && groups[5] === 0xffff) {
+    const [high = 0, low = 0] = groups.slice(6);
+    return [high >> 8, high & 0xff, low >> 8, low & 0xff].join(".");
+  }
+  return `${groups
+    .slice(0, 4)
+    .map((group) => group.toString(16))
+    .join(":")}::/64`;
+}
+
+/** The rate-limit key for the client that sent these headers. */
+export function clientKey(headers: Headers): string {
+  return rateLimitKey(clientIp(headers));
+}
+
+/** The eight 16-bit groups of a valid IPv6 address. */
+function ipv6Groups(address: string): number[] {
+  const [head = "", tail] = address.split("::");
+  const parse = (part: string) => (part ? part.split(":").flatMap(ipv6Group) : []);
+  const left = parse(head);
+  const right = tail === undefined ? [] : parse(tail);
+  return [...left, ...Array<number>(8 - left.length - right.length).fill(0), ...right];
+}
+
+/** One group, or two for a dotted IPv4 tail. */
+function ipv6Group(group: string): number[] {
+  if (!group.includes(".")) return [parseInt(group, 16)];
+  const [a = 0, b = 0, c = 0, d = 0] = group.split(".").map(Number);
+  return [(a << 8) | b, (c << 8) | d];
 }

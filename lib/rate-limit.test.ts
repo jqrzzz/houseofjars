@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clientIp, createRateLimiter } from "./rate-limit";
+import { clientIp, clientKey, createRateLimiter, rateLimitKey } from "./rate-limit";
 
 function clock(start = 0) {
   let time = start;
@@ -57,9 +57,40 @@ describe("token bucket rate limiter", () => {
 });
 
 describe("clientIp", () => {
-  it("uses the first forwarded address, then x-real-ip", () => {
-    expect(clientIp(new Headers({ "x-forwarded-for": "203.0.113.9, 10.0.0.1" }))).toBe("203.0.113.9");
+  it("uses the address the nearest proxy added, never a client-supplied first entry (R4-03)", () => {
+    expect(clientIp(new Headers({ "x-forwarded-for": "192.0.2.1, 203.0.113.9" }))).toBe("203.0.113.9");
+    expect(clientIp(new Headers({ "x-forwarded-for": "203.0.113.9" }))).toBe("203.0.113.9");
     expect(clientIp(new Headers({ "x-real-ip": "198.51.100.4" }))).toBe("198.51.100.4");
     expect(clientIp(new Headers())).toBe("unknown");
+  });
+});
+
+describe("rate-limit keys", () => {
+  it("counts every address in one IPv6 /64 as one client (R4-03)", () => {
+    const keys = ["2001:db8:1:2::1", "2001:db8:1:2::ffff", "2001:0DB8:0001:0002:aaaa:bbbb:cccc:dddd", "[2001:db8:1:2::9]:443"];
+    expect(new Set(keys.map(rateLimitKey))).toEqual(new Set(["2001:db8:1:2::/64"]));
+    expect(rateLimitKey("2001:db8:1:3::1")).toBe("2001:db8:1:3::/64");
+    expect(rateLimitKey("::1")).toBe("0:0:0:0::/64");
+    expect(rateLimitKey("fe80::1%eth0")).toBe("fe80:0:0:0::/64");
+  });
+
+  it("keeps IPv4 addresses whole, including IPv4-mapped IPv6 and a trailing port", () => {
+    expect(rateLimitKey("203.0.113.9")).toBe("203.0.113.9");
+    expect(rateLimitKey("203.0.113.9:51234")).toBe("203.0.113.9");
+    expect(rateLimitKey("::ffff:203.0.113.9")).toBe("203.0.113.9");
+    expect(rateLimitKey("64:ff9b::203.0.113.9")).toBe("64:ff9b:0:0::/64");
+  });
+
+  it("falls back to the raw value for anything that is not an address", () => {
+    expect(rateLimitKey(" Unknown ")).toBe("unknown");
+    expect(rateLimitKey("")).toBe("unknown");
+  });
+
+  it("gives a rotating IPv6 client one bucket", () => {
+    const limiter = createRateLimiter({ capacity: 1, refillMs: 60_000, now: clock().now });
+    const allowed = [1, 2, 3].map(
+      (i) => limiter.take(clientKey(new Headers({ "x-forwarded-for": `2001:db8:1:2::${i}` }))).allowed,
+    );
+    expect(allowed).toEqual([true, false, false]);
   });
 });

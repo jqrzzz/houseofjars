@@ -1,6 +1,6 @@
 import { json, readJsonBody, rejectCrossSite } from "../http";
 import type { SubmitResult } from "../inquiry/submit";
-import { clientIp, type RateLimitDecision } from "../rate-limit";
+import { clientKey, type RateLimitDecision } from "../rate-limit";
 import { buildSystemPrompt } from "./prompt";
 import { encodeEvent, type ConciergeEvent } from "./protocol";
 import { MAX_REQUEST_BYTES } from "./limits";
@@ -38,7 +38,7 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
     if (!parsed.success) return json({ error: "invalid_request" }, 400);
 
     // Rate-limit only requests that would reach Claude.
-    const decision = deps.limiter.take(clientIp(request.headers));
+    const decision = deps.limiter.take(clientKey(request.headers));
     if (!decision.allowed) {
       return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
     }
