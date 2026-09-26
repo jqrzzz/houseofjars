@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { inquiryDraftSchema } from "../inquiry/schema";
 import { createSigner } from "./signing";
 import { prepareInquiryTool, runPrepareInquiry } from "./tool";
@@ -18,6 +18,14 @@ const input = {
   conversation_summary: "Asks about a bed for two nights from 3 October.",
 };
 const signer = createSigner("sk-ant-test-key");
+
+// The dates above must stay inside the inquiry date window: pin the clock.
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-09-26T03:00:00Z") });
+});
+afterAll(() => {
+  vi.useRealTimers();
+});
 const sign = (draft: Parameters<typeof signer.signDraft>[1]) => signer.signDraft(sessionId, draft);
 
 describe("prepare_inquiry tool definition", () => {

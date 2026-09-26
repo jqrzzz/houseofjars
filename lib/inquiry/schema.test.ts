@@ -1,5 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { buildPayload, inquiryFormSchema, inquiryPayloadSchema, prepareInquiryInputSchema, toFieldIssues } from "./schema";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
+import {
+  buildPayload,
+  dateWindow,
+  inquiryFormSchema,
+  inquiryPayloadSchema,
+  prepareInquiryInputSchema,
+  toFieldIssues,
+} from "./schema";
 
 const ref = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
 const form = {
@@ -14,6 +22,14 @@ function issues(input: unknown) {
   const result = inquiryFormSchema.safeParse(input);
   return result.success ? [] : toFieldIssues(result.error);
 }
+
+// The date window moves with the clock: pin it.
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-09-26T03:00:00Z") });
+});
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 describe("inquiry form validation", () => {
   it("accepts a minimal inquiry, trims text and fills optional fields with null", () => {
@@ -112,5 +128,36 @@ describe("the contract payload", () => {
     for (const extra of [{ client_ref: ref }, { source: "website_form" }, { consent: true }]) {
       expect(prepareInquiryInputSchema.safeParse({ ...input, ...extra }).success).toBe(false);
     }
+  });
+});
+
+describe("inquiry dates (R4-16)", () => {
+  const form = {
+    client_ref: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    name: "Mai",
+    email: "mai@example.com",
+    message: "A bed?",
+    consent: true,
+  };
+  const problems = (dates: object) =>
+    toFieldIssues(inquiryFormSchema.safeParse({ ...form, ...dates }).error ?? new z.ZodError([]));
+
+  it("accepts yesterday in Vientiane (for guests a day behind) up to two years ahead", () => {
+    expect(dateWindow()).toEqual({ earliest: "2026-09-25", latest: "2028-09-25" });
+    expect(problems({ check_in: "2026-09-25", check_out: "2028-09-25" })).toEqual([]);
+  });
+
+  it("refuses dates in the past or far in the future, from the form, Shadow's tool and the payload", () => {
+    expect(problems({ check_in: "2001-01-01", check_out: "2001-01-02" })).toEqual([
+      { field: "check_in", message: "Please choose a date from today onwards." },
+      { field: "check_out", message: "Please choose a date from today onwards." },
+    ]);
+    expect(problems({ check_in: "9999-12-30" })).toEqual([
+      { field: "check_in", message: "Please choose a date within the next two years." },
+    ]);
+    const input = { name: "Mai", email: "mai@example.com", message: "A bed?" };
+    expect(prepareInquiryInputSchema.safeParse({ ...input, check_in: "2025-10-03" }).success).toBe(false);
+    const payload = buildPayload(inquiryFormSchema.parse(form), { client_ref: form.client_ref, source: "website_form" });
+    expect(inquiryPayloadSchema.safeParse({ ...payload, check_out: "2030-01-01" }).success).toBe(false);
   });
 });

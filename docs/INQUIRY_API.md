@@ -31,7 +31,7 @@ JSON. Unknown keys are rejected; strings are trimmed.
 }
 ```
 
-At least one of `email` and `phone` is required.
+At least one of `email` and `phone` is required. The website also keeps `check_in` and `check_out` between yesterday in Vientiane and two years ahead (`dateWindow` in `lib/inquiry/schema.ts`), so the form and Shadow's drafts never carry a past date or a mistaken year.
 
 ## Responses
 
