@@ -21,7 +21,7 @@ export function BookingBand() {
         </div>
         <div className={styles.actions}>
           <Link href={pages.book.path} className={`${buttons.button} ${buttons.bandFill}`}>
-            Check availability
+            Prices and booking
             <ArrowIcon />
           </Link>
           <a

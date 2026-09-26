@@ -54,7 +54,7 @@ export const pages = {
   book: {
     path: "/book",
     nav: "Book",
-    title: "Check availability",
+    title: "Prices and booking",
     description:
       "See live prices and availability on Booking.com and Agoda, or send the House of Jars team a message and they will reply by email or WhatsApp.",
   },

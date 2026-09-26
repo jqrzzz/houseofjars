@@ -37,7 +37,7 @@ export function Hero() {
           <p className={styles.owner}>Owned and run by {identity.owner.name.value}.</p>
           <div className={styles.actions}>
             <Link href="/book" className={`${buttons.button} ${buttons.primary}`}>
-              Check availability
+              Prices and booking
               <ArrowIcon />
             </Link>
             <AskShadowButton className={`${buttons.button} ${buttons.secondary}`}>Ask Shadow</AskShadowButton>
