@@ -12,9 +12,9 @@ export const CLUSTER = {
    * makes a jar a little taller or squatter than the mark, as no two are alike.
    */
   jars: [
-    { x: 116, scale: 2.7, stretch: 1.06, rotate: -5, tone: 1 },
-    { x: 402, scale: 2.1, stretch: 0.9, rotate: 4, tone: 3 },
-    { x: 262, scale: 4, stretch: 0.97, rotate: 1.5, tone: 2 },
+    { x: 100, scale: 3.3, stretch: 1.06, rotate: -5, tone: 1 },
+    { x: 404, scale: 2.55, stretch: 0.9, rotate: 4, tone: 3 },
+    { x: 258, scale: 4.8, stretch: 0.97, rotate: 1.5, tone: 2 },
   ],
 } as const;
 

@@ -157,20 +157,31 @@ export type TextPart = { kind: "text"; text: string } | { kind: "link"; text: st
 
 /**
  * Splits a reply into text and links. Links to this site become relative so
- * they work on preview deployments too.
+ * they work on preview deployments too. Only this site and `allowedHosts`
+ * become clickable: anything else Shadow writes stays plain text.
  */
-export function linkify(text: string, siteUrl: string): TextPart[] {
+export function linkify(text: string, siteUrl: string, allowedHosts: readonly string[] = []): TextPart[] {
   const parts: TextPart[] = [];
   const pattern = /https?:\/\/[^\s<>()]+[^\s<>().,;:!?'"]/g;
   let last = 0;
   for (const match of text.matchAll(pattern)) {
+    const url = match[0];
+    const internal = url === siteUrl || url.startsWith(`${siteUrl}/`);
+    if (!internal && !isAllowed(url, allowedHosts)) continue;
     const index = match.index ?? 0;
     if (index > last) parts.push({ kind: "text", text: text.slice(last, index) });
-    const url = match[0];
-    const href = url.startsWith(`${siteUrl}/`) ? url.slice(siteUrl.length) : url === siteUrl ? "/" : url;
-    parts.push({ kind: "link", text: url, href });
+    parts.push({ kind: "link", text: url, href: internal ? url.slice(siteUrl.length) || "/" : url });
     last = index + url.length;
   }
   if (last < text.length) parts.push({ kind: "text", text: text.slice(last) });
   return parts;
+}
+
+function isAllowed(url: string, hosts: readonly string[]): boolean {
+  try {
+    const { protocol, hostname } = new URL(url);
+    return protocol === "https:" && hosts.includes(hostname);
+  } catch {
+    return false;
+  }
 }

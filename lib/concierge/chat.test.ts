@@ -119,14 +119,26 @@ describe("saved conversations", () => {
 });
 
 describe("links in replies", () => {
+  const site = "https://thehouseofjars.com";
+
   it("makes site links relative and leaves trailing punctuation out", () => {
-    expect(linkify("See https://thehouseofjars.com/book. Or https://www.agoda.com/x!", "https://thehouseofjars.com")).toEqual([
+    expect(linkify("See https://thehouseofjars.com/book. Or https://www.agoda.com/x!", site, ["www.agoda.com"])).toEqual([
       { kind: "text", text: "See " },
       { kind: "link", text: "https://thehouseofjars.com/book", href: "/book" },
       { kind: "text", text: ". Or " },
       { kind: "link", text: "https://www.agoda.com/x", href: "https://www.agoda.com/x" },
       { kind: "text", text: "!" },
     ]);
+    expect(linkify("Home: https://thehouseofjars.com", site)).toContainEqual({
+      kind: "link",
+      text: "https://thehouseofjars.com",
+      href: "/",
+    });
+  });
+
+  it("only links to the site and the allowed hosts, over https", () => {
+    const text = "Try https://evil.example/login or http://www.agoda.com/x";
+    expect(linkify(text, site, ["www.agoda.com"])).toEqual([{ kind: "text", text }]);
   });
 });
 

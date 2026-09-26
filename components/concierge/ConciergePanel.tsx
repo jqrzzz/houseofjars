@@ -25,6 +25,8 @@ import {
 } from "@/lib/concierge/chat";
 import { MAX_MESSAGE_CHARS } from "@/lib/concierge/limits";
 import { parseEvents, type ConciergeEvent } from "@/lib/concierge/protocol";
+import { immigration } from "@/content/area";
+import { identity, whatsappUrl } from "@/content/identity";
 import { pages, siteUrl } from "@/lib/site";
 import { uuid } from "@/lib/uuid";
 import { ContactDetails } from "../contact/ContactDetails";
@@ -40,6 +42,13 @@ export interface ConciergePanelProps {
 }
 
 const STORAGE_KEY = "houseofjars:concierge";
+
+/** The only outside sites Shadow's replies may link to: the ones in the house's own content. */
+const linkHosts = [
+  ...Object.values(identity.links).map((link) => link.value),
+  immigration.ldif.value.url,
+  whatsappUrl(),
+].map((url) => new URL(url).hostname);
 
 const starters = ["What time is check-in?", "Is breakfast included?", "How far is the airport?", "Is it a quiet hostel?"];
 
@@ -86,6 +95,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
   const logRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const titleId = useId();
+  const noteId = useId();
   const inputId = useId();
 
   // A new pre-filled question replaces the draft (adjusting state during render, not in an effect).
@@ -187,7 +197,13 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
   const showContacts = offline || state.inquiry === "failed";
 
   return (
-    <dialog ref={dialogRef} className={styles.panel} aria-labelledby={titleId} onClose={onClose}>
+    <dialog
+      ref={dialogRef}
+      className={styles.panel}
+      aria-labelledby={titleId}
+      aria-describedby={noteId}
+      onClose={onClose}
+    >
       <header className={styles.header}>
         <span className={styles.avatar}>
           <Image src={shadowBust.src} width={shadowBust.width} height={shadowBust.height} sizes="44px" alt="" />
@@ -213,7 +229,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
         </button>
       </header>
 
-      <p className={styles.disclaimer}>
+      <p id={noteId} className={styles.disclaimer}>
         Shadow is an AI and can make mistakes. For anything important,{" "}
         <Link href={`${pages.book.path}#contact`} onClick={onClose}>
           contact the team
@@ -340,7 +356,7 @@ function Message({ message, onNavigate }: { message: ChatMessage; onNavigate: ()
 
   return (
     <Bubble role="assistant" failed={message.state === "failed"}>
-      {linkify(message.content, siteUrl).map((part, index) => {
+      {linkify(message.content, siteUrl, linkHosts).map((part, index) => {
         if (part.kind === "text") return <span key={index}>{part.text}</span>;
         return part.href.startsWith("/") ? (
           <Link key={index} href={part.href} onClick={onNavigate}>
