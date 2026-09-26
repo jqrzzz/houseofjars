@@ -25,6 +25,11 @@
   font-variant-numeric: lining-nums;
 }
 
+/* A line too long for a phone breaks evenly, never leaving "Rd" alone. */
+.address > span {
+  text-wrap: balance;
+}
+
 @media (min-width: 48rem) {
   .address {
     font-size: var(--step-2);
