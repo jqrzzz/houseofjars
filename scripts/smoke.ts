@@ -7,7 +7,8 @@
  * Visits every page on a phone (390 x 844) and a desktop (1440 x 900), in
  * light and dark, and checks the HTTP status, console errors, exactly one
  * h1, JSON-LD that parses, canonical and Open Graph tags, and sideways
- * scrolling. Then it opens Shadow's window and tries the booking form.
+ * scrolling, plus the security headers and that the API routes refuse
+ * cross-site posts. Then it opens Shadow's window and tries the booking form.
  * Without API keys both must fall back to the team's contact details; if
  * Shadow Check-in is configured, the form is not submitted (no test
  * inquiries reach the team). Screenshots are saved to ./screenshots.
@@ -207,12 +208,35 @@ async function files(context: BrowserContext) {
   }
 }
 
+/** Security headers on pages, files and images, and the API routes refusing requests from other sites. */
+async function security(context: BrowserContext) {
+  for (const path of ["/", "/book", "/robots.txt", "/opengraph-image"]) {
+    const headers = (await context.request.get(base + path)).headers();
+    const csp = headers["content-security-policy"] ?? "";
+    for (const directive of ["default-src 'self'", "connect-src 'self'", "object-src 'none'", "frame-ancestors 'none'"]) {
+      check(csp.includes(directive), `${path}: Content-Security-Policy lacks ${directive}`);
+    }
+    check((headers["strict-transport-security"] ?? "").startsWith("max-age="), `${path}: no Strict-Transport-Security`);
+    check(headers["x-content-type-options"] === "nosniff", `${path}: no X-Content-Type-Options`);
+  }
+  for (const api of ["/api/inquiry", "/api/concierge", "/api/concierge/send"]) {
+    const crossSite = await context.request.post(base + api, {
+      data: {},
+      headers: { origin: "https://evil.example", "sec-fetch-site": "cross-site" },
+    });
+    check(crossSite.status() === 403, `${api}: a cross-site POST got ${crossSite.status()}, expected 403`);
+    const simple = await context.request.post(base + api, { data: "{}", headers: { "content-type": "text/plain" } });
+    check(simple.status() === 415, `${api}: a text/plain POST got ${simple.status()}, expected 415`);
+  }
+}
+
 async function main() {
   await mkdir(outDir, { recursive: true });
   const browser = await chromium.launch({ executablePath });
   try {
     const context = await browser.newContext();
     await files(context);
+    await security(context);
     await context.close();
 
     for (const route of routes) {
