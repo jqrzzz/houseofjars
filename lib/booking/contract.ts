@@ -3,6 +3,7 @@ import { addDays, houseToday, isIsoDate, nightsBetween } from "../dates";
 import { MAX_DAYS_AHEAD } from "../inquiry/dates";
 import { CONTACT_METHODS } from "../inquiry/reply";
 import { toFieldIssues } from "../inquiry/schema";
+import { guestText } from "./text";
 import {
   ARRIVAL_TIME,
   CURRENCIES,
@@ -32,19 +33,7 @@ import {
 
 export const MAX_BOOKING_BYTES = 16 * 1024;
 
-/** What a guest reads when Shadow turns down their dates or party size. */
-export const guestText = {
-  realDates: "Please choose real dates.",
-  fromToday: "Please choose dates from today onwards.",
-  order: "Check-out must be after check-in.",
-  tooFar: "Please choose dates within the next two years.",
-  tooLong: "For a stay of more than a year, please send the team a message.",
-  guests: `Please choose between 1 and ${MAX_GUESTS} guests.`,
-  datesRefused: "These dates can’t be booked online. Please choose other dates, or send the team a message.",
-  guestsRefused: "Online booking can’t take this many guests. For a group, please send the team a message.",
-  roomRefused: "Please choose your beds again.",
-  checkForm: "Please check your booking and try again.",
-} as const;
+export { guestText } from "./text";
 
 export interface AvailabilityQuery {
   readonly check_in: string;
@@ -161,33 +150,17 @@ export const bookingRequestSchema = z
     check_in: z.string(guestText.realDates),
     check_out: z.string(guestText.realDates),
     guests: z.number(guestText.guests).int(guestText.guests).min(1, guestText.guests).max(MAX_GUESTS, guestText.guests),
-    name: z
-      .string("Please tell us your name.")
-      .trim()
-      .min(1, "Please tell us your name.")
-      .max(MAX_NAME, `Please keep your name under ${MAX_NAME} characters.`),
-    email: optional(z.string().trim().pipe(z.email("Please check your email address."))),
-    phone: optional(
-      z
-        .string()
-        .trim()
-        .min(PHONE_LENGTH.min, "Please check your WhatsApp or phone number.")
-        .max(PHONE_LENGTH.max, "Please check your WhatsApp or phone number."),
-    ),
-    preferred_contact: optional(z.enum(CONTACT_METHODS, "Please choose how the team should reply.")),
-    arrival_time: optional(z.string().trim().regex(ARRIVAL_TIME, "Please give a time like 15:30.")),
-    message: optional(
-      z.string().trim().max(MAX_MESSAGE, `Please keep your message under ${MAX_MESSAGE.toLocaleString("en-GB")} characters.`),
-    ),
-    consent: z.literal(true, "Please agree to the privacy notice so the team can contact you."),
+    name: z.string(guestText.name).trim().min(1, guestText.name).max(MAX_NAME, guestText.nameLong),
+    email: optional(z.string().trim().pipe(z.email(guestText.email))),
+    phone: optional(z.string().trim().min(PHONE_LENGTH.min, guestText.phone).max(PHONE_LENGTH.max, guestText.phone)),
+    preferred_contact: optional(z.enum(CONTACT_METHODS, guestText.preferred)),
+    arrival_time: optional(z.string().trim().regex(ARRIVAL_TIME, guestText.arrival)),
+    message: optional(z.string().trim().max(MAX_MESSAGE, guestText.message)),
+    consent: z.literal(true, guestText.consent),
   })
   .superRefine((value, ctx) => {
     if (!value.email && !value.phone) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["email"],
-        message: "Please give an email address or a WhatsApp or phone number.",
-      });
+      ctx.addIssue({ code: "custom", path: ["email"], message: guestText.contact });
     }
   });
 
@@ -254,13 +227,13 @@ const refusedField: Readonly<Record<string, string>> = {
   check_out: guestText.datesRefused,
   guests: guestText.guestsRefused,
   room_type_id: guestText.roomRefused,
-  name: "Please check your name.",
-  email: "Please check your email address.",
-  phone: "Please check your WhatsApp or phone number.",
-  preferred_contact: "Please choose how the team should reply.",
-  arrival_time: "Please give a time like 15:30.",
-  message: `Please keep your message under ${MAX_MESSAGE.toLocaleString("en-GB")} characters.`,
-  consent: "Please agree to the privacy notice so the team can contact you.",
+  name: guestText.name,
+  email: guestText.email,
+  phone: guestText.phone,
+  preferred_contact: guestText.preferred,
+  arrival_time: guestText.arrival,
+  message: guestText.message,
+  consent: guestText.consent,
 };
 
 /** Shadow's 400 issues in the guest's words, one per field; "form" when none can be placed. */

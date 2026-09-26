@@ -93,3 +93,28 @@ export function SendIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+/** Points right; `left` turns it round, for "previous". */
+export function ChevronIcon({ className, left = false }: IconProps & { left?: boolean }) {
+  return (
+    <svg {...base} className={iconClass(className)}>
+      <path d={left ? "M12 4.5 6.5 10l5.5 5.5" : "M8 4.5l5.5 5.5L8 15.5"} />
+    </svg>
+  );
+}
+
+export function MinusIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={iconClass(className)}>
+      <path d="M4.5 10h11" />
+    </svg>
+  );
+}
+
+export function PlusIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={iconClass(className)}>
+      <path d="M4.5 10h11M10 4.5v11" />
+    </svg>
+  );
+}

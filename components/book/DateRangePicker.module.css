@@ -1,0 +1,151 @@
+/*
+ * The calendar: round day marks, the chosen check-in and check-out in
+ * saffron, the nights between on a soft band. Every day is a 44px target.
+ */
+.picker {
+  position: relative;
+  display: grid;
+  gap: var(--space-s);
+  min-width: 0;
+}
+
+.turns {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.turn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--field-border);
+  border-radius: 50%;
+  background: var(--page);
+  color: var(--text);
+}
+
+.turn svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.turn:hover:not(:disabled) {
+  border-color: var(--text);
+}
+
+.turn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.months {
+  display: flex;
+  gap: var(--space-2xl);
+}
+
+.month {
+  flex: none;
+}
+
+.monthName {
+  margin-bottom: var(--space-2xs);
+  font-size: var(--step-1);
+  line-height: 2.75rem;
+}
+
+.grid {
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.grid th {
+  width: 2.75rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--text-soft);
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.cell,
+.blank {
+  width: 2.75rem;
+  height: 2.9rem;
+  padding: 0;
+  text-align: center;
+}
+
+.day {
+  position: relative;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums lining-nums;
+  transition: background-color 120ms ease;
+}
+
+.day:hover {
+  background: color-mix(in srgb, var(--saffron) 22%, transparent);
+}
+
+.day:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+  border-radius: 50%;
+}
+
+/* Today, at the house. */
+.day[aria-current="date"]::after {
+  content: "";
+  position: absolute;
+  bottom: 0.3rem;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.day[aria-disabled="true"] {
+  color: var(--text-soft);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.day[aria-disabled="true"]:hover {
+  background: transparent;
+}
+
+/* The nights of the stay on one band; it starts and ends at the middle of the chosen days. */
+.cell[data-role="in_stay"] {
+  background: color-mix(in srgb, var(--saffron) 20%, transparent);
+}
+
+.cell[data-role="check_in"][data-span] {
+  background: linear-gradient(to right, transparent 50%, color-mix(in srgb, var(--saffron) 20%, transparent) 50%);
+}
+
+.cell[data-role="check_out"] {
+  background: linear-gradient(to left, transparent 50%, color-mix(in srgb, var(--saffron) 20%, transparent) 50%);
+}
+
+.cell[data-role="check_in"] .day,
+.cell[data-role="check_out"] .day {
+  background: var(--saffron);
+  color: var(--ink);
+  font-weight: 700;
+  opacity: 1;
+}

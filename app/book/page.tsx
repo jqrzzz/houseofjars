@@ -1,3 +1,5 @@
+import { BookingFlow } from "@/components/book/BookingFlow";
+import type { HouseNotes } from "@/components/book/BookingSteps";
 import { InquiryForm } from "@/components/book/InquiryForm";
 import { ContactDetails } from "@/components/contact/ContactDetails";
 import { Block, Prose } from "@/components/page/Block";
@@ -5,6 +7,9 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { ExternalIcon } from "@/components/ui/icons";
 import { PageJsonLd } from "@/components/PageJsonLd";
 import { addressLines, identity } from "@/content/identity";
+import { rules, times } from "@/content/stay";
+import { lowerFirst } from "@/content/text";
+import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
 import styles from "./book.module.css";
@@ -16,17 +21,47 @@ const platforms = [
   { name: "Agoda", href: identity.links.agoda.value },
 ];
 
+const passport = rules.stay.find((rule) => rule.value.rule.startsWith("Bring your passport"));
+
+/** What the booking confirmation says about arriving. */
+const house: HouseNotes = {
+  checkInFrom: times.checkIn.value,
+  passport: passport ? `Bring your passport: ${lowerFirst(passport.value.why)}` : "",
+};
+
+/**
+ * /book. With Shadow Check-in's address and key set when the site is built,
+ * the page opens with online booking; without them it is the message form
+ * and the booking sites, as before.
+ */
 export default function BookPage() {
+  const online = onlineBookingConfigured();
   return (
     <>
-      <PageHeader
-        eyebrow="Book"
-        morph="book"
-        title="Prices and booking"
-        lede="Live prices and free beds are on Booking.com and Agoda. Or send the team a message, and they will reply by email or WhatsApp."
-      />
+      {online ? (
+        <>
+          <PageHeader
+            eyebrow="Book"
+            morph="book"
+            title="Book a bed"
+            lede="Choose your dates to see the free beds, and book directly with the house. There is nothing to pay online: you pay when you arrive."
+          />
+          <BookingFlow house={house} />
+        </>
+      ) : (
+        <PageHeader
+          eyebrow="Book"
+          morph="book"
+          title="Prices and booking"
+          lede="Live prices and free beds are on Booking.com and Agoda. Or send the team a message, and they will reply by email or WhatsApp."
+        />
+      )}
 
-      <Block id="online" title="Book online" aside="Both open in a new tab. There is no payment on this website.">
+      <Block
+        id="online"
+        title={online ? "Or book on Booking.com or Agoda" : "Book online"}
+        aside="Both open in a new tab. There is no payment on this website."
+      >
         <ul role="list" className={styles.platforms}>
           {platforms.map((platform) => (
             <li key={platform.name}>

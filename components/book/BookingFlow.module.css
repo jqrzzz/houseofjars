@@ -1,0 +1,831 @@
+/*
+ * The booking form, set as the site's ticket (the same card as
+ * components/BookingCard.module.css): cream, a woven band along the top, and a
+ * stub torn off along a perforation. The steps fill the ticket; the stub holds
+ * the stay's summary and the other ways to book. Phones stack the stub under
+ * the ticket; wide screens put it to the right.
+ */
+.section {
+  padding-bottom: var(--space-3xl);
+  scroll-margin-top: var(--space-m);
+}
+
+.ticket {
+  --notch: 0.85rem;
+  display: grid;
+  max-width: 76rem;
+  margin-inline: auto;
+  color: var(--text);
+}
+
+.main,
+.stub {
+  --bite: transparent var(--notch), #000 calc(var(--notch) + 0.5px);
+  background: var(--surface);
+}
+
+.main {
+  min-width: 0;
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+  -webkit-mask:
+    radial-gradient(circle at 0 100%, var(--bite)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 100%, var(--bite)) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle at 0 100%, var(--bite)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 100%, var(--bite)) right / 51% 100% no-repeat;
+}
+
+.body {
+  display: grid;
+  gap: var(--space-l);
+  padding: var(--space-l) var(--space-m) var(--space-2xl);
+}
+
+.title {
+  font-size: var(--step-3);
+  max-width: 20ch;
+}
+
+.title:focus {
+  outline: none;
+}
+
+.stack {
+  display: grid;
+  gap: var(--space-l);
+  min-width: 0;
+}
+
+/* Steps: numbered marks, the current one in saffron, done ones ticked. */
+.steps ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-l);
+  margin: 0;
+}
+
+.steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.stepMark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  font-size: var(--step--2);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.stepMark svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  stroke-width: 2.2;
+}
+
+.steps li[data-state="current"] {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.steps li[data-state="current"] .stepMark {
+  border-color: var(--saffron);
+  background: var(--saffron);
+  color: var(--ink);
+}
+
+.steps li[data-state="done"] .stepMark {
+  border-color: var(--text-soft);
+  color: var(--text);
+}
+
+/* Phones: every mark, but only the current step's name. */
+@media (max-width: 39.99rem) {
+  .steps ol {
+    gap: var(--space-xs);
+  }
+
+  .steps li:not([data-state="current"]) .stepLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* Check-in, check-out and guests, set like the booking card's fields. */
+.picks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-s);
+}
+
+.pick {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-m);
+  background: var(--page);
+}
+
+.pick:last-child {
+  grid-column: 1 / -1;
+}
+
+.pickLabel {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.pickValue {
+  font-family: var(--font-display-stack);
+  font-size: var(--step-1);
+  line-height: 1.25;
+}
+
+.pickValue[data-empty] {
+  color: var(--text-soft);
+  font-family: var(--font-body-stack);
+  font-size: 1rem;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-s);
+}
+
+.stepperButton {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--field-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+}
+
+.stepperButton svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.stepperButton:hover:not([aria-disabled="true"]) {
+  border-color: var(--text);
+}
+
+.stepperButton[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (min-width: 40rem) {
+  .picks {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pick:last-child {
+    grid-column: auto;
+  }
+}
+
+.hints {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.hints p:first-child {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-s) var(--space-l);
+}
+
+.actions [aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.textButton {
+  min-height: 2.75rem;
+  padding: 0.4rem 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: var(--underline-offset);
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.textButton:hover {
+  text-decoration-color: currentColor;
+}
+
+.notice {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-m) var(--space-l);
+  border: 1px solid var(--rule-strong);
+  border-left: 4px solid var(--saffron);
+  border-radius: var(--radius-s);
+  background: var(--page);
+}
+
+/* The stay so far, above the later steps. */
+.trip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--space-m);
+  padding-bottom: var(--space-s);
+  border-bottom: 2px dashed var(--rule-strong);
+}
+
+.trip p {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.tripDates {
+  font-family: var(--font-display-stack);
+  font-size: var(--step-1);
+}
+
+.tripMeta {
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+/* Rooms: one card each, a radio to choose it. */
+.rooms {
+  display: grid;
+  gap: var(--space-m);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.room {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "radio main"
+    ". price"
+    ". nights";
+  gap: var(--space-s) var(--space-m);
+  padding: var(--space-l) var(--space-m);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-m);
+  background: var(--page);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.room:hover {
+  border-color: var(--text-soft);
+}
+
+.room[data-chosen] {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 1px var(--saffron);
+}
+
+.room:has(:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.room[data-unavailable] {
+  background: transparent;
+  cursor: default;
+}
+
+.room[data-unavailable] .roomName,
+.room[data-unavailable] .roomText,
+.room[data-unavailable] .roomPrice {
+  color: var(--text-soft);
+}
+
+.roomRadio {
+  grid-area: radio;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin: 0.3rem 0 0;
+  accent-color: var(--saffron);
+}
+
+.roomMain {
+  grid-area: main;
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.roomName {
+  font-family: var(--font-display-stack);
+  font-size: var(--step-2);
+  line-height: 1.15;
+}
+
+.roomInfo {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.roomKind {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.roomText {
+  color: var(--text-soft);
+}
+
+.roomFeatures {
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.roomBeds {
+  font-weight: 650;
+}
+
+.roomBeds[data-short] {
+  color: var(--danger);
+}
+
+.roomPrice {
+  grid-area: price;
+  display: grid;
+  align-content: start;
+  gap: 0.1rem;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+@media (min-width: 48rem) {
+  .room {
+    grid-template-columns: auto minmax(0, 1fr) minmax(11rem, auto);
+    grid-template-areas:
+      "radio main price"
+      ". nights price";
+    padding: var(--space-l);
+  }
+
+  .roomPrice {
+    justify-items: end;
+    text-align: right;
+  }
+}
+
+.amount {
+  display: block;
+  color: var(--text);
+  font-family: var(--font-display-stack);
+  font-size: var(--step-1);
+}
+
+.roomTotal {
+  color: var(--text);
+}
+
+/* Free beds each night: a small chip per night. */
+.nights {
+  grid-area: nights;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+.night {
+  display: grid;
+  min-width: 4.5rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  font-size: var(--step--2);
+  line-height: 1.35;
+}
+
+.nightDay {
+  color: var(--text-soft);
+}
+
+.nightFree {
+  font-weight: 650;
+  font-size: var(--step--1);
+}
+
+.nightUnit {
+  font-weight: 400;
+  color: var(--text-soft);
+  font-size: var(--step--2);
+}
+
+.night[data-short] {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.night[data-short] .nightFree {
+  color: var(--danger);
+}
+
+.skeleton {
+  display: grid;
+  gap: var(--space-m);
+}
+
+.skeleton span {
+  display: block;
+  height: 10rem;
+  border-radius: var(--radius-m);
+  background: linear-gradient(100deg, var(--page) 30%, color-mix(in srgb, var(--page) 55%, var(--surface)) 50%, var(--page) 70%);
+  background-size: 250% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* Details: the reply channel as a row of chips. */
+.detailsForm {
+  min-width: 0;
+}
+
+.choice {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choice legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+}
+
+.chip input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chip span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.05rem;
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  background: var(--page);
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+.chip input:checked + span {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--page);
+}
+
+.chip input:focus-visible + span {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Review: a register of the booking, each line with its way back. */
+.review {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid var(--rule-strong);
+}
+
+.reviewRow {
+  display: grid;
+  gap: 0.15rem var(--space-m);
+  padding: var(--space-m) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.reviewValue {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  font-size: var(--step-1);
+  overflow-wrap: anywhere;
+}
+
+.reviewNote {
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.reviewMessage {
+  font-size: 1rem;
+  white-space: pre-wrap;
+}
+
+.reviewChange {
+  margin: 0;
+}
+
+.reviewChange .textButton {
+  min-height: 2.25rem;
+}
+
+@media (min-width: 40rem) {
+  .reviewRow {
+    grid-template-columns: 8.5rem minmax(0, 1fr) auto;
+  }
+
+  .reviewRow dt {
+    padding-top: 0.35rem;
+  }
+
+  .reviewChange {
+    align-self: center;
+  }
+}
+
+.next {
+  max-width: 38rem;
+}
+
+/* The confirmation: a stamped ticket with the reference in large type. */
+.done {
+  position: relative;
+  display: grid;
+  gap: var(--space-l);
+  justify-items: start;
+}
+
+.done .title {
+  padding-right: 6.5rem;
+}
+
+.stamp {
+  position: absolute;
+  top: calc(var(--space-xs) * -1);
+  right: 0;
+  width: 6rem;
+  height: 6rem;
+  color: var(--accent-text);
+  rotate: -9deg;
+}
+
+.reference {
+  display: grid;
+  justify-items: start;
+  gap: 0.35rem;
+}
+
+.referenceCode {
+  font-family: var(--font-display-stack);
+  font-size: var(--step-4);
+  line-height: 1;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums lining-nums;
+  overflow-wrap: anywhere;
+}
+
+.doneStay {
+  display: grid;
+  gap: 0.1rem;
+  color: var(--text-soft);
+}
+
+.doneStay span:first-child {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.nextTitle {
+  font-size: var(--step-2);
+}
+
+.nextSteps {
+  display: grid;
+  gap: var(--space-s);
+  max-width: 40rem;
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.nextSteps li::marker {
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+@media (min-width: 40rem) {
+  .stamp {
+    width: 8rem;
+    height: 8rem;
+  }
+
+  .done .title {
+    padding-right: 9rem;
+  }
+}
+
+.closedLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+  margin: 0;
+}
+
+/* The stub, torn along a dashed line. */
+.stub {
+  display: grid;
+  align-content: start;
+  gap: var(--space-s);
+  padding: var(--space-xl) var(--space-l);
+  border-top: 2px dashed var(--rule-strong);
+  border-radius: 0 0 var(--radius-l) var(--radius-l);
+  -webkit-mask:
+    radial-gradient(circle at 0 0, var(--bite)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 0, var(--bite)) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle at 0 0, var(--bite)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 0, var(--bite)) right / 51% 100% no-repeat;
+}
+
+.stubTitle {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+
+.stubList {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.stubList div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-m);
+  padding-bottom: 0.4rem;
+  border-bottom: 1px dotted var(--rule-strong);
+}
+
+.stubList dt {
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.stubList dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.stubText {
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.stubPay {
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+.stubOther {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-s);
+  padding-top: var(--space-m);
+  border-top: 1px solid var(--rule);
+}
+
+.stubLinks {
+  display: grid;
+  gap: var(--space-2xs);
+  margin: 0;
+}
+
+.stubLinks a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-block: 0.35rem;
+  font-weight: 600;
+}
+
+.stubLinks svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+@media (min-width: 40rem) {
+  .body {
+    padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+  }
+}
+
+@media (min-width: 64rem) {
+  .ticket {
+    grid-template-columns: minmax(0, 1fr) 19rem;
+  }
+
+  .main {
+    border-radius: var(--radius-l) 0 0 var(--radius-l);
+    -webkit-mask:
+      radial-gradient(circle at 100% 0, var(--bite)) top / 100% 51% no-repeat,
+      radial-gradient(circle at 100% 100%, var(--bite)) bottom / 100% 51% no-repeat;
+    mask:
+      radial-gradient(circle at 100% 0, var(--bite)) top / 100% 51% no-repeat,
+      radial-gradient(circle at 100% 100%, var(--bite)) bottom / 100% 51% no-repeat;
+  }
+
+  .body {
+    padding: var(--space-2xl) var(--space-2xl) var(--space-3xl);
+  }
+
+  .stub {
+    padding: var(--space-2xl) var(--space-xl);
+    border-top: 0;
+    border-left: 2px dashed var(--rule-strong);
+    border-radius: 0 var(--radius-l) var(--radius-l) 0;
+    -webkit-mask:
+      radial-gradient(circle at 0 0, var(--bite)) top / 100% 51% no-repeat,
+      radial-gradient(circle at 0 100%, var(--bite)) bottom / 100% 51% no-repeat;
+    mask:
+      radial-gradient(circle at 0 0, var(--bite)) top / 100% 51% no-repeat,
+      radial-gradient(circle at 0 100%, var(--bite)) bottom / 100% 51% no-repeat;
+  }
+}
+
+/* Vientiane night: a little lantern light on the ticket. */
+@media (prefers-color-scheme: dark) {
+  .main {
+    background:
+      radial-gradient(120% 60% at 0% 0%, rgb(232 149 43 / 0.08), transparent 55%),
+      var(--surface);
+  }
+}
+
+@media print {
+  .stub,
+  .steps {
+    display: none;
+  }
+}

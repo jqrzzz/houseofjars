@@ -1,4 +1,5 @@
 import { identity } from "@/content/identity";
+import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pages } from "@/lib/site";
 import styles from "./BookingCard.module.css";
 import { TextileBand } from "./brand/TextileBand";
@@ -17,12 +18,14 @@ const platforms = [
 
 /**
  * The closing call to action on most pages, set like a ticket. The form
- * carries check-in, nights and guests to the message form on /book (a plain
- * GET, so it works without JavaScript). The Booking.com and Agoda links open
- * the house's pages there: their date parameters can't be verified from
- * here, so the dates are not passed on.
+ * carries check-in, nights and guests to /book (a plain GET, so it works
+ * without JavaScript): to the free beds when the site offers online booking
+ * (lib/booking/config.ts), otherwise to the message form. The Booking.com and
+ * Agoda links open the house's pages there: their date parameters can't be
+ * verified from here, so the dates are not passed on.
  */
 export function BookingCard() {
+  const online = onlineBookingConfigured();
   return (
     <Section space="m" labelledBy="booking-card-title" className={styles.section}>
       <div className="container">
@@ -31,7 +34,7 @@ export function BookingCard() {
             <TextileBand pattern="lozenge" weave="view" />
             <form
               className={styles.form}
-              action={`${pages.book.path}#message`}
+              action={online ? pages.book.path : `${pages.book.path}#message`}
               method="get"
               aria-labelledby="booking-card-title"
             >
@@ -39,7 +42,9 @@ export function BookingCard() {
                 Find a bed for your dates.
               </h2>
               <p className={styles.text}>
-                Tell the team when you would like to stay, and they will reply by email or WhatsApp.
+                {online
+                  ? "See which beds are free on your dates and book directly with the house. Nothing to pay online: you pay when you arrive."
+                  : "Tell the team when you would like to stay, and they will reply by email or WhatsApp."}
               </p>
               <div className={styles.fields}>
                 <label className={`${styles.field} ${styles.date}`}>
@@ -64,15 +69,17 @@ export function BookingCard() {
                 </label>
               </div>
               <button type="submit" className={`${buttons.button} ${buttons.primary}`}>
-                Ask the team
+                {online ? "See free beds" : "Ask the team"}
                 <ArrowIcon />
               </button>
             </form>
           </div>
           <div className={styles.stub}>
             <ShadowWriting still className={styles.clipboard} />
-            <p className={styles.stubTitle}>Live prices</p>
-            <p className={styles.stubText}>Free beds and prices are on the booking sites.</p>
+            <p className={styles.stubTitle}>{online ? "Also on" : "Live prices"}</p>
+            <p className={styles.stubText}>
+              {online ? "The house is on the booking sites too." : "Free beds and prices are on the booking sites."}
+            </p>
             <ul role="list" className={styles.platforms}>
               {platforms.map((platform) => (
                 <li key={platform.name}>
