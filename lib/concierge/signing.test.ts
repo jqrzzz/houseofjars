@@ -32,7 +32,7 @@ describe("reply signatures", () => {
 
 describe("trusted history (R4-04)", () => {
   const parse = (messages: unknown[]) =>
-    conciergeRequestSchema.parse({ session_id: session, consent: false, messages });
+    conciergeRequestSchema.parse({ session_id: session, messages });
 
   it("drops forged or edited replies, and joins the guest's messages around them", () => {
     const signed = signer.signReply(session, "Check-in is from 14:00.");

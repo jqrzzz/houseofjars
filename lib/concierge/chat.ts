@@ -1,3 +1,4 @@
+import type { InquiryDraft } from "../inquiry/schema";
 import type { ConciergeEvent } from "./protocol";
 import { historyText, MAX_TOTAL_CHARS, MAX_TURNS } from "./limits";
 
@@ -17,13 +18,17 @@ export interface ChatMessage {
   readonly truncated?: boolean;
 }
 
+/** A message Shadow prepared for the team, with the server's signature over it. */
+export interface ChatDraft {
+  readonly draft: InquiryDraft;
+  readonly token: string;
+}
+
 export interface ChatState {
   readonly sessionId: string;
   readonly messages: readonly ChatMessage[];
-  /** Shadow asked for the privacy box to be ticked. */
-  readonly consentRequested: boolean;
-  readonly consented: boolean;
-  readonly inquiry: "none" | "sent" | "failed";
+  /** Waiting for the guest to check it and press Send (or ask for changes). */
+  readonly draft: ChatDraft | null;
 }
 
 export const shadowLines = {
@@ -36,11 +41,10 @@ export const shadowLines = {
   unavailable: "Something went wrong on my side. Please try again, or message the team directly.",
   empty: "Sorry, I lost my thread there. Could you ask me again?",
   cutOff: "I ran out of room there. Could you ask again, or shall I pass your question to the team?",
-  confirmSend: "I’ve ticked the privacy box. Please send my request to the team.",
 } as const;
 
 export function newChat(sessionId: string): ChatState {
-  return { sessionId, messages: [], consentRequested: false, consented: false, inquiry: "none" };
+  return { sessionId, messages: [], draft: null };
 }
 
 export type ChatAction =
@@ -50,7 +54,10 @@ export type ChatAction =
   | { type: "failed"; line: string }
   /** The stream ended without a `done` or `error` event. */
   | { type: "ended" }
-  | { type: "consent"; value: boolean }
+  /** The guest wants to change the draft (they tell Shadow what). */
+  | { type: "draftDismissed" }
+  /** The draft reached the team; the server's signed confirmation joins the conversation. */
+  | { type: "draftSent"; reply: { content: string; sig: string } }
   | { type: "reset"; sessionId: string };
 
 function updateLast(state: ChatState, update: (message: ChatMessage) => ChatMessage): ChatState {
@@ -79,8 +86,14 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return updateLast(state, (m) => ({ ...m, content: action.line, state: "failed" }));
     case "ended":
       return updateLast(state, finish);
-    case "consent":
-      return { ...state, consented: action.value };
+    case "draftDismissed":
+      return { ...state, draft: null };
+    case "draftSent":
+      return {
+        ...state,
+        draft: null,
+        messages: [...state.messages, { role: "assistant", content: action.reply.content, state: "final", sig: action.reply.sig }],
+      };
     case "reset":
       return newChat(action.sessionId);
     case "event":
@@ -94,12 +107,8 @@ function applyEvent(state: ChatState, event: ConciergeEvent): ChatState {
       return updateLast(state, (m) => ({ ...m, content: m.content + event.text }));
     case "rewind":
       return updateLast(state, (m) => ({ ...m, content: m.content.slice(0, event.keep) }));
-    case "consent_required":
-      return { ...state, consentRequested: true };
-    case "inquiry_sent":
-      return { ...state, inquiry: "sent" };
-    case "inquiry_failed":
-      return { ...state, inquiry: "failed" };
+    case "draft":
+      return isDraft(event) ? { ...state, draft: { draft: event.draft, token: event.token } } : state;
     case "notice":
       if (event.code === "refusal") return updateLast(state, (m) => ({ ...m, content: shadowLines.refusal, state: "failed" }));
       // Keep the text exactly as streamed (it is what the server signs); the ellipsis is only drawn.
@@ -162,16 +171,23 @@ export function restoreChat(raw: string | null): ChatState | null {
         ...(typeof m.sig === "string" ? { sig: m.sig } : {}),
         ...(m.truncated === true ? { truncated: true } : {}),
       }));
-    return {
-      sessionId: saved.sessionId,
-      messages,
-      consentRequested: saved.consentRequested === true,
-      consented: saved.consented === true,
-      inquiry: saved.inquiry === "sent" || saved.inquiry === "failed" ? saved.inquiry : "none",
-    };
+    return { sessionId: saved.sessionId, messages, draft: isDraft(saved.draft) ? saved.draft : null };
   } catch {
     return null;
   }
+}
+
+/** Enough shape to show a draft; the server checks its signature before sending anything. */
+function isDraft(value: unknown): value is ChatDraft {
+  if (typeof value !== "object" || value === null) return false;
+  const { draft, token } = value as { draft?: Partial<InquiryDraft>; token?: unknown };
+  return (
+    typeof token === "string" &&
+    typeof draft === "object" &&
+    draft !== null &&
+    typeof draft.name === "string" &&
+    typeof draft.message === "string"
+  );
 }
 
 export type TextPart = { kind: "text"; text: string } | { kind: "link"; text: string; href: string };

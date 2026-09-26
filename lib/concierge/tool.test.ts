@@ -1,8 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
-import type { SubmitResult } from "../inquiry/submit";
-import { runSendInquiry, sendInquiryTool } from "./tool";
+import { describe, expect, it } from "vitest";
+import { inquiryDraftSchema } from "../inquiry/schema";
+import { createSigner } from "./signing";
+import { prepareInquiryTool, runPrepareInquiry } from "./tool";
 
 const sessionId = "0b7a7a4e-3c2f-4d1e-9a58-6f2b8c1d9e10";
+const reference = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
 const input = {
   name: "Mai",
   email: "mai@example.com",
@@ -15,12 +17,12 @@ const input = {
   message: "Is there a bed from the 3rd to the 5th?",
   conversation_summary: "Asks about a bed for two nights from 3 October.",
 };
+const signer = createSigner("sk-ant-test-key");
+const sign = (draft: Parameters<typeof signer.signDraft>[1]) => signer.signDraft(sessionId, draft);
 
-const submitting = (result: SubmitResult) => vi.fn(async (payload: unknown) => (void payload, result));
-
-describe("send_inquiry tool definition", () => {
+describe("prepare_inquiry tool definition", () => {
   it("mirrors the contract minus what the server sets", () => {
-    const properties = Object.keys((sendInquiryTool.input_schema as { properties: object }).properties);
+    const properties = Object.keys((prepareInquiryTool.input_schema as { properties: object }).properties);
     expect(properties).toEqual([
       "name",
       "email",
@@ -33,64 +35,32 @@ describe("send_inquiry tool definition", () => {
       "message",
       "conversation_summary",
     ]);
-    expect(properties).not.toContain("client_ref");
-    expect(properties).not.toContain("source");
-    expect(properties).not.toContain("consent");
-    expect(sendInquiryTool.eager_input_streaming).toBe(true);
+    expect(prepareInquiryTool.eager_input_streaming).toBe(true);
+    expect(prepareInquiryTool.description).toContain("This sends nothing");
   });
 });
 
-describe("send_inquiry gating", () => {
-  it("sends nothing until the guest has ticked the privacy box", async () => {
-    const submit = submitting({ ok: true, id: "b1", duplicate: false });
-    const outcome = await runSendInquiry(input, { consent: false, sessionId, submit });
-    expect(outcome).toMatchObject({ isError: true, event: "consent_required" });
-    expect(outcome.content).toMatch(/^consent_required/);
-    expect(submit).not.toHaveBeenCalled();
+describe("prepare_inquiry (R4-05)", () => {
+  it("turns the details into a signed draft for the guest to check, and sends nothing", () => {
+    const outcome = runPrepareInquiry(input, sign, () => reference);
+    expect(outcome.isError).toBe(false);
+    expect(outcome.content).toMatch(/^draft_ready: .*Nothing has been sent/);
+    expect(outcome.draft!.draft).toEqual({ ...input, client_ref: reference, source: "website_concierge" });
+    expect(inquiryDraftSchema.safeParse(outcome.draft!.draft).success).toBe(true);
+    expect(signer.verifyDraft(sessionId, outcome.draft!.draft, outcome.draft!.token)).toBe(true);
   });
 
-  it("rejects invalid input before checking anything else", async () => {
-    const submit = submitting({ ok: true, id: "b1", duplicate: false });
-    const outcome = await runSendInquiry({ ...input, email: null, phone: null }, { consent: true, sessionId, submit });
-    expect(outcome).toMatchObject({ isError: true, event: null });
-    expect(outcome.content).toContain("invalid_input");
-    expect(submit).not.toHaveBeenCalled();
+  it("gives every draft its own reference, so a corrected one is a new inquiry", () => {
+    const first = runPrepareInquiry(input, sign).draft!.draft.client_ref;
+    const second = runPrepareInquiry({ ...input, email: "mai@example.org" }, sign).draft!.draft.client_ref;
+    expect(first).not.toBe(second);
   });
 
-  it("ignores any attempt to set the reference, source or consent itself", async () => {
-    const submit = submitting({ ok: true, id: "b1", duplicate: false });
-    const outcome = await runSendInquiry({ ...input, consent: true, source: "website_form" }, { consent: false, sessionId, submit });
-    expect(outcome.isError).toBe(true);
-    expect(submit).not.toHaveBeenCalled();
-  });
-
-  it("with consent, sends the contract payload with the conversation as the reference", async () => {
-    const submit = submitting({ ok: true, id: "b1", duplicate: false });
-    const outcome = await runSendInquiry(input, { consent: true, sessionId, submit });
-    expect(outcome).toMatchObject({ isError: false, event: "inquiry_sent" });
-    expect(submit).toHaveBeenCalledWith({
-      ...input,
-      client_ref: sessionId,
-      source: "website_concierge",
-      consent: true,
-    });
-  });
-
-  it("tells the model when the inquiry was already sent", async () => {
-    const outcome = await runSendInquiry(input, {
-      consent: true,
-      sessionId,
-      submit: submitting({ ok: true, id: "b1", duplicate: true }),
-    });
-    expect(outcome.content).toMatch(/^already_sent/);
-  });
-
-  it("reports failures so the guest gets the contact details instead", async () => {
-    const outcome = await runSendInquiry(input, {
-      consent: true,
-      sessionId,
-      submit: submitting({ ok: false, error: "unavailable" }),
-    });
-    expect(outcome).toMatchObject({ isError: true, event: "inquiry_failed" });
+  it("rejects invalid input, and any attempt to set the reference, source or consent", () => {
+    for (const bad of [{ ...input, email: null, phone: null }, { ...input, consent: true }, { ...input, source: "website_form" }]) {
+      const outcome = runPrepareInquiry(bad, sign);
+      expect(outcome).toMatchObject({ isError: true, draft: null });
+      expect(outcome.content).toContain("invalid_input");
+    }
   });
 });

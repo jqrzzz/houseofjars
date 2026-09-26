@@ -55,9 +55,9 @@ export default function PrivacyPage() {
             does not save the conversation: it stays in your browser tab until you close it.
           </p>
           <p>
-            If you ask Shadow to pass a message to the team and tick the box to agree, he sends the same kind of
-            details as the booking form, plus a sentence or two summing up what you asked. He never sends the whole
-            conversation.
+            If you ask Shadow to pass a message to the team, he shows you exactly what would be sent: the same kind of
+            details as the booking form, plus a sentence or two summing up what you asked. Nothing is sent until you
+            tick the box and press Send. He never sends the whole conversation.
           </p>
 
           <h3>Your IP address</h3>

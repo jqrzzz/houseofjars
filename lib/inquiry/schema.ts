@@ -2,10 +2,12 @@ import { z } from "zod";
 
 /*
  * The inquiry contract shared with Shadow Check-in (docs/INQUIRY_API.md).
- * Three views of it:
+ * Four views of it:
  *  - inquiryPayloadSchema: exactly what is POSTed to Shadow.
  *  - inquiryFormSchema: what the booking form sends to /api/inquiry.
- *  - sendInquiryInputSchema: what the concierge's send_inquiry tool accepts.
+ *  - prepareInquiryInputSchema: what the concierge's prepare_inquiry tool accepts.
+ *  - inquiryDraftSchema: the concierge's draft the guest checks and sends
+ *    (the payload before consent).
  */
 
 export const INQUIRY_SOURCES = ["website_form", "website_concierge"] as const;
@@ -85,11 +87,16 @@ export const inquiryFormSchema = z
   })
   .superRefine(checkContactAndDates);
 
-export const sendInquiryInputSchema = z.strictObject(fields).superRefine(checkContactAndDates);
+export const prepareInquiryInputSchema = z.strictObject(fields).superRefine(checkContactAndDates);
+
+export const inquiryDraftSchema = z
+  .strictObject({ client_ref: z.uuid(), source: z.literal("website_concierge"), ...fields })
+  .superRefine(checkContactAndDates);
 
 export type InquiryPayload = z.output<typeof inquiryPayloadSchema>;
 export type InquiryForm = z.output<typeof inquiryFormSchema>;
-export type SendInquiryInput = z.output<typeof sendInquiryInputSchema>;
+export type PrepareInquiryInput = z.output<typeof prepareInquiryInputSchema>;
+export type InquiryDraft = z.output<typeof inquiryDraftSchema>;
 export type InquirySource = (typeof INQUIRY_SOURCES)[number];
 
 export interface FieldIssue {
@@ -102,6 +109,24 @@ export function toFieldIssues(error: z.ZodError): FieldIssue[] {
     field: issue.path.length > 0 ? issue.path.map(String).join(".") : "form",
     message: issue.message,
   }));
+}
+
+/** The concierge's draft, keys in contract order (it is signed as JSON, so the order must never vary). */
+export function buildDraft(input: PrepareInquiryInput, clientRef: string): InquiryDraft {
+  return {
+    client_ref: clientRef,
+    source: "website_concierge",
+    name: input.name,
+    email: input.email,
+    phone: input.phone,
+    preferred_contact: input.preferred_contact,
+    check_in: input.check_in,
+    check_out: input.check_out,
+    guests: input.guests,
+    bed_preference: input.bed_preference,
+    message: input.message,
+    conversation_summary: input.conversation_summary,
+  };
 }
 
 /** Builds the exact contract payload: every key present, optional ones null. */

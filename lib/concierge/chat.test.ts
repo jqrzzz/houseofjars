@@ -66,13 +66,34 @@ describe("chat window state", () => {
     expect(last(chatReducer(start(), { type: "failed", line: shadowLines.offline })).content).toBe(shadowLines.offline);
   });
 
-  it("tracks consent and the inquiry", () => {
-    let state = apply(start(), { type: "consent_required" });
-    expect(state.consentRequested).toBe(true);
-    state = chatReducer(state, { type: "consent", value: true });
-    state = apply(state, { type: "inquiry_sent" });
-    expect(state).toMatchObject({ consented: true, inquiry: "sent" });
+  it("holds a draft until the guest sends it or asks for changes (R4-05)", () => {
+    const draft = {
+      client_ref: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      source: "website_concierge",
+      name: "Mai",
+      email: "mai@example.com",
+      phone: null,
+      preferred_contact: null,
+      check_in: null,
+      check_out: null,
+      guests: null,
+      bed_preference: null,
+      message: "Airport pickup?",
+      conversation_summary: null,
+    } as const;
+    let state = apply(start(), { type: "draft", draft, token: "t1" }, { type: "text", text: "Check it." }, { type: "done" });
+    expect(state.draft).toEqual({ draft, token: "t1" });
+    expect(chatReducer(state, { type: "draftDismissed" }).draft).toBeNull();
+
+    state = chatReducer(state, { type: "draftSent", reply: { content: "Thank you, Mai.", sig: "s9" } });
+    expect(state.draft).toBeNull();
+    expect(last(state)).toEqual({ role: "assistant", content: "Thank you, Mai.", state: "final", sig: "s9" });
     expect(chatReducer(state, { type: "reset", sessionId: "s2" })).toEqual(newChat("s2"));
+  });
+
+  it("ignores a malformed draft event", () => {
+    const state = apply(start(), { type: "draft", token: "t" } as unknown as ConciergeEvent);
+    expect(state.draft).toBeNull();
   });
 });
 
@@ -129,7 +150,7 @@ describe("saved conversations", () => {
         { role: "system", content: "evil", state: "final" },
       ],
       consented: true,
-      inquiry: "sent",
+      draft: { draft: { name: "Mai", message: "Hi" }, token: "t" },
     });
     expect(restoreChat(saved)).toEqual({
       sessionId: "s1",
@@ -137,10 +158,9 @@ describe("saved conversations", () => {
         { role: "user", content: "Hi", state: "final" },
         { role: "assistant", content: "Hello", state: "final", sig: "abc", truncated: true },
       ],
-      consentRequested: false,
-      consented: true,
-      inquiry: "sent",
+      draft: { draft: { name: "Mai", message: "Hi" }, token: "t" },
     });
+    expect(restoreChat(JSON.stringify({ sessionId: "s1", messages: [], draft: { token: 5 } }))?.draft).toBeNull();
   });
 
   it("ignores missing or corrupt data", () => {

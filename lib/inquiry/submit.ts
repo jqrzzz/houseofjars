@@ -8,6 +8,14 @@ export interface ShadowConfig {
 
 export type SubmitError = "not_configured" | "invalid_request" | "rate_limited" | "unavailable";
 
+/** The HTTP status the website's own routes answer with for each failure. */
+export const submitErrorStatus: Record<SubmitError, number> = {
+  invalid_request: 400,
+  rate_limited: 429,
+  not_configured: 503,
+  unavailable: 502,
+};
+
 export type SubmitResult =
   | { readonly ok: true; readonly id: string; readonly duplicate: boolean }
   | { readonly ok: false; readonly error: SubmitError; readonly issues?: readonly FieldIssue[] };
@@ -31,7 +39,8 @@ const receivedSchema = z.object({ id: z.string().min(1), status: z.literal("rece
 
 /**
  * Validates an inquiry against the contract and forwards it to Shadow
- * Check-in. Used by both /api/inquiry and the concierge's send_inquiry tool.
+ * Check-in. Used by /api/inquiry (the booking form) and /api/concierge/send
+ * (a draft Shadow prepared, sent by the guest).
  * Never throws: every failure maps to a SubmitError.
  */
 export async function submitInquiry(input: unknown, deps: SubmitDeps): Promise<SubmitResult> {

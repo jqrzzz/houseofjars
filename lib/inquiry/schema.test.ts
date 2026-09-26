@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPayload, inquiryFormSchema, inquiryPayloadSchema, sendInquiryInputSchema, toFieldIssues } from "./schema";
+import { buildPayload, inquiryFormSchema, inquiryPayloadSchema, prepareInquiryInputSchema, toFieldIssues } from "./schema";
 
 const ref = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
 const form = {
@@ -108,9 +108,9 @@ describe("the contract payload", () => {
 
   it("does not let the concierge tool set the reference, source or consent", () => {
     const input = { name: "Mai", email: "mai@example.com", message: "Airport pickup?" };
-    expect(sendInquiryInputSchema.safeParse(input).success).toBe(true);
+    expect(prepareInquiryInputSchema.safeParse(input).success).toBe(true);
     for (const extra of [{ client_ref: ref }, { source: "website_form" }, { consent: true }]) {
-      expect(sendInquiryInputSchema.safeParse({ ...input, ...extra }).success).toBe(false);
+      expect(prepareInquiryInputSchema.safeParse({ ...input, ...extra }).success).toBe(false);
     }
   });
 });

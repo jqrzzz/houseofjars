@@ -1,14 +1,19 @@
 import { createHmac, hkdfSync, timingSafeEqual } from "node:crypto";
+import { buildDraft, type InquiryDraft } from "../inquiry/schema";
 import { historyText } from "./limits";
 
 /**
  * Signs what the server itself wrote, so the browser can keep it and hand it
- * back without being able to change it. Only replies carrying a valid
- * signature go back to Claude as Shadow's own turns.
+ * back without being able to change it:
+ *  - Shadow's replies: only signed ones go back to Claude as Shadow's turns;
+ *  - drafts for the team: /api/concierge/send sends exactly the draft the
+ *    guest was shown, and nothing Shadow didn't prepare.
  */
 export interface Signer {
   signReply(sessionId: string, content: string): string;
   verifyReply(sessionId: string, content: string, signature: string): boolean;
+  signDraft(sessionId: string, draft: InquiryDraft): string;
+  verifyDraft(sessionId: string, draft: InquiryDraft, signature: string): boolean;
 }
 
 /**
@@ -20,9 +25,14 @@ export function createSigner(secret: string): Signer {
   // Every field but the last is fixed-format (a label, a UUID), so joining with newlines is unambiguous.
   const mac = (...fields: string[]) => createHmac("sha256", key).update(fields.join("\n")).digest("base64url");
 
+  // Rebuilt in contract key order, so the same draft always serialises the same way.
+  const draftText = (draft: InquiryDraft) => JSON.stringify(buildDraft(draft, draft.client_ref));
+
   return {
     signReply: (sessionId, content) => mac("reply", sessionId, historyText(content)),
     verifyReply: (sessionId, content, signature) => equal(mac("reply", sessionId, historyText(content)), signature),
+    signDraft: (sessionId, draft) => mac("draft", sessionId, draftText(draft)),
+    verifyDraft: (sessionId, draft, signature) => equal(mac("draft", sessionId, draftText(draft)), signature),
   };
 }
 

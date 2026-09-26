@@ -1,8 +1,8 @@
+import { randomUUID } from "node:crypto";
 import type { BetaTool } from "@anthropic-ai/sdk/resources/beta/messages/messages";
-import { buildPayload, CONTACT_METHODS, sendInquiryInputSchema } from "../inquiry/schema";
-import type { SubmitResult } from "../inquiry/submit";
+import { buildDraft, CONTACT_METHODS, prepareInquiryInputSchema, type InquiryDraft } from "../inquiry/schema";
 
-export const SEND_INQUIRY = "send_inquiry";
+export const PREPARE_INQUIRY = "prepare_inquiry";
 
 const nullableString = (description: string, extra: Record<string, unknown> = {}) => ({
   type: ["string", "null"],
@@ -11,21 +11,23 @@ const nullableString = (description: string, extra: Record<string, unknown> = {}
 });
 
 /**
- * The concierge's only tool. Its schema mirrors the inquiry contract minus
- * client_ref, source and consent, which the server sets. The server validates
- * every call with sendInquiryInputSchema before anything is sent, which is
- * also what makes eager input streaming (no server-side buffering) safe.
+ * The concierge's only tool. It sends nothing: it turns what the guest told
+ * Shadow into a draft that the chat window shows them in full, and only the
+ * guest's own Send (POST /api/concierge/send) delivers it. Its schema mirrors
+ * the inquiry contract minus client_ref, source and consent, which the server
+ * sets. The server validates every call with prepareInquiryInputSchema,
+ * which is also what makes eager input streaming (no server-side buffering)
+ * safe.
  */
-export const sendInquiryTool: BetaTool = {
-  name: SEND_INQUIRY,
+export const prepareInquiryTool: BetaTool = {
+  name: PREPARE_INQUIRY,
   eager_input_streaming: true,
   description:
-    "Send the guest's message to the House of Jars team, who reply by email, WhatsApp or phone. " +
-    "Call this only when all of these are true: (1) the guest wants the team to contact them; " +
-    "(2) you have their name, their message and at least an email address or a WhatsApp/phone number; " +
-    "(3) you read back a one-line summary and the guest clearly confirmed they want it sent. " +
-    "The guest must also tick the privacy box in the chat window; if they haven't, this returns consent_required. " +
-    "Send at most once per conversation.",
+    "Prepare a message from the guest to the House of Jars team, who reply by email, WhatsApp or phone. " +
+    "This sends nothing: the chat window shows the guest the exact details with a privacy checkbox and a Send button, " +
+    "and only the guest can send it. Call it when the guest wants the team to contact them and you have their name, " +
+    "their message and at least an email address or a WhatsApp/phone number. " +
+    "If the guest wants to change something, call it again with the corrected details.",
   input_schema: {
     type: "object",
     additionalProperties: false,
@@ -55,54 +57,33 @@ export interface ToolOutcome {
   /** Text returned to the model as the tool result. */
   readonly content: string;
   readonly isError: boolean;
-  /** What the chat window should show. */
-  readonly event: "consent_required" | "inquiry_sent" | "inquiry_failed" | null;
+  /** The draft for the chat window, with the server's signature over it. */
+  readonly draft: { readonly draft: InquiryDraft; readonly token: string } | null;
 }
 
 /**
- * Runs send_inquiry. Guest-supplied data only flows into the inquiry; it can
- * never change what the tool does. Nothing is sent without UI consent.
+ * Runs prepare_inquiry. Guest-supplied data only flows into the draft; it can
+ * never change what the tool does, and nothing leaves the server here. Each
+ * draft gets its own reference, so a corrected draft is a new inquiry while
+ * sending the same draft twice is not.
  */
-export async function runSendInquiry(
+export function runPrepareInquiry(
   input: unknown,
-  context: {
-    readonly consent: boolean;
-    readonly sessionId: string;
-    readonly submit: (payload: unknown) => Promise<SubmitResult>;
-  },
-): Promise<ToolOutcome> {
-  const parsed = sendInquiryInputSchema.safeParse(input);
+  sign: (draft: InquiryDraft) => string,
+  newReference: () => string = randomUUID,
+): ToolOutcome {
+  const parsed = prepareInquiryInputSchema.safeParse(input);
   if (!parsed.success) {
     const problems = parsed.error.issues.map((issue) => `${issue.path.join(".") || "input"}: ${issue.message}`);
-    return { content: `invalid_input: ${problems.join("; ")}. Ask the guest for what is missing.`, isError: true, event: null };
+    return { content: `invalid_input: ${problems.join("; ")}. Ask the guest for what is missing.`, isError: true, draft: null };
   }
 
-  if (!context.consent) {
-    return {
-      content:
-        "consent_required: the guest has not ticked the privacy-notice box. Nothing was sent. Ask them to tick the box below the chat and confirm again.",
-      isError: true,
-      event: "consent_required",
-    };
-  }
-
-  const result = await context.submit(
-    buildPayload(parsed.data, { client_ref: context.sessionId, source: "website_concierge" }),
-  );
-
-  if (result.ok) {
-    return {
-      content: result.duplicate
-        ? "already_sent: this conversation's inquiry had already reached the team. Nothing new was sent."
-        : "sent: the team has the inquiry and will reply using the guest's contact details.",
-      isError: false,
-      event: "inquiry_sent",
-    };
-  }
-
+  const draft = buildDraft(parsed.data, newReference());
   return {
-    content: `not_sent (${result.error}): the inquiry could not be delivered. Apologise briefly and give the guest the WhatsApp number and email from the house knowledge.`,
-    isError: true,
-    event: "inquiry_failed",
+    content:
+      "draft_ready: the guest now sees these exact details in a card below your reply, with a privacy checkbox and a Send button. " +
+      "Nothing has been sent. In one short sentence, ask them to check the details and press Send, or to tell you what to change.",
+    isError: false,
+    draft: { draft, token: sign(draft) },
   };
 }

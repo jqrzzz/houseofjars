@@ -11,10 +11,8 @@ const message = z.discriminatedUnion("role", [
 
 export const conciergeRequestSchema = z
   .strictObject({
-    /** One per conversation; also the idempotency key for any inquiry it sends. */
+    /** One per conversation; signatures on replies and drafts are bound to it. */
     session_id: z.uuid(),
-    /** Whether the guest ticked the privacy-notice box in the chat window. */
-    consent: z.boolean(),
     messages: z.array(message).min(1).max(MAX_TURNS),
   })
   .superRefine((value, ctx) => {

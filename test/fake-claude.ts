@@ -17,7 +17,7 @@ export interface Turn {
   error?: unknown;
 }
 
-export function toolUse(input: unknown, name = "send_inquiry", id = "toolu_1"): BetaContentBlock {
+export function toolUse(input: unknown, name = "prepare_inquiry", id = "toolu_1"): BetaContentBlock {
   return { type: "tool_use", id, name, input } as BetaContentBlock;
 }
 

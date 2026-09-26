@@ -48,7 +48,7 @@ At least one of `email` and `phone` is required.
 ## How the website uses it
 
 - **Booking form** → `POST /api/inquiry` on the website (`lib/inquiry/handler.ts`). The form sends everything except `source` and `conversation_summary`; the server validates it (`lib/inquiry/schema.ts`), sets `source: "website_form"` and forwards it. The browser keeps one `client_ref` per inquiry, so a retry after a network failure cannot create a duplicate.
-- **Shadow** → the `send_inquiry` tool (`lib/concierge/tool.ts`). The model supplies the guest's details but never `client_ref`, `source` or `consent`: the server sets `client_ref` to the conversation's id, `source: "website_concierge"`, and refuses to send at all unless the guest ticked the privacy box in the chat window.
+- **Shadow** → the `prepare_inquiry` tool (`lib/concierge/tool.ts`), then `POST /api/concierge/send` (`lib/concierge/send.ts`). The tool sends nothing. The model supplies the guest's details but never `client_ref`, `source` or `consent`; the server builds a draft with a fresh `client_ref` and `source: "website_concierge"`, signs it (HMAC bound to the conversation) and the chat window shows every field. Only when the guest ticks the privacy box for that message and presses Send does the browser post the draft and its signature back; the server checks the signature and sends exactly that draft with `consent: true`, with no model call. Sending the same draft again reuses its `client_ref` (Shadow answers 200); a corrected draft gets a new one.
 - Both paths call `submitInquiry` (`lib/inquiry/submit.ts`), which validates against the full contract before anything leaves the server.
 
 What the guest sees:

@@ -1,16 +1,9 @@
 import { json, readJsonBody, rejectCrossSite } from "../http";
 import { clientKey, type RateLimitDecision } from "../rate-limit";
 import { buildPayload, inquiryFormSchema, toFieldIssues } from "./schema";
-import { submitInquiry, type ShadowConfig, type SubmitError } from "./submit";
+import { submitErrorStatus, submitInquiry, type ShadowConfig } from "./submit";
 
 export const MAX_INQUIRY_BYTES = 16 * 1024;
-
-const STATUS: Record<SubmitError, number> = {
-  invalid_request: 400,
-  rate_limited: 429,
-  not_configured: 503,
-  unavailable: 502,
-};
 
 export interface InquiryHandlerDeps {
   readonly config: () => ShadowConfig | null;
@@ -47,6 +40,6 @@ export function createInquiryHandler(deps: InquiryHandlerDeps) {
     const payload = buildPayload(form.data, { client_ref: form.data.client_ref, source: "website_form" });
     const result = await submitInquiry(payload, { config, fetch: deps.fetch });
     if (result.ok) return json({ status: "received", id: result.id }, result.duplicate ? 200 : 201);
-    return json({ error: result.error, ...(result.issues ? { issues: result.issues } : {}) }, STATUS[result.error]);
+    return json({ error: result.error, ...(result.issues ? { issues: result.issues } : {}) }, submitErrorStatus[result.error]);
   };
 }

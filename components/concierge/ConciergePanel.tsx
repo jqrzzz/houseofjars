@@ -30,8 +30,9 @@ import { identity, whatsappUrl } from "@/content/identity";
 import { pages, siteUrl } from "@/lib/site";
 import { uuid } from "@/lib/uuid";
 import { ContactDetails } from "../contact/ContactDetails";
-import { CheckIcon, CloseIcon, RestartIcon, SendIcon } from "../ui/icons";
+import { CloseIcon, RestartIcon, SendIcon } from "../ui/icons";
 import styles from "./ConciergePanel.module.css";
+import { DraftCard } from "./DraftCard";
 import { shadowBust } from "./mascot";
 
 export interface ConciergePanelProps {
@@ -130,7 +131,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
   }, [state, offline]);
 
   const send = useCallback(
-    async (text: string, consent = state.consented) => {
+    async (text: string) => {
       const question = text.trim().slice(0, MAX_MESSAGE_CHARS);
       if (!question || pending) return;
 
@@ -145,7 +146,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
         const response = await fetch("/api/concierge", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ session_id: state.sessionId, consent, messages: history }),
+          body: JSON.stringify({ session_id: state.sessionId, messages: history }),
           signal: controller.signal,
         });
         if (!response.ok || !response.body) {
@@ -193,8 +194,6 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
 
   const lastReply = state.messages.findLast((message) => message.role === "assistant" && message.state !== "streaming");
   const showStarters = state.messages.length === 0;
-  const showConsent = state.consentRequested && state.inquiry !== "sent";
-  const showContacts = offline || state.inquiry === "failed";
 
   return (
     <dialog
@@ -256,41 +255,21 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
           </ul>
         ) : null}
 
-        {showConsent ? (
-          <div className={styles.consent}>
-            <label className={styles.consentLabel}>
-              <input
-                type="checkbox"
-                checked={state.consented}
-                onChange={(event) => dispatch({ type: "consent", value: event.target.checked })}
-              />
-              <span>
-                I agree to the{" "}
-                <Link href={pages.privacy.path} onClick={onClose}>
-                  privacy notice
-                </Link>{" "}
-                and want the House of Jars team to contact me about my request.
-              </span>
-            </label>
-            <button
-              type="button"
-              className={styles.consentButton}
-              disabled={!state.consented || pending}
-              onClick={() => void send(shadowLines.confirmSend, true)}
-            >
-              Send my request
-            </button>
-          </div>
+        {state.draft ? (
+          <DraftCard
+            key={state.draft.token}
+            sessionId={state.sessionId}
+            draft={state.draft}
+            onSent={(reply) => dispatch({ type: "draftSent", reply })}
+            onChange={() => {
+              dispatch({ type: "draftDismissed" });
+              inputRef.current?.focus();
+            }}
+            onNavigate={onClose}
+          />
         ) : null}
 
-        {state.inquiry === "sent" ? (
-          <p className={styles.sent} role="status">
-            <CheckIcon />
-            Your message is with the team.
-          </p>
-        ) : null}
-
-        {showContacts ? (
+        {offline ? (
           <div className={styles.contacts}>
             <ContactDetails compact />
           </div>

@@ -9,14 +9,14 @@ import type {
   BetaToolResultBlockParam,
   BetaToolUseBlock,
 } from "@anthropic-ai/sdk/resources/beta/messages/messages";
-import type { SubmitResult } from "../inquiry/submit";
+import type { InquiryDraft } from "../inquiry/schema";
 import { mentionsMoney, priceLine } from "./guard";
 import type { HistoryMessage } from "./history";
 import { buildDateLine } from "./prompt";
 import type { ConciergeEvent } from "./protocol";
-import { runSendInquiry, SEND_INQUIRY, sendInquiryTool } from "./tool";
+import { PREPARE_INQUIRY, prepareInquiryTool, runPrepareInquiry } from "./tool";
 
-/** Tool rounds per request: enough for "consent missing" then "sent". */
+/** Tool rounds per request: enough to prepare a draft, and correct it once if it was invalid. */
 export const MAX_TOOL_ROUNDS = 2;
 /** Times a round is re-issued because its streamed tool input could not be parsed. */
 export const MAX_MALFORMED_RETRIES = 1;
@@ -37,11 +37,9 @@ export type StreamMessages = (
 export interface RunConciergeOptions {
   /** The conversation, with only the replies this server signed (see trustedHistory). */
   readonly messages: readonly HistoryMessage[];
-  readonly sessionId: string;
-  /** Whether the guest ticked the privacy-notice box in the chat window. */
-  readonly consent: boolean;
   readonly stream: StreamMessages;
-  readonly submit: (payload: unknown) => Promise<SubmitResult>;
+  /** Signs a draft for the team, so the chat window can send exactly that and nothing else. */
+  readonly signDraft: (draft: InquiryDraft) => string;
   readonly emit: (event: ConciergeEvent) => void;
   readonly model: string;
   /** Stable instructions and house knowledge (cached). */
@@ -63,13 +61,13 @@ export function buildParams(
     fallbacks: "default",
     thinking: { type: "adaptive" },
     // Short factual answers from a fixed knowledge base: low effort keeps
-    // replies fast; the server enforces the rules that matter (consent).
+    // replies fast; the server enforces the rules that matter (only the guest can send a message).
     output_config: { effort: "low" },
     system: [
       { type: "text", text: options.systemPrompt, cache_control: { type: "ephemeral" } },
       { type: "text", text: buildDateLine(options.now) },
     ],
-    tools: [sendInquiryTool],
+    tools: [prepareInquiryTool],
     tool_choice: { type: "auto", disable_parallel_tool_use: true },
     messages,
   };
@@ -100,7 +98,7 @@ export function isMalformedStream(error: unknown): boolean {
 }
 
 /**
- * One concierge turn: stream Claude's reply to the client, run send_inquiry
+ * One concierge turn: stream Claude's reply to the client, run prepare_inquiry
  * when asked (at most MAX_TOOL_ROUNDS times), and stop cleanly on refusal or
  * truncation. Resolves with the reply the guest was shown, which the caller
  * signs ("" when there is nothing to keep, as after a refusal). Throws the
@@ -170,16 +168,12 @@ export async function runConcierge(options: RunConciergeOptions): Promise<string
     messages.push({ role: "assistant", content });
     const results: BetaToolResultBlockParam[] = [];
     for (const block of toolUses) {
-      if (block.name !== SEND_INQUIRY) {
+      if (block.name !== PREPARE_INQUIRY) {
         results.push({ type: "tool_result", tool_use_id: block.id, is_error: true, content: "unknown_tool" });
         continue;
       }
-      const outcome = await runSendInquiry(block.input, {
-        consent: options.consent,
-        sessionId: options.sessionId,
-        submit: options.submit,
-      });
-      if (outcome.event) emit({ type: outcome.event });
+      const outcome = runPrepareInquiry(block.input, options.signDraft);
+      if (outcome.draft) emit({ type: "draft", ...outcome.draft });
       results.push({
         type: "tool_result",
         tool_use_id: block.id,

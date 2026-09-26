@@ -1,5 +1,4 @@
 import { json, readJsonBody, rejectCrossSite } from "../http";
-import type { SubmitResult } from "../inquiry/submit";
 import { clientKey, type RateLimitDecision } from "../rate-limit";
 import { trustedHistory } from "./history";
 import { buildSystemPrompt } from "./prompt";
@@ -14,7 +13,6 @@ export interface ConciergeHandlerDeps {
   readonly streamer: () => StreamMessages | null;
   /** Signs Shadow's replies; null when ANTHROPIC_API_KEY is not set. */
   readonly signer: () => Signer | null;
-  readonly submit: (payload: unknown) => Promise<SubmitResult>;
   readonly limiter: { take(key: string): RateLimitDecision };
   readonly model: () => string;
   readonly siteUrl: string;
@@ -41,7 +39,7 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
     }
     const parsed = conciergeRequestSchema.safeParse(body.value);
     if (!parsed.success) return json({ error: "invalid_request" }, 400);
-    const { session_id: sessionId, consent } = parsed.data;
+    const sessionId = parsed.data.session_id;
 
     // Rate-limit only requests that would reach Claude.
     const decision = deps.limiter.take(clientKey(request.headers));
@@ -65,10 +63,8 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
         try {
           const reply = await runConcierge({
             messages: trustedHistory(parsed.data, signer),
-            sessionId,
-            consent,
             stream,
-            submit: deps.submit,
+            signDraft: (draft) => signer.signDraft(sessionId, draft),
             emit,
             model: deps.model(),
             systemPrompt: prompt,

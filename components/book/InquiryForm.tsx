@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { replyChannel } from "@/lib/inquiry/reply";
 import { pages } from "@/lib/site";
 import { uuid } from "@/lib/uuid";
 import { ContactDetails } from "../contact/ContactDetails";
@@ -53,14 +54,6 @@ const text = (data: FormData, key: FieldName) => {
   const value = data.get(key);
   return typeof value === "string" && value.trim() ? value.trim() : null;
 };
-
-function replyBy(preferred: string | null, email: string | null, phone: string | null): string {
-  if (preferred === "email") return "by email";
-  if (preferred === "whatsapp") return "on WhatsApp";
-  if (preferred === "phone") return "by phone";
-  if (email && phone) return "by email or WhatsApp";
-  return email ? "by email" : "on WhatsApp or by phone";
-}
 
 /** Local calendar date as YYYY-MM-DD. */
 function today(): string {
@@ -123,7 +116,7 @@ export function InquiryForm() {
         setStatus({
           kind: "sent",
           name: payload.name,
-          replyBy: replyBy(payload.preferred_contact, payload.email, payload.phone),
+          replyBy: replyChannel(payload.preferred_contact, payload.email, payload.phone),
         });
         clientRef.current = null;
         form.reset();

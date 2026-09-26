@@ -2,7 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { BetaContentBlock, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import { describe, expect, it, vi } from "vitest";
 import { fakeClaude, toolUse, type Turn } from "@/test/fake-claude";
-import type { SubmitResult } from "../inquiry/submit";
 import { priceLine } from "./guard";
 import type { HistoryMessage } from "./history";
 import type { ConciergeEvent } from "./protocol";
@@ -14,7 +13,8 @@ import {
   MAX_TOOL_ROUNDS,
   runConcierge,
 } from "./run";
-import { sendInquiryTool } from "./tool";
+import { createSigner } from "./signing";
+import { prepareInquiryTool } from "./tool";
 
 const sessionId = "0b7a7a4e-3c2f-4d1e-9a58-6f2b8c1d9e10";
 const messages: HistoryMessage[] = [
@@ -22,23 +22,25 @@ const messages: HistoryMessage[] = [
 ];
 const inquiry = { name: "Mai", email: "mai@example.com", message: "A bed on 3 October?" };
 
-async function run(turns: Turn[], options: { consent?: boolean; submit?: SubmitResult } = {}) {
+const signer = createSigner("sk-ant-test-key");
+
+async function run(turns: Turn[]) {
   const { streamer, calls } = fakeClaude(turns);
   const events: ConciergeEvent[] = [];
-  const submit = vi.fn(async (payload: unknown) => (void payload, options.submit ?? ({ ok: true, id: "b1", duplicate: false } as const)));
+  const signDraft = vi.fn((draft: Parameters<typeof signer.signDraft>[1]) => signer.signDraft(sessionId, draft));
   const promise = runConcierge({
     messages,
-    sessionId,
-    consent: options.consent ?? true,
     stream: streamer,
-    submit,
+    signDraft,
     emit: (event) => events.push(event),
     model: "claude-opus-5",
     systemPrompt: "SYSTEM",
     now: new Date("2026-09-26T03:00:00Z"),
   });
-  return { promise, events, calls, submit };
+  return { promise, events, calls, signDraft };
 }
+
+const drafts = (events: ConciergeEvent[]) => events.filter((event) => event.type === "draft");
 
 const text = (events: ConciergeEvent[]) =>
   events.flatMap((event) => (event.type === "text" ? [event.text] : [])).join("");
@@ -55,7 +57,7 @@ describe("request parameters", () => {
       fallbacks: "default",
       thinking: { type: "adaptive" },
       output_config: { effort: "low" },
-      tools: [sendInquiryTool],
+      tools: [prepareInquiryTool],
       tool_choice: { type: "auto", disable_parallel_tool_use: true },
     });
   });
@@ -70,60 +72,38 @@ describe("request parameters", () => {
 
 describe("the concierge loop", () => {
   it("streams a plain answer, stops, and resolves with the reply to sign", async () => {
-    const { promise, events, calls, submit } = await run([{ text: ["Check-in is ", "from 14:00."], stopReason: "end_turn" }]);
+    const { promise, events, calls } = await run([{ text: ["Check-in is ", "from 14:00."], stopReason: "end_turn" }]);
     expect(await promise).toBe("Check-in is from 14:00.");
     expect(text(events)).toBe("Check-in is from 14:00.");
     expect(calls).toHaveLength(1);
-    expect(submit).not.toHaveBeenCalled();
+    expect(drafts(events)).toHaveLength(0);
   });
 
-  it("runs send_inquiry, returns the result to Claude and streams the follow-up", async () => {
-    const { promise, events, calls, submit } = await run([
-      { text: ["Sending it now."], blocks: [toolUse(inquiry)], stopReason: "tool_use" },
-      { text: ["Done: the team will email you."], stopReason: "end_turn" },
+  it("prepares a signed draft for the guest, tells Claude nothing was sent, and streams the follow-up (R4-05)", async () => {
+    const { promise, events, calls } = await run([
+      { text: ["Here is what I'll pass on."], blocks: [toolUse(inquiry)], stopReason: "tool_use" },
+      { text: ["Please check the details and press Send."], stopReason: "end_turn" },
     ]);
     await promise;
 
-    expect(submit).toHaveBeenCalledOnce();
-    expect(submit.mock.calls[0]![0]).toMatchObject({ source: "website_concierge", client_ref: sessionId });
-    expect(events).toContainEqual({ type: "inquiry_sent" });
-    expect(text(events)).toBe("Sending it now.\n\nDone: the team will email you.");
+    const [draft] = drafts(events) as Extract<ConciergeEvent, { type: "draft" }>[];
+    expect(draft!.draft).toMatchObject({ ...inquiry, source: "website_concierge", phone: null });
+    expect(signer.verifyDraft(sessionId, draft!.draft, draft!.token)).toBe(true);
+    expect(text(events)).toBe("Here is what I'll pass on.\n\nPlease check the details and press Send.");
 
     const followUp = calls[1]!.messages as BetaMessageParam[];
     expect(followUp.at(-2)?.role).toBe("assistant");
-    expect(followUp.at(-1)).toEqual({
-      role: "user",
-      content: [
-        {
-          type: "tool_result",
-          tool_use_id: "toolu_1",
-          content: "sent: the team has the inquiry and will reply using the guest's contact details.",
-        },
-      ],
-    });
-  });
-
-  it("refuses to send without consent from the chat window", async () => {
-    const { promise, events, calls, submit } = await run(
-      [
-        { blocks: [toolUse(inquiry)], stopReason: "tool_use" },
-        { text: ["Please tick the box below."], stopReason: "end_turn" },
-      ],
-      { consent: false },
-    );
-    await promise;
-    expect(submit).not.toHaveBeenCalled();
-    expect(events).toContainEqual({ type: "consent_required" });
-    const result = (calls[1]!.messages.at(-1)!.content as { is_error?: boolean; content: string }[])[0]!;
-    expect(result.is_error).toBe(true);
-    expect(result.content).toMatch(/^consent_required/);
+    const result = (followUp.at(-1)!.content as { type: string; content: string; is_error?: boolean }[])[0]!;
+    expect(result.type).toBe("tool_result");
+    expect(result.is_error).toBeUndefined();
+    expect(result.content).toMatch(/^draft_ready: .*Nothing has been sent/);
   });
 
   it(`stops after ${MAX_TOOL_ROUNDS} tool rounds`, async () => {
     const again: Turn = { blocks: [toolUse(inquiry)], stopReason: "tool_use" };
-    const { promise, calls, submit } = await run([again, again, again, again]);
+    const { promise, events, calls } = await run([again, again, again, again]);
     await promise;
-    expect(submit).toHaveBeenCalledTimes(MAX_TOOL_ROUNDS);
+    expect(drafts(events)).toHaveLength(MAX_TOOL_ROUNDS);
     expect(calls).toHaveLength(MAX_TOOL_ROUNDS + 1);
   });
 
@@ -153,20 +133,21 @@ describe("the concierge loop", () => {
       ["refusal", "refusal"],
       ["max_tokens", "truncated"],
     ] as const) {
-      const { promise, events, submit } = await run([{ text: ["Let me"], blocks: [toolUse(inquiry)], stopReason }]);
+      const { promise, events, signDraft } = await run([{ text: ["Let me"], blocks: [toolUse(inquiry)], stopReason }]);
       await promise;
-      expect(submit).not.toHaveBeenCalled();
+      expect(signDraft).not.toHaveBeenCalled();
+      expect(drafts(events)).toHaveLength(0);
       expect(events.at(-1)).toEqual({ type: "notice", code });
     }
   });
 
   it("answers unknown tools with an error result", async () => {
-    const { promise, calls, submit } = await run([
+    const { promise, calls, events } = await run([
       { blocks: [toolUse({}, "book_bed")], stopReason: "tool_use" },
       { text: ["Sorry."], stopReason: "end_turn" },
     ]);
     await promise;
-    expect(submit).not.toHaveBeenCalled();
+    expect(drafts(events)).toHaveLength(0);
     expect((calls[1]!.messages.at(-1)!.content as unknown[])[0]).toEqual({
       type: "tool_result",
       tool_use_id: "toolu_1",
@@ -213,7 +194,7 @@ describe("echoing content after a fallback", () => {
     const content = [
       { type: "thinking", thinking: "", signature: "s1" },
       { type: "text", text: "Partial ", citations: null },
-      { type: "tool_use", id: "toolu_0", name: "send_inquiry", input: {} },
+      { type: "tool_use", id: "toolu_0", name: "prepare_inquiry", input: {} },
       { type: "fallback", from: { model: "claude-opus-5" }, to: { model: "claude-opus-4-8" }, trigger: { type: "refusal", category: null } },
       { type: "thinking", thinking: "", signature: "s2" },
       { type: "text", text: "answer", citations: null },

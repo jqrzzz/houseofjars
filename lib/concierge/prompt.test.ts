@@ -48,7 +48,8 @@ describe("system prompt", () => {
     expect(prompt).toContain("you are an AI assistant");
     expect(prompt).toContain("Never quote a price");
     expect(prompt).toContain("Never ask for or accept passport numbers");
-    expect(prompt).toContain("Call send_inquiry only after they clearly say yes");
+    expect(prompt).toContain("Then call prepare_inquiry. It sends nothing");
+    expect(prompt).toContain("Never say a message was sent");
     expect(prompt).toContain(buildHouseKnowledge(site));
   });
 

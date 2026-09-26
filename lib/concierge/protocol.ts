@@ -1,3 +1,5 @@
+import type { InquiryDraft } from "../inquiry/schema";
+
 /**
  * The streaming protocol between /api/concierge and the chat window:
  * newline-delimited JSON, one event per line.
@@ -7,12 +9,11 @@ export type ConciergeEvent =
   | { type: "text"; text: string }
   /** A round is being retried: cut the reply back to its first `keep` characters. */
   | { type: "rewind"; keep: number }
-  /** Shadow tried to send an inquiry but the guest has not ticked the privacy box. */
-  | { type: "consent_required" }
-  /** The inquiry reached the team. */
-  | { type: "inquiry_sent" }
-  /** The inquiry could not be sent; the window shows contact details instead. */
-  | { type: "inquiry_failed" }
+  /**
+   * Shadow prepared a message for the team. The window shows every detail;
+   * only the guest's Send delivers it, with `token` (the server's signature).
+   */
+  | { type: "draft"; draft: InquiryDraft; token: string }
   /** The reply was withheld (refusal) or cut short (length). */
   | { type: "notice"; code: "refusal" | "truncated" }
   /** Something went wrong mid-stream. */
@@ -30,9 +31,7 @@ export function encodeEvent(event: ConciergeEvent): string {
 const EVENT_TYPES = new Set([
   "text",
   "rewind",
-  "consent_required",
-  "inquiry_sent",
-  "inquiry_failed",
+  "draft",
   "notice",
   "error",
   "done",
