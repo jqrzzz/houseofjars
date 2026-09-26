@@ -1,6 +1,127 @@
 /* House of Jars design tokens and base styles.
    Colours are Shadow's: saffron bow tie, vest brown, ghost cream. */
 
+/*
+ * Stand-ins while the web fonts load: each platform's own fonts, resized to
+ * set this site's text at Young Serif's and Hanken Grotesk's widths, on their
+ * line metrics, so nothing reflows when the fonts swap in (CLS 0). Metric
+ * twins share a face: Gelasio is Georgia's, Tinos and Liberation Serif are
+ * Times New Roman's, Arimo and Liberation Sans are Arial's. Noto Serif and
+ * Roboto are Android's.
+ *
+ * size-adjust is fitted to the site's own text, measured in Chromium with
+ * kerning (the web font's total width over the stand-in's, weighted by type
+ * size). The overrides are the web font's: Young Serif ascent 1046, descent
+ * 366; Hanken Grotesk 1000 and 303 (per 1000 units, no line gap), each
+ * divided by size-adjust. Bold stand-ins are fitted to Hanken at 600 to 650.
+ * Young Serif's figures are narrow for its letters, so each serif stand-in
+ * sets its figures (0-9) at their own size.
+ */
+@font-face {
+  font-family: "Young Serif Georgia";
+  src: local("Georgia"), local("Gelasio"), local("Gelasio Regular"), local("Gelasio-Regular");
+  size-adjust: 112.43%;
+  ascent-override: 93.04%;
+  descent-override: 32.55%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Young Serif Georgia";
+  src: local("Georgia"), local("Gelasio"), local("Gelasio Regular"), local("Gelasio-Regular");
+  unicode-range: U+0030-0039;
+  size-adjust: 100.93%;
+  ascent-override: 103.64%;
+  descent-override: 36.26%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Young Serif Times";
+  src:
+    local("Times New Roman"), local("TimesNewRomanPSMT"), local("Tinos"), local("Tinos Regular"),
+    local("Tinos-Regular"), local("Liberation Serif"), local("LiberationSerif");
+  size-adjust: 123.24%;
+  ascent-override: 84.88%;
+  descent-override: 29.7%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Young Serif Times";
+  src:
+    local("Times New Roman"), local("TimesNewRomanPSMT"), local("Tinos"), local("Tinos Regular"),
+    local("Tinos-Regular"), local("Liberation Serif"), local("LiberationSerif");
+  unicode-range: U+0030-0039;
+  size-adjust: 110.58%;
+  ascent-override: 94.59%;
+  descent-override: 33.1%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Young Serif Noto";
+  src: local("Noto Serif"), local("Noto Serif Regular"), local("NotoSerif"), local("NotoSerif-Regular");
+  size-adjust: 104.72%;
+  ascent-override: 99.89%;
+  descent-override: 34.95%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Young Serif Noto";
+  src: local("Noto Serif"), local("Noto Serif Regular"), local("NotoSerif"), local("NotoSerif-Regular");
+  unicode-range: U+0030-0039;
+  size-adjust: 98.91%;
+  ascent-override: 105.75%;
+  descent-override: 37%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Hanken Arial";
+  src:
+    local("Arial"), local("ArialMT"), local("Arimo"), local("Arimo Regular"), local("Arimo-Regular"),
+    local("Liberation Sans"), local("LiberationSans");
+  font-weight: 100 549;
+  size-adjust: 100.29%;
+  ascent-override: 99.71%;
+  descent-override: 30.21%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Hanken Arial";
+  src:
+    local("Arial Bold"), local("Arial-BoldMT"), local("Arimo Bold"), local("Arimo-Bold"),
+    local("Liberation Sans Bold"), local("LiberationSans-Bold");
+  font-weight: 550 900;
+  size-adjust: 94.46%;
+  ascent-override: 105.86%;
+  descent-override: 32.08%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Hanken Roboto";
+  src: local("Roboto"), local("Roboto Regular"), local("Roboto-Regular");
+  font-weight: 100 549;
+  size-adjust: 100.73%;
+  ascent-override: 99.28%;
+  descent-override: 30.08%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Hanken Roboto";
+  src: local("Roboto Bold"), local("Roboto-Bold");
+  font-weight: 550 900;
+  size-adjust: 99.8%;
+  ascent-override: 100.2%;
+  descent-override: 30.36%;
+  line-gap-override: 0%;
+}
+
 :root {
   color-scheme: light dark;
 
@@ -52,8 +173,9 @@
   --dawn-3: #fdb833;
 
   /* Type */
-  --font-display-stack: var(--font-display), Georgia, "Times New Roman", serif;
-  --font-body-stack: var(--font-body), system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display-stack:
+    var(--font-display), "Young Serif Georgia", "Young Serif Times", "Young Serif Noto", Georgia, serif;
+  --font-body-stack: var(--font-body), "Hanken Arial", "Hanken Roboto", system-ui, sans-serif;
   --font-lao-stack: var(--font-lao), serif;
 
   --step--2: 0.75rem;

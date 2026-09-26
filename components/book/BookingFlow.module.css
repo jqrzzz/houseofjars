@@ -43,7 +43,7 @@
 
 .title {
   font-size: var(--step-3);
-  max-width: 20ch;
+  max-width: 12.04em; /* 20ch in Young Serif, in em so it holds while the font loads */
 }
 
 .title:focus {

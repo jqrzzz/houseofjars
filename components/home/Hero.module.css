@@ -49,7 +49,11 @@
   letter-spacing: 0.06em;
 }
 
+/* The word keeps Noto Serif Lao's width while the font loads, so nothing beside it moves when it swaps in. */
 .lao {
+  display: inline-block;
+  inline-size: 3.45em;
+  white-space: nowrap;
   font-family: var(--font-lao-stack);
   font-size: 1.15em;
   font-weight: 500;
@@ -69,7 +73,7 @@
   font-size: clamp(2.5rem, 1.1rem + 5.2vw, 6.5rem);
   line-height: 1.02;
   letter-spacing: -0.015em;
-  max-width: 13ch;
+  max-width: 7.83em; /* 13ch in Young Serif, in em so the lines hold while the font loads */
 }
 
 .lede {

@@ -29,7 +29,7 @@
 .title {
   font-size: var(--step-3);
   line-height: 1.1;
-  max-width: 16ch;
+  max-width: 9.63em; /* 16ch in Young Serif, in em so it holds while the font loads */
 }
 
 .aside {

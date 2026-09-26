@@ -17,7 +17,7 @@
   font-size: var(--step-4);
   line-height: 1.04;
   letter-spacing: -0.018em;
-  max-width: 18ch;
+  max-width: 10.84em; /* 18ch in Young Serif, in em so it holds while the font loads */
 }
 
 .lede {
