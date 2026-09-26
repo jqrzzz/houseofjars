@@ -6,6 +6,7 @@ import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import buttons from "@/components/ui/button.module.css";
 import { PageJsonLd } from "@/components/PageJsonLd";
+import { ReadNext } from "@/components/guide/ReadNext";
 import { location, plainOfJars } from "@/content/area";
 import { identity } from "@/content/identity";
 import { building, staff } from "@/content/stay";
@@ -77,6 +78,7 @@ export default function AboutPage() {
         <AskShadowButton className={`${buttons.button} ${buttons.secondary} ${styles.ask}`}>Ask Shadow</AskShadowButton>
       </Block>
 
+      <ReadNext paths={[pages.house.path, "/guides/quiet-hostel-vientiane", "/guides/whats-nearby"]} />
       <BookingCard />
       <PageJsonLd path={pages.about.path} />
     </>

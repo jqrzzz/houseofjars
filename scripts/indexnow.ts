@@ -46,5 +46,6 @@ if (!(await keyIsLive(submission))) {
 
 // INDEXNOW_ENDPOINT exists for testing against a local stand-in.
 const result = await submit(submission, { endpoint: process.env.INDEXNOW_ENDPOINT || INDEXNOW_ENDPOINT });
-console.log(`IndexNow answered ${result.status}: ${result.message} (${submission.urlList.length} URLs from ${submission.host})`);
+const count = submission.urlList.length;
+console.log(`IndexNow answered ${result.status}: ${result.message} (${count} URL${count === 1 ? "" : "s"} from ${submission.host})`);
 process.exit(result.ok ? 0 : 1);

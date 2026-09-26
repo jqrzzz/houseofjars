@@ -7,6 +7,7 @@
  *   npm run content:check -- --strict
  */
 import { CONTENT_UPDATED, content } from "../content";
+import { creditFor } from "../content/certainty";
 import { openQuestions } from "../content/open-questions";
 import { describeValue, unconfirmedFacts } from "../lib/content-audit";
 
@@ -39,6 +40,8 @@ if (facts.length === 0) {
     }
     lines.push(`- ${path}`, `    ${describeValue(fact.value)}`, `    Source: ${fact.source}`);
     if (fact.note) lines.push(`    Note: ${fact.note}`);
+    const credit = creditFor(fact);
+    if (credit) lines.push(`    Until confirmed: credited as "${credit}", and kept out of search engines' structured data.`);
   }
 }
 
