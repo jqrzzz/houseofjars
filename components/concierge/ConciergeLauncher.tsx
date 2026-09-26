@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
+import { ShadowFigure } from "../shadow/ShadowFigure";
 import styles from "./ConciergeLauncher.module.css";
-import { shadowBust } from "./mascot";
 import type { ConciergePanelProps } from "./ConciergePanel";
 
 // The chat window's code loads on first interaction, never on page load.
@@ -73,7 +72,7 @@ export function ConciergeLauncher() {
         onFocus={() => void loadPanel()}
       >
         <span className={styles.avatar}>
-          <Image src={shadowBust.src} width={shadowBust.width} height={shadowBust.height} sizes="56px" alt="" />
+          <ShadowFigure variant="bust" />
         </span>
         <span className={styles.label} aria-hidden="true">
           Ask Shadow

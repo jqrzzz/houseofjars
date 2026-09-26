@@ -1,6 +1,7 @@
 // One-off asset export: turns the Shadow mascot master PNG (from the Shadow
-// Check-in repo, 1024x1536) into two small WebP masters. next/image then
-// serves them as AVIF or WebP at the size each screen needs.
+// Check-in repo, 1024x1536) into a WebP master for the home page's "Ask
+// Shadow" section. next/image then serves it as AVIF or WebP at the size each
+// screen needs. (Elsewhere Shadow is drawn in SVG: components/shadow/.)
 // Usage: node scripts/export-mascot.mjs /path/to/shadow.png
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
@@ -17,7 +18,6 @@ await mkdir(outDir, { recursive: true });
 // Crops are in the master's 1024x1536 pixel space.
 const variants = [
   { name: "shadow", crop: { left: 160, top: 176, width: 720, height: 1056 }, width: 800 },
-  { name: "shadow-bust", crop: { left: 145, top: 172, width: 750, height: 750 }, width: 192 },
 ];
 
 for (const { name, crop, width } of variants) {

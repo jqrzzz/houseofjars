@@ -1,0 +1,113 @@
+/* Shadow's own colours: they stay the same in both themes, as a character's would. */
+.figure {
+  display: block;
+  overflow: visible;
+}
+
+.ghost {
+  fill: #fbf1df;
+  stroke: #4a2f1b;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.shade {
+  fill: #ecd9b9;
+  opacity: 0.7;
+}
+
+.vest {
+  fill: #5b3a22;
+}
+
+.line {
+  fill: none;
+  stroke: #3a2313;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.button,
+.band {
+  fill: #e8952b;
+}
+
+.bowtie {
+  fill: #e8952b;
+  stroke: #9a5608;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 240ms var(--ease-out);
+}
+
+/* Whatever button or link he stands in, he straightens his bow tie when you point at it. */
+:is(button, a):is(:hover, :focus-visible) .bowtie {
+  transform: rotate(6deg);
+}
+
+.knot {
+  fill: #cf7d1c;
+}
+
+.dome {
+  fill: #b5712b;
+}
+
+.cap {
+  stroke: #6e4218;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.eyes {
+  fill: #3b2414;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.glint {
+  fill: #fff;
+}
+
+.cheek {
+  fill: #f4a47c;
+  opacity: 0.55;
+}
+
+.smile {
+  fill: none;
+  stroke: #3b2414;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.board {
+  fill: #6b4428;
+  stroke: #3a2313;
+  stroke-width: 1.2;
+}
+
+.clip {
+  fill: #3a2313;
+}
+
+/* He blinks now and then. */
+@media (prefers-reduced-motion: no-preference) {
+  .eyes {
+    animation: blink 7s 2s infinite;
+  }
+}
+
+@keyframes blink {
+  0%,
+  95%,
+  100% {
+    transform: none;
+  }
+
+  96.5% {
+    transform: scaleY(0.12);
+  }
+}

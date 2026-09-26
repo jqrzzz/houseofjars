@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   useCallback,
@@ -32,10 +31,11 @@ import { identity, whatsappUrl } from "@/content/identity";
 import { pages, siteUrl } from "@/lib/site";
 import { uuid } from "@/lib/uuid";
 import { ContactDetails } from "../contact/ContactDetails";
+import { ShadowFigure } from "../shadow/ShadowFigure";
+import { ShadowWriting } from "../shadow/ShadowWriting";
 import { CloseIcon, RestartIcon, SendIcon } from "../ui/icons";
 import styles from "./ConciergePanel.module.css";
 import { DraftCard } from "./DraftCard";
-import { shadowBust } from "./mascot";
 
 export interface ConciergePanelProps {
   open: boolean;
@@ -207,7 +207,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
     >
       <header className={styles.header}>
         <span className={styles.avatar}>
-          <Image src={shadowBust.src} width={shadowBust.width} height={shadowBust.height} sizes="44px" alt="" />
+          <ShadowFigure variant="bust" />
         </span>
         <div className={styles.heading}>
           <h2 id={titleId} className={styles.title}>
@@ -239,6 +239,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
       </p>
 
       <div ref={logRef} className={styles.log}>
+        {showStarters ? <ShadowFigure className={styles.welcome} /> : null}
         <Bubble role="assistant">{shadowLines.greeting}</Bubble>
 
         {state.messages.map((message, index) => (
@@ -327,10 +328,9 @@ function Message({ message, onNavigate }: { message: ChatMessage; onNavigate: ()
   if (message.state === "streaming" && !message.content) {
     return (
       <Bubble role="assistant">
-        <span className={styles.typing} aria-hidden="true">
-          <span />
-          <span />
-          <span />
+        <span className={styles.writing}>
+          <ShadowWriting />
+          <span aria-hidden="true">Writing…</span>
         </span>
         <span className="visually-hidden">Shadow is writing</span>
       </Bubble>

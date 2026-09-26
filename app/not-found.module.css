@@ -1,5 +1,5 @@
 .section {
-  padding-top: clamp(3rem, 2rem + 6vw, 7rem);
+  padding-top: clamp(2.5rem, 1.5rem + 5vw, 6rem);
 }
 
 .inner {
@@ -12,9 +12,9 @@
 }
 
 .jar {
-  width: 5.5rem;
-  height: 5.5rem;
-  color: var(--jar-2);
+  width: 9.5rem;
+  height: auto;
+  margin-bottom: var(--space-xs);
 }
 
 .code {
@@ -40,4 +40,27 @@
   justify-content: center;
   gap: var(--space-xs) var(--space-l);
   margin: var(--space-s) 0 0;
+}
+
+/* Shadow keeps his own corner, away from the jar. */
+.shadow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-l);
+  align-items: center;
+  width: 100%;
+  margin-top: var(--space-xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--rule);
+  text-align: left;
+}
+
+.figure {
+  width: 4.5rem;
+  height: auto;
+}
+
+.shadowText {
+  margin-bottom: var(--space-s);
+  color: var(--text-soft);
 }

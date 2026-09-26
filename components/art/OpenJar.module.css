@@ -1,0 +1,55 @@
+.jar {
+  display: block;
+  overflow: visible;
+}
+
+.shadow {
+  fill: #3b2414;
+  opacity: 0.14;
+}
+
+.stone {
+  fill: var(--jar-2);
+}
+
+.lit {
+  fill: #fff;
+  opacity: 0.08;
+}
+
+.dark {
+  fill: #1a0f07;
+  opacity: 0.09;
+}
+
+.under {
+  fill: #140c06;
+  opacity: 0.22;
+}
+
+.top {
+  fill: var(--jar-1);
+}
+
+.hollow {
+  fill: #24160c;
+}
+
+.wall {
+  fill: var(--jar-3);
+  opacity: 0.55;
+}
+
+@media (prefers-color-scheme: dark) {
+  .stone {
+    fill: #7e7160;
+  }
+
+  .top {
+    fill: #938573;
+  }
+
+  .hollow {
+    fill: #0c0805;
+  }
+}
