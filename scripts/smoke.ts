@@ -146,7 +146,7 @@ async function concierge(browser: Browser, viewport: Viewport, scheme: Scheme) {
   // The status line says Shadow is writing, then announces his reply.
   await page.waitForFunction(
     () => {
-      const status = (document.querySelector("dialog [role='status']")?.textContent ?? "").trim();
+      const status = (document.querySelector("dialog [aria-live='polite']")?.textContent ?? "").trim();
       return status.length > 0 && status !== "Shadow is writing…";
     },
     undefined,
