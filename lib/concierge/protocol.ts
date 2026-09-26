@@ -16,13 +16,23 @@ export type ConciergeEvent =
   | { type: "draft"; draft: InquiryDraft; token: string }
   /** The reply was withheld (refusal) or cut short (length). */
   | { type: "notice"; code: "refusal" | "truncated" }
-  /** Something went wrong mid-stream. */
-  | { type: "error"; code: "busy" | "unavailable" }
+  /** Something went wrong mid-stream; "resting": today's budget is spent. */
+  | { type: "error"; code: "busy" | "unavailable" | "resting" }
   /** The reply is complete; `sig` is the server's signature on it, sent back with the reply as history. */
   | { type: "done"; sig?: string };
 
 /** Error bodies returned before streaming starts. */
-export type ConciergeErrorCode = "not_configured" | "rate_limited" | "invalid_request" | "payload_too_large";
+export type ConciergeErrorCode =
+  | "not_configured"
+  /** Today's budget is spent (503, with retry-after). */
+  | "resting"
+  | "rate_limited"
+  /** This conversation reached MAX_CONVERSATION_TURNS (429). */
+  | "conversation_limit"
+  | "invalid_request"
+  | "payload_too_large"
+  | "unsupported_media_type"
+  | "forbidden";
 
 export function encodeEvent(event: ConciergeEvent): string {
   return `${JSON.stringify(event)}\n`;

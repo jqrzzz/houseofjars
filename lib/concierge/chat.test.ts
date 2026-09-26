@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   chatReducer,
+  failureOf,
   linkify,
   newChat,
   restoreChat,
@@ -62,6 +63,7 @@ describe("chat window state", () => {
 
   it("shows a friendly line for errors and empty replies", () => {
     expect(last(apply(start(), { type: "error", code: "busy" })).content).toBe(shadowLines.busy);
+    expect(last(apply(start(), { type: "error", code: "resting" }))).toMatchObject({ content: shadowLines.resting, state: "failed" });
     expect(last(apply(start(), { type: "done" }))).toMatchObject({ content: shadowLines.empty, state: "failed" });
     expect(last(chatReducer(start(), { type: "failed", line: shadowLines.offline })).content).toBe(shadowLines.offline);
   });
@@ -94,6 +96,16 @@ describe("chat window state", () => {
   it("ignores a malformed draft event", () => {
     const state = apply(start(), { type: "draft", token: "t" } as unknown as ConciergeEvent);
     expect(state.draft).toBeNull();
+  });
+});
+
+describe("answers before streaming (R4-03)", () => {
+  it("points to the team when Shadow is off, resting or the conversation is long", () => {
+    expect(failureOf(503, "not_configured")).toEqual({ line: shadowLines.offline, closed: "offline" });
+    expect(failureOf(503, "resting")).toEqual({ line: shadowLines.resting, closed: "resting" });
+    expect(failureOf(429, "conversation_limit")).toEqual({ line: shadowLines.conversationLimit, closed: "limit" });
+    expect(failureOf(429, "rate_limited")).toEqual({ line: shadowLines.slowDown, closed: null });
+    expect(failureOf(500, undefined)).toEqual({ line: shadowLines.unavailable, closed: null });
   });
 });
 

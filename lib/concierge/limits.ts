@@ -3,6 +3,8 @@ export const MAX_TURNS = 12;
 export const MAX_MESSAGE_CHARS = 1500;
 export const MAX_TOTAL_CHARS = 12_000;
 export const MAX_REQUEST_BYTES = 64 * 1024;
+/** Guest messages one conversation may send; after that the chat points to the team. */
+export const MAX_CONVERSATION_TURNS = 20;
 
 /**
  * A message as it goes back to the API: trimmed and within the per-message

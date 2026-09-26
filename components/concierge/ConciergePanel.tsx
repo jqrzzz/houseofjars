@@ -15,6 +15,7 @@ import {
 } from "react";
 import {
   chatReducer,
+  failureOf,
   linkify,
   newChat,
   restoreChat,
@@ -22,6 +23,7 @@ import {
   toApiMessages,
   type ChatMessage,
   type ChatState,
+  type Closed,
 } from "@/lib/concierge/chat";
 import { MAX_MESSAGE_CHARS } from "@/lib/concierge/limits";
 import { parseEvents, type ConciergeEvent } from "@/lib/concierge/protocol";
@@ -90,7 +92,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
   const [state, dispatch] = useReducer(chatReducer, null, () => loadChat() ?? newChat(uuid()));
   const [draft, setDraft] = useState({ text: "", prefillId: -1 });
   const [pending, setPending] = useState(false);
-  const [offline, setOffline] = useState(false);
+  const [closed, setClosed] = useState<Closed | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
@@ -128,7 +130,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
   useEffect(() => {
     const log = logRef.current;
     if (log) log.scrollTop = log.scrollHeight;
-  }, [state, offline]);
+  }, [state, closed]);
 
   const send = useCallback(
     async (text: string) => {
@@ -150,17 +152,16 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
           signal: controller.signal,
         });
         if (!response.ok || !response.body) {
-          if (response.status === 503) setOffline(true);
-          const line =
-            response.status === 503
-              ? shadowLines.offline
-              : response.status === 429
-                ? shadowLines.slowDown
-                : shadowLines.unavailable;
-          dispatch({ type: "failed", line });
+          const code = ((await response.json().catch(() => null)) as { error?: unknown } | null)?.error;
+          const failure = failureOf(response.status, code);
+          if (failure.closed) setClosed(failure.closed);
+          dispatch({ type: "failed", line: failure.line });
           return;
         }
-        await readEvents(response.body, (event) => dispatch({ type: "event", event }));
+        await readEvents(response.body, (event) => {
+          if (event.type === "error" && event.code === "resting") setClosed("resting");
+          dispatch({ type: "event", event });
+        });
         dispatch({ type: "ended" });
       } catch {
         dispatch(controller.signal.aborted ? { type: "ended" } : { type: "failed", line: shadowLines.unavailable });
@@ -176,6 +177,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
     abortRef.current?.abort();
     saveChat(null);
     dispatch({ type: "reset", sessionId: uuid() });
+    setClosed(null);
     setDraft((current) => ({ ...current, text: "" }));
     inputRef.current?.focus();
   }
@@ -269,7 +271,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
           />
         ) : null}
 
-        {offline ? (
+        {closed ? (
           <div className={styles.contacts}>
             <ContactDetails compact />
           </div>

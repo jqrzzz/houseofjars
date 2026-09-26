@@ -15,6 +15,8 @@ export interface Turn {
   stopReason: BetaMessage["stop_reason"];
   /** Thrown while streaming, after the text has been sent. */
   error?: unknown;
+  /** Reported usage (default: 1 input and 1 output token). */
+  usage?: { input_tokens: number; output_tokens: number };
 }
 
 export function toolUse(input: unknown, name = "prepare_inquiry", id = "toolu_1"): BetaContentBlock {
@@ -34,7 +36,7 @@ function stream(turn: Turn): MessageStreamLike {
     ],
     stop_reason: turn.stopReason,
     stop_sequence: null,
-    usage: { input_tokens: 1, output_tokens: 1 },
+    usage: turn.usage ?? { input_tokens: 1, output_tokens: 1 },
   } as unknown as BetaMessage;
 
   return {

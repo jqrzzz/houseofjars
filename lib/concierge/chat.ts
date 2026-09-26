@@ -41,7 +41,26 @@ export const shadowLines = {
   unavailable: "Something went wrong on my side. Please try again, or message the team directly.",
   empty: "Sorry, I lost my thread there. Could you ask me again?",
   cutOff: "I ran out of room there. Could you ask again, or shall I pass your question to the team?",
+  resting: "I’m resting for the rest of the day, but the team is here: their WhatsApp and email are below.",
+  conversationLimit:
+    "We’ve covered a lot in this conversation. For anything else the team can help directly: their WhatsApp and email are below.",
 } as const;
+
+/** Why the window points to the team instead of Shadow: no API key, today's budget spent, or a very long conversation. */
+export type Closed = "offline" | "resting" | "limit";
+
+/** What the window says when /api/concierge answers with an error before streaming. */
+export function failureOf(status: number, code: unknown): { line: string; closed: Closed | null } {
+  if (status === 503) {
+    return code === "resting" ? { line: shadowLines.resting, closed: "resting" } : { line: shadowLines.offline, closed: "offline" };
+  }
+  if (status === 429) {
+    return code === "conversation_limit"
+      ? { line: shadowLines.conversationLimit, closed: "limit" }
+      : { line: shadowLines.slowDown, closed: null };
+  }
+  return { line: shadowLines.unavailable, closed: null };
+}
 
 export function newChat(sessionId: string): ChatState {
   return { sessionId, messages: [], draft: null };
@@ -116,11 +135,7 @@ function applyEvent(state: ChatState, event: ConciergeEvent): ChatState {
         m.content.trim() ? { ...m, truncated: true } : { ...m, content: shadowLines.cutOff, state: "failed" },
       );
     case "error":
-      return updateLast(state, (m) => ({
-        ...m,
-        content: event.code === "busy" ? shadowLines.busy : shadowLines.unavailable,
-        state: "failed",
-      }));
+      return updateLast(state, (m) => ({ ...m, content: shadowLines[event.code], state: "failed" }));
     case "done":
       return updateLast(state, (m) => finish(m, event.sig));
   }

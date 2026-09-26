@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it } from "vitest";
 import { fakeClaude, toolUse, type Turn } from "@/test/fake-claude";
 import { createRateLimiter } from "../rate-limit";
+import { createDailyBudget } from "./budget";
+import { MAX_CONVERSATION_TURNS } from "./limits";
 import { createConciergeHandler } from "./handler";
 import { parseEvents } from "./protocol";
 import type { StreamMessages } from "./run";
@@ -21,11 +23,13 @@ const post = (payload: unknown, headers: Record<string, string> = {}) =>
     body: JSON.stringify(payload),
   });
 
-function handler(streamer: StreamMessages | null, capacity = 5) {
+function handler(streamer: StreamMessages | null, capacity = 5, budget = createDailyBudget({ limit: 10_000_000 })) {
   return createConciergeHandler({
     streamer: () => streamer,
     signer: () => (streamer ? signer : null),
     limiter: createRateLimiter({ capacity, refillMs: 60_000 }),
+    conversations: createRateLimiter({ capacity: MAX_CONVERSATION_TURNS, refillMs: 86_400_000 }),
+    budget,
     model: () => "claude-opus-5",
     siteUrl: "https://thehouseofjars.com",
     now: () => new Date("2026-09-26T03:00:00Z"),
@@ -138,6 +142,42 @@ describe("POST /api/concierge", () => {
     expect((await handle(post(body, { origin: "https://evil.example", "sec-fetch-site": "cross-site" }))).status).toBe(403);
     expect((await handle(post(body, { "content-type": "text/plain;charset=UTF-8" }))).status).toBe(415);
     expect(calls).toHaveLength(0);
+  });
+
+  it("rests, without calling Claude, once today's budget is spent (R4-03)", async () => {
+    const { streamer, calls } = fakeClaude([{ text: ["Hi."], stopReason: "end_turn" }]);
+    const response = await handler(streamer, 5, createDailyBudget({ limit: 1_000 }))(post(body));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "resting" });
+    expect(Number(response.headers.get("retry-after"))).toBeGreaterThan(0);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("tells the chat Shadow is resting if the budget runs out mid-turn (R4-03)", async () => {
+    const budget = createDailyBudget({ limit: 40_000 });
+    const { streamer } = fakeClaude([
+      {
+        blocks: [toolUse({ name: "Mai", email: "mai@example.com", message: "Pickup?" })],
+        stopReason: "tool_use",
+        usage: { input_tokens: 30_000, output_tokens: 0 },
+      },
+      { text: ["Please check it."], stopReason: "end_turn" },
+    ]);
+    const received = await events(await handler(streamer, 5, budget)(post(body)));
+    expect(received.at(-1)).toEqual({ type: "error", code: "resting" });
+  });
+
+  it(`caps a conversation at ${MAX_CONVERSATION_TURNS} guest messages (R4-03)`, async () => {
+    const turns = Array.from({ length: MAX_CONVERSATION_TURNS }, () => ({ text: ["Ok."], stopReason: "end_turn" as const }));
+    const { streamer, calls } = fakeClaude(turns);
+    const handle = handler(streamer, 100);
+    for (let i = 0; i < MAX_CONVERSATION_TURNS; i++) expect((await handle(post(body))).status).toBe(200);
+    const limited = await handle(post(body));
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({ error: "conversation_limit" });
+    expect(calls).toHaveLength(MAX_CONVERSATION_TURNS);
+    // A new conversation starts afresh.
+    expect((await handle(post({ ...body, session_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7" }))).status).toBe(200);
   });
 
   it("rate-limits per IP", async () => {

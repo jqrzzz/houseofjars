@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { BetaContentBlock, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import { describe, expect, it, vi } from "vitest";
 import { fakeClaude, toolUse, type Turn } from "@/test/fake-claude";
+import { createDailyBudget, SpendLimitReached, type SpendBudget } from "./budget";
 import { priceLine } from "./guard";
 import type { HistoryMessage } from "./history";
 import type { ConciergeEvent } from "./protocol";
@@ -24,7 +25,7 @@ const inquiry = { name: "Mai", email: "mai@example.com", message: "A bed on 3 Oc
 
 const signer = createSigner("sk-ant-test-key");
 
-async function run(turns: Turn[]) {
+async function run(turns: Turn[], budget: SpendBudget = createDailyBudget({ limit: 10_000_000 })) {
   const { streamer, calls } = fakeClaude(turns);
   const events: ConciergeEvent[] = [];
   const signDraft = vi.fn((draft: Parameters<typeof signer.signDraft>[1]) => signer.signDraft(sessionId, draft));
@@ -32,6 +33,7 @@ async function run(turns: Turn[]) {
     messages,
     stream: streamer,
     signDraft,
+    budget,
     emit: (event) => events.push(event),
     model: "claude-opus-5",
     systemPrompt: "SYSTEM",
@@ -53,6 +55,7 @@ describe("request parameters", () => {
   it("asks for adaptive thinking at low effort with server-side refusal fallbacks", () => {
     expect(params).toMatchObject({
       model: "claude-opus-5",
+      max_tokens: 2048,
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
       thinking: { type: "adaptive" },
@@ -186,6 +189,46 @@ describe("the concierge loop", () => {
     const api = await run([{ stopReason: "end_turn", error: overloaded }]);
     await expect(api.promise).rejects.toBe(overloaded);
     expect(api.calls).toHaveLength(1);
+  });
+});
+
+describe("spend ceiling (R4-03)", () => {
+  it("reserves each call's worst case and settles to what it really used", async () => {
+    const budget = createDailyBudget({ limit: 1_000_000 });
+    const { promise } = await run([{ text: ["Hi."], stopReason: "end_turn" }], budget);
+    await promise;
+    expect(budget.remaining()).toBe(1_000_000 - 6); // the fake reports 1 input and 1 output token
+  });
+
+  it("calls nothing when today's budget can't cover a call", async () => {
+    const { promise, calls } = await run([{ text: ["Hi."], stopReason: "end_turn" }], createDailyBudget({ limit: 1_000 }));
+    await expect(promise).rejects.toBeInstanceOf(SpendLimitReached);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("stops before a follow-up call the budget can't cover", async () => {
+    const budget = createDailyBudget({ limit: 30_000 });
+    const { promise, calls } = await run(
+      [
+        { blocks: [toolUse(inquiry)], stopReason: "tool_use", usage: { input_tokens: 20_000, output_tokens: 0 } },
+        { text: ["Please check it."], stopReason: "end_turn" },
+      ],
+      budget,
+    );
+    await expect(promise).rejects.toBeInstanceOf(SpendLimitReached);
+    expect(calls).toHaveLength(1);
+    expect(classifyError(new SpendLimitReached())).toBe("resting");
+  });
+
+  it("gives back a reservation the API turned away, but keeps one for a call that may have run", async () => {
+    const budget = createDailyBudget({ limit: 1_000_000 });
+    const overloaded = new Anthropic.InternalServerError(529, undefined, "Overloaded", new Headers());
+    await (await run([{ stopReason: "end_turn", error: overloaded }], budget)).promise.catch(() => {});
+    expect(budget.remaining()).toBe(1_000_000);
+
+    const midStream = new Anthropic.APIError(undefined, undefined, "overloaded", undefined, "overloaded_error");
+    await (await run([{ text: ["Part"], stopReason: "end_turn", error: midStream }], budget)).promise.catch(() => {});
+    expect(budget.remaining()).toBeLessThan(1_000_000 - 10_000);
   });
 });
 

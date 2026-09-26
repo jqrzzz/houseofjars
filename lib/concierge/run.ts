@@ -10,6 +10,7 @@ import type {
   BetaToolUseBlock,
 } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import type { InquiryDraft } from "../inquiry/schema";
+import { SpendLimitReached, weighUsage, worstCaseCost, type SpendBudget } from "./budget";
 import { mentionsMoney, priceLine } from "./guard";
 import type { HistoryMessage } from "./history";
 import { buildDateLine } from "./prompt";
@@ -20,8 +21,13 @@ import { PREPARE_INQUIRY, prepareInquiryTool, runPrepareInquiry } from "./tool";
 export const MAX_TOOL_ROUNDS = 2;
 /** Times a round is re-issued because its streamed tool input could not be parsed. */
 export const MAX_MALFORMED_RETRIES = 1;
-/** Caps thinking plus reply; replies are two to four sentences. */
-export const MAX_TOKENS = 4096;
+/**
+ * A backstop, not a length control (the model never sees it): room for
+ * low-effort thinking, a two-to-four-sentence reply and a prepare_inquiry
+ * call carrying a long guest message, so real replies are never cut off. It
+ * also bounds what each call reserves from the daily budget.
+ */
+export const MAX_TOKENS = 2048;
 export const DEFAULT_MODEL = "claude-opus-5";
 
 /** The slice of the SDK's BetaMessageStream the loop needs (lets tests inject a fake). */
@@ -40,6 +46,8 @@ export interface RunConciergeOptions {
   readonly stream: StreamMessages;
   /** Signs a draft for the team, so the chat window can send exactly that and nothing else. */
   readonly signDraft: (draft: InquiryDraft) => string;
+  /** Today's spending ceiling: every model call reserves its worst case first. */
+  readonly budget: SpendBudget;
   readonly emit: (event: ConciergeEvent) => void;
   readonly model: string;
   /** Stable instructions and house knowledge (cached). */
@@ -116,9 +124,12 @@ export async function runConcierge(options: RunConciergeOptions): Promise<string
 
   for (let round = 0, retries = 0; ; ) {
     const keep = reply.length;
+    const params = buildParams(options, messages);
+    const reservation = options.budget.reserve(worstCaseCost(params));
+    if (!reservation) throw new SpendLimitReached();
     let message: BetaMessage;
     try {
-      const stream = options.stream(buildParams(options, messages), { signal: options.signal });
+      const stream = options.stream(params, { signal: options.signal });
       let needsSeparator = reply.length > 0;
       let quotedMoney = false;
       for await (const event of stream) {
@@ -135,13 +146,18 @@ export async function runConcierge(options: RunConciergeOptions): Promise<string
         }
       }
       if (quotedMoney) {
+        // The call's real usage is unknown now, so its reservation stays spent.
         emit({ type: "rewind", keep: 0 });
         reply = "";
         sendText(priceLine);
         return reply;
       }
       message = await stream.finalMessage();
+      reservation.settle(weighUsage(message.usage));
     } catch (error) {
+      // An HTTP error means the API turned the request away unbilled; after
+      // any other failure the call may have run, so its reservation stays spent.
+      if (error instanceof Anthropic.APIError && error.status !== undefined) reservation.settle(0);
       if (!isMalformedStream(error) || retries >= MAX_MALFORMED_RETRIES) throw error;
       // Nothing from this round reached a tool; take back its text and ask again.
       retries++;
@@ -187,7 +203,8 @@ export async function runConcierge(options: RunConciergeOptions): Promise<string
 }
 
 /** Maps a thrown error to what the chat window shows; null when the guest has gone. */
-export function classifyError(error: unknown): "busy" | "unavailable" | null {
+export function classifyError(error: unknown): "busy" | "unavailable" | "resting" | null {
+  if (error instanceof SpendLimitReached) return "resting";
   if (error instanceof Anthropic.APIUserAbortError) return null;
   if (error instanceof Anthropic.RateLimitError) return "busy";
   // Mid-stream errors carry no HTTP status, only the API's error type.

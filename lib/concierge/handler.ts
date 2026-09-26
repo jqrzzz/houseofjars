@@ -1,11 +1,12 @@
 import { json, readJsonBody, rejectCrossSite } from "../http";
 import { clientKey, type RateLimitDecision } from "../rate-limit";
+import { worstCaseCost, type SpendBudget } from "./budget";
 import { trustedHistory } from "./history";
 import { buildSystemPrompt } from "./prompt";
 import { encodeEvent, type ConciergeEvent } from "./protocol";
 import { MAX_REQUEST_BYTES } from "./limits";
 import { conciergeRequestSchema } from "./request";
-import { classifyError, runConcierge, type StreamMessages } from "./run";
+import { buildParams, classifyError, runConcierge, type StreamMessages } from "./run";
 import type { Signer } from "./signing";
 
 export interface ConciergeHandlerDeps {
@@ -13,7 +14,12 @@ export interface ConciergeHandlerDeps {
   readonly streamer: () => StreamMessages | null;
   /** Signs Shadow's replies; null when ANTHROPIC_API_KEY is not set. */
   readonly signer: () => Signer | null;
+  /** Per client (IPv4 address or IPv6 /64). */
   readonly limiter: { take(key: string): RateLimitDecision };
+  /** Per conversation (session id): at most MAX_CONVERSATION_TURNS guest messages. */
+  readonly conversations: { take(key: string): RateLimitDecision };
+  /** Today's spending ceiling for this server instance. */
+  readonly budget: SpendBudget;
   readonly model: () => string;
   readonly siteUrl: string;
   readonly now?: () => Date;
@@ -49,6 +55,17 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
 
     systemPrompt ??= buildSystemPrompt(deps.siteUrl);
     const prompt = systemPrompt;
+    const model = deps.model();
+    const now = deps.now?.() ?? new Date();
+    const history = trustedHistory(parsed.data, signer);
+
+    // Answer plainly now if today's budget can't cover even the first call.
+    if (deps.budget.remaining() < worstCaseCost(buildParams({ model, systemPrompt: prompt, now }, history))) {
+      return json({ error: "resting" }, 503, { "retry-after": String(deps.budget.secondsUntilReset()) });
+    }
+    const turn = deps.conversations.take(sessionId);
+    if (!turn.allowed) return json({ error: "conversation_limit" }, 429);
+
     const encoder = new TextEncoder();
 
     const events = new ReadableStream<Uint8Array>({
@@ -62,13 +79,14 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
         };
         try {
           const reply = await runConcierge({
-            messages: trustedHistory(parsed.data, signer),
+            messages: history,
             stream,
             signDraft: (draft) => signer.signDraft(sessionId, draft),
+            budget: deps.budget,
             emit,
-            model: deps.model(),
+            model,
             systemPrompt: prompt,
-            now: deps.now?.() ?? new Date(),
+            now,
             signal: request.signal,
           });
           // The browser sends the reply back with this signature; without it, it never reaches Claude again.
