@@ -1,6 +1,7 @@
 import { BookingBand } from "@/components/BookingBand";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import { JarDrawing } from "@/components/drawings/Drawings";
+import { PhotoFrame } from "@/components/PhotoFrame";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import buttons from "@/components/ui/button.module.css";
@@ -50,6 +51,7 @@ export default function AboutPage() {
             Our mark is drawn after those jars: squat and heavy, with a thick rolled lip and one carved line.
           </p>
         </Prose>
+        <PhotoFrame shape="jar" caption="The front of the house" className={styles.jarFrame} />
       </Block>
 
       <Block id="team" title="The team">

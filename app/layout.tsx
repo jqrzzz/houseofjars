@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${displayFont.variable} ${bodyFont.variable} ${laoFont.variable}`}>
+    <html lang="en-GB" className={`${displayFont.variable} ${bodyFont.variable} ${laoFont.variable}`}>
       <body>
         <a className="skip-link" href="#main">
           Skip to content

@@ -65,7 +65,9 @@
   opacity: 0.75;
 }
 
-.jar .placeholderCaption {
+/* A jar-shaped frame is its own mark: no watermark or caption inside it. */
+.jar .placeholderCaption,
+.jar .watermark {
   display: none;
 }
 

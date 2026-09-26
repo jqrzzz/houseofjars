@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JarMark } from "@/components/brand/JarMark";
-import { TextileBand } from "@/components/brand/TextileBand";
 import buttons from "@/components/ui/button.module.css";
 import { ArrowIcon } from "@/components/ui/icons";
 import { pages } from "@/lib/site";
@@ -38,7 +37,6 @@ export default function NotFound() {
           ))}
         </ul>
       </div>
-      <TextileBand tone="stone" size="s" />
     </section>
   );
 }

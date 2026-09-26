@@ -22,7 +22,7 @@ export function siteJsonLd() {
         "@id": `${siteUrl}/#website`,
         url: `${siteUrl}/`,
         name: identity.name.value,
-        inLanguage: "en",
+        inLanguage: "en-GB",
         publisher: { "@id": hostelId },
       },
       {

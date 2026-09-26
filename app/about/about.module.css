@@ -17,3 +17,7 @@
 .ask {
   justify-self: start;
 }
+
+.jarFrame {
+  width: min(100%, 15rem);
+}
