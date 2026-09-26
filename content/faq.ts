@@ -51,7 +51,7 @@ export const faq: readonly FaqGroup[] = [
         id: "airport",
         question: "How far is the airport, and can you arrange transport?",
         answer: [
-          `${airport.value.place} is ${lowerFirst(airport.value.distance)} from the house. ${airportTransport.value}`,
+          `${airport.value.place} is ${lowerFirst(airport.value.distance)} from the house. ${airportTransport.value} Message them with your arrival time.`,
         ],
       },
       {
@@ -77,7 +77,7 @@ export const faq: readonly FaqGroup[] = [
         id: "dorms",
         question: "What kind of dorms do you have?",
         answer: [
-          `${beds.dorms.value}. To see which beds are free on your dates, check Booking.com or Agoda, or `,
+          `All the beds are pods, and the dorms include ${joinList(beds.dorms.value)}. To see which beds are free on your dates, check Booking.com or Agoda, or `,
           { text: "ask us", href: "/book" },
           ".",
         ],

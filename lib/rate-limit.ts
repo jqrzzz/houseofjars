@@ -25,10 +25,17 @@ export interface RateLimitDecision {
 export function createRateLimiter(options: RateLimiterOptions) {
   const { capacity, refillMs, maxKeys = 10_000, now = Date.now } = options;
   const buckets = new Map<string, { tokens: number; updated: number }>();
+  // After this long untouched a bucket is full again, no different from a new one.
+  const idleMs = capacity * refillMs;
 
   return {
     take(key: string): RateLimitDecision {
       const time = now();
+      // The Map is in least-recently-used order: forget buckets that have gone idle.
+      for (const [staleKey, stale] of buckets) {
+        if (time - stale.updated < idleMs) break;
+        buckets.delete(staleKey);
+      }
       const bucket = buckets.get(key) ?? { tokens: capacity, updated: time };
       const earned = (time - bucket.updated) / refillMs;
       bucket.tokens = Math.min(capacity, bucket.tokens + earned);
@@ -47,6 +54,10 @@ export function createRateLimiter(options: RateLimiterOptions) {
         return { allowed: true, retryAfterSeconds: 0 };
       }
       return { allowed: false, retryAfterSeconds: Math.ceil(((1 - bucket.tokens) * refillMs) / 1000) };
+    },
+    /** Number of clients currently tracked (for tests). */
+    get size() {
+      return buckets.size;
     },
   };
 }

@@ -46,6 +46,7 @@
   --placeholder: #e4d8c5;
   --placeholder-ink: #5f4c3c;
   --focus: var(--saffron-text);
+  --danger: #a33a1c; /* 6.1:1 on paper */
   --shadow-soft: 0 1px 2px rgb(35 23 16 / 0.06), 0 8px 24px rgb(35 23 16 / 0.08);
   --shadow-lift: 0 2px 4px rgb(35 23 16 / 0.08), 0 18px 48px rgb(35 23 16 / 0.16);
 
@@ -116,6 +117,7 @@
     --placeholder: #261c14;
     --placeholder-ink: #c9b89f;
     --focus: var(--saffron);
+    --danger: #f08a6b;
     --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
     --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 18px 48px rgb(0 0 0 / 0.5);
   }

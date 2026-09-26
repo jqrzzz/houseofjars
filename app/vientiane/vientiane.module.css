@@ -1,0 +1,30 @@
+.whatsapp {
+  justify-self: start;
+}
+
+/* A card to show a taxi or tuk-tuk driver. */
+.address {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-s);
+  padding: var(--space-l);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+}
+
+.addressLabel {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.addressText {
+  display: grid;
+  font-family: var(--font-display-stack);
+  font-size: var(--step-2);
+  font-style: normal;
+  line-height: 1.3;
+}

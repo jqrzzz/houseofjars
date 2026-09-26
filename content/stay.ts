@@ -23,8 +23,9 @@ export const beds = {
     ["Privacy curtain", "Reading light", "Personal power socket", "Locker or safe"] as const,
     sources.booking,
   ),
-  dorms: fact("Dorms of pod-style beds, including a mixed dorm and a 14-bed dorm", sources.booking, {
-    note: "A mixed dorm is listed and a 14-bed dorm is mentioned. Other dorm types and sizes are not published.",
+  /** Written to follow "The dorms include …". */
+  dorms: fact(["a mixed dorm", "a 14-bed dorm"] as const, sources.booking, {
+    note: "A mixed dorm is listed and a 14-bed dorm is mentioned (they may be the same dorm). Other dorm types and sizes are not published.",
   }),
 } as const;
 

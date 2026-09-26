@@ -42,7 +42,7 @@ export function buildHouseKnowledge(siteUrl: string): string {
     ],
     [
       "Beds and dorms",
-      bullet([beds.style.value + ".", `Every bed has: ${joinList(beds.perBed.value.map((i) => i.toLowerCase()))}.`, `${beds.dorms.value}.`]),
+      bullet([beds.style.value + ".", `Every bed has: ${joinList(beds.perBed.value.map((i) => i.toLowerCase()))}.`, `The dorms include ${joinList(beds.dorms.value)}.`]),
     ],
     [
       "Bathrooms, breakfast and amenities",

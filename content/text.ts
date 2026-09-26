@@ -10,3 +10,10 @@ export function joinList(items: readonly string[]): string {
 export function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
+
+const WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+
+/** 2 -> "Two", for counts that start a sentence. */
+export function countWord(count: number): string {
+  return WORDS[count] ?? String(count);
+}

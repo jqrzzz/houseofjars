@@ -24,11 +24,6 @@ export function createInquiryHandler(deps: InquiryHandlerDeps) {
     const config = deps.config();
     if (!config) return json({ error: "not_configured" }, 503);
 
-    const decision = deps.limiter.take(clientIp(request.headers));
-    if (!decision.allowed) {
-      return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
-    }
-
     const body = await readJsonBody(request, MAX_INQUIRY_BYTES);
     if (!body.ok) {
       return body.status === 413
@@ -38,6 +33,12 @@ export function createInquiryHandler(deps: InquiryHandlerDeps) {
 
     const form = inquiryFormSchema.safeParse(body.value);
     if (!form.success) return json({ error: "invalid_request", issues: toFieldIssues(form.error) }, 400);
+
+    // Only requests that would reach Shadow count, so fixing a typo never locks a guest out.
+    const decision = deps.limiter.take(clientIp(request.headers));
+    if (!decision.allowed) {
+      return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
+    }
 
     const payload = buildPayload(form.data, { client_ref: form.data.client_ref, source: "website_form" });
     const result = await submitInquiry(payload, { config, fetch: deps.fetch });

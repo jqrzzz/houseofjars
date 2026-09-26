@@ -1,0 +1,62 @@
+.platforms {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid var(--rule-strong);
+}
+
+.platform {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-m);
+  padding: var(--space-l) 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.platformName {
+  font-family: var(--font-display-stack);
+  font-size: var(--step-3);
+  line-height: 1.1;
+}
+
+.platformNote {
+  grid-row: 2;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.platformIcon {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--accent-text);
+  transition: transform 200ms var(--ease-out);
+}
+
+.platform:hover .platformName {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.platform:hover .platformIcon {
+  transform: translate(2px, -2px);
+}
+
+.addressLabel {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.address {
+  display: grid;
+  font-style: normal;
+  font-size: var(--step-1);
+}

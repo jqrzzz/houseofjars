@@ -1,5 +1,6 @@
 import { airportTransport, immigration, location, plainOfJars } from "./area";
 import { identity } from "./identity";
+import { privacy } from "./privacy";
 import { honestNotes, praise, ratings } from "./reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, staff, times } from "./stay";
 
@@ -22,6 +23,7 @@ export const content = {
   ratings,
   praise,
   honestNotes,
+  privacy,
 } as const;
 
 /** Date the published facts were last reviewed against public listings. */

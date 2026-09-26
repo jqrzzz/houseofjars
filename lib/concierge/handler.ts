@@ -27,17 +27,18 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
     const stream = deps.streamer();
     if (!stream) return json({ error: "not_configured" }, 503);
 
-    const decision = deps.limiter.take(clientIp(request.headers));
-    if (!decision.allowed) {
-      return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
-    }
-
     const body = await readJsonBody(request, MAX_REQUEST_BYTES);
     if (!body.ok) {
       return json({ error: body.status === 413 ? "payload_too_large" : "invalid_request" }, body.status);
     }
     const parsed = conciergeRequestSchema.safeParse(body.value);
     if (!parsed.success) return json({ error: "invalid_request" }, 400);
+
+    // Rate-limit only requests that would reach Claude.
+    const decision = deps.limiter.take(clientIp(request.headers));
+    if (!decision.allowed) {
+      return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
+    }
 
     systemPrompt ??= buildSystemPrompt(deps.siteUrl);
     const prompt = systemPrompt;

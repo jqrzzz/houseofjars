@@ -30,7 +30,7 @@ export function buildLlmsTxt(siteUrl: string): string {
     `- Email: ${email.value}`,
     `- Check-in from ${times.checkIn.value}; check-out until ${times.checkOut.value}; early check-in ${times.earlyCheckIn.value.toLowerCase()}`,
     `- Beds: ${beds.style.value.toLowerCase()}; each has ${joinList(beds.perBed.value.map((i) => i.toLowerCase()))}`,
-    `- Dorms: ${beds.dorms.value.toLowerCase()}`,
+    `- Dorms: include ${joinList(beds.dorms.value)}`,
     `- Breakfast included: ${joinList(breakfast.items.value.map((i) => i.toLowerCase()))}`,
     `- Amenities: ${amenities.map((a) => a.value.name).join("; ")}`,
     `- Staff: ${staff.hours.value.toLowerCase()}; languages: ${joinList(staff.languages.value)}`,

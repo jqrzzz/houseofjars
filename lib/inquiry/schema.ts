@@ -27,7 +27,13 @@ const formFields = {
   preferred_contact: optional(z.enum(CONTACT_METHODS)),
   check_in: optional(z.iso.date("Please use a real date.")),
   check_out: optional(z.iso.date("Please use a real date.")),
-  guests: optional(z.number().int().min(1, "At least one guest.").max(20, "For more than 20 guests, write to us.")),
+  guests: optional(
+    z
+      .number("Please enter a number of guests.")
+      .int("Please enter a whole number of guests.")
+      .min(1, "At least one guest.")
+      .max(20, "For more than 20 guests, write to us."),
+  ),
   bed_preference: optional(z.string().trim().max(80, "Please keep this under 80 characters.")),
   message: z
     .string()

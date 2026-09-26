@@ -21,10 +21,7 @@ export const location = {
   },
 } as const;
 
-export const airportTransport = fact(
-  "The team can arrange transport from the airport: message them with your arrival time.",
-  sources.reviews,
-);
+export const airportTransport = fact("The team can arrange transport from the airport.", sources.reviews);
 
 export const immigration = {
   ldif: fact(
