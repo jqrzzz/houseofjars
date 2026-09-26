@@ -100,7 +100,7 @@ const roomTypeSchema = z.object({
   price: priceSchema.nullable(),
 });
 
-export const availabilitySchema = z.object({
+const availabilitySchema = z.object({
   property: z.object({ name: z.string(), timezone: z.string() }),
   check_in: isoDate,
   check_out: isoDate,
@@ -143,7 +143,7 @@ function optional<T extends z.ZodType>(schema: T) {
   return z.preprocess(blankToNull, schema.nullish()).transform((value) => value ?? null);
 }
 
-export const bookingRequestSchema = z
+const bookingRequestSchema = z
   .strictObject({
     client_ref: z.uuid(guestText.checkForm),
     room_type_id: z.uuid(guestText.roomRefused),
@@ -198,7 +198,7 @@ export function parseBookingRequest(
   };
 }
 
-export const bookingCreatedSchema = z.object({
+const bookingCreatedSchema = z.object({
   id: z.string().min(1),
   // A property prefix, then 6 unambiguous characters: "HOJ-7K3M9Q".
   reference: z.string().regex(/^[A-Z0-9]{1,12}-[A-Z0-9]{6}$/),

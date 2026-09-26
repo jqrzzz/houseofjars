@@ -5,7 +5,7 @@
  * Browser-safe and free of zod: the booking form's JavaScript loads this.
  */
 
-export const HOUSE_TIME_ZONE = "Asia/Vientiane";
+const HOUSE_TIME_ZONE = "Asia/Vientiane";
 const DAY_MS = 86_400_000;
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;

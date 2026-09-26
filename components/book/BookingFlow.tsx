@@ -289,12 +289,19 @@ function Flow({ house }: { house: HouseNotes }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // The Back and Forward buttons move between the steps. After a booking, sending the same request
-  // again reuses its client_ref, so Shadow answers with the same booking rather than a second one.
+  // The Back and Forward buttons move between the steps. Entries the form didn't make (a link to
+  // #message on this page) leave the step alone. After a booking, sending the same request again
+  // reuses its client_ref, so Shadow answers with the same booking rather than a second one.
+  const stepNow = useRef(step);
+  useEffect(() => {
+    stepNow.current = step;
+  }, [step]);
   useEffect(() => {
     function onPopState(event: PopStateEvent) {
+      const target = (event.state as { booking?: Step } | null)?.booking;
+      if (!target || target === stepNow.current) return;
       moved.current = true;
-      setStep((event.state as { booking?: Step } | null)?.booking ?? "dates");
+      setStep(target);
     }
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -422,13 +429,18 @@ function Flow({ house }: { house: HouseNotes }) {
     />
   );
 
+  // A later step without its choices shows the beds again (after a 409, the room may be gone);
+  // after a reload they are gone altogether.
+  const needsRoom = step === "details" || step === "review";
+  const current: Exclude<Step, "done"> | null =
+    step === "done" ? null : needsRoom && !(shown && room) ? (search.status === "idle" ? null : "rooms") : step;
+
   let content: ReactNode;
   if (status === "closed") {
     content = <Closed headingId={headingId} headingRef={headingRef} />;
   } else if (step === "done" && saved) {
     content = <Confirmation saved={saved} house={house} headingId={headingId} headingRef={headingRef} onAgain={startAgain} />;
-  } else if (step === "dates" || step === "rooms" || (shown && room && step !== "done")) {
-    const current = step as Exclude<Step, "done">;
+  } else if (current) {
     content = (
       <>
         <StepList current={current} />

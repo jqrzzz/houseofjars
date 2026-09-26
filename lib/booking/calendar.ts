@@ -172,7 +172,7 @@ export function viewFor(day: string, view: string, count: number, rules: Calenda
 const nightsText = (count: number) => `${count} ${count === 1 ? "night" : "nights"}`;
 
 /** Why a day can't be chosen, in words, for its label and for the announcement when it is tried. */
-export function blockText(block: DayBlock, rules: CalendarRules): string {
+function blockText(block: DayBlock, rules: CalendarRules): string {
   switch (block) {
     case "past":
       return "in the past";
