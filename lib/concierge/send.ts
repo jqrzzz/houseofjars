@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { gateRefusal } from "../gate";
 import { json, readJsonBody, rejectCrossSite } from "../http";
 import type { InquiryGate } from "../inquiry/gate";
-import { gateRefusal, MAX_INQUIRY_BYTES } from "../inquiry/handler";
+import { MAX_INQUIRY_BYTES } from "../inquiry/handler";
 import { replyChannel } from "../inquiry/reply";
 import { buildPayload, inquiryDraftSchema } from "../inquiry/schema";
 import { submitErrorStatus, submitInquiry, type ShadowConfig } from "../inquiry/submit";

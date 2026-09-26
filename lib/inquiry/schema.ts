@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { dateWindow } from "./dates";
+import { CONTACT_METHODS } from "./reply";
 
 export { MAX_DAYS_AHEAD, dateWindow } from "./dates";
+export { CONTACT_METHODS } from "./reply";
 
 /*
  * The inquiry contract shared with Shadow Check-in (docs/INQUIRY_API.md).
@@ -14,7 +16,6 @@ export { MAX_DAYS_AHEAD, dateWindow } from "./dates";
  */
 
 export const INQUIRY_SOURCES = ["website_form", "website_concierge"] as const;
-export const CONTACT_METHODS = ["email", "whatsapp", "phone"] as const;
 
 const blankToNull = (value: unknown) => (typeof value === "string" && value.trim() === "" ? null : value);
 

@@ -3,15 +3,10 @@
  * zod: the booking form reads links in the browser and must stay small.
  */
 
+import { addDays, houseToday } from "../dates";
+
 /** How far ahead an inquiry can be about. */
 export const MAX_DAYS_AHEAD = 730;
-const DAY_MS = 86_400_000;
-const vientianeDate = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Vientiane",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
 
 /**
  * The dates an inquiry may name, as YYYY-MM-DD: from yesterday in Vientiane
@@ -20,5 +15,6 @@ const vientianeDate = new Intl.DateTimeFormat("en-CA", {
  * source of anything outside it.
  */
 export function dateWindow(now = Date.now()): { earliest: string; latest: string } {
-  return { earliest: vientianeDate.format(now - DAY_MS), latest: vientianeDate.format(now + MAX_DAYS_AHEAD * DAY_MS) };
+  const today = houseToday(now);
+  return { earliest: addDays(today, -1), latest: addDays(today, MAX_DAYS_AHEAD) };
 }

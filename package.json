@@ -16,6 +16,7 @@
     "test": "vitest run",
     "content:check": "tsx scripts/content-check.ts",
     "smoke": "tsx scripts/smoke.ts",
+    "fake-shadow": "tsx test/fake-shadow.ts",
     "indexnow": "tsx scripts/indexnow.ts"
   },
   "dependencies": {

@@ -19,7 +19,15 @@ export function json(body: unknown, status = 200, headers: HeadersInit = {}): Re
 export function rejectCrossSite(request: Request, siteUrl: string): Response | null {
   const type = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
   if (type !== "application/json") return json({ error: "unsupported_media_type" }, 415);
+  return rejectForeignOrigin(request, siteUrl);
+}
 
+/**
+ * The origin half of rejectCrossSite, for GET routes (which have no body to
+ * type): when the browser says where the request came from, it must be this
+ * site or the visitor's own address bar.
+ */
+export function rejectForeignOrigin(request: Request, siteUrl: string): Response | null {
   const site = request.headers.get("sec-fetch-site");
   if (site !== null && site !== "same-origin" && site !== "none") return json({ error: "forbidden" }, 403);
 

@@ -1,5 +1,5 @@
+import { gateRefusal } from "../gate";
 import { json, readJsonBody, rejectCrossSite } from "../http";
-import { clientKey } from "../rate-limit";
 import type { InquiryGate } from "./gate";
 import { buildPayload, inquiryFormSchema, toFieldIssues } from "./schema";
 import { submitErrorStatus, submitInquiry, type ShadowConfig } from "./submit";
@@ -42,15 +42,4 @@ export function createInquiryHandler(deps: InquiryHandlerDeps) {
     if (result.ok) return json({ status: "received", id: result.id }, result.duplicate ? 200 : 201);
     return json({ error: result.error, ...(result.issues ? { issues: result.issues } : {}) }, submitErrorStatus[result.error]);
   };
-}
-
-/** The gate's answer as a response: 429 when this client sent too many, 503 busy when everyone did. */
-export function gateRefusal(gate: InquiryGate, request: Request): Response | null {
-  const decision = gate.take(clientKey(request.headers));
-  if (decision.allowed) return null;
-  return json(
-    { error: decision.reason },
-    decision.reason === "rate_limited" ? 429 : 503,
-    { "retry-after": String(decision.retryAfterSeconds) },
-  );
 }
