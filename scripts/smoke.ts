@@ -4,6 +4,13 @@
  *   npm run build && npm run start -- -p 3000     # in one terminal
  *   BASE_URL=http://localhost:3000 npm run smoke  # in another
  *
+ * To walk the booking form too, build and start the site against a stand-in
+ * for Shadow Check-in that this test runs itself (test/fake-shadow.ts):
+ *
+ *   export SHADOW_API_URL=http://127.0.0.1:4010 SHADOW_INQUIRY_KEY=sck_fakeShadowCheckinKeyForLocalTestsOnly000000
+ *   npm run build && npm run start -- -p 3000
+ *   BASE_URL=http://localhost:3000 FAKE_SHADOW_PORT=4010 npm run smoke
+ *
  * Visits every page, guides included, on a phone (390 x 844) and a desktop
  * (1440 x 900), in light and dark, and checks the HTTP status, console
  * errors, exactly one h1, the title, canonical and Open Graph tags,
@@ -14,9 +21,14 @@
  * file, the security headers, and that the API routes refuse cross-site
  * posts. Then it opens Shadow's window, checks that a /book link fills in the
  * dates and guests, and tries the booking form. Without API keys Shadow and
- * the form must fall back to the team's contact details; if Shadow Check-in is
- * configured, the form is not submitted (no test inquiries reach the team).
- * Screenshots are saved to ./screenshots.
+ * the form must fall back to the team's contact details, and /book must offer
+ * only the booking sites and the message form. Against the fake Shadow
+ * Check-in it walks online booking on a phone and a desktop (dates by
+ * keyboard, beds, details, review, confirmation), then beds taken while
+ * booking (409), booking closed (503) and a busy line (429), and sends the
+ * message form. Against a real Shadow Check-in nothing is sent (no test
+ * bookings or inquiries reach the team). Screenshots are saved to
+ * ./screenshots.
  *
  * Uses the Chromium at CHROMIUM_PATH (default /opt/pw-browsers/chromium)
  * and never downloads a browser.
@@ -25,15 +37,18 @@ import { mkdir } from "node:fs/promises";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
 import { content } from "../content";
 import { isFirm } from "../content/certainty";
+import { addDays, houseToday } from "../lib/dates";
 import { dateWindow } from "../lib/inquiry/dates";
 import { collectFacts, factsMentionedIn } from "../lib/content-audit";
 import { allPages, metaTitle } from "../lib/pages";
 import { siteUrl } from "../lib/site";
+import { FAKE_ROOMS, FAKE_SHADOW_KEY, startFakeShadow, type FakeShadow } from "../test/fake-shadow";
 import { typesOf, isA, validateJsonLd } from "../test/schema-org";
 
 const base = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 const executablePath = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
 const outDir = "screenshots";
+const fakeShadowPort = process.env.FAKE_SHADOW_PORT ? Number(process.env.FAKE_SHADOW_PORT) : null;
 
 const viewports = [
   { name: "phone", width: 390, height: 844 },
@@ -64,9 +79,21 @@ function check(ok: boolean, label: string) {
 
 const trimSlash = (url: string | null) => url?.replace(/\/+$/, "") ?? null;
 
-/** Opens a page and records console errors, except responses the test expects (e.g. a 503 from an API). */
+let visitor = 0;
+
+/**
+ * Opens a page and records console errors, except responses the test expects
+ * (e.g. a 503 from an API). Each visitor comes from its own address (the site
+ * reads X-Forwarded-For when no proxy sets it), so the site's limits per
+ * client apply to each walk on its own.
+ */
 async function open(browser: Browser, viewport: Viewport, scheme: Scheme) {
-  const context = await browser.newContext({ viewport, colorScheme: scheme });
+  visitor += 1;
+  const context = await browser.newContext({
+    viewport,
+    colorScheme: scheme,
+    extraHTTPHeaders: { "x-forwarded-for": `198.51.${100 + Math.floor(visitor / 250)}.${visitor % 250}` },
+  });
   const page = await context.newPage();
   const errors: string[] = [];
   page.on("console", (message) => {
@@ -227,29 +254,231 @@ async function concierge(browser: Browser, viewport: Viewport, scheme: Scheme) {
   await context.close();
 }
 
-async function bookingForm(browser: Browser, viewport: Viewport) {
+/** The message form: sent to the fake Shadow Check-in, or its fallback without one; never sent to a real one. */
+async function bookingForm(browser: Browser, viewport: Viewport, mode: BookingMode, fake: FakeShadow | null) {
   const { context, page, errors } = await open(browser, viewport, "light");
-  const label = `booking form (${viewport.name})`;
-  const probe = await page.request.post(`${base}/api/inquiry`, { data: {} });
-  if (probe.status() !== 503) {
+  const label = `message form (${viewport.name})`;
+  if (mode === "live") {
     console.log(`${label}: Shadow Check-in is configured, so the form is not submitted.`);
     await context.close();
     return;
   }
 
   await page.goto(`${base}/book`, { waitUntil: "networkidle" });
-  await page.getByLabel("Your name").fill("Smoke Test");
-  await page.getByLabel("Email").fill("smoke@example.com");
-  await page.getByLabel("Your message").fill("Checking the form works.");
-  await page.getByLabel(/I agree to the privacy notice/).check();
-  await page.getByRole("button", { name: "Send message" }).click();
-  const problem = page.getByRole("alert").filter({ hasText: "contact the team directly" });
-  await problem.waitFor({ state: "visible" });
-  check(await problem.getByText("Open WhatsApp").isVisible(), `${label}: no contact details after a failed send`);
-  await problem.scrollIntoViewIfNeeded();
-  await page.screenshot({ path: `${outDir}/book-form-unavailable-${viewport.width}.png` });
-  const unexpected = errors.filter((error) => !error.includes("503"));
+  const form = page.getByRole("form", { name: "Send the team a message" });
+  await form.getByLabel("Your name").fill("Smoke Test");
+  await form.getByRole("textbox", { name: "Email" }).fill("smoke@example.com");
+  await form.getByLabel("Your message").fill("Checking the form works.");
+  await form.getByLabel(/I agree to the privacy notice/).check();
+  const sent = fake?.inquiries.size ?? 0;
+  await form.getByRole("button", { name: "Send message" }).click();
+  if (mode === "fake") {
+    await page.getByText("Your message is with the team").waitFor();
+    check(fake?.inquiries.size === sent + 1, `${label}: the fake Shadow Check-in received ${(fake?.inquiries.size ?? 0) - sent} inquiries, expected 1`);
+  } else {
+    const problem = page.getByRole("alert").filter({ hasText: "contact the team directly" });
+    await problem.waitFor({ state: "visible" });
+    check(await problem.getByText("Open WhatsApp").isVisible(), `${label}: no contact details after a failed send`);
+    await problem.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `${outDir}/book-form-unavailable-${viewport.width}.png` });
+  }
+  const unexpected = errors.filter((error) => !(mode === "off" && error.includes("503")));
   check(unexpected.length === 0, `${label}: console errors: ${unexpected.join(" | ")}`);
+  await context.close();
+}
+
+/**
+ * Online booking's switch: "off" when the site has no Shadow Check-in, "fake"
+ * when it talks to this test's stand-in, "live" when it talks to a real one.
+ */
+type BookingMode = "off" | "fake" | "live";
+
+/** A day at the house, counted from today in Vientiane, as the booking calendar counts. */
+const houseDay = (offset: number) => addDays(houseToday(), offset);
+
+async function bookingMode(context: BrowserContext, fake: FakeShadow | null): Promise<BookingMode> {
+  const before = fake?.calls.length ?? 0;
+  // Dates no earlier run asked about in the last minute, so the site's cache can't answer for Shadow.
+  const from = houseDay(100 + (Date.now() % 97));
+  const response = await context.request.get(`${base}/api/availability?check_in=${from}&check_out=${addDays(from, 1)}&guests=1`);
+  if (fake && fake.calls.length > before) return "fake";
+  const body = (await response.json().catch(() => null)) as { error?: string } | null;
+  return response.status() === 503 && body?.error === "not_configured" ? "off" : "live";
+}
+
+/** /book with or without online booking, and the booking card that leads there. */
+async function bookingPages(browser: Browser, mode: BookingMode) {
+  const { context, page, errors } = await open(browser, viewports[0], "light");
+  await page.goto(`${base}/book`, { waitUntil: "networkidle" });
+  const online = (await page.locator("#book-online").count()) === 1;
+  const h1 = (await page.locator("h1").textContent())?.trim();
+  if (mode === "off") {
+    check(!online && h1 === "Prices and booking", `/book without Shadow Check-in: online booking ${online ? "shown" : "hidden"}, h1 "${h1}"`);
+  } else {
+    check(
+      online && h1 === "Book a bed",
+      `/book with Shadow Check-in: online booking ${online ? "shown" : "missing: was the site built with SHADOW_API_URL and SHADOW_INQUIRY_KEY?"}, h1 "${h1}"`,
+    );
+  }
+  for (const site of ["Booking.com", "Agoda"]) {
+    check(await page.locator("#online").getByRole("link", { name: new RegExp(`^${site}`) }).isVisible(), `/book: no ${site} link`);
+  }
+  check(await page.getByRole("form", { name: "Send the team a message" }).isVisible(), "/book: no message form");
+
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  const card = page.locator('form[aria-labelledby="booking-card-title"]');
+  const [action, button] = [await card.getAttribute("action"), (await card.getByRole("button").textContent())?.trim()];
+  const expected = mode === "off" ? ["/book#message", "Ask the team"] : ["/book", "See free beds"];
+  check(action === expected[0] && button === expected[1], `booking card: "${button}" to ${action}, expected "${expected[1]}" to ${expected[0]}`);
+  check(errors.length === 0, `booking pages: console errors: ${errors.join(" | ")}`);
+  await context.close();
+}
+
+/** A guest's whole booking, the dates chosen by keyboard, with a screenshot of each step. */
+async function bookingWalk(browser: Browser, viewport: Viewport, scheme: Scheme, fake: FakeShadow, offset: number) {
+  const { context, page, errors } = await open(browser, viewport, scheme);
+  const label = `booking (${viewport.name}, ${scheme})`;
+  const flow = page.locator("#book-online");
+  const shot = (step: string) => flow.screenshot({ path: `${outDir}/booking-${step}-${viewport.width}-${scheme}.png` });
+  const [checkIn, checkOut] = [houseDay(offset), houseDay(offset + 2)];
+
+  await page.goto(`${base}/book`, { waitUntil: "networkidle" });
+  await flow.getByText("Online booking is open until").waitFor();
+  // From today's day, the calendar's one tab stop: arrows to the check-in, Enter, two nights on, Enter.
+  await flow.locator('[data-day][tabindex="0"]').focus();
+  for (let day = 0; day < offset; day++) await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Enter");
+  const names = [
+    await flow.locator(`[data-day="${checkIn}"]`).getAttribute("aria-label"),
+    await flow.locator(`[data-day="${checkOut}"]`).getAttribute("aria-label"),
+  ];
+  check(
+    Boolean(names[0]?.endsWith("check-in") && names[1]?.endsWith("check-out")),
+    `${label}: the keyboard chose "${names.join('" and "')}"`,
+  );
+  await flow.getByRole("button", { name: "More guests" }).click();
+  await shot("1-dates");
+  await flow.getByRole("button", { name: "See free beds" }).click();
+
+  await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
+  await flow.getByRole("radio", { name: FAKE_ROOMS[0]!.name }).check();
+  await shot("2-beds");
+  await flow.getByRole("button", { name: "Continue" }).click();
+
+  await flow.getByRole("heading", { name: "Your details" }).waitFor();
+  await flow.getByRole("textbox", { name: "Your name" }).fill("Smoke Test");
+  await flow.getByRole("textbox", { name: "Email" }).fill("smoke@example.com");
+  await flow.getByRole("textbox", { name: "WhatsApp or phone" }).fill("+856 20 5555 0100");
+  await flow.getByRole("radio", { name: "WhatsApp" }).check();
+  await flow.getByLabel("Arrival time").fill("15:30");
+  await flow.getByRole("checkbox", { name: /I agree to the privacy notice/ }).check();
+  await shot("3-details");
+  await flow.getByRole("button", { name: "Continue" }).click();
+
+  await flow.getByRole("heading", { name: "Check and send" }).waitFor();
+  const payment = flow.getByRole("definition").filter({ hasText: /^At the house/ });
+  check((await payment.count()) === 1, `${label}: the review doesn't say the guest pays at the house`);
+  await shot("4-review");
+  await flow.getByRole("button", { name: "Send booking request" }).click();
+
+  await flow.getByRole("heading", { name: "Booking request sent" }).waitFor();
+  const reference = (await flow.getByText(/^[A-Z0-9]+-[A-Z0-9]{6}$/).textContent())?.trim();
+  await shot("5-confirmation");
+  const booked = [...fake.bookings.values()].find((booking) => booking.response.reference === reference);
+  const sent = booked?.request;
+  check(
+    sent?.check_in === checkIn &&
+      sent.check_out === checkOut &&
+      sent.guests === 2 &&
+      sent.room_type_id === FAKE_ROOMS[0]!.id &&
+      sent.name === "Smoke Test" &&
+      sent.preferred_contact === "whatsapp" &&
+      sent.arrival_time === "15:30",
+    `${label}: Shadow received ${JSON.stringify(sent)} for ${reference}`,
+  );
+  check(await flow.getByText(/Nothing to pay now/).isVisible(), `${label}: the confirmation doesn't say when to pay`);
+  check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
+  await context.close();
+}
+
+/** Someone else takes the beds while the guest is booking (Shadow answers 409): they choose again, details kept. */
+async function bookingTaken(browser: Browser, fake: FakeShadow) {
+  const { context, page, errors } = await open(browser, viewports[0], "light");
+  const label = "booking, beds taken (phone)";
+  const flow = page.locator("#book-online");
+  const [dorm, other] = [FAKE_ROOMS[0]!, FAKE_ROOMS[1]!];
+  const [checkIn, checkOut] = [houseDay(20), houseDay(23)];
+
+  // A link with dates, as an assistant would write it, goes straight to the beds.
+  await page.goto(`${base}/book?check_in=${checkIn}&check_out=${checkOut}&guests=2`, { waitUntil: "networkidle" });
+  await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
+  await flow.getByRole("radio", { name: dorm.name }).check();
+  await flow.getByRole("button", { name: "Continue" }).click();
+  await flow.getByRole("textbox", { name: "Your name" }).fill("Smoke Test");
+  await flow.getByRole("textbox", { name: "Email" }).fill("smoke@example.com");
+  await flow.getByRole("checkbox", { name: /I agree to the privacy notice/ }).check();
+  await flow.getByRole("button", { name: "Continue" }).click();
+  await flow.getByRole("heading", { name: "Check and send" }).waitFor();
+
+  fake.occupy(dorm.id, checkIn, checkOut, dorm.beds);
+  await flow.getByRole("button", { name: "Send booking request" }).click();
+  await flow.getByRole("alert").filter({ hasText: "those beds were taken" }).waitFor();
+  await flow.getByRole("radio", { name: other.name }).waitFor();
+  check(await flow.getByRole("radio", { name: dorm.name }).isDisabled(), `${label}: the full dorm can still be chosen`);
+  await flow.screenshot({ path: `${outDir}/booking-taken-390-light.png` });
+
+  await flow.getByRole("radio", { name: other.name }).check();
+  await flow.getByRole("button", { name: "Continue" }).click();
+  const name = await flow.getByRole("textbox", { name: "Your name" }).inputValue();
+  check(name === "Smoke Test", `${label}: the guest's details were lost ("${name}")`);
+  await flow.getByRole("button", { name: "Continue" }).click();
+  const price = flow.locator("dl").first().getByRole("definition").filter({ hasText: /^Confirmed by the team/ });
+  check((await price.count()) === 1, `${label}: a room without a rate shows a price`);
+  await flow.getByRole("button", { name: "Send booking request" }).click();
+  await flow.getByRole("heading", { name: "Booking request sent" }).waitFor();
+  check(
+    await flow.getByText(/The team confirms the price with your booking/).isVisible(),
+    `${label}: the confirmation doesn't say the team confirms the price`,
+  );
+  const unexpected = errors.filter((error) => !error.includes("409"));
+  check(unexpected.length === 0, `${label}: console errors: ${unexpected.join(" | ")}`);
+  await context.close();
+}
+
+/** Shadow Check-in not taking bookings (503), then a busy line (429) that clears. */
+async function bookingClosedAndBusy(browser: Browser, fake: FakeShadow) {
+  const { context, page, errors } = await open(browser, viewports[0], "light");
+  const flow = page.locator("#book-online");
+  // Dates nobody asked about yet, so the site's cache doesn't answer instead.
+  const link = (offset: number) => `${base}/book?check_in=${houseDay(offset)}&check_out=${houseDay(offset + 2)}&guests=3`;
+  try {
+    fake.state.mode = "not_configured";
+    await page.goto(link(40), { waitUntil: "networkidle" });
+    await flow.getByRole("heading", { name: "Online booking isn’t open just now" }).waitFor();
+    check(
+      (await flow.getByRole("link", { name: /^Booking\.com/ }).first().isVisible()) &&
+        (await flow.getByRole("link", { name: "Send the team a message", exact: true }).isVisible()),
+      "booking closed: the other ways to book are missing",
+    );
+    await flow.screenshot({ path: `${outDir}/booking-closed-390-light.png` });
+
+    fake.state.mode = "rate_limited";
+    await page.goto(link(50), { waitUntil: "networkidle" });
+    const busy = flow.getByRole("alert").filter({ hasText: "Our booking line is busy" });
+    await busy.waitFor();
+    check(await busy.getByText("Open WhatsApp").isVisible(), "booking busy: no contact details");
+    await flow.screenshot({ path: `${outDir}/booking-busy-390-light.png` });
+    fake.state.mode = "open";
+    await busy.getByRole("button", { name: "Try again" }).click();
+    await flow.getByRole("radio", { name: FAKE_ROOMS[0]!.name }).waitFor();
+  } finally {
+    fake.state.mode = "open";
+  }
+  const unexpected = errors.filter((error) => !error.includes("503"));
+  check(unexpected.length === 0, `booking closed and busy: console errors: ${unexpected.join(" | ")}`);
   await context.close();
 }
 
@@ -302,7 +531,11 @@ async function security(context: BrowserContext) {
     check((headers["strict-transport-security"] ?? "").startsWith("max-age="), `${path}: no Strict-Transport-Security`);
     check(headers["x-content-type-options"] === "nosniff", `${path}: no X-Content-Type-Options`);
   }
-  for (const api of ["/api/inquiry", "/api/concierge", "/api/concierge/send"]) {
+  const crossSiteLookup = await context.request.get(`${base}/api/availability?check_in=2030-01-01&check_out=2030-01-02&guests=1`, {
+    headers: { origin: "https://evil.example", "sec-fetch-site": "cross-site" },
+  });
+  check(crossSiteLookup.status() === 403, `/api/availability: a cross-site GET got ${crossSiteLookup.status()}, expected 403`);
+  for (const api of ["/api/inquiry", "/api/booking", "/api/concierge", "/api/concierge/send"]) {
     const crossSite = await context.request.post(base + api, {
       data: {},
       headers: { origin: "https://evil.example", "sec-fetch-site": "cross-site" },
@@ -315,11 +548,22 @@ async function security(context: BrowserContext) {
 
 async function main() {
   await mkdir(outDir, { recursive: true });
+  const fake = fakeShadowPort
+    ? await startFakeShadow({ port: fakeShadowPort, key: process.env.SHADOW_INQUIRY_KEY || FAKE_SHADOW_KEY })
+    : null;
   const browser = await chromium.launch({ executablePath });
   try {
     const context = await browser.newContext();
     await files(context);
     await security(context);
+    const mode = await bookingMode(context, fake);
+    console.log(
+      {
+        off: "Online booking: off (no Shadow Check-in), checking the message form's fallback.",
+        fake: `Online booking: on, against the fake Shadow Check-in at ${fake?.url}.`,
+        live: "Online booking: on, against a real Shadow Check-in, so nothing is booked or sent.",
+      }[mode],
+    );
     await context.close();
 
     for (const route of routes) {
@@ -331,9 +575,18 @@ async function main() {
     await bookingLink(browser);
     await concierge(browser, viewports[0], "light");
     await concierge(browser, viewports[1], "dark");
-    for (const viewport of viewports) await bookingForm(browser, viewport);
+    await bookingPages(browser, mode);
+    if (mode === "fake" && fake) {
+      await bookingWalk(browser, viewports[0], "light", fake, 10);
+      await bookingWalk(browser, viewports[1], "light", fake, 12);
+      await bookingWalk(browser, viewports[0], "dark", fake, 14);
+      await bookingTaken(browser, fake);
+      await bookingClosedAndBusy(browser, fake);
+    }
+    for (const viewport of viewports) await bookingForm(browser, viewport, mode, fake);
   } finally {
     await browser.close();
+    await fake?.close();
   }
 
   if (failures.length > 0) {

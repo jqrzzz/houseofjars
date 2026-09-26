@@ -7,7 +7,7 @@ import { identity } from "@/content/identity";
 import { openQuestions } from "@/content/open-questions";
 import { rules, times } from "@/content/stay";
 import { collectFacts, factsMentionedIn } from "./content-audit";
-import { bookingLinkTemplate, buildLlmsFullTxt, buildLlmsTxt, credited } from "./llms";
+import { bookingLinkTemplate, buildLlmsFullTxt, buildLlmsTxt, credited, onlineBookingLinkTemplate } from "./llms";
 import { allPages } from "./pages";
 
 const site = "https://example.org";
@@ -85,5 +85,33 @@ describe("unconfirmed facts in the text files", () => {
     expect(credited(`Check-in from ${times.checkIn.value}`)).toBe("Check-in from 14:00");
     // A line built by hand without the helper would be caught.
     expect(uncredited(`- ${identity.nameStory.value}`)).toHaveLength(1);
+  });
+});
+
+describe("with online booking (W3)", () => {
+  const shortOnline = buildLlmsTxt(site, { onlineBooking: true });
+  const fullOnline = buildLlmsFullTxt(site, { onlineBooking: true });
+
+  it("tells assistants they can link the free beds for a guest's dates", () => {
+    for (const text of [shortOnline, fullOnline]) {
+      expect(text).toContain(`[Book online](${site}/book)`);
+      expect(text).toContain(onlineBookingLinkTemplate(site));
+      expect(text).toContain("the guest pays at the house");
+      expect(text).toContain("nothing is booked until the guest sends the request");
+      // The message form and the booking sites stay alternatives.
+      expect(text).toContain(bookingLinkTemplate(site));
+      expect(text).toContain(identity.links.agoda.value);
+    }
+    expect(shortOnline).not.toContain("Prices and availability are not published here");
+  });
+
+  it("still publishes no prices, and names no fact it can't stand behind", () => {
+    expect(fullOnline).not.toMatch(/\b(?:LAK|USD|kip)\b|[$₭€£]\s?\d/i);
+    expect(uncredited(fullOnline)).toEqual([]);
+  });
+
+  it("is unchanged without online booking", () => {
+    expect(short).not.toContain("Book online");
+    expect(buildLlmsTxt(site, { onlineBooking: false })).toBe(short);
   });
 });

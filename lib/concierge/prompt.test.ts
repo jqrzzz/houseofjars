@@ -65,3 +65,27 @@ describe("date line", () => {
     expect(buildDateLine(new Date("2026-09-25T16:30:00Z"))).toBe("Today's date in Vientiane is Friday, 2026-09-25.");
   });
 });
+
+describe("with online booking (W3)", () => {
+  const prompt = buildSystemPrompt(site, { onlineBooking: true });
+  const knowledge = buildHouseKnowledge(site, { onlineBooking: true });
+
+  it("points guests to the booking page, with their dates filled in", () => {
+    expect(prompt).toContain(`${site}/book?check_in=YYYY-MM-DD&check_out=YYYY-MM-DD&guests=N`);
+    expect(prompt).toContain("To book, point them to the booking page instead.");
+    expect(knowledge).toContain("The guest sends a booking request there; the team confirms it");
+    expect(knowledge).toContain("the guest pays at the house");
+  });
+
+  it("still never quotes a price or promises a bed", () => {
+    expect(prompt).toContain("Never quote a price or promise that a bed is free: only the booking page can say what is free.");
+    expect(knowledge).toContain("never promise a bed");
+    expect(knowledge).not.toMatch(/\b(?:LAK|USD|kip)\s?\d/i);
+  });
+
+  it("leaves the prompt as it was without online booking, and stays deterministic", () => {
+    expect(buildSystemPrompt(site)).not.toContain("booking request");
+    expect(buildSystemPrompt(site)).toContain("For prices and availability, point to Booking.com and Agoda (live prices)");
+    expect(buildSystemPrompt(site, { onlineBooking: true })).toBe(prompt);
+  });
+});

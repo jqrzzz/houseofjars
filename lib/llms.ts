@@ -41,6 +41,23 @@ export function bookingLinkTemplate(siteUrl: string): string {
   return `${new URL(pages.book.path, `${siteUrl}/`)}?check_in=YYYY-MM-DD&check_out=YYYY-MM-DD&guests=N#message`;
 }
 
+/** The link that opens online booking at the free beds for those dates and guests. */
+export function onlineBookingLinkTemplate(siteUrl: string): string {
+  return `${new URL(pages.book.path, `${siteUrl}/`)}?check_in=YYYY-MM-DD&check_out=YYYY-MM-DD&guests=N`;
+}
+
+export interface LlmsOptions {
+  /** The site takes booking requests on /book (lib/booking/config.ts). */
+  readonly onlineBooking?: boolean;
+}
+
+/** Where free beds and prices can be seen, for the files' opening lines. */
+function availabilityText(url: (path: string) => string, onlineBooking: boolean | undefined): string {
+  return onlineBooking
+    ? `Free beds for any dates, with prices where the house has set them, are on the booking page (${url(pages.book.path)}), not in this file; Booking.com and Agoda show live prices too.`
+    : "Prices and availability are not published here: see Booking.com or Agoda, or ask the team.";
+}
+
 function summary(): string {
   return `> A dorm hostel of curtained pod beds in ${location.neighbourhood.value}, ${identity.address.country.value}. Breakfast is included, there is ${lowerFirst(building.cafe.value)}, and staff are ${lowerFirst(staff.hours.value.summary)}. Owned and run by ${identity.owner.name.value}.`;
 }
@@ -60,8 +77,13 @@ function keyFacts(): string[] {
   ]);
 }
 
-function bookingLines(siteUrl: string, url: (path: string) => string): string[] {
+function bookingLines(siteUrl: string, url: (path: string) => string, onlineBooking: boolean | undefined): string[] {
   return [
+    ...(onlineBooking
+      ? [
+          `- [Book online](${url(pages.book.path)}): the free beds for the guest's dates and a booking request; the team confirms it by email or WhatsApp, and the guest pays at the house. ${onlineBookingLinkTemplate(siteUrl)} opens it at the free beds for those dates. Prices show there only where the house has set them, and nothing is booked until the guest sends the request.`,
+        ]
+      : []),
     `- [Booking.com](${identity.links.booking.value}): live prices and free beds`,
     `- [Agoda](${identity.links.agoda.value}): live prices and free beds`,
     `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. There is no payment on this website.`,
@@ -69,7 +91,7 @@ function bookingLines(siteUrl: string, url: (path: string) => string): string[] 
 }
 
 /** /llms.txt: what the house is, the key facts, and every page. */
-export function buildLlmsTxt(siteUrl: string): string {
+export function buildLlmsTxt(siteUrl: string, options: LlmsOptions = {}): string {
   const url = (path: string) => new URL(path, `${siteUrl}/`).toString();
   const mainPages = allPages.filter((page) => !page.guide && page.path !== pages.privacy.path);
   return [
@@ -77,7 +99,7 @@ export function buildLlmsTxt(siteUrl: string): string {
     "",
     summary(),
     "",
-    `Facts were last checked against the house's public listings on ${CONTENT_UPDATED}, and the house is confirming them. Prices and availability are not published here: see Booking.com or Agoda, or ask the team. Everything on the site in one file, with where each fact comes from: ${url("/llms-full.txt")}`,
+    `Facts were last checked against the house's public listings on ${CONTENT_UPDATED}, and the house is confirming them. ${availabilityText(url, options.onlineBooking)} Everything on the site in one file, with where each fact comes from: ${url("/llms-full.txt")}`,
     "",
     ...keyFacts(),
     "",
@@ -88,7 +110,7 @@ export function buildLlmsTxt(siteUrl: string): string {
     ...guideList.map((guide) => `- [${guide.question}](${url(guidePath(guide))}): ${guide.teaser}`),
     "",
     "## Book",
-    ...bookingLines(siteUrl, url),
+    ...bookingLines(siteUrl, url, options.onlineBooking),
     "",
     "## Optional",
     `- [Everything in one file](${url("/llms-full.txt")}): facts with their sources, house rules, questions and answers, guides and how to book`,
@@ -131,7 +153,7 @@ function guideText(guide: Guide, siteUrl: string): string[] {
 }
 
 /** /llms-full.txt: everything the site says, with the source of anything that isn't firm. */
-export function buildLlmsFullTxt(siteUrl: string): string {
+export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): string {
   const url = (path: string) => new URL(path, `${siteUrl}/`).toString();
   const { phone, email } = identity.contact;
   const lastReviewed = [CONTENT_UPDATED, ...guideList.map((guide) => guide.reviewed)].sort().at(-1);
@@ -143,7 +165,7 @@ export function buildLlmsFullTxt(siteUrl: string): string {
     "",
     summary(),
     "",
-    `Everything the website ${url("/")} says, as plain text. Facts were last checked on ${CONTENT_UPDATED} against the house's own public listings (Booking.com, Agoda, Google, Tripadvisor, Facebook) and official sources, and the house is confirming them. A line that rests on guest reviews, a single source, general practice or an assumption says so in brackets. Prices and availability are not published here. Last reviewed ${lastReviewed}.`,
+    `Everything the website ${url("/")} says, as plain text. Facts were last checked on ${CONTENT_UPDATED} against the house's own public listings (Booking.com, Agoda, Google, Tripadvisor, Facebook) and official sources, and the house is confirming them. A line that rests on guest reviews, a single source, general practice or an assumption says so in brackets. ${options.onlineBooking ? availabilityText(url, true) : "Prices and availability are not published here."} Last reviewed ${lastReviewed}.`,
     "",
     "## The house",
     ...bullets([
@@ -225,7 +247,7 @@ export function buildLlmsFullTxt(siteUrl: string): string {
     ]),
     "",
     "## How to book",
-    ...bookingLines(siteUrl, url),
+    ...bookingLines(siteUrl, url, options.onlineBooking),
     "",
     "## Not published yet",
     "The website does not say; ask the team:",

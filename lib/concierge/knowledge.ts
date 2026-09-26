@@ -9,16 +9,28 @@ import { joinList } from "@/content/text";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, staff, times } from "@/content/stay";
 import { pages } from "../site";
 
+export interface KnowledgeOptions {
+  /** The site takes booking requests on /book (lib/booking/config.ts). */
+  readonly onlineBooking?: boolean;
+}
+
+/** The booking page, bare and with a stay filled in (the placeholders are for Shadow to replace). */
+export function bookingPageLinks(siteUrl: string): { page: string; withDates: string } {
+  const page = new URL(pages.book.path, `${siteUrl}/`).toString();
+  return { page, withDates: `${page}?check_in=YYYY-MM-DD&check_out=YYYY-MM-DD&guests=N` };
+}
+
 /**
  * Everything Shadow knows about the house, as plain text built from the
  * content layer. Deterministic (no dates, no randomness) so the system
  * prompt stays byte-identical and cacheable.
  */
-export function buildHouseKnowledge(siteUrl: string): string {
+export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions = {}): string {
   const url = (path: string) => new URL(path, `${siteUrl}/`).toString();
   const bullet = (items: readonly string[]) => items.map((item) => `- ${item}`).join("\n");
   const { phone, email } = identity.contact;
   const nearby = Object.values(location.nearby).map((f) => `${f.value.place}: ${f.value.distance}`);
+  const book = bookingPageLinks(siteUrl);
 
   const sections: [string, string][] = [
     [
@@ -37,7 +49,9 @@ export function buildHouseKnowledge(siteUrl: string): string {
       bullet([
         `WhatsApp or phone: ${phone.value.display}`,
         `Email: ${email.value}`,
-        `Booking page with a message form: ${url(pages.book.path)}`,
+        options.onlineBooking
+          ? `Booking page, with the free beds, booking requests and a message form: ${book.page}`
+          : `Booking page with a message form: ${url(pages.book.path)}`,
         `Staff: ${staff.hours.value.summary}. Reception speaks ${joinList(staff.languages.value)}. ${staff.replies.value}.`,
       ]),
     ],
@@ -93,13 +107,22 @@ export function buildHouseKnowledge(siteUrl: string): string {
     ],
     [
       "Booking and prices",
-      bullet([
-        "You cannot see prices or availability. Live prices and availability are on Booking.com and Agoda.",
-        `Booking.com: ${identity.links.booking.value}`,
-        `Agoda: ${identity.links.agoda.value}`,
-        `Or the team answers directly via ${url(pages.book.path)}.`,
-        "There is no online payment on this website.",
-      ]),
+      bullet(
+        options.onlineBooking
+          ? [
+              "You cannot see prices or availability yourself, so never promise a bed: only the booking page can say what is free.",
+              `Book on this website: ${book.page} shows the free beds for any dates and, where the house has set them, the price. The guest sends a booking request there; the team confirms it by email or WhatsApp, and the guest pays at the house. With the guest's dates and party filled in: ${book.withDates}`,
+              `Live prices are also on Booking.com (${identity.links.booking.value}) and Agoda (${identity.links.agoda.value}).`,
+              "There is no online payment on this website.",
+            ]
+          : [
+              "You cannot see prices or availability. Live prices and availability are on Booking.com and Agoda.",
+              `Booking.com: ${identity.links.booking.value}`,
+              `Agoda: ${identity.links.agoda.value}`,
+              `Or the team answers directly via ${url(pages.book.path)}.`,
+              "There is no online payment on this website.",
+            ],
+      ),
     ],
     [
       "Questions and answers",

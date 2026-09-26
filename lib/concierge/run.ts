@@ -52,6 +52,8 @@ export interface RunConciergeOptions {
   readonly model: string;
   /** Stable instructions and house knowledge (cached). */
   readonly systemPrompt: string;
+  /** What replaces a reply that starts quoting a price (default: guard.ts's priceLine). */
+  readonly priceLine?: string;
   readonly now: Date;
   readonly signal?: AbortSignal;
 }
@@ -149,7 +151,7 @@ export async function runConcierge(options: RunConciergeOptions): Promise<string
         // The call's real usage is unknown now, so its reservation stays spent.
         emit({ type: "rewind", keep: 0 });
         reply = "";
-        sendText(priceLine);
+        sendText(options.priceLine ?? priceLine);
         return reply;
       }
       message = await stream.finalMessage();

@@ -24,3 +24,13 @@ export const priceLine =
   `I can’t see prices or live availability, so I can’t quote a price or promise a bed. ` +
   `Booking.com (${identity.links.booking.value}) and Agoda (${identity.links.agoda.value}) show live prices, ` +
   `or I can pass your question to the team.`;
+
+/** The same line when the site takes booking requests: the booking page first. */
+export function bookingPriceLine(bookingPage: string): string {
+  return (
+    `I can’t see prices or live availability, so I can’t quote a price or promise a bed. ` +
+    `The booking page (${bookingPage}) shows the free beds for your dates, with prices where the house has set them. ` +
+    `Booking.com (${identity.links.booking.value}) and Agoda (${identity.links.agoda.value}) show live prices too, ` +
+    `or I can pass your question to the team.`
+  );
+}

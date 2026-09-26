@@ -4,6 +4,7 @@ import { PageJsonLd } from "@/components/PageJsonLd";
 import { formatAddress, identity, whatsappUrl } from "@/content/identity";
 import { PRIVACY_UPDATED, privacy } from "@/content/privacy";
 import { formatDate } from "@/content/text";
+import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
 
@@ -11,6 +12,9 @@ export const metadata = pageMetadata(pages.privacy);
 
 export default function PrivacyPage() {
   const { email, phone } = identity.contact;
+  // With online booking on /book there are two forms: a booking request and a message.
+  const online = onlineBookingConfigured();
+  const forms = online ? "the booking and message forms" : "the form";
   const contact = (
     <>
       <a href={`mailto:${email.value}`}>{email.value}</a> or{" "}
@@ -39,6 +43,24 @@ export default function PrivacyPage() {
 
       <Block id="collect" title="What we collect, and why">
         <Prose>
+          {online ? (
+            <>
+              <h3>When you request a booking</h3>
+              <TickList
+                items={[
+                  "Your name.",
+                  "Your email address, your WhatsApp or phone number, or both, and how you would like us to reply.",
+                  "Your dates, the number of guests and the beds you chose.",
+                  "Your arrival time and a message, if you give them.",
+                ]}
+              />
+              <p>
+                We use these only to confirm and arrange your stay. Your browser keeps your booking reference and the
+                dates of your stay (not your contact details) in session storage, so the confirmation stays on screen if
+                you reload the page; it clears them when you close the tab.
+              </p>
+            </>
+          ) : null}
           <h3>When you send a message from the booking page</h3>
           <TickList
             items={[
@@ -63,7 +85,7 @@ export default function PrivacyPage() {
 
           <h3>Your IP address</h3>
           <p>
-            Our server keeps it in memory for a short time, to stop the form and Shadow being flooded with requests,
+            Our server keeps it in memory for a short time, to stop {forms} and Shadow being flooded with requests,
             and does not save it. Like any website, the server hosting this one may also record it in short-term logs.
           </p>
 
@@ -95,8 +117,8 @@ export default function PrivacyPage() {
       <Block id="processors" title="Who handles your data">
         <Prose>
           <p>
-            Messages you send reach the team through Shadow Check-in, the system the house uses to run the front desk.
-            Shadow Check-in is hosted by Vercel and Supabase.
+            {online ? "Booking requests and messages" : "Messages"} you send reach the team through Shadow Check-in, the
+            system the house uses to run the front desk. Shadow Check-in is hosted by Vercel and Supabase.
           </p>
           <p>
             Anthropic processes your conversations with Shadow to write his replies. The team may also use Shadow
@@ -104,7 +126,7 @@ export default function PrivacyPage() {
             reads and sends every reply.
           </p>
           <p>
-            These services use servers outside Laos, so your details are transferred abroad when you use the form or
+            These services use servers outside Laos, so your details are transferred abroad when you use {forms} or
             talk to Shadow.
           </p>
           <p>We don’t sell your details or use them for advertising.</p>

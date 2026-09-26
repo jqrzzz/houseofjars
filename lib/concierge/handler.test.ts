@@ -28,8 +28,10 @@ function handler(
   capacity = 5,
   budget = createDailyBudget({ limit: 10_000_000 }),
   log: (message: string) => void = () => {},
+  onlineBooking = false,
 ) {
   return createConciergeHandler({
+    onlineBooking: () => onlineBooking,
     streamer: () => streamer,
     signer: () => (streamer ? signer : null),
     limiter: createRateLimiter({ capacity, refillMs: 60_000 }),
@@ -220,5 +222,19 @@ describe("POST /api/concierge", () => {
     const limited = await handle(post(body));
     expect(limited.status).toBe(429);
     expect(await limited.json()).toEqual({ error: "rate_limited" });
+  });
+
+  it("points guests to online booking when the site takes it, and still never quotes a price (W3)", async () => {
+    const { streamer, calls } = fakeClaude([{ text: ["A bed is ", "$12 a night."], stopReason: "end_turn" }]);
+    const response = await handler(streamer, 5, undefined, () => {}, true)(post(body));
+    const system = JSON.stringify(calls[0]!.system);
+    expect(system).toContain("https://thehouseofjars.com/book?check_in=YYYY-MM-DD&check_out=YYYY-MM-DD&guests=N");
+    expect(system).toContain("Never quote a price or promise that a bed is free");
+    const text = (await events(response))
+      .flatMap((event) => (event.type === "text" ? [event.text] : event.type === "rewind" ? ["|"] : []))
+      .join("");
+    const shown = text.slice(text.lastIndexOf("|") + 1);
+    expect(shown).toContain("The booking page (https://thehouseofjars.com/book) shows the free beds for your dates");
+    expect(shown).not.toMatch(/\$\s?\d/);
   });
 });

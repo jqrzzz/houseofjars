@@ -275,7 +275,7 @@ function Flow({ house }: { house: HouseNotes }) {
     window.history.replaceState({ booking: "dates" }, "");
     if (linkedStay) {
       // Dates from a link: straight to the free beds, with the dates one step back.
-      window.history.pushState({ booking: "rooms" }, "", `?${stayQuery(linkedStay)}`);
+      window.history.pushState({ booking: "rooms" }, "", `?${stayQuery(linkedStay)}${window.location.hash}`);
       void lookUp(linkedStay, null);
     } else {
       void loadTerms();

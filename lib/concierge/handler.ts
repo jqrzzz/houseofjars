@@ -2,6 +2,8 @@ import { json, readJsonBody, rejectCrossSite } from "../http";
 import { clientKey, type RateLimitDecision } from "../rate-limit";
 import { worstCaseCost, type SpendBudget } from "./budget";
 import { trustedHistory } from "./history";
+import { bookingPriceLine } from "./guard";
+import { bookingPageLinks } from "./knowledge";
 import { buildSystemPrompt } from "./prompt";
 import { encodeEvent, type ConciergeEvent } from "./protocol";
 import { MAX_REQUEST_BYTES } from "./limits";
@@ -22,6 +24,8 @@ export interface ConciergeHandlerDeps {
   readonly budget: SpendBudget;
   readonly model: () => string;
   readonly siteUrl: string;
+  /** Whether the site takes booking requests on /book (Shadow then points guests there). */
+  readonly onlineBooking?: () => boolean;
   readonly now?: () => Date;
   readonly log?: (message: string) => void;
 }
@@ -29,6 +33,7 @@ export interface ConciergeHandlerDeps {
 /** POST /api/concierge: validates the chat, then streams NDJSON events. */
 export function createConciergeHandler(deps: ConciergeHandlerDeps) {
   let systemPrompt: string | null = null;
+  let priceLine: string | undefined;
   const log = deps.log ?? ((message: string) => console.error(message));
 
   return async function handleConcierge(request: Request): Promise<Response> {
@@ -53,7 +58,11 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
       return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
     }
 
-    systemPrompt ??= buildSystemPrompt(deps.siteUrl);
+    if (systemPrompt === null) {
+      const onlineBooking = deps.onlineBooking?.() ?? false;
+      systemPrompt = buildSystemPrompt(deps.siteUrl, { onlineBooking });
+      priceLine = onlineBooking ? bookingPriceLine(bookingPageLinks(deps.siteUrl).page) : undefined;
+    }
     const prompt = systemPrompt;
     const model = deps.model();
     const now = deps.now?.() ?? new Date();
@@ -86,6 +95,7 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
             emit,
             model,
             systemPrompt: prompt,
+            priceLine,
             now,
             signal: request.signal,
           });

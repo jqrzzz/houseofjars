@@ -1,3 +1,4 @@
+import { onlineBookingConfigured } from "@/lib/booking/config";
 import { anthropicStreamer, conciergeModel } from "@/lib/concierge/anthropic";
 import { createDailyBudget, dailyTokenBudget } from "@/lib/concierge/budget";
 import { createConciergeHandler } from "@/lib/concierge/handler";
@@ -24,4 +25,5 @@ export const POST = createConciergeHandler({
   budget,
   model: () => conciergeModel(),
   siteUrl,
+  onlineBooking: () => onlineBookingConfigured(),
 });

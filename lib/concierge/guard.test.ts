@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { identity } from "@/content/identity";
 import { buildSystemPrompt } from "./prompt";
-import { mentionsMoney, priceLine } from "./guard";
+import { bookingPriceLine, mentionsMoney, priceLine } from "./guard";
 
 describe("price guard", () => {
   it("spots money amounts in the usual forms", () => {
@@ -30,5 +30,14 @@ describe("price guard", () => {
     expect(priceLine).toContain(identity.links.booking.value);
     expect(priceLine).toContain(identity.links.agoda.value);
     expect(mentionsMoney(priceLine)).toBe(false);
+  });
+});
+
+describe("the price line with online booking", () => {
+  it("names the booking page first, and quotes no price itself", () => {
+    const line = bookingPriceLine("https://thehouseofjars.com/book");
+    expect(line).toContain("https://thehouseofjars.com/book");
+    expect(line).toContain(identity.links.agoda.value);
+    expect(mentionsMoney(line)).toBe(false);
   });
 });
