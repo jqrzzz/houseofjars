@@ -7,6 +7,40 @@ export function json(body: unknown, status = 200, headers: HeadersInit = {}): Re
   });
 }
 
+/**
+ * Refuses requests that another website could make from a visitor's browser.
+ * Any page can POST a "simple" request (text/plain, no preflight) here, so the
+ * API routes accept only application/json: from another origin that needs a
+ * CORS preflight, which fails because these routes never send CORS headers.
+ * When the browser says where a request came from (Sec-Fetch-Site, Origin),
+ * it must be this site. A client that sends neither is not a browser acting
+ * for a visitor; the rate limits cover it like anyone else.
+ */
+export function rejectCrossSite(request: Request, siteUrl: string): Response | null {
+  const type = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
+  if (type !== "application/json") return json({ error: "unsupported_media_type" }, 415);
+
+  const site = request.headers.get("sec-fetch-site");
+  if (site !== null && site !== "same-origin" && site !== "none") return json({ error: "forbidden" }, 403);
+
+  const origin = request.headers.get("origin");
+  if (origin !== null && !isOwnOrigin(origin, request.headers, siteUrl)) return json({ error: "forbidden" }, 403);
+  return null;
+}
+
+/** The canonical site, or the host this request was sent to (a preview deployment or a local server). */
+function isOwnOrigin(origin: string, headers: Headers, siteUrl: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    return false; // "null" (sandboxed frames, file: pages) or malformed
+  }
+  if (url.origin === new URL(siteUrl).origin) return true;
+  const hosts = [headers.get("x-forwarded-host")?.split(",")[0], headers.get("host")];
+  return hosts.some((host) => host?.trim().toLowerCase() === url.host);
+}
+
 export type BodyResult = { ok: true; value: unknown } | { ok: false; status: 400 | 413 };
 
 /**

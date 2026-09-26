@@ -12,10 +12,10 @@ const body = {
   messages: [{ role: "user", content: "What time is check-in?" }],
 };
 
-const post = (payload: unknown) =>
+const post = (payload: unknown, headers: Record<string, string> = {}) =>
   new Request("http://localhost/api/concierge", {
     method: "POST",
-    headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.9" },
+    headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.9", ...headers },
     body: JSON.stringify(payload),
   });
 
@@ -77,6 +77,14 @@ describe("POST /api/concierge", () => {
     const { streamer } = fakeClaude([{ stopReason: "end_turn", error: busy }]);
     const response = await handler(streamer)(post(body));
     expect(await events(response)).toEqual([{ type: "error", code: "busy" }]);
+  });
+
+  it("never lets another website start a conversation (R4-01)", async () => {
+    const { streamer, calls } = fakeClaude([]);
+    const handle = handler(streamer);
+    expect((await handle(post(body, { origin: "https://evil.example", "sec-fetch-site": "cross-site" }))).status).toBe(403);
+    expect((await handle(post(body, { "content-type": "text/plain;charset=UTF-8" }))).status).toBe(415);
+    expect(calls).toHaveLength(0);
   });
 
   it("rate-limits per IP", async () => {

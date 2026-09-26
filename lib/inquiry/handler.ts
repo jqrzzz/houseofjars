@@ -1,4 +1,4 @@
-import { json, readJsonBody } from "../http";
+import { json, readJsonBody, rejectCrossSite } from "../http";
 import { clientIp, type RateLimitDecision } from "../rate-limit";
 import { buildPayload, inquiryFormSchema, toFieldIssues } from "./schema";
 import { submitInquiry, type ShadowConfig, type SubmitError } from "./submit";
@@ -15,12 +15,16 @@ const STATUS: Record<SubmitError, number> = {
 export interface InquiryHandlerDeps {
   readonly config: () => ShadowConfig | null;
   readonly limiter: { take(key: string): RateLimitDecision };
+  readonly siteUrl: string;
   readonly fetch?: typeof fetch;
 }
 
 /** POST /api/inquiry: the booking form's route to Shadow Check-in. */
 export function createInquiryHandler(deps: InquiryHandlerDeps) {
   return async function handleInquiry(request: Request): Promise<Response> {
+    const refused = rejectCrossSite(request, deps.siteUrl);
+    if (refused) return refused;
+
     const config = deps.config();
     if (!config) return json({ error: "not_configured" }, 503);
 

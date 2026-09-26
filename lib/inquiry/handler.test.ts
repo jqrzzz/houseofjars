@@ -3,6 +3,7 @@ import { createRateLimiter } from "../rate-limit";
 import { createInquiryHandler } from "./handler";
 
 const config = { apiUrl: "https://shadow.example", key: "sck_test" };
+const siteUrl = "https://thehouseofjars.com";
 const form = {
   client_ref: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
   name: "Mai",
@@ -23,13 +24,17 @@ function setup(shadowStatus = 201) {
     .fn<typeof globalThis.fetch>()
     .mockImplementation(async () => new Response(JSON.stringify({ id: "b1", status: "received" }), { status: shadowStatus }));
   const limiter = createRateLimiter({ capacity: 2, refillMs: 60_000 });
-  const handle = createInquiryHandler({ config: () => config, limiter, fetch });
+  const handle = createInquiryHandler({ config: () => config, limiter, fetch, siteUrl });
   return { handle, fetch };
 }
 
 describe("POST /api/inquiry", () => {
   it("answers 503 when Shadow is not configured", async () => {
-    const handle = createInquiryHandler({ config: () => null, limiter: createRateLimiter({ capacity: 1, refillMs: 1 }) });
+    const handle = createInquiryHandler({
+      config: () => null,
+      limiter: createRateLimiter({ capacity: 1, refillMs: 1 }),
+      siteUrl,
+    });
     const response = await handle(post(form));
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: "not_configured" });
@@ -74,6 +79,21 @@ describe("POST /api/inquiry", () => {
     expect(limited.status).toBe(429);
     expect(limited.headers.get("retry-after")).toBe("60");
     expect((await handle(post(form, { "x-forwarded-for": "198.51.100.4" }))).status).toBe(201);
+  });
+
+  it("refuses cross-site and non-JSON posts before anything reaches Shadow (R4-01)", async () => {
+    const { handle, fetch } = setup();
+    const crossSite = await handle(
+      post(form, { origin: "https://evil.example", "sec-fetch-site": "cross-site" }),
+    );
+    expect(crossSite.status).toBe(403);
+    expect(await crossSite.json()).toEqual({ error: "forbidden" });
+    // What a page on another site can send without a preflight: text/plain, consent included.
+    const simple = await handle(post(form, { "content-type": "text/plain;charset=UTF-8" }));
+    expect(simple.status).toBe(415);
+    expect(fetch).not.toHaveBeenCalled();
+    // The site's own page still gets through.
+    expect((await handle(post(form, { origin: siteUrl, "sec-fetch-site": "same-origin" }))).status).toBe(201);
   });
 
   it("maps Shadow being down to 502", async () => {

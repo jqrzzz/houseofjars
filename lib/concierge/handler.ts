@@ -1,4 +1,4 @@
-import { json, readJsonBody } from "../http";
+import { json, readJsonBody, rejectCrossSite } from "../http";
 import type { SubmitResult } from "../inquiry/submit";
 import { clientIp, type RateLimitDecision } from "../rate-limit";
 import { buildSystemPrompt } from "./prompt";
@@ -24,6 +24,9 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
   const log = deps.log ?? ((message: string) => console.error(message));
 
   return async function handleConcierge(request: Request): Promise<Response> {
+    const refused = rejectCrossSite(request, deps.siteUrl);
+    if (refused) return refused;
+
     const stream = deps.streamer();
     if (!stream) return json({ error: "not_configured" }, 503);
 
