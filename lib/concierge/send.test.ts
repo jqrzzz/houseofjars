@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createRateLimiter } from "../rate-limit";
+import { createInquiryGate } from "../inquiry/gate";
 import { createDraftSendHandler } from "./send";
 import { createSigner } from "./signing";
 import { runPrepareInquiry } from "./tool";
@@ -28,7 +28,7 @@ function setup(shadowStatus = 201, { configured = true } = {}) {
   const handle = createDraftSendHandler({
     signer: () => (configured ? signer : null),
     config: () => ({ apiUrl: "https://shadow.example", key: "sck_test" }),
-    limiter: createRateLimiter({ capacity: 5, refillMs: 60_000 }),
+    gate: createInquiryGate(),
     siteUrl,
     fetch,
   });
@@ -79,6 +79,7 @@ describe("POST /api/concierge/send (R4-05)", () => {
   it("answers a resend of the same draft as a duplicate, and maps failures", async () => {
     expect((await setup(200).handle(post(valid))).status).toBe(200);
     expect((await setup(500).handle(post(valid))).status).toBe(502);
+    expect((await setup(429).handle(post(valid))).status).toBe(503);
     expect((await setup(201, { configured: false }).handle(post(valid))).status).toBe(503);
   });
 });

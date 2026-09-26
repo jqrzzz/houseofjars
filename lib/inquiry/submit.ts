@@ -6,12 +6,16 @@ export interface ShadowConfig {
   readonly key: string;
 }
 
-export type SubmitError = "not_configured" | "invalid_request" | "rate_limited" | "unavailable";
+/**
+ * busy: Shadow's per-key hourly limit was reached. That limit is shared by
+ * every guest, so this is never reported as the guest sending too much.
+ */
+export type SubmitError = "not_configured" | "invalid_request" | "busy" | "unavailable";
 
 /** The HTTP status the website's own routes answer with for each failure. */
 export const submitErrorStatus: Record<SubmitError, number> = {
   invalid_request: 400,
-  rate_limited: 429,
+  busy: 503,
   not_configured: 503,
   unavailable: 502,
 };
@@ -82,7 +86,8 @@ export async function submitInquiry(input: unknown, deps: SubmitDeps): Promise<S
       log(`[inquiry] Shadow rejected the payload (${response.status})`);
       return { ok: false, error: "invalid_request" };
     case 429:
-      return { ok: false, error: "rate_limited" };
+      log("[inquiry] Shadow's hourly limit for this key was reached (429)");
+      return { ok: false, error: "busy" };
     case 503:
       return { ok: false, error: "not_configured" };
     case 401:

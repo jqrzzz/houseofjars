@@ -38,7 +38,7 @@ describe("submitInquiry", () => {
   it.each([
     [400, "invalid_request"],
     [413, "invalid_request"],
-    [429, "rate_limited"],
+    [429, "busy"],
     [503, "not_configured"],
     [401, "unavailable"],
     [500, "unavailable"],

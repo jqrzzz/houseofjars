@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { json, readJsonBody, rejectCrossSite } from "../http";
-import { MAX_INQUIRY_BYTES } from "../inquiry/handler";
+import type { InquiryGate } from "../inquiry/gate";
+import { gateRefusal, MAX_INQUIRY_BYTES } from "../inquiry/handler";
 import { replyChannel } from "../inquiry/reply";
 import { buildPayload, inquiryDraftSchema } from "../inquiry/schema";
 import { submitErrorStatus, submitInquiry, type ShadowConfig } from "../inquiry/submit";
-import { clientKey, type RateLimitDecision } from "../rate-limit";
 import type { Signer } from "./signing";
 
 const sendRequestSchema = z.strictObject({
@@ -21,7 +21,8 @@ export interface DraftSendDeps {
   /** Null when ANTHROPIC_API_KEY is not set (no drafts can exist then). */
   readonly signer: () => Signer | null;
   readonly config: () => ShadowConfig | null;
-  readonly limiter: { take(key: string): RateLimitDecision };
+  /** The same gate as the booking form: both use Shadow's one inbound key. */
+  readonly gate: InquiryGate;
   readonly siteUrl: string;
   readonly fetch?: typeof fetch;
 }
@@ -48,10 +49,8 @@ export function createDraftSendHandler(deps: DraftSendDeps) {
     const { session_id: sessionId, draft, token } = parsed.data;
     if (!signer.verifyDraft(sessionId, draft, token)) return json({ error: "invalid_request" }, 400);
 
-    const decision = deps.limiter.take(clientKey(request.headers));
-    if (!decision.allowed) {
-      return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
-    }
+    const refusal = gateRefusal(deps.gate, request);
+    if (refusal) return refusal;
 
     const result = await submitInquiry(buildPayload(draft, { client_ref: draft.client_ref, source: draft.source }), {
       config,

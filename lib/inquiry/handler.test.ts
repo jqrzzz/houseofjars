@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createRateLimiter } from "../rate-limit";
+import { createInquiryGate, PER_CLIENT, PER_INSTANCE } from "./gate";
 import { createInquiryHandler } from "./handler";
 
 const config = { apiUrl: "https://shadow.example", key: "sck_test" };
@@ -23,18 +23,13 @@ function setup(shadowStatus = 201) {
   const fetch = vi
     .fn<typeof globalThis.fetch>()
     .mockImplementation(async () => new Response(JSON.stringify({ id: "b1", status: "received" }), { status: shadowStatus }));
-  const limiter = createRateLimiter({ capacity: 2, refillMs: 60_000 });
-  const handle = createInquiryHandler({ config: () => config, limiter, fetch, siteUrl });
+  const handle = createInquiryHandler({ config: () => config, gate: createInquiryGate(() => 0), fetch, siteUrl });
   return { handle, fetch };
 }
 
 describe("POST /api/inquiry", () => {
   it("answers 503 when Shadow is not configured", async () => {
-    const handle = createInquiryHandler({
-      config: () => null,
-      limiter: createRateLimiter({ capacity: 1, refillMs: 1 }),
-      siteUrl,
-    });
+    const handle = createInquiryHandler({ config: () => null, gate: createInquiryGate(), siteUrl });
     const response = await handle(post(form));
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: "not_configured" });
@@ -70,15 +65,32 @@ describe("POST /api/inquiry", () => {
     expect((await handle(post({ ...form, message: "x".repeat(17_000) }))).status).toBe(413);
   });
 
-  it("rate-limits valid inquiries per IP, but never invalid ones", async () => {
+  it("rate-limits valid inquiries per client, but never invalid ones", async () => {
     const { handle } = setup();
     for (let i = 0; i < 5; i++) expect((await handle(post({ ...form, name: "" }))).status).toBe(400);
-    expect((await handle(post(form))).status).toBe(201);
-    expect((await handle(post(form))).status).toBe(201);
+    for (let i = 0; i < PER_CLIENT.capacity; i++) expect((await handle(post(form))).status).toBe(201);
     const limited = await handle(post(form));
     expect(limited.status).toBe(429);
-    expect(limited.headers.get("retry-after")).toBe("60");
+    expect(await limited.json()).toEqual({ error: "rate_limited" });
+    expect(limited.headers.get("retry-after")).toBe(String(PER_CLIENT.refillMs / 1000));
     expect((await handle(post(form, { "x-forwarded-for": "198.51.100.4" }))).status).toBe(201);
+  });
+
+  it("tells guests the line is busy, not that they sent too much, when everyone together hits the limit (R4-02)", async () => {
+    const { handle } = setup();
+    for (let i = 0; i < PER_INSTANCE.capacity; i++) {
+      expect((await handle(post(form, { "x-forwarded-for": `198.51.100.${i + 1}` }))).status).toBe(201);
+    }
+    const busy = await handle(post(form, { "x-forwarded-for": "203.0.113.200" }));
+    expect(busy.status).toBe(503);
+    expect(await busy.json()).toEqual({ error: "busy" });
+  });
+
+  it("reports Shadow's own hourly limit as busy (R4-02)", async () => {
+    const { handle } = setup(429);
+    const response = await handle(post(form));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "busy" });
   });
 
   it("refuses cross-site and non-JSON posts before anything reaches Shadow (R4-01)", async () => {

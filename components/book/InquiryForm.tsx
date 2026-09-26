@@ -10,7 +10,7 @@ import buttons from "../ui/button.module.css";
 import { ArrowIcon } from "../ui/icons";
 import styles from "./InquiryForm.module.css";
 
-type Problem = "invalid" | "rate_limited" | "not_configured" | "unavailable";
+type Problem = "invalid" | "rate_limited" | "busy" | "not_configured" | "unavailable";
 
 type Status =
   | { kind: "idle" }
@@ -46,6 +46,7 @@ const FIELDS: readonly FieldName[] = [
 
 const problemText: Record<Exclude<Problem, "invalid">, string> = {
   rate_limited: "You have sent several messages in a short time. Please wait a few minutes, or contact the team directly:",
+  busy: "Our message line is busy right now, so this one couldn’t be sent. Please contact the team directly:",
   not_configured: "Messages can’t be sent from this form at the moment. Please contact the team directly:",
   unavailable: "We couldn’t send your message just now. Please try again in a moment, or contact the team directly:",
 };
@@ -135,9 +136,17 @@ export function InquiryForm() {
         setStatus({ kind: "problem", problem: "invalid" });
         return;
       }
+      const code = ((await response.json().catch(() => null)) as { error?: unknown } | null)?.error;
       setStatus({
         kind: "problem",
-        problem: response.status === 429 ? "rate_limited" : response.status === 503 ? "not_configured" : "unavailable",
+        problem:
+          response.status === 429
+            ? "rate_limited"
+            : code === "busy"
+              ? "busy"
+              : response.status === 503
+                ? "not_configured"
+                : "unavailable",
       });
     } catch {
       setStatus({ kind: "problem", problem: "unavailable" });

@@ -9,10 +9,11 @@ import { pages } from "@/lib/site";
 import { ContactDetails } from "../contact/ContactDetails";
 import styles from "./ConciergePanel.module.css";
 
-type Problem = "rate_limited" | "invalid" | "unavailable";
+type Problem = "rate_limited" | "busy" | "invalid" | "unavailable";
 
 const problemText: Record<Problem, string> = {
   rate_limited: "You’ve sent several messages in a short time. Please wait a few minutes, or contact the team directly:",
+  busy: "The team’s message line is busy right now, so this one couldn’t be sent. Please contact them directly:",
   invalid: "These details can’t be sent as they are. Tell Shadow what to change, or contact the team directly:",
   unavailable: "I couldn’t send it just now. Please try again in a moment, or contact the team directly:",
 };
@@ -71,13 +72,24 @@ export function DraftCard({ sessionId, draft, onSent, onChange, onNavigate }: Dr
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ session_id: sessionId, draft: d, token: draft.token, consent: true }),
       });
-      const body = (await response.json().catch(() => null)) as { reply?: { content?: unknown; sig?: unknown } } | null;
+      const body = (await response.json().catch(() => null)) as {
+        error?: unknown;
+        reply?: { content?: unknown; sig?: unknown };
+      } | null;
       const reply = body?.reply;
       if (response.ok && typeof reply?.content === "string" && typeof reply.sig === "string") {
         onSent({ content: reply.content, sig: reply.sig });
         return;
       }
-      setProblem(response.status === 429 ? "rate_limited" : response.status === 400 ? "invalid" : "unavailable");
+      setProblem(
+        response.status === 429
+          ? "rate_limited"
+          : body?.error === "busy"
+            ? "busy"
+            : response.status === 400
+              ? "invalid"
+              : "unavailable",
+      );
     } catch {
       setProblem("unavailable");
     } finally {

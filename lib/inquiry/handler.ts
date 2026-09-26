@@ -1,5 +1,6 @@
 import { json, readJsonBody, rejectCrossSite } from "../http";
-import { clientKey, type RateLimitDecision } from "../rate-limit";
+import { clientKey } from "../rate-limit";
+import type { InquiryGate } from "./gate";
 import { buildPayload, inquiryFormSchema, toFieldIssues } from "./schema";
 import { submitErrorStatus, submitInquiry, type ShadowConfig } from "./submit";
 
@@ -7,7 +8,8 @@ export const MAX_INQUIRY_BYTES = 16 * 1024;
 
 export interface InquiryHandlerDeps {
   readonly config: () => ShadowConfig | null;
-  readonly limiter: { take(key: string): RateLimitDecision };
+  /** Per-client and per-instance limits, kept inside Shadow's per-key quota. */
+  readonly gate: InquiryGate;
   readonly siteUrl: string;
   readonly fetch?: typeof fetch;
 }
@@ -32,14 +34,23 @@ export function createInquiryHandler(deps: InquiryHandlerDeps) {
     if (!form.success) return json({ error: "invalid_request", issues: toFieldIssues(form.error) }, 400);
 
     // Only requests that would reach Shadow count, so fixing a typo never locks a guest out.
-    const decision = deps.limiter.take(clientKey(request.headers));
-    if (!decision.allowed) {
-      return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
-    }
+    const refusal = gateRefusal(deps.gate, request);
+    if (refusal) return refusal;
 
     const payload = buildPayload(form.data, { client_ref: form.data.client_ref, source: "website_form" });
     const result = await submitInquiry(payload, { config, fetch: deps.fetch });
     if (result.ok) return json({ status: "received", id: result.id }, result.duplicate ? 200 : 201);
     return json({ error: result.error, ...(result.issues ? { issues: result.issues } : {}) }, submitErrorStatus[result.error]);
   };
+}
+
+/** The gate's answer as a response: 429 when this client sent too many, 503 busy when everyone did. */
+export function gateRefusal(gate: InquiryGate, request: Request): Response | null {
+  const decision = gate.take(clientKey(request.headers));
+  if (decision.allowed) return null;
+  return json(
+    { error: decision.reason },
+    decision.reason === "rate_limited" ? 429 : 503,
+    { "retry-after": String(decision.retryAfterSeconds) },
+  );
 }
