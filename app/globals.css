@@ -298,6 +298,15 @@ strong {
   top: var(--space-m);
 }
 
+/* The small line icons (components/ui/icons.tsx). */
+.icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .tnum {
   font-variant-numeric: tabular-nums lining-nums;
 }

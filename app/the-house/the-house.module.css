@@ -1,8 +1,11 @@
+/* After the pod, the whole house: a hairline above it, as between the blocks around it. */
 .section {
   padding-bottom: clamp(2.5rem, 1.5rem + 3vw, 4rem);
 }
 
 .sectionTitle {
   margin-bottom: var(--space-l);
+  padding-top: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  border-top: 1px solid var(--rule);
   font-size: var(--step-3);
 }

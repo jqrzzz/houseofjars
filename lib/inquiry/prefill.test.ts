@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { inquiryPrefill } from "./prefill";
 
@@ -39,5 +41,12 @@ describe("inquiryPrefill", () => {
     expect(inquiryPrefill("?check_in=2029-01-01&nights=2", now)).toEqual({});
     // The window's last day may be a check-in, but not have a check-out after it.
     expect(inquiryPrefill("?check_in=2028-09-25&nights=2", now)).toEqual({ check_in: "2028-09-25" });
+  });
+
+  it("stays free of zod, which would add some 90 kB to the booking form's JavaScript", () => {
+    for (const file of ["lib/inquiry/prefill.ts", "lib/inquiry/dates.ts"]) {
+      const source = readFileSync(join(process.cwd(), file), "utf8");
+      expect(source).not.toMatch(/from "(zod[^"]*|\.\/schema)"/);
+    }
   });
 });

@@ -48,8 +48,8 @@ export const JARS: readonly PlacedJar[] = [
     lean: -4,
     tone: 1,
     lichen: {
-      fine: lichen(7, -46, -48, 28, 14) + lichen(11, 28, -126, 15, 7),
-      coarse: lichen(13, -50, -44, 16, 5) + lichen(17, 26, -124, 8, 2),
+      fine: lichen(7, -46, -48, 28, 10) + lichen(11, 28, -126, 15, 5),
+      coarse: lichen(13, -50, -44, 16, 4) + lichen(17, 26, -124, 8, 2),
     },
   },
   {
@@ -126,7 +126,7 @@ export const RIVER_BANDS = RIVER.slice(0, 3).map(
 export const GLINTS = (() => {
   const random = seeded(23);
   const ticks: string[] = [];
-  for (let x = -1500; x < SCENE.width; x += 70 + random() * 90) {
+  for (let x = -1500; x < SCENE.width; x += 95 + random() * 110) {
     const band = Math.floor(random() * 3);
     const y = RIVER[band]! + 8 + random() * 16;
     ticks.push(`M${num(x)} ${num(y)}h${num(10 + random() * 34)}`);
@@ -148,13 +148,10 @@ export const GROUND_PATH = `M${FAR_LEFT} ${GROUND + 2}H860C920 ${GROUND + 1} 960
 
 /** Grass tufts along the bank and at the jars' feet. */
 const tufts: readonly (readonly [number, number])[] = [
-  [-900, 719],
   [-260, 719],
-  [310, 719],
-  [700, 719],
+  [520, 719],
   [884, 716],
   [1102, 744],
-  [1170, 753],
   [1330, 746],
   [1478, 748],
 ];

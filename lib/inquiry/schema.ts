@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { dateWindow } from "./dates";
+
+export { MAX_DAYS_AHEAD, dateWindow } from "./dates";
 
 /*
  * The inquiry contract shared with Shadow Check-in (docs/INQUIRY_API.md).
@@ -51,26 +54,6 @@ const fields = {
 };
 
 const isoDate = z.iso.date();
-
-/** How far ahead an inquiry can be about. */
-export const MAX_DAYS_AHEAD = 730;
-const DAY_MS = 86_400_000;
-const vientianeDate = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Vientiane",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-/**
- * The dates an inquiry may name, as YYYY-MM-DD: from yesterday in Vientiane
- * (a guest whose own calendar is a day behind can still pick "today") to
- * MAX_DAYS_AHEAD days ahead. A model guessing the year is the likeliest
- * source of anything outside it.
- */
-export function dateWindow(now = Date.now()): { earliest: string; latest: string } {
-  return { earliest: vientianeDate.format(now - DAY_MS), latest: vientianeDate.format(now + MAX_DAYS_AHEAD * DAY_MS) };
-}
 
 interface Checkable {
   email: string | null;

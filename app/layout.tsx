@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ViewTransition, type ReactNode } from "react";
 import { JsonLd } from "@/components/JsonLd";
+import { JarMarkSymbol } from "@/components/brand/JarMark";
 import { ConciergeLauncher } from "@/components/concierge/ConciergeLauncher";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en-GB" className={`${displayFont.variable} ${bodyFont.variable} ${laoFont.variable}`}>
       <body>
+        <JarMarkSymbol />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

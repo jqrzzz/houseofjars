@@ -24,15 +24,6 @@ export default function TheHousePage() {
         lede={`${countWord(building.floors.value)} floors of curtained pod beds, shared bathrooms with hot showers, and a café downstairs where breakfast is included. Here is what to expect.`}
       />
 
-      <section id="section" aria-labelledby="section-title" className={styles.section}>
-        <div className="container">
-          <h2 id="section-title" className={styles.sectionTitle}>
-            The house in section
-          </h2>
-          <HouseCutaway />
-        </div>
-      </section>
-
       <Block id="beds" title="Your pod">
         <Prose>
           <p>
@@ -47,6 +38,15 @@ export default function TheHousePage() {
         </Prose>
         <PodDiagram />
       </Block>
+
+      <section id="section" aria-labelledby="section-title">
+        <div className={`container ${styles.section}`}>
+          <h2 id="section-title" className={styles.sectionTitle}>
+            The house in section
+          </h2>
+          <HouseCutaway />
+        </div>
+      </section>
 
       <Block id="bathrooms" title="Bathrooms">
         <Prose>

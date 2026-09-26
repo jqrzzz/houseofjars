@@ -1,4 +1,4 @@
-import { dateWindow } from "./schema";
+import { dateWindow } from "./dates";
 
 export interface InquiryPrefill {
   readonly check_in?: string;

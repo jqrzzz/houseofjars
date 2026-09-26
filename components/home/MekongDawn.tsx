@@ -25,8 +25,8 @@ const tones = { 1: styles.tone1, 2: styles.tone2, 3: styles.tone3 } as const;
 const settleOrder = [...JARS].sort((a, b) => a.x - b.x);
 
 /** Stone grain: a few specks on a small tile, instead of a noise filter (cheap to paint on phones). */
-const GRAIN = specks([[3, 2], [17, 6], [8, 11], [21, 15], [2, 19], [12, 21], [25, 26], [15, 28], [27, 3], [6, 26]]);
-const GRAIN_LIGHT = specks([[10, 4], [23, 10], [5, 14], [18, 22], [28, 20], [9, 29]]);
+const GRAIN = specks([[3, 2], [17, 6], [8, 11], [21, 15], [2, 19], [25, 26], [13, 28]]);
+const GRAIN_LIGHT = specks([[10, 4], [23, 10], [5, 14], [18, 22]]);
 
 /** The landscape: see components/art/mekong-dawn.ts. Decorative, so hidden from assistive tech. */
 export function MekongDawn() {
@@ -56,8 +56,8 @@ export function MekongDawn() {
           <stop offset="0.7" className={styles.rimEnd} />
         </linearGradient>
         <pattern id="hero-grain" width="31" height="31" patternUnits="userSpaceOnUse">
-          <path d={GRAIN} className={styles.speck} />
-          <path d={GRAIN_LIGHT} className={styles.speckLight} />
+          <path d={GRAIN} stroke="#2b1c10" strokeLinecap="round" opacity=".3" />
+          <path d={GRAIN_LIGHT} stroke="#fff" strokeLinecap="round" opacity=".35" />
         </pattern>
         {JARS.map((jar) => (
           <path key={jar.id} id={`hero-jar-${jar.id}`} d={jarGeometry(jar).body} />
@@ -100,26 +100,26 @@ export function MekongDawn() {
             style={{ "--step": settleOrder.indexOf(jar) } as CSSProperties}
           >
             <g transform={jarTransform(jar)}>
-              <ellipse className={styles.footShadow} cx="0" cy="-1" rx={num(jar.spec.w * 0.62)} ry="7" />
+              <ellipse cx="0" cy="-1" rx={num(jar.spec.w * 0.62)} ry="7" fill="#3b2414" opacity=".22" />
               <use href={href} className={tones[jar.tone]} />
               <g clipPath={`url(#hero-clip-${jar.id})`}>
-                <path className={styles.litPlane} d={jarShape.litPlanes} />
-                <path className={styles.darkPlane} d={jarShape.darkPlanes} />
+                <path d={jarShape.litPlanes} fill="#fff" opacity=".07" />
+                <path d={jarShape.darkPlanes} fill="#1a0f07" opacity=".07" />
                 <rect {...jarShape.box} fill="url(#hero-grain)" />
                 <use href={href} fill="url(#hero-shade)" />
-                <path className={styles.under} d={jarShape.under} />
-                <path className={styles.streaks} d={jarShape.streaks} />
+                <path d={jarShape.under} fill="#140c06" opacity=".26" />
+                <path d={jarShape.streaks} fill="none" stroke="#2b1c10" strokeWidth="7" strokeLinecap="round" opacity=".05" />
                 {jar.lichen ? (
-                  <>
-                    <path className={styles.lichen} d={jar.lichen.fine} strokeWidth="2.6" />
-                    <path className={styles.lichen} d={jar.lichen.coarse} strokeWidth="6" />
-                  </>
+                  <g stroke="#8f9a7a" strokeLinecap="round" opacity=".45">
+                    <path d={jar.lichen.fine} strokeWidth="2.6" />
+                    <path d={jar.lichen.coarse} strokeWidth="6" />
+                  </g>
                 ) : null}
                 <use href={href} className={styles.rim} />
               </g>
-              <path className={styles.ledge} d={jarShape.ledge} />
+              <path d={jarShape.ledge} fill="#fff" opacity=".1" />
               <path className={styles.top} d={jarShape.top} />
-              <path className={styles.mouth} d={jarShape.mouth} />
+              <path d={jarShape.mouth} fill="#2a1a0e" opacity=".5" />
             </g>
           </g>
         );
@@ -127,11 +127,11 @@ export function MekongDawn() {
 
       <g className={styles.settle} style={{ "--step": JARS.length } as CSSProperties}>
         <g transform={`translate(${LID.x} ${LID.y}) rotate(${LID.lean})`}>
-          <ellipse className={styles.footShadow} cx="0" cy="12" rx="66" ry="6" />
+          <ellipse cx="0" cy="12" rx="66" ry="6" fill="#3b2414" opacity=".22" />
           <path className={tones[2]} d={LID.side} />
-          <path className={styles.darkPlane} d={LID.side} />
+          <path d={LID.side} fill="#1a0f07" opacity=".07" />
           <path className={tones[1]} d={LID.top} />
-          <path className={styles.lidLight} d={LID.top} />
+          <path d={LID.top} fill="#fff" opacity=".2" />
         </g>
       </g>
     </svg>

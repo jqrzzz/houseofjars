@@ -282,55 +282,14 @@
   fill: var(--jar-3);
 }
 
-.footShadow {
-  fill: #3b2414;
-  opacity: 0.22;
-}
 
-.litPlane {
-  fill: #fff;
-  opacity: 0.07;
-}
 
-.darkPlane {
-  fill: #1a0f07;
-  opacity: 0.07;
-}
 
-.streaks {
-  fill: none;
-  stroke: #2b1c10;
-  stroke-width: 7;
-  stroke-linecap: round;
-  opacity: 0.05;
-}
 
-.speck,
-.speckLight {
-  stroke-width: 1;
-  stroke-linecap: round;
-}
 
-.speck {
-  stroke: #2b1c10;
-  opacity: 0.3;
-}
 
-.speckLight {
-  stroke: #fff;
-  opacity: 0.35;
-}
 
-.under {
-  fill: #140c06;
-  opacity: 0.26;
-}
 
-.lichen {
-  stroke: #8f9a7a;
-  stroke-linecap: round;
-  opacity: 0.45;
-}
 
 .rim {
   fill: none;
@@ -338,25 +297,13 @@
   stroke-width: 7;
 }
 
-.ledge {
-  fill: #fff;
-  opacity: 0.1;
-}
 
 .top {
   fill: #fff;
   opacity: 0.34;
 }
 
-.mouth {
-  fill: #2a1a0e;
-  opacity: 0.5;
-}
 
-.lidLight {
-  fill: #fff;
-  opacity: 0.2;
-}
 
 /* The load sequence: the sun rises, the jars settle one by one, the band weaves in. */
 @media (prefers-reduced-motion: no-preference) {

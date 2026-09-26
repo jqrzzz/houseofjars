@@ -1,5 +1,21 @@
 import { JAR_PATH, JAR_VIEWBOX_TIGHT } from "./jar-shape";
 
+const SYMBOL_ID = "jar-mark";
+
+/**
+ * The jar, drawn once per page (in the root layout); every mark then reuses
+ * it, so a page with a dozen marks carries the path only once.
+ */
+export function JarMarkSymbol() {
+  return (
+    <svg width="0" height="0" aria-hidden="true" focusable="false" style={{ position: "absolute" }}>
+      <symbol id={SYMBOL_ID} viewBox={JAR_VIEWBOX_TIGHT}>
+        <path d={JAR_PATH} fill="currentColor" />
+      </symbol>
+    </svg>
+  );
+}
+
 interface JarMarkProps {
   className?: string;
   /** Accessible name. Omit for a decorative mark. */
@@ -16,7 +32,7 @@ export function JarMark({ className, title }: JarMarkProps) {
       aria-label={title}
       focusable="false"
     >
-      <path d={JAR_PATH} fill="currentColor" />
+      <use href={`#${SYMBOL_ID}`} />
     </svg>
   );
 }
