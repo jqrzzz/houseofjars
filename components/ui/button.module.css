@@ -1,0 +1,120 @@
+.button {
+  --button-bg: transparent;
+  --button-fg: var(--text);
+  --button-border: var(--rule-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 3rem;
+  padding: 0.7rem 1.35rem;
+  border: 1px solid var(--button-border);
+  border-radius: 999px;
+  background: var(--button-bg);
+  color: var(--button-fg);
+  font-family: var(--font-body-stack);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms var(--ease-out);
+}
+
+.button:hover {
+  text-decoration: none;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+  transition: transform 200ms var(--ease-out);
+}
+
+.button:hover svg[data-arrow] {
+  transform: translateX(3px);
+}
+
+/* Saffron: the bow tie. Ink text keeps 7:1 contrast. */
+.primary {
+  --button-bg: var(--saffron);
+  --button-fg: var(--ink);
+  --button-border: var(--saffron);
+}
+
+.primary:hover {
+  --button-bg: #f0a445;
+  --button-border: #f0a445;
+}
+
+.secondary:hover {
+  --button-border: var(--text);
+}
+
+/* On deep (brown) sections */
+.onDeep {
+  --button-fg: var(--deep-text);
+  --button-border: var(--deep-rule);
+}
+
+.onDeep:hover {
+  --button-border: var(--deep-text);
+}
+
+/* Primary action on the closing band (brown on saffron; saffron at night) */
+.bandFill {
+  --button-bg: var(--band-button-bg);
+  --button-fg: var(--band-button-fg);
+  --button-border: var(--band-button-bg);
+}
+
+.bandFill:hover {
+  --button-bg: var(--band-button-hover);
+  --button-border: var(--band-button-hover);
+}
+
+.small {
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+}
+
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+.textLink svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  transition: transform 200ms var(--ease-out);
+}
+
+.textLink:hover svg {
+  transform: translateX(3px);
+}
+
+.textLink span {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.textLink:hover span {
+  text-decoration-color: currentColor;
+}

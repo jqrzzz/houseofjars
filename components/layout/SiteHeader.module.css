@@ -1,0 +1,134 @@
+.header {
+  position: relative;
+  z-index: 20;
+  border-bottom: 1px solid var(--rule);
+  background: var(--page);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-l);
+  min-height: 4.5rem;
+}
+
+.desktopNav {
+  display: none;
+  margin-left: auto;
+}
+
+.links {
+  display: flex;
+  gap: clamp(1rem, 0.2rem + 1.6vw, 2rem);
+  margin: 0;
+}
+
+.link {
+  position: relative;
+  display: inline-block;
+  padding-block: 0.5rem;
+  color: var(--text-soft);
+  font-size: 0.975rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.15rem;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 220ms var(--ease-out);
+}
+
+.link:hover,
+.link[aria-current="page"] {
+  color: var(--text);
+}
+
+.link:hover::after,
+.link[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+.link[aria-current="page"]::after {
+  background: var(--saffron);
+  height: 2px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+}
+
+.mobileMenu {
+  position: static;
+}
+
+.menuButton {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  list-style: none;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.menuButton::-webkit-details-marker {
+  display: none;
+}
+
+.mobileMenu[open] .menuButton {
+  background: var(--surface);
+}
+
+.mobilePanel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  background: var(--page);
+  border-bottom: 1px solid var(--rule);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-s) var(--gutter) var(--space-xl);
+}
+
+.mobileLinks {
+  display: grid;
+  margin: 0;
+}
+
+.mobileLink {
+  display: block;
+  padding: var(--space-m) 0;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-display-stack);
+  font-size: var(--step-2);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.mobileLink[aria-current="page"] {
+  color: var(--accent-text);
+}
+
+@media (min-width: 60rem) {
+  .desktopNav {
+    display: block;
+  }
+
+  .mobileMenu {
+    display: none;
+  }
+}

@@ -1,0 +1,34 @@
+.band {
+  width: 100%;
+  background-color: currentColor;
+  -webkit-mask-image: url("/brand/textile.svg");
+  mask-image: url("/brand/textile.svg");
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.m {
+  height: 16px;
+  -webkit-mask-size: 48px 16px;
+  mask-size: 48px 16px;
+}
+
+.s {
+  height: 12px;
+  -webkit-mask-size: 36px 12px;
+  mask-size: 36px 12px;
+}
+
+.saffron {
+  color: var(--deep-accent);
+}
+
+.stone {
+  color: var(--jar-2);
+}
+
+.ink {
+  color: var(--band-text);
+}

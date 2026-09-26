@@ -1,0 +1,305 @@
+/* House of Jars design tokens and base styles.
+   Colours are Shadow's: saffron bow tie, vest brown, ghost cream. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Palette (light) */
+  --paper: #fbf6ee;
+  --cream: #f7eedd;
+  --ink: #231710;
+  --ink-soft: #6b5645;
+  --saffron: #e8952b;
+  --saffron-text: #9a5608; /* 5.3:1 on paper, 4.9:1 on cream */
+  --brown: #5b3a22;
+  --brown-deep: #4a2f1b;
+  --on-brown: #f7eedd;
+  --on-brown-soft: #d9cbb5;
+  --saffron-on-brown: #f2a948;
+  --stone: #cdbfaa;
+  --stone-dark: #8c7b66;
+  --night: #140e09;
+
+  /* Roles */
+  --page: var(--paper);
+  --surface: var(--cream);
+  --text: var(--ink);
+  --text-soft: var(--ink-soft);
+  --accent-text: var(--saffron-text);
+  --rule: rgb(35 23 16 / 0.14);
+  --rule-strong: rgb(35 23 16 / 0.3);
+  --deep: var(--brown);
+  --deep-text: var(--on-brown);
+  --deep-text-soft: var(--on-brown-soft);
+  --deep-accent: var(--saffron-on-brown);
+  --deep-rule: rgb(247 238 221 / 0.18);
+  --band: var(--saffron);
+  --band-text: var(--ink);
+  --band-text-soft: var(--brown-deep);
+  --band-rule: rgb(35 23 16 / 0.22);
+  --band-button-bg: var(--brown);
+  --band-button-hover: var(--brown-deep);
+  --band-button-fg: var(--on-brown);
+  --jar-1: #cdbfaa;
+  --jar-2: #b7a68e;
+  --jar-3: #9d8b73;
+  --placeholder: #e4d8c5;
+  --placeholder-ink: #5f4c3c;
+  --focus: var(--saffron-text);
+  --shadow-soft: 0 1px 2px rgb(35 23 16 / 0.06), 0 8px 24px rgb(35 23 16 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(35 23 16 / 0.08), 0 18px 48px rgb(35 23 16 / 0.16);
+
+  /* Shadow's sunrise, used once: the dawn glow on the hero horizon */
+  --dawn-1: #ff6b35;
+  --dawn-2: #f7931e;
+  --dawn-3: #fdb833;
+
+  /* Type */
+  --font-display-stack: var(--font-display), Georgia, "Times New Roman", serif;
+  --font-body-stack: var(--font-body), system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-lao-stack: var(--font-lao), serif;
+
+  --step--2: 0.75rem;
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: clamp(1.1875rem, 1.12rem + 0.3vw, 1.375rem);
+  --step-2: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);
+  --step-3: clamp(1.75rem, 1.4rem + 1.6vw, 2.625rem);
+  --step-4: clamp(2.125rem, 1.5rem + 2.9vw, 3.75rem);
+  --step-5: clamp(2.5rem, 1.45rem + 4.6vw, 5.25rem);
+
+  /* Space */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-s: 0.75rem;
+  --space-m: 1rem;
+  --space-l: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: clamp(3.5rem, 2.5rem + 4vw, 6rem);
+  --space-4xl: clamp(4.5rem, 3rem + 6vw, 9rem);
+
+  /* Layout */
+  --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.75rem);
+  --max-width: 76rem;
+  --measure: 65ch;
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: var(--night);
+    --surface: #1e1610;
+    --text: #f7eedd;
+    --text-soft: #c9b89f;
+    --accent-text: var(--saffron);
+    --rule: rgb(247 238 221 / 0.13);
+    --rule-strong: rgb(247 238 221 / 0.28);
+    --deep: #2a1d13;
+    --deep-text: #f7eedd;
+    --deep-text-soft: #d2c2a9;
+    --deep-accent: var(--saffron-on-brown);
+    --deep-rule: rgb(247 238 221 / 0.14);
+    --band: #2a1d13;
+    --band-text: #f7eedd;
+    --band-text-soft: #d2c2a9;
+    --band-rule: rgb(247 238 221 / 0.16);
+    --band-button-bg: var(--saffron);
+    --band-button-hover: #f0a445;
+    --band-button-fg: var(--ink);
+    --jar-1: #8c7b66;
+    --jar-2: #74644f;
+    --jar-3: #5e503f;
+    --placeholder: #261c14;
+    --placeholder-ink: #c9b89f;
+    --focus: var(--saffron);
+    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+    --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 18px 48px rgb(0 0 0 / 0.5);
+  }
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: var(--space-xl);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font-body-stack);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+main {
+  flex: 1;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+dl,
+dd,
+figure,
+blockquote {
+  margin: 0;
+}
+
+ul[role="list"],
+ol[role="list"] {
+  list-style: none;
+  padding: 0;
+}
+
+img,
+svg,
+picture {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display-stack);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h3 {
+  line-height: 1.2;
+}
+
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--accent-text);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  transition: text-decoration-color 160ms ease, color 160ms ease;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--saffron) 35%, transparent);
+  color: inherit;
+}
+
+strong {
+  font-weight: 650;
+}
+
+/* Utilities */
+.container {
+  width: 100%;
+  max-width: calc(var(--max-width) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-m);
+  top: -100px;
+  z-index: 100;
+  padding: var(--space-s) var(--space-m);
+  background: var(--text);
+  color: var(--page);
+  border-radius: var(--radius-s);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: var(--space-m);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

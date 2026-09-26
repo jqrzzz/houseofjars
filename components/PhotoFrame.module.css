@@ -1,0 +1,70 @@
+.figure {
+  display: grid;
+  gap: var(--space-s);
+}
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  background: var(--placeholder);
+}
+
+.rect {
+  border-radius: var(--radius-m);
+}
+
+.arch {
+  border-radius: 999px 999px var(--radius-s) var(--radius-s);
+}
+
+.jar {
+  aspect-ratio: 1;
+  -webkit-mask: url("/brand/jar.svg") center / contain no-repeat;
+  mask: url("/brand/jar.svg") center / contain no-repeat;
+}
+
+.image {
+  object-fit: cover;
+}
+
+/* Stone: a fine grain over a soft, uneven light. */
+.placeholder {
+  background-color: var(--placeholder);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .27 0 0 0 0 .19 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(120% 80% at 30% 20%, rgb(255 255 255 / 0.22), transparent 60%),
+    radial-gradient(90% 70% at 80% 100%, rgb(35 23 16 / 0.1), transparent 70%);
+}
+
+.watermark {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 34%;
+  height: auto;
+  color: var(--placeholder-ink);
+  opacity: 0.12;
+}
+
+.placeholderCaption {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: var(--space-l);
+  font-size: var(--step--2);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--placeholder-ink);
+  opacity: 0.75;
+}
+
+.jar .placeholderCaption {
+  display: none;
+}
+
+.caption {
+  font-size: var(--step--1);
+  color: var(--text-soft);
+}
