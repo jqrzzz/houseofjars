@@ -2,14 +2,16 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { CLUSTER, jarTransform } from "@/components/brand/jar-cluster";
-import { JAR_BODY, JAR_CARVE, JAR_PATH, JAR_VIEWBOX_TIGHT } from "@/components/brand/jar-shape";
+import { SCENE } from "@/components/art/mekong-dawn";
+import { mekongDawnSvg } from "@/components/art/mekong-dawn-svg";
+import { JAR_PATH, JAR_VIEWBOX_TIGHT } from "@/components/brand/jar-shape";
 import { identity } from "@/content/identity";
 import type { PageInfo } from "./site";
 
 /*
  * Open Graph images, drawn at build time with the brand's own parts: the
- * jar mark, Young Serif, the jars on the dawn horizon and the woven band.
+ * jar mark, Young Serif, the hero's Mekong dawn with its stone jars, and the
+ * woven band.
  */
 
 export const ogSize = { width: 1200, height: 630 };
@@ -22,15 +24,14 @@ const color = {
   saffron: "#e8952b",
   saffronText: "#9a5608",
   brown: "#5b3a22",
-  band: "#b7a68e",
-  jars: ["#cdbfaa", "#b7a68e", "#9d8b73"],
+  saffronOnBrown: "#f2a948",
 };
 
 // Satori reads woff but not woff2; @fontsource ships both.
 const displayFont = readFile(
   join(process.cwd(), "node_modules/@fontsource/young-serif/files/young-serif-latin-400-normal.woff"),
 );
-const textileTile = readFile(join(process.cwd(), "public/brand/textile.svg"), "utf8");
+const textileTile = readFile(join(process.cwd(), "public/brand/textile-diamond.svg"), "utf8");
 
 const svgData = (svg: string) => `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
@@ -38,30 +39,27 @@ function jarMarkSvg(fill: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${JAR_VIEWBOX_TIGHT}"><path d="${JAR_PATH}" fill="${fill}"/></svg>`;
 }
 
-function clusterSvg(): string {
-  const jars = CLUSTER.jars
-    .map(
-      (jar) =>
-        `<g transform="${jarTransform(jar)}"><path d="${JAR_BODY}" fill="${color.jars[jar.tone - 1]}"/><path d="${JAR_CARVE}" fill="#140c06" fill-opacity="0.3"/></g>`,
-    )
-    .join("");
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CLUSTER.width} ${CLUSTER.height}">${jars}</svg>`;
-}
-
-/** The woven band, repeated from the same tile the site uses. */
-async function bandSvg(width: number, fill: string): Promise<string> {
-  const tile = (await textileTile)
+/** The hero's woven band: saffron stepped diamonds on vest brown, from the same tile the site uses. */
+async function bandSvg(width: number): Promise<string> {
+  const tile = await textileTile;
+  const [, , tileWidth, tileHeight] = (/viewBox="([^"]+)"/.exec(tile)?.[1] ?? "0 0 48 36").split(" ");
+  const inner = tile
     .replace(/^<svg[^>]*>/, "")
     .replace(/<\/svg>\s*$/, "")
-    .replaceAll('stroke="#000"', `stroke="${fill}"`);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="28" viewBox="0 0 ${width} 28"><defs><pattern id="t" width="48" height="28" patternUnits="userSpaceOnUse"><g fill="${fill}">${tile}</g></pattern></defs><rect width="${width}" height="28" fill="url(#t)"/></svg>`;
+    .replaceAll('stroke="#000"', `stroke="${color.saffronOnBrown}"`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${tileHeight}" viewBox="0 0 ${width} ${tileHeight}"><defs><pattern id="t" width="${tileWidth}" height="${tileHeight}" patternUnits="userSpaceOnUse"><g fill="${color.saffronOnBrown}">${inner}</g></pattern></defs><rect width="${width}" height="${tileHeight}" fill="${color.brown}"/><rect width="${width}" height="${tileHeight}" fill="url(#t)"/></svg>`;
 }
+
+/** The scene fills the card's width, its right edge on the card's; this many scene units show. */
+const SCENE_SHOWN = 2000;
+const SCENE_HEIGHT = Math.round((ogSize.width / SCENE_SHOWN) * SCENE.height);
+const BAND_HEIGHT = 36;
 
 export async function renderOgImage(page: PageInfo): Promise<ImageResponse> {
   const isHome = page.path === "/";
   const title = isHome ? "A calm house in the heart of Vientiane." : page.title;
   const eyebrow = isHome ? "Sabaidee" : page.nav ?? "House of Jars";
-  const band = await bandSvg(ogSize.width, color.band);
+  const band = await bandSvg(ogSize.width);
 
   return new ImageResponse(
     (
@@ -72,51 +70,39 @@ export async function renderOgImage(page: PageInfo): Promise<ImageResponse> {
           display: "flex",
           flexDirection: "column",
           position: "relative",
-          background: color.paper,
+          background: `linear-gradient(180deg, ${color.paper} 35%, #f6e2c4 88%)`,
           color: color.ink,
           fontFamily: "Young Serif",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "56px 72px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "52px 72px 0" }}>
           <img src={svgData(jarMarkSvg(color.saffron))} width={52} height={52} alt="" />
           <div style={{ fontSize: 36 }}>{identity.name.value}</div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", padding: "0 72px", marginTop: 64, width: 760 }}>
+        <div style={{ display: "flex", flexDirection: "column", padding: "0 72px", marginTop: 52, width: 780 }}>
           <div style={{ fontSize: 22, letterSpacing: 5, textTransform: "uppercase", color: color.saffronText }}>
             {eyebrow}
           </div>
-          <div style={{ fontSize: title.length > 24 ? 66 : 84, lineHeight: 1.04, marginTop: 20 }}>{title}</div>
-        </div>
-
-        <div style={{ position: "absolute", left: 72, bottom: 100, fontSize: 24, color: color.soft }}>
-          {`Owned and run by ${identity.owner.name.value} · ${identity.address.village.value}, Vientiane`}
+          <div style={{ fontSize: title.length > 24 ? 64 : 80, lineHeight: 1.04, marginTop: 18 }}>{title}</div>
+          <div style={{ fontSize: 24, marginTop: 22, color: color.soft }}>
+            {`Owned and run by ${identity.owner.name.value} · ${identity.address.village.value}, Vientiane`}
+          </div>
         </div>
 
         <img
-          src={svgData(clusterSvg())}
-          width={420}
-          height={245}
+          src={svgData(mekongDawnSvg(SCENE.width - SCENE_SHOWN))}
+          width={ogSize.width}
+          height={SCENE_HEIGHT}
           alt=""
-          style={{ position: "absolute", right: 64, bottom: 70 }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 68,
-            height: 3,
-            background:
-              "linear-gradient(90deg, rgba(255,107,53,0) 0%, #ff6b35 20%, #f7931e 50%, #fdb833 78%, rgba(253,184,51,0) 100%)",
-          }}
+          style={{ position: "absolute", left: 0, bottom: BAND_HEIGHT }}
         />
         <img
           src={svgData(band)}
           width={ogSize.width}
-          height={28}
+          height={BAND_HEIGHT}
           alt=""
-          style={{ position: "absolute", left: 0, bottom: 28 }}
+          style={{ position: "absolute", left: 0, bottom: 0 }}
         />
       </div>
     ),

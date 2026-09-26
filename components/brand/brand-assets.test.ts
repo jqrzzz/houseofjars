@@ -15,13 +15,17 @@ describe("brand assets stay in sync", () => {
     expect(pathIn(read("app/icon.svg"))).toBe(JAR_PATH);
   });
 
-  it("sizes the textile band in the tile's proportions", () => {
-    const tile = read("public/brand/textile.svg");
-    const [, , width, height] = (/viewBox="([^"]+)"/.exec(tile)?.[1] ?? "").split(" ").map(Number);
+  it("draws each woven band at its tile's own height, keeping its proportions", () => {
     const css = read("components/brand/TextileBand.module.css");
-    expect(css).toContain(`mask-size: ${width}px ${height}px`);
-    // The small band keeps the same ratio.
-    const small = /\.s \{[^}]*mask-size: ([\d.]+)px ([\d.]+)px/.exec(css);
-    expect(Number(small?.[1]) / Number(small?.[2])).toBeCloseTo(width! / height!, 2);
+    // Tiles scale with the band's height, so their proportions hold.
+    expect(css).toContain("auto 100% repeat-x");
+    for (const pattern of ["diamond", "lozenge", "hooks"]) {
+      const tile = read(`public/brand/textile-${pattern}.svg`);
+      const [, , , tileHeight] = (/viewBox="([^"]+)"/.exec(tile)?.[1] ?? "").split(" ").map(Number);
+      const rule = new RegExp(`\\.${pattern} \\{[^}]*--band-height: (\\d+)px[^}]*--band-tile: url\\("/brand/textile-${pattern}\\.svg"\\)`);
+      const height = Number(rule.exec(css)?.[1]);
+      // One tile unit per pixel keeps the warp's hairlines crisp.
+      expect(height).toBe(tileHeight);
+    }
   });
 });

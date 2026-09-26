@@ -1,23 +1,44 @@
 .hero {
+  /* The landscape's colours (see the dark variant below). */
+  --sky-low: #f6e2c4;
+  --bank: #b5b8ae;
+  --river-1: #f1dbbd;
+  --river-2: #e7cdaa;
+  --river-3: #ddbf98;
+  --glint: rgb(255 252 244 / 0.9);
+  --sun-glint: #fdb833;
+  --ground: #bf8a63;
+  --tuft: #8f9a7a;
+  --glow: #fdb833;
+  --glow-opacity: 0.4;
+  --rim: #fff0d2;
+  --rim-opacity: 0.4;
+  --stone-light: 0.26;
+  --stone-shade: 0.2;
+  /* Phones: the jars span the width. Tablets: capped. */
+  --scene-height: min(108.6vw, 570px);
   position: relative;
-  padding-top: clamp(2.75rem, 1.25rem + 6vw, 6.5rem);
-  padding-bottom: var(--space-2xl);
+}
+
+.inner {
+  position: relative;
   overflow: hidden;
+  padding-top: clamp(2rem, 1rem + 3.2vw, 3.25rem);
+  background: linear-gradient(to bottom, var(--page) 8%, var(--sky-low));
 }
 
 .grid {
   position: relative;
   z-index: 1;
-  display: grid;
-  gap: var(--space-xl);
-  align-items: end;
 }
 
 .copy {
-  max-width: 38rem;
+  max-width: 40rem;
 }
 
 .greeting {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
@@ -39,23 +60,28 @@
   color: var(--text-soft);
 }
 
+/* On wide screens the greeting is set large behind its own line, as an ornament. */
+.ornament {
+  display: none;
+}
+
 .title {
-  font-size: var(--step-5);
+  font-size: clamp(2.5rem, 1.1rem + 5.2vw, 6.5rem);
   line-height: 1.02;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
   max-width: 13ch;
 }
 
 .lede {
   margin-top: var(--space-l);
-  max-width: 34rem;
+  max-width: 36rem;
   font-size: var(--step-1);
   line-height: 1.55;
   color: var(--text-soft);
 }
 
 .owner {
-  margin-top: var(--space-m);
+  margin-top: var(--space-s);
   font-family: var(--font-display-stack);
   font-size: var(--step-1);
   color: var(--text);
@@ -65,15 +91,183 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-s);
-  margin-top: var(--space-xl);
+  margin-top: var(--space-l);
 }
 
-/* The jars stand on the horizon: the svg's bottom edge is the horizon line. */
-.jars {
-  width: min(100%, 27rem);
-  height: auto;
-  margin-inline: auto;
+/* The landscape. The frame shows the lower part of the scene on phones, and fills the hero behind the words on wide screens. */
+.sceneFrame {
+  position: relative;
   overflow: hidden;
+  height: calc(var(--scene-height) * 0.6);
+  margin-top: var(--space-l);
+}
+
+.scene {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  height: var(--scene-height);
+  aspect-ratio: 1600 / 760;
+  overflow: visible;
+}
+
+.band {
+  position: relative;
+}
+
+@media (min-width: 60rem) {
+  .hero {
+    --scene-height: clamp(30rem, 52vw, 48rem);
+  }
+
+  .sceneFrame {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    margin: 0;
+  }
+
+  /* Room below the words for the river and the bank. */
+  .copy {
+    padding-bottom: calc(var(--scene-height) * 0.221 + 2.25rem);
+  }
+
+  .title {
+    line-height: 0.95;
+  }
+
+  .inner {
+    padding-top: clamp(1.25rem, 0.5rem + 1.5vw, 2.5rem);
+  }
+
+  .greeting {
+    margin-top: 2.6rem;
+  }
+
+  .copy {
+    max-width: 43rem;
+  }
+
+  .lede {
+    max-width: 42rem;
+    font-size: var(--step-1);
+  }
+
+  .ornament {
+    display: block;
+    position: absolute;
+    z-index: -1;
+    left: -0.05em;
+    bottom: 0.2em;
+    font-family: var(--font-lao-stack);
+    font-size: 4rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0;
+    color: color-mix(in srgb, var(--stone) 50%, transparent);
+    user-select: none;
+    pointer-events: none;
+  }
+}
+
+/* The scene's parts */
+.glowStop {
+  stop-color: var(--glow);
+  stop-opacity: var(--glow-opacity);
+}
+
+.glowEnd {
+  stop-color: var(--glow);
+  stop-opacity: 0;
+}
+
+.lightStop {
+  stop-opacity: var(--stone-light);
+}
+
+.shadeStop {
+  stop-opacity: var(--stone-shade);
+}
+
+.rimStop {
+  stop-color: var(--rim);
+  stop-opacity: var(--rim-opacity);
+}
+
+.rimEnd {
+  stop-color: var(--rim);
+  stop-opacity: 0;
+}
+
+.night,
+.lights {
+  display: none;
+}
+
+.moon {
+  fill: #f4e8d0;
+}
+
+.stars {
+  stroke: #f7eedd;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.bank {
+  fill: var(--bank);
+}
+
+.lights {
+  stroke: var(--saffron);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.river1 {
+  fill: var(--river-1);
+}
+
+.river2 {
+  fill: var(--river-2);
+}
+
+.river3 {
+  fill: var(--river-3);
+}
+
+.shimmer {
+  fill: none;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-dasharray: 9 3 2 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.glint {
+  stroke: var(--glint);
+}
+
+/* The sun's own reflection is solid; only the loose glints drift. */
+.sunGlint {
+  stroke: var(--sun-glint);
+  stroke-width: 2;
+  stroke-dasharray: none;
+  animation: none !important;
+}
+
+.ground {
+  fill: var(--ground);
+}
+
+.tufts {
+  fill: none;
+  stroke: var(--tuft);
+  stroke-width: 2.4;
+  stroke-linecap: round;
 }
 
 .tone1 {
@@ -88,116 +282,174 @@
   fill: var(--jar-3);
 }
 
-.groove {
-  fill: rgb(20 12 6 / 0.32);
+.footShadow {
+  fill: #3b2414;
+  opacity: 0.22;
 }
 
-.lightStop {
-  stop-color: #fff;
-  stop-opacity: var(--jar-light, 0.26);
+.litPlane {
+  fill: #fff;
+  opacity: 0.07;
 }
 
-.clearStop {
-  stop-color: #fff;
-  stop-opacity: 0;
+.darkPlane {
+  fill: #1a0f07;
+  opacity: 0.07;
 }
 
-.shadeStop {
-  stop-color: #140c06;
-  stop-opacity: var(--jar-shade, 0.14);
+.streaks {
+  fill: none;
+  stroke: #2b1c10;
+  stroke-width: 7;
+  stroke-linecap: round;
+  opacity: 0.05;
 }
 
-/* The one hero moment: jars rise from behind the horizon, left to right. */
-.rise {
-  transform-box: fill-box;
-  animation: rise 420ms var(--ease-out) both;
+.speck,
+.speckLight {
+  stroke-width: 1;
+  stroke-linecap: round;
 }
 
-@keyframes rise {
+.speck {
+  stroke: #2b1c10;
+  opacity: 0.3;
+}
+
+.speckLight {
+  stroke: #fff;
+  opacity: 0.35;
+}
+
+.under {
+  fill: #140c06;
+  opacity: 0.26;
+}
+
+.lichen {
+  stroke: #8f9a7a;
+  stroke-linecap: round;
+  opacity: 0.45;
+}
+
+.rim {
+  fill: none;
+  stroke: url(#hero-rim);
+  stroke-width: 7;
+}
+
+.ledge {
+  fill: #fff;
+  opacity: 0.1;
+}
+
+.top {
+  fill: #fff;
+  opacity: 0.34;
+}
+
+.mouth {
+  fill: #2a1a0e;
+  opacity: 0.5;
+}
+
+.lidLight {
+  fill: #fff;
+  opacity: 0.2;
+}
+
+/* The load sequence: the sun rises, the jars settle one by one, the band weaves in. */
+@media (prefers-reduced-motion: no-preference) {
+  .sun {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: sunrise 900ms var(--ease-out) both;
+  }
+
+  .settle {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: settle 620ms var(--ease-out) both;
+    animation-delay: calc(220ms + var(--step) * 90ms);
+  }
+
+  .shimmer {
+    animation: drift 4s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes sunrise {
   from {
-    transform: translateY(104%);
+    transform: translateY(16px);
+    opacity: 0;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .rise {
-    animation: none;
+@keyframes settle {
+  from {
+    transform: translateY(-12px) rotate(1.8deg);
+    opacity: 0;
+  }
+
+  55% {
+    transform: translateY(1px) rotate(-1deg);
+    opacity: 1;
+  }
+
+  80% {
+    transform: rotate(0.4deg);
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
   }
 }
 
-/* Shadow's sunrise, once: a thin Mekong dawn along the horizon. */
-.horizon {
-  position: relative;
-  height: 1px;
-  background: var(--rule-strong);
+@keyframes drift {
+  to {
+    stroke-dashoffset: -6;
+  }
 }
 
-.horizon::before {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  top: -1px;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--dawn-1) 20%,
-    var(--dawn-2) 50%,
-    var(--dawn-3) 78%,
-    transparent
-  );
-}
-
-.horizon::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: 1px;
-  height: clamp(5rem, 3rem + 8vw, 9rem);
-  background: radial-gradient(
-    40% 100% at 50% 100%,
-    color-mix(in srgb, var(--dawn-3) 50%, transparent),
-    color-mix(in srgb, var(--dawn-2) 22%, transparent) 45%,
-    transparent 75%
-  );
-  opacity: var(--dawn-haze, 0.55);
-  pointer-events: none;
-}
-
-.band {
-  margin-top: 0.625rem;
-}
-
+/* Vientiane night: a cream moon, a few stars, lights on the far bank, lantern light on the stone. */
 @media (prefers-color-scheme: dark) {
   .hero {
-    --dawn-haze: 0.7;
-    --jar-light: 0.12;
-    --jar-shade: 0.3;
-  }
-}
-
-@media (min-width: 60rem) {
-  .grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
-    gap: var(--space-2xl);
-  }
-
-  .copy {
-    padding-bottom: clamp(3rem, 1rem + 4vw, 5.5rem);
-  }
-
-  .jars {
-    width: 100%;
-    max-width: 40rem;
-    margin-inline: auto 0;
+    --sky-low: #2a1d14;
+    --bank: #2e2721;
+    --river-1: #251b14;
+    --river-2: #211812;
+    --river-3: #1c150f;
+    --glint: rgb(232 149 43 / 0.6);
+    --sun-glint: rgb(247 238 221 / 0.5);
+    --ground: #33241a;
+    --tuft: #58604c;
+    --glow: #f7eedd;
+    --glow-opacity: 0.1;
+    --rim: var(--saffron);
+    --rim-opacity: 0.32;
+    --stone-light: 0.1;
+    --stone-shade: 0.34;
+    --jar-1: #938573;
+    --jar-2: #7e7160;
+    --jar-3: #6a5e50;
   }
 
-  .horizon::after {
-    background: radial-gradient(
-      30% 100% at 74% 100%,
-      color-mix(in srgb, var(--dawn-3) 50%, transparent),
-      color-mix(in srgb, var(--dawn-2) 22%, transparent) 45%,
-      transparent 75%
-    );
+  .glow,
+  .sun {
+    display: none;
+  }
+
+  .night,
+  .lights {
+    display: inline;
+  }
+
+  .top {
+    opacity: 0.16;
+  }
+
+  .ornament {
+    color: color-mix(in srgb, var(--stone-dark) 28%, transparent);
   }
 }

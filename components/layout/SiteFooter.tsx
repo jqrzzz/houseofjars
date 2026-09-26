@@ -16,7 +16,7 @@ export function SiteFooter() {
   const { phone, email } = identity.contact;
   return (
     <footer className={styles.footer}>
-      <TextileBand tone="saffron" className={styles.band} />
+      <TextileBand pattern="hooks" weave="view" />
       <div className={`container ${styles.grid}`}>
         <div className={styles.brand}>
           <Wordmark tone="deep" />
