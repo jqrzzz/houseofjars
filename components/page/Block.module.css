@@ -85,15 +85,45 @@
   }
 }
 
+/* List markers: the house's jar, tiny, in saffron. */
 .ticks li::before {
   content: "";
   position: absolute;
-  left: 0.1rem;
-  top: 0.8em;
-  width: 0.7rem;
-  height: 2px;
-  border-radius: 2px;
+  left: 0.05rem;
+  top: 0.42em;
+  width: 0.8rem;
+  height: 0.8rem;
   background: var(--saffron);
+  -webkit-mask: url("/brand/jar.svg") center / contain no-repeat;
+  mask: url("/brand/jar.svg") center / contain no-repeat;
+}
+
+.numbered {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: tick;
+}
+
+.numbered li {
+  padding-left: 2rem;
+  counter-increment: tick;
+}
+
+.numbered li::before {
+  content: counter(tick);
+  top: 0.2em;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  -webkit-mask: none;
+  mask: none;
 }
 
 @media (min-width: 60rem) {

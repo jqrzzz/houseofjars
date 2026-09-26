@@ -40,9 +40,86 @@
   }
 }
 
-/* The house: three rooms, each drawn in an arched niche */
+/* The house: the house in section (small), then three rooms, each drawn in an arched niche */
 .house {
   padding-top: var(--space-3xl);
+}
+
+.houseTop {
+  display: grid;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.houseTop .intro {
+  margin-bottom: 0;
+}
+
+.echo {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-xs);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.echoFrame {
+  display: block;
+  width: 100%;
+  padding: 4% 3% 2%;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  transition: transform 320ms var(--ease-out);
+}
+
+.echoFrame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.echo:hover .echoFrame {
+  transform: translateY(-3px);
+}
+
+.echoLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: var(--space-2xs);
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.echoLabel span {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: var(--underline-offset);
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.echoLabel svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  transition: transform 200ms var(--ease-out);
+}
+
+.echo:hover .echoLabel svg {
+  transform: translateX(3px);
+}
+
+.echoNote {
+  font-size: var(--step--1);
+  font-style: italic;
+  color: var(--text-soft);
+}
+
+@media (min-width: 60rem) {
+  .houseTop {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    align-items: end;
+    gap: var(--space-4xl);
+  }
 }
 
 .rooms {
@@ -65,7 +142,7 @@
   display: grid;
   place-items: center;
   aspect-ratio: 4 / 5;
-  padding: 14%;
+  padding: 30% 6% 10%;
   border-radius: 999px 999px var(--radius-s) var(--radius-s);
   background: var(--surface);
   color: var(--brown);
@@ -97,8 +174,8 @@
 
   .niche {
     grid-row: auto;
-    aspect-ratio: 1 / 1;
-    padding: 17%;
+    aspect-ratio: 6 / 5;
+    padding: 20% 9% 8%;
     margin-bottom: var(--space-l);
   }
 }
@@ -237,13 +314,35 @@
   transform: rotate(45deg);
 }
 
-/* Owned and run by Nang */
+/* Owned and run by Nang: an arch kept for her portrait, if she wishes; an open door until then. */
 .owner {
   display: grid;
-  justify-items: center;
+  gap: var(--space-xl);
+  align-items: center;
+  max-width: 62rem;
+}
+
+.ownerFrame {
+  --frame-ground: var(--page);
+  width: min(62%, 15rem);
+}
+
+.ownerWords {
+  display: grid;
+  justify-items: start;
   gap: var(--space-l);
-  max-width: 46rem;
-  text-align: center;
+}
+
+@media (min-width: 48rem) {
+  .owner {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    gap: var(--space-3xl);
+  }
+
+  .ownerFrame {
+    width: 100%;
+    max-width: 18rem;
+  }
 }
 
 .ownerMark {

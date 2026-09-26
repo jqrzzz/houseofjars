@@ -1,6 +1,7 @@
 import { BookingBand } from "@/components/BookingBand";
 import { CopyButton } from "@/components/contact/CopyButton";
-import { WalkDrawing } from "@/components/drawings/Drawings";
+import { Drawing } from "@/components/art/Drawing";
+import { PhotoFrame } from "@/components/PhotoFrame";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import buttons from "@/components/ui/button.module.css";
@@ -25,7 +26,7 @@ export default function VientianePage() {
         eyebrow="Vientiane"
         title="Getting here and around Vientiane"
         lede={`The house is in ${location.neighbourhood.value}: ${lowerFirst(airport.value.distance)} from the airport and a few minutes’ walk from the Mekong.`}
-        art={<WalkDrawing />}
+        art={<Drawing name="tuktuk" />}
       />
 
       <Block id="airport" title="From the airport">
@@ -61,6 +62,7 @@ export default function VientianePage() {
           variant="places"
           rows={Object.values(onFoot).map((nearby) => ({ term: nearby.value.place, value: nearby.value.distance }))}
         />
+        <PhotoFrame caption="The Mekong riverside at dusk" drawing="riverside" />
       </Block>
 
       <Block id="arriving-in-laos" title="Before you arrive in Laos" tone="cream">

@@ -1,6 +1,13 @@
 import { fact, type Fact } from "./fact";
 import { sources } from "./sources";
 
+export interface Portrait {
+  /** A file in public/, e.g. "/photos/nang.jpg". */
+  readonly src: string;
+  /** What the photograph shows, for people who can't see it. */
+  readonly alt: string;
+}
+
 export const identity = {
   name: fact("House of Jars", sources.booking, {
     note: 'Listed as "House Of Jars" on Booking.com and "House of jars Hostel" on Google.',
@@ -41,6 +48,8 @@ export const identity = {
      * here until she writes it: never write a note or quote on her behalf.
      */
     note: null as Fact<string> | null,
+    /** A portrait for the home page, only if Nang wishes. Until then the frame shows an open door. */
+    portrait: null as Fact<Portrait> | null,
   },
 
   /** Why the house is called House of Jars. */

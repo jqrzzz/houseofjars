@@ -19,8 +19,13 @@ export const openQuestions: readonly OpenQuestion[] = [
   { ask: "Whether there are private rooms.", guestTopic: "private rooms" },
   { ask: "Breakfast serving times.", guestTopic: "breakfast serving times" },
   { ask: "Late check-out: possible or not, and on what terms.", guestTopic: "late check-out" },
-  { ask: "Photos of the house: pods, bathrooms, café, the front of the house (PhotoFrame placeholders are waiting).", guestTopic: null },
+  { ask: "Photos of the house: pods, bathrooms, café, the front of the house (the drawings in the photo frames are standing in).", guestTopic: null },
+  {
+    ask: "The layout of the house: which floor the dorms, the bathrooms and the front desk are on, and the building's shape. The drawing on /the-house (components/house/HouseCutaway.tsx) guesses and says it is an illustration, not a floor plan; with the real layout it can be made accurate.",
+    guestTopic: "which floor the dorms, bathrooms and front desk are on",
+  },
   { ask: "Nang's own note for the About page, only if she would like to write one (identity.owner.note).", guestTopic: null },
+  { ask: "A portrait of Nang for the home page, only if she would like one (identity.owner.portrait).", guestTopic: null },
   { ask: "A link to the Hostelz ranking page.", guestTopic: null },
   { ask: "The real story behind the name House of Jars (identity.nameStory).", guestTopic: null },
 ];

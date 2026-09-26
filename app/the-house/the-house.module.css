@@ -1,0 +1,8 @@
+.section {
+  padding-bottom: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+}
+
+.sectionTitle {
+  margin-bottom: var(--space-l);
+  font-size: var(--step-3);
+}

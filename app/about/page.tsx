@@ -1,6 +1,6 @@
 import { BookingBand } from "@/components/BookingBand";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
-import { JarDrawing } from "@/components/drawings/Drawings";
+import { Drawing } from "@/components/art/Drawing";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -25,7 +25,7 @@ export default function AboutPage() {
         eyebrow="About"
         title="About the house"
         lede={`${identity.name.value} is a calm dorm hostel in ${location.neighbourhood.value}: ${countWord(building.floors.value).toLowerCase()} floors of pod beds, with a café downstairs.`}
-        art={<JarDrawing />}
+        art={<Drawing name="plain" />}
       />
 
       <Block id="owner" title={`Owned and run by ${owner}`}>
@@ -41,6 +41,7 @@ export default function AboutPage() {
             </blockquote>
           ) : null}
         </Prose>
+        <PhotoFrame caption="The front of the house" drawing="door" shape="arch" aspect="4 / 5" className={styles.door} />
       </Block>
 
       <Block id="name" title="Why House of Jars" tone="cream">
@@ -48,10 +49,10 @@ export default function AboutPage() {
           <p>{identity.nameStory.value}</p>
           <p>{plainOfJars.summary.value}</p>
           <p>
-            Our mark is drawn after those jars: squat and heavy, with a thick rolled lip and one carved line.
+            Our mark is drawn after those jars: squat and heavy, its thick rim carved from the same stone, with one
+            carved line.
           </p>
         </Prose>
-        <PhotoFrame shape="jar" caption="The front of the house" className={styles.jarFrame} />
       </Block>
 
       <Block id="team" title="The team">

@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BookingBand } from "@/components/BookingBand";
+import { PhotoFrame } from "@/components/PhotoFrame";
+import { Drawing } from "@/components/art/Drawing";
+import type { DrawingName } from "@/components/art/drawings";
 import { JarMark } from "@/components/brand/JarMark";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import { shadowFull } from "@/components/concierge/mascot";
-import { BreakfastDrawing, PodBedDrawing, ShowerDrawing } from "@/components/drawings/Drawings";
 import { Hero } from "@/components/home/Hero";
 import { Ledger, type LedgerRow } from "@/components/ui/Ledger";
 import { Eyebrow, Section } from "@/components/ui/Section";
@@ -22,21 +24,21 @@ import styles from "./home.module.css";
 
 export const metadata = pageMetadata(pages.home);
 
-const rooms = [
+const rooms: { drawing: DrawingName; title: string; text: string }[] = [
   {
-    Drawing: PodBedDrawing,
+    drawing: "pod",
     title: "Your own pod",
     text: `Every bed is its own cubicle, with ${joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`))}.`,
   },
   {
-    Drawing: ShowerDrawing,
+    drawing: "shower",
     title: "Hot showers",
     text: `Shared bathrooms with hot showers, ${lowerFirst(bathrooms.cleaning.value)}.`,
   },
   ...(breakfast.included.value
     ? [
         {
-          Drawing: BreakfastDrawing,
+          drawing: "cafe" as const,
           title: "Breakfast downstairs",
           text: `Included, in the café on the ground floor: ${joinList(breakfast.items.value.map((item) => item.toLowerCase()))}.`,
         },
@@ -82,17 +84,29 @@ export default function HomePage() {
 
       <Section labelledBy="house-title" className={styles.house}>
         <div className="container">
-          <div className={styles.intro}>
-            <Eyebrow>The house</Eyebrow>
-            <h2 id="house-title" className={styles.heading}>
-              Made for a good night’s sleep.
-            </h2>
+          <div className={styles.houseTop}>
+            <div className={styles.intro}>
+              <Eyebrow>The house</Eyebrow>
+              <h2 id="house-title" className={styles.heading}>
+                Made for a good night’s sleep.
+              </h2>
+            </div>
+            <Link href={`${pages.house.path}#section`} className={styles.echo}>
+              <span className={styles.echoFrame}>
+                <Drawing name="house" sizes="(min-width: 60rem) 36rem, 100vw" />
+              </span>
+              <span className={styles.echoLabel}>
+                <span>The house in section</span>
+                <ArrowIcon />
+              </span>
+              <span className={styles.echoNote}>An illustration, not a floor plan.</span>
+            </Link>
           </div>
           <ul role="list" className={styles.rooms}>
-            {rooms.map(({ Drawing, title, text }) => (
+            {rooms.map(({ drawing, title, text }) => (
               <li key={title} className={styles.room}>
                 <div className={styles.niche}>
-                  <Drawing className={styles.drawing} />
+                  <Drawing name={drawing} className={styles.drawing} sizes="(min-width: 48rem) 20rem, 6rem" />
                 </div>
                 <h3 className={styles.roomTitle}>{title}</h3>
                 <p className={styles.roomText}>{text}</p>
@@ -168,24 +182,35 @@ export default function HomePage() {
 
       <Section tone="cream" labelledBy="owner-title">
         <div className={`container ${styles.owner}`}>
-          <JarMark className={styles.ownerMark} />
-          <h2 id="owner-title" className={styles.heading}>
-            Owned and run by {identity.owner.name.value}.
-          </h2>
-          <p className={styles.ownerText}>
-            A team is on site day and night and speaks {joinList(staff.languages.value)}. Guests often mention how
-            friendly and helpful they are, and how quickly they reply.
-          </p>
-          {ownerNote ? (
-            <blockquote className={styles.ownerNote}>
-              <p>{ownerNote.value}</p>
-              <footer>{identity.owner.name.value}</footer>
-            </blockquote>
-          ) : null}
-          <Link href={pages.about.path} className={buttons.textLink}>
-            <span>About the house</span>
-            <ArrowIcon />
-          </Link>
+          <PhotoFrame
+            caption={`${identity.owner.name.value}, who owns and runs the house`}
+            photo={identity.owner.portrait?.value}
+            drawing="door"
+            shape="arch"
+            aspect="4 / 5"
+            sizes="(min-width: 60rem) 18rem, 12rem"
+            className={styles.ownerFrame}
+          />
+          <div className={styles.ownerWords}>
+            <JarMark className={styles.ownerMark} />
+            <h2 id="owner-title" className={styles.heading}>
+              Owned and run by {identity.owner.name.value}.
+            </h2>
+            <p className={styles.ownerText}>
+              A team is on site day and night and speaks {joinList(staff.languages.value)}. Guests often mention how
+              friendly and helpful they are, and how quickly they reply.
+            </p>
+            {ownerNote ? (
+              <blockquote className={styles.ownerNote}>
+                <p>{ownerNote.value}</p>
+                <footer>{identity.owner.name.value}</footer>
+              </blockquote>
+            ) : null}
+            <Link href={pages.about.path} className={buttons.textLink}>
+              <span>About the house</span>
+              <ArrowIcon />
+            </Link>
+          </div>
         </div>
       </Section>
 

@@ -1,5 +1,5 @@
 import { BookingBand } from "@/components/BookingBand";
-import { LuggageDrawing } from "@/components/drawings/Drawings";
+import { Drawing } from "@/components/art/Drawing";
 import { Block } from "@/components/page/Block";
 import { RuleList, Steps, type Step } from "@/components/page/Lists";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -67,7 +67,7 @@ export default function HouseRulesPage() {
         eyebrow="House rules"
         title="A few rules keep the house calm."
         lede="Each one comes with the reason behind it. Most are about sleep: this is a house for resting, not for parties."
-        art={<LuggageDrawing />}
+        art={<Drawing name="door" />}
       />
 
       <Block id="in-the-house" title="In the house">

@@ -1,5 +1,6 @@
 import Image, { type StaticImageData } from "next/image";
-import { JarMark } from "./brand/JarMark";
+import { Drawing } from "./art/Drawing";
+import type { DrawingName } from "./art/drawings";
 import styles from "./PhotoFrame.module.css";
 
 export interface Photo {
@@ -8,47 +9,48 @@ export interface Photo {
 }
 
 interface PhotoFrameProps {
-  /** What the photograph shows (or will show). */
+  /** What the photograph shows. */
   caption: string;
-  /** A real photograph. Until one exists the frame renders a stone placeholder. */
-  photo?: Photo;
-  shape?: "arch" | "jar" | "rect";
-  /** CSS aspect-ratio, e.g. "4 / 5". Ignored for the jar shape (always square). */
+  /** A real photograph. Until one exists the frame shows the drawing. */
+  photo?: Photo | null;
+  /** The drawing that stands in for the photograph. */
+  drawing: DrawingName;
+  shape?: "arch" | "rect";
+  /** CSS aspect-ratio, e.g. "4 / 3". */
   aspect?: string;
   /** next/image sizes hint. */
   sizes?: string;
   className?: string;
-  priority?: boolean;
 }
 
+/** A frame for a photograph of the house, drawn until the photograph exists; photos swap in through the same frame. */
 export function PhotoFrame({
   caption,
   photo,
-  shape = "arch",
-  aspect = "4 / 5",
+  drawing,
+  shape = "rect",
+  aspect = "4 / 3",
   sizes = "(min-width: 60rem) 40vw, 100vw",
   className,
-  priority = false,
 }: PhotoFrameProps) {
-  const frameClass = [styles.frame, styles[shape], photo ? "" : styles.placeholder].filter(Boolean).join(" ");
-  const style = shape === "jar" ? undefined : { aspectRatio: aspect };
+  const figureClass = [styles.figure, className].filter(Boolean).join(" ");
+  const frameClass = [styles.frame, styles[shape]].join(" ");
 
   if (!photo) {
-    // Decorative until a real photograph exists, so hidden from assistive tech.
+    // The drawing is decorative: the text beside it says the same.
     return (
-      <figure className={[styles.figure, className].filter(Boolean).join(" ")} aria-hidden="true">
-        <div className={frameClass} style={style}>
-          <JarMark className={styles.watermark} />
-          <figcaption className={styles.placeholderCaption}>{caption}</figcaption>
+      <figure className={figureClass} aria-hidden="true">
+        <div className={`${frameClass} ${styles.drawn}`} style={{ aspectRatio: aspect }}>
+          <Drawing name={drawing} className={styles.drawing} sizes={sizes} />
         </div>
       </figure>
     );
   }
 
   return (
-    <figure className={[styles.figure, className].filter(Boolean).join(" ")}>
-      <div className={frameClass} style={style}>
-        <Image src={photo.src} alt={photo.alt} fill sizes={sizes} priority={priority} className={styles.image} />
+    <figure className={figureClass}>
+      <div className={frameClass} style={{ aspectRatio: aspect }}>
+        <Image src={photo.src} alt={photo.alt} fill sizes={sizes} className={styles.image} />
       </div>
       <figcaption className={styles.caption}>{caption}</figcaption>
     </figure>

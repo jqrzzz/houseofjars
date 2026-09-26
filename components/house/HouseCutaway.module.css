@@ -1,0 +1,172 @@
+.cutaway {
+  display: grid;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.figure {
+  display: grid;
+  gap: var(--space-s);
+  margin: 0;
+}
+
+.stage {
+  padding: 4% 3% 2%;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+}
+
+/* The drawing's own box: the spots' percentages are measured on it. */
+.canvas {
+  position: relative;
+}
+
+.drawing {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.caption {
+  font-size: var(--step--1);
+  font-style: italic;
+  color: var(--text-soft);
+}
+
+/* A numbered spot: a saffron dot on the drawing, with room around it for a finger. */
+.spot {
+  position: absolute;
+  translate: -50% -50%;
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.dot::-webkit-details-marker {
+  display: none;
+}
+
+.dot > span[aria-hidden] {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: var(--saffron);
+  color: var(--ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: lining-nums;
+  box-shadow: 0 1px 4px rgb(35 23 16 / 0.3);
+  transition: transform 180ms var(--ease-out);
+}
+
+.dot:hover > span[aria-hidden],
+.spot[open] .dot > span[aria-hidden] {
+  transform: scale(1.12);
+}
+
+.spot[open] .dot > span[aria-hidden] {
+  background: var(--brown);
+  color: var(--on-brown);
+}
+
+.dot:focus-visible {
+  outline: none;
+}
+
+.dot:focus-visible > span[aria-hidden] {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The note: above the dot, kept inside the drawing near its edges. */
+.tip {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% - 0.2rem);
+  width: max-content;
+  max-width: min(17rem, 70vw);
+  padding: var(--space-xs) var(--space-s);
+  border-radius: var(--radius-s);
+  background: var(--deep);
+  color: var(--deep-text);
+  font-size: var(--step--1);
+  line-height: 1.45;
+  box-shadow: var(--shadow-soft);
+}
+
+.spot[data-align="center"] .tip {
+  left: 50%;
+  translate: -50% 0;
+}
+
+.spot[data-align="start"] .tip {
+  left: 0.2rem;
+}
+
+.spot[data-align="end"] .tip {
+  right: 0.2rem;
+}
+
+/* Where the browser can show a closed note, hovering a spot reveals it too. */
+@media (hover: hover) {
+  .spot:hover::details-content {
+    content-visibility: visible;
+  }
+}
+
+.legend {
+  display: grid;
+  gap: var(--space-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: spot;
+}
+
+.legend li {
+  position: relative;
+  padding-left: 2.25rem;
+  color: var(--text-soft);
+  counter-increment: spot;
+}
+
+.legend li::before {
+  content: counter(spot);
+  position: absolute;
+  left: 0;
+  top: 0.05rem;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--saffron);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.legend strong {
+  color: var(--text);
+  font-weight: 650;
+}
+
+@media (min-width: 60rem) {
+  .cutaway {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+    gap: var(--space-2xl);
+  }
+
+  .legend {
+    padding-top: var(--space-l);
+  }
+}

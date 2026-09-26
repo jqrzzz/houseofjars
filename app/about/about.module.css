@@ -18,6 +18,6 @@
   justify-self: start;
 }
 
-.jarFrame {
-  width: min(100%, 15rem);
+.door {
+  width: min(100%, 17rem);
 }

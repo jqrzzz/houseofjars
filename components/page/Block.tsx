@@ -35,13 +35,27 @@ export function Prose({ children }: { children: ReactNode }) {
   return <div className={styles.prose}>{children}</div>;
 }
 
-/** A plain list with a small saffron tick for each item; `columns` sets short items side by side on wide screens. */
-export function TickList({ items, columns = false }: { items: readonly ReactNode[]; columns?: boolean }) {
-  return (
-    <ul role="list" className={`${styles.ticks} ${columns ? styles.columns : ""}`}>
-      {items.map((item, index) => (
-        <li key={index}>{item}</li>
-      ))}
+/**
+ * A plain list with a small saffron jar for each item; `columns` sets short
+ * items side by side on wide screens, `numbered` counts them (to match a
+ * numbered drawing).
+ */
+export function TickList({
+  items,
+  columns = false,
+  numbered = false,
+}: {
+  items: readonly ReactNode[];
+  columns?: boolean;
+  numbered?: boolean;
+}) {
+  const className = [styles.ticks, columns ? styles.columns : "", numbered ? styles.numbered : ""].filter(Boolean).join(" ");
+  const children = items.map((item, index) => <li key={index}>{item}</li>);
+  return numbered ? (
+    <ol className={className}>{children}</ol>
+  ) : (
+    <ul role="list" className={className}>
+      {children}
     </ul>
   );
 }

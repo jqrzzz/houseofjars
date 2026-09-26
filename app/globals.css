@@ -91,6 +91,8 @@
   --radius-m: 12px;
   --radius-l: 20px;
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* One underline offset for every link. */
+  --underline-offset: 0.22em;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -243,7 +245,7 @@ a {
   color: var(--accent-text);
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.2em;
+  text-underline-offset: var(--underline-offset);
   text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
   transition: text-decoration-color 160ms ease, color 160ms ease;
 }

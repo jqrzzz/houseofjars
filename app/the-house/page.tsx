@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { BookingBand } from "@/components/BookingBand";
 import { PhotoFrame } from "@/components/PhotoFrame";
-import { PodBedDrawing } from "@/components/drawings/Drawings";
+import { HouseCutaway } from "@/components/house/HouseCutaway";
+import { PodDiagram } from "@/components/house/PodDiagram";
 import { Block, Prose, TickList } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import { honestNotes } from "@/content/reviews";
@@ -9,6 +10,7 @@ import { amenities, atmosphere, bathrooms, beds, breakfast, building } from "@/c
 import { countWord, joinList, lowerFirst } from "@/content/text";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
+import styles from "./the-house.module.css";
 
 export const metadata = pageMetadata(pages.house);
 
@@ -19,8 +21,16 @@ export default function TheHousePage() {
         eyebrow="The house"
         title="Inside the house"
         lede={`${countWord(building.floors.value)} floors of curtained pod beds, shared bathrooms with hot showers, and a café downstairs where breakfast is included. Here is what to expect.`}
-        art={<PodBedDrawing />}
       />
+
+      <section id="section" aria-labelledby="section-title" className={styles.section}>
+        <div className="container">
+          <h2 id="section-title" className={styles.sectionTitle}>
+            The house in section
+          </h2>
+          <HouseCutaway />
+        </div>
+      </section>
 
       <Block id="beds" title="Your pod">
         <Prose>
@@ -28,13 +38,13 @@ export default function TheHousePage() {
             Every bed is a pod: its own cubicle with a privacy curtain, so you can close out the room and sleep. Each
             pod has:
           </p>
-          <TickList items={beds.perBed.value} />
+          <TickList numbered items={beds.perBed.value} />
           <p>
             The dorms include {joinList(beds.dorms.value)}. To see which beds are free on your dates, check
             Booking.com or Agoda, or <Link href={pages.book.path}>ask us</Link>.
           </p>
         </Prose>
-        <PhotoFrame caption="A pod, curtain half drawn, reading light on" aspect="4 / 3" />
+        <PodDiagram />
       </Block>
 
       <Block id="bathrooms" title="Bathrooms">
@@ -44,6 +54,7 @@ export default function TheHousePage() {
             often single out how clean the whole house is.
           </p>
         </Prose>
+        <PhotoFrame caption="A shared bathroom" drawing="shower" />
       </Block>
 
       {breakfast.included.value ? (
@@ -54,12 +65,13 @@ export default function TheHousePage() {
               {joinList(breakfast.items.value.map((item) => item.toLowerCase()))}.
             </p>
           </Prose>
-          <PhotoFrame caption="Breakfast in the café downstairs" aspect="4 / 3" />
+          <PhotoFrame caption="Breakfast in the café downstairs" drawing="cafe" />
         </Block>
       ) : null}
 
       <Block id="comfort" title="Comfort and convenience">
         <TickList columns items={amenities.map((amenity) => amenity.value.name)} />
+        <PhotoFrame caption="Luggage storage" drawing="luggage" />
       </Block>
 
       <Block id="who" title="Who the house suits">
