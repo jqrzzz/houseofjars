@@ -56,7 +56,7 @@ const standards: LedgerRow[] = [
   { term: "Smoking", value: "Not anywhere in the house", note: "Clean air in every dorm." },
   {
     term: "Nights",
-    value: times.quietHours ? `Quiet from ${times.quietHours.value}` : "Calm and quiet",
+    value: times.quietHours ? `Quiet hours ${times.quietHours.value}` : "Calm and quiet",
     note: "Not a party hostel: no hen or stag parties.",
   },
 ];

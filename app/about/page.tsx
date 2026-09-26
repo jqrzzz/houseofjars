@@ -1,6 +1,6 @@
 import { BookingBand } from "@/components/BookingBand";
-import { JarMark } from "@/components/brand/JarMark";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
+import { JarDrawing } from "@/components/drawings/Drawings";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import buttons from "@/components/ui/button.module.css";
@@ -24,7 +24,7 @@ export default function AboutPage() {
         eyebrow="About"
         title="About the house"
         lede={`${identity.name.value} is a calm dorm hostel in ${location.neighbourhood.value}: ${countWord(building.floors.value).toLowerCase()} floors of pod beds, with a café downstairs.`}
-        art={<JarMark className={styles.headerJar} />}
+        art={<JarDrawing />}
       />
 
       <Block id="owner" title={`Owned and run by ${owner}`}>

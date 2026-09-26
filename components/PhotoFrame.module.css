@@ -3,6 +3,11 @@
   gap: var(--space-s);
 }
 
+/* Until there is a photograph, the frame stays modest. */
+.figure:has(.placeholder) {
+  max-width: 30rem;
+}
+
 .frame {
   position: relative;
   overflow: hidden;
@@ -41,10 +46,10 @@
   position: absolute;
   inset: 0;
   margin: auto;
-  width: 34%;
+  width: 24%;
   height: auto;
   color: var(--placeholder-ink);
-  opacity: 0.12;
+  opacity: 0.09;
 }
 
 .placeholderCaption {

@@ -15,14 +15,16 @@ interface BlockProps {
 export function Block({ id, title, aside, children, tone = "paper" }: BlockProps) {
   return (
     <section id={id} aria-labelledby={`${id}-title`} className={`${styles.block} ${styles[tone]}`}>
-      <div className={`container ${styles.grid}`}>
-        <div className={styles.head}>
-          <h2 id={`${id}-title`} className={styles.title}>
-            {title}
-          </h2>
-          {aside ? <div className={styles.aside}>{aside}</div> : null}
+      <div className="container">
+        <div className={styles.grid}>
+          <div className={styles.head}>
+            <h2 id={`${id}-title`} className={styles.title}>
+              {title}
+            </h2>
+            {aside ? <div className={styles.aside}>{aside}</div> : null}
+          </div>
+          <div className={styles.body}>{children}</div>
         </div>
-        <div className={styles.body}>{children}</div>
       </div>
     </section>
   );
@@ -33,10 +35,10 @@ export function Prose({ children }: { children: ReactNode }) {
   return <div className={styles.prose}>{children}</div>;
 }
 
-/** A plain list with a small saffron tick for each item. */
-export function TickList({ items }: { items: readonly ReactNode[] }) {
+/** A plain list with a small saffron tick for each item; `columns` sets short items side by side on wide screens. */
+export function TickList({ items, columns = false }: { items: readonly ReactNode[]; columns?: boolean }) {
   return (
-    <ul role="list" className={styles.ticks}>
+    <ul role="list" className={`${styles.ticks} ${columns ? styles.columns : ""}`}>
       {items.map((item, index) => (
         <li key={index}>{item}</li>
       ))}

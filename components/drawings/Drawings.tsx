@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { JAR_BODY, JAR_CARVE } from "../brand/jar-shape";
 import styles from "./Drawing.module.css";
 
 /*
@@ -100,6 +101,16 @@ export function LuggageDrawing(props: DrawingProps) {
       <path d="M38 14.5L48 12.5" />
       <path d="M48 9.5L54.5 8.2L55.8 14.7L49.3 16Z" />
       <circle cx="51.2" cy="11.8" r="0.9" />
+    </Drawing>
+  );
+}
+
+/** The house's jar, in outline, to sit with the other drawings. */
+export function JarDrawing(props: DrawingProps) {
+  return (
+    <Drawing {...props}>
+      <path d={JAR_BODY} />
+      <path d={JAR_CARVE} />
     </Drawing>
   );
 }

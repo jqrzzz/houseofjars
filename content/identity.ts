@@ -19,9 +19,8 @@ export const identity = {
     phone: fact(
       { display: "+856 20 23 978 946", e164: "+8562023978946" },
       sources.booking,
-      { note: "Also used for WhatsApp." },
+      { note: "The site also offers this number for WhatsApp." },
     ),
-    whatsapp: fact(true, sources.booking, { note: "WhatsApp on the phone number above." }),
     email: fact("houseofjarslaos@gmail.com", sources.booking),
   },
 

@@ -22,7 +22,7 @@ export default function TheHousePage() {
         art={<PodBedDrawing />}
       />
 
-      <Block id="beds" title="Your pod" aside="Every bed has its own curtain, light, socket and locker.">
+      <Block id="beds" title="Your pod">
         <Prose>
           <p>
             Every bed is a pod: its own cubicle with a privacy curtain, so you can close out the room and sleep. Each
@@ -34,7 +34,7 @@ export default function TheHousePage() {
             Booking.com or Agoda, or <Link href={pages.book.path}>ask us</Link>.
           </p>
         </Prose>
-        <PhotoFrame caption="A pod, curtain half drawn, reading light on" aspect="3 / 2" />
+        <PhotoFrame caption="A pod, curtain half drawn, reading light on" aspect="4 / 3" />
       </Block>
 
       <Block id="bathrooms" title="Bathrooms">
@@ -54,12 +54,12 @@ export default function TheHousePage() {
               {joinList(breakfast.items.value.map((item) => item.toLowerCase()))}.
             </p>
           </Prose>
-          <PhotoFrame caption="Breakfast in the café downstairs" aspect="3 / 2" />
+          <PhotoFrame caption="Breakfast in the café downstairs" aspect="4 / 3" />
         </Block>
       ) : null}
 
       <Block id="comfort" title="Comfort and convenience">
-        <TickList items={amenities.map((amenity) => amenity.value.name)} />
+        <TickList columns items={amenities.map((amenity) => amenity.value.name)} />
       </Block>
 
       <Block id="who" title="Who the house suits">

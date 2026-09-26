@@ -294,7 +294,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
           value={draft.text}
           onChange={(event) => setDraft((current) => ({ ...current, text: event.target.value }))}
           onKeyDown={onKeyDown}
-          placeholder="Ask about beds, breakfast, getting here…"
+          placeholder="Ask a question…"
           enterKeyHint="send"
           autoComplete="off"
         />

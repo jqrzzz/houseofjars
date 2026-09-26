@@ -1,9 +1,3 @@
-.headerJar {
-  width: 100%;
-  height: auto;
-  color: var(--jar-2);
-}
-
 .note {
   margin: var(--space-s) 0 0;
   padding-left: var(--space-l);
