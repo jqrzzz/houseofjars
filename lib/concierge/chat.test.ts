@@ -184,25 +184,41 @@ describe("saved conversations", () => {
 
 describe("links in replies", () => {
   const site = "https://thehouseofjars.com";
+  const links = (text: string, hosts: string[] = []) => linkify(text, site, hosts).filter((part) => part.kind === "link");
 
   it("makes site links relative and leaves trailing punctuation out", () => {
     expect(linkify("See https://thehouseofjars.com/book. Or https://www.agoda.com/x!", site, ["www.agoda.com"])).toEqual([
       { kind: "text", text: "See " },
-      { kind: "link", text: "https://thehouseofjars.com/book", href: "/book" },
+      { kind: "link", text: "https://thehouseofjars.com/book", href: "/book", internal: true },
       { kind: "text", text: ". Or " },
-      { kind: "link", text: "https://www.agoda.com/x", href: "https://www.agoda.com/x" },
+      { kind: "link", text: "https://www.agoda.com/x", href: "https://www.agoda.com/x", internal: false },
       { kind: "text", text: "!" },
     ]);
-    expect(linkify("Home: https://thehouseofjars.com", site)).toContainEqual({
-      kind: "link",
-      text: "https://thehouseofjars.com",
-      href: "/",
-    });
+    expect(links("Home: https://thehouseofjars.com")).toEqual([
+      { kind: "link", text: "https://thehouseofjars.com", href: "/", internal: true },
+    ]);
+    expect(links("https://thehouseofjars.com/faq?q=1#airport")[0]).toMatchObject({ href: "/faq?q=1#airport" });
   });
 
   it("only links to the site and the allowed hosts, over https", () => {
     const text = "Try https://evil.example/login or http://www.agoda.com/x";
     expect(linkify(text, site, ["www.agoda.com"])).toEqual([{ kind: "text", text }]);
+    expect(links("https://thehouseofjars.com.evil.example/x https://thehouseofjars.com@evil.example/x")).toEqual([]);
+  });
+
+  it("never turns a site link into a link to another site (R4-07)", () => {
+    for (const url of [
+      "https://thehouseofjars.com//evil.example/login",
+      "https://thehouseofjars.com/\\evil.example/login",
+      "https://thehouseofjars.com///evil.example",
+      "https://thehouseofjars.com/%2F%2Fevil.example",
+    ]) {
+      const [link] = links(`See ${url} now`);
+      expect(link, url).toMatchObject({ internal: true });
+      if (link?.kind !== "link") continue;
+      expect(link.href.startsWith("//"), link.href).toBe(false);
+      expect(new URL(link.href, `${site}/page`).origin, link.href).toBe(site);
+    }
   });
 });
 

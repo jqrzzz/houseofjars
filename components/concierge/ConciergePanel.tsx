@@ -300,9 +300,12 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
         </button>
       </form>
 
-      {/* Finished replies are announced once, not token by token. */}
-      <p className="visually-hidden" aria-live="polite">
-        {lastReply?.content ?? ""}
+      {/*
+        Announced politely: that Shadow is writing, then his finished reply, never token by token.
+        The text always passes through "writing", so two identical replies are both announced.
+      */}
+      <p className="visually-hidden" role="status" aria-live="polite">
+        {pending ? shadowLines.writing : (lastReply?.content ?? "")}
       </p>
     </dialog>
   );
@@ -339,7 +342,7 @@ function Message({ message, onNavigate }: { message: ChatMessage; onNavigate: ()
     <Bubble role="assistant" failed={message.state === "failed"}>
       {linkify(message.content, siteUrl, linkHosts).map((part, index) => {
         if (part.kind === "text") return <span key={index}>{part.text}</span>;
-        return part.href.startsWith("/") ? (
+        return part.internal ? (
           <Link key={index} href={part.href} onClick={onNavigate}>
             {part.text}
           </Link>

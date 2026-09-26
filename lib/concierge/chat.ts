@@ -40,6 +40,7 @@ export const shadowLines = {
   offline: "I’m not taking questions at the moment, but the team is. Their WhatsApp and email are below.",
   unavailable: "Something went wrong on my side. Please try again, or message the team directly.",
   empty: "Sorry, I lost my thread there. Could you ask me again?",
+  writing: "Shadow is writing…",
   cutOff: "I ran out of room there. Could you ask again, or shall I pass your question to the team?",
   resting: "I’m resting for the rest of the day, but the team is here: their WhatsApp and email are below.",
   conversationLimit:
@@ -205,35 +206,48 @@ function isDraft(value: unknown): value is ChatDraft {
   );
 }
 
-export type TextPart = { kind: "text"; text: string } | { kind: "link"; text: string; href: string };
+export type TextPart =
+  | { kind: "text"; text: string }
+  /** `internal`: a path on this site, for client-side navigation; otherwise an allowed https URL. */
+  | { kind: "link"; text: string; href: string; internal: boolean };
 
 /**
- * Splits a reply into text and links. Links to this site become relative so
- * they work on preview deployments too. Only this site and `allowedHosts`
- * become clickable: anything else Shadow writes stays plain text.
+ * Splits a reply into text and links. Links to this site become root-relative
+ * paths, so they work on preview deployments too. Only this site and
+ * `allowedHosts` become clickable: anything else Shadow writes stays text.
  */
 export function linkify(text: string, siteUrl: string, allowedHosts: readonly string[] = []): TextPart[] {
+  const site = new URL(siteUrl).origin;
   const parts: TextPart[] = [];
   const pattern = /https?:\/\/[^\s<>()]+[^\s<>().,;:!?'"]/g;
   let last = 0;
   for (const match of text.matchAll(pattern)) {
-    const url = match[0];
-    const internal = url === siteUrl || url.startsWith(`${siteUrl}/`);
-    if (!internal && !isAllowed(url, allowedHosts)) continue;
+    const url = parse(match[0]);
+    if (!url) continue;
+    const internal = url.origin === site;
+    if (!internal && !(url.protocol === "https:" && allowedHosts.includes(url.hostname))) continue;
     const index = match.index ?? 0;
     if (index > last) parts.push({ kind: "text", text: text.slice(last, index) });
-    parts.push({ kind: "link", text: url, href: internal ? url.slice(siteUrl.length) || "/" : url });
-    last = index + url.length;
+    parts.push({ kind: "link", text: match[0], href: internal ? sitePath(url) : match[0], internal });
+    last = index + match[0].length;
   }
   if (last < text.length) parts.push({ kind: "text", text: text.slice(last) });
   return parts;
 }
 
-function isAllowed(url: string, hosts: readonly string[]): boolean {
+function parse(url: string): URL | null {
   try {
-    const { protocol, hostname } = new URL(url);
-    return protocol === "https:" && hosts.includes(hostname);
+    return new URL(url);
   } catch {
-    return false;
+    return null;
   }
+}
+
+/**
+ * The path on this site, starting with exactly one slash: a path like
+ * "//evil.example" (or "/\\evil.example") would otherwise be a
+ * protocol-relative link to another site.
+ */
+function sitePath(url: URL): string {
+  return `/${url.pathname.replace(/^[/\\]+/, "")}${url.search}${url.hash}`;
 }

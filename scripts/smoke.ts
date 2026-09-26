@@ -143,8 +143,12 @@ async function concierge(browser: Browser, viewport: Viewport, scheme: Scheme) {
   const concierge = await page.request.post(`${base}/api/concierge`, { data: {} });
   const configured = concierge.status() !== 503;
   await dialog.getByRole("button", { name: "Send" }).click();
+  // The status line says Shadow is writing, then announces his reply.
   await page.waitForFunction(
-    () => (document.querySelector("dialog [aria-live='polite']")?.textContent ?? "").trim().length > 0,
+    () => {
+      const status = (document.querySelector("dialog [role='status']")?.textContent ?? "").trim();
+      return status.length > 0 && status !== "Shadow is writing…";
+    },
     undefined,
     { timeout: 60_000 },
   );
