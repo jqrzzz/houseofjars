@@ -1,15 +1,19 @@
 import { json, readJsonBody, rejectCrossSite } from "../http";
 import type { SubmitResult } from "../inquiry/submit";
 import { clientKey, type RateLimitDecision } from "../rate-limit";
+import { trustedHistory } from "./history";
 import { buildSystemPrompt } from "./prompt";
 import { encodeEvent, type ConciergeEvent } from "./protocol";
 import { MAX_REQUEST_BYTES } from "./limits";
 import { conciergeRequestSchema } from "./request";
 import { classifyError, runConcierge, type StreamMessages } from "./run";
+import type { Signer } from "./signing";
 
 export interface ConciergeHandlerDeps {
   /** Returns a streaming function, or null when ANTHROPIC_API_KEY is not set. */
   readonly streamer: () => StreamMessages | null;
+  /** Signs Shadow's replies; null when ANTHROPIC_API_KEY is not set. */
+  readonly signer: () => Signer | null;
   readonly submit: (payload: unknown) => Promise<SubmitResult>;
   readonly limiter: { take(key: string): RateLimitDecision };
   readonly model: () => string;
@@ -28,7 +32,8 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
     if (refused) return refused;
 
     const stream = deps.streamer();
-    if (!stream) return json({ error: "not_configured" }, 503);
+    const signer = deps.signer();
+    if (!stream || !signer) return json({ error: "not_configured" }, 503);
 
     const body = await readJsonBody(request, MAX_REQUEST_BYTES);
     if (!body.ok) {
@@ -36,6 +41,7 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
     }
     const parsed = conciergeRequestSchema.safeParse(body.value);
     if (!parsed.success) return json({ error: "invalid_request" }, 400);
+    const { session_id: sessionId, consent } = parsed.data;
 
     // Rate-limit only requests that would reach Claude.
     const decision = deps.limiter.take(clientKey(request.headers));
@@ -57,8 +63,10 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
           }
         };
         try {
-          await runConcierge({
-            request: parsed.data,
+          const reply = await runConcierge({
+            messages: trustedHistory(parsed.data, signer),
+            sessionId,
+            consent,
             stream,
             submit: deps.submit,
             emit,
@@ -67,7 +75,8 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
             now: deps.now?.() ?? new Date(),
             signal: request.signal,
           });
-          emit({ type: "done" });
+          // The browser sends the reply back with this signature; without it, it never reaches Claude again.
+          emit({ type: "done", ...(reply.trim() ? { sig: signer.signReply(sessionId, reply) } : {}) });
         } catch (error) {
           const code = classifyError(error);
           if (code) {

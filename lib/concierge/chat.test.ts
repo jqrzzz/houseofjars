@@ -37,9 +37,27 @@ describe("chat window state", () => {
       content: shadowLines.refusal,
       state: "failed",
     });
-    expect(last(apply(start(), { type: "text", text: "Part " }, { type: "notice", code: "truncated" })).content).toBe(
-      "Part…",
-    );
+    // Cut off: the streamed text is kept as is (it is what the server signs); the ellipsis is drawn.
+    expect(last(apply(start(), { type: "text", text: "Part " }, { type: "notice", code: "truncated" }, { type: "done", sig: "s" }))).toEqual({
+      role: "assistant",
+      content: "Part ",
+      state: "final",
+      truncated: true,
+      sig: "s",
+    });
+  });
+
+  it("never leaves a bare ellipsis when a reply is cut off before any text (R4-10)", () => {
+    expect(last(apply(start(), { type: "notice", code: "truncated" }, { type: "done" }))).toEqual({
+      role: "assistant",
+      content: shadowLines.cutOff,
+      state: "failed",
+    });
+  });
+
+  it("keeps the server's signature with a finished reply", () => {
+    const state = apply(start(), { type: "text", text: "Yes." }, { type: "done", sig: "abc" });
+    expect(last(state)).toEqual({ role: "assistant", content: "Yes.", state: "final", sig: "abc" });
   });
 
   it("shows a friendly line for errors and empty replies", () => {
@@ -63,6 +81,16 @@ describe("history sent to the API", () => {
     role,
     content,
     state,
+  });
+
+  it("sends each reply back with its signature", () => {
+    expect(
+      toApiMessages([message("user", "Hi"), { role: "assistant", content: " Hello ", state: "final", sig: "abc" }, message("user", "Bye")]),
+    ).toEqual([
+      { role: "user", content: "Hi" },
+      { role: "assistant", content: "Hello", sig: "abc" },
+      { role: "user", content: "Bye" },
+    ]);
   });
 
   it("sends finished messages only, trimmed", () => {
@@ -96,6 +124,7 @@ describe("saved conversations", () => {
       sessionId: "s1",
       messages: [
         { role: "user", content: "Hi", state: "final" },
+        { role: "assistant", content: "Hello", state: "final", sig: "abc", truncated: true },
         { role: "assistant", content: "Hel", state: "streaming" },
         { role: "system", content: "evil", state: "final" },
       ],
@@ -104,7 +133,10 @@ describe("saved conversations", () => {
     });
     expect(restoreChat(saved)).toEqual({
       sessionId: "s1",
-      messages: [{ role: "user", content: "Hi", state: "final" }],
+      messages: [
+        { role: "user", content: "Hi", state: "final" },
+        { role: "assistant", content: "Hello", state: "final", sig: "abc", truncated: true },
+      ],
       consentRequested: false,
       consented: true,
       inquiry: "sent",

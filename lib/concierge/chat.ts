@@ -1,5 +1,5 @@
 import type { ConciergeEvent } from "./protocol";
-import { MAX_MESSAGE_CHARS, MAX_TOTAL_CHARS, MAX_TURNS } from "./limits";
+import { historyText, MAX_TOTAL_CHARS, MAX_TURNS } from "./limits";
 
 /*
  * Chat-window state, kept free of React so it can be unit tested.
@@ -11,6 +11,10 @@ export interface ChatMessage {
   readonly content: string;
   /** "failed" replies are shown to the guest but not sent back to Claude. */
   readonly state: "streaming" | "final" | "failed";
+  /** The server's signature on a finished reply; unsigned replies never reach Claude again. */
+  readonly sig?: string;
+  /** The reply was cut off at the length limit (shown with an ellipsis). */
+  readonly truncated?: boolean;
 }
 
 export interface ChatState {
@@ -31,6 +35,7 @@ export const shadowLines = {
   offline: "I’m not taking questions at the moment, but the team is. Their WhatsApp and email are below.",
   unavailable: "Something went wrong on my side. Please try again, or message the team directly.",
   empty: "Sorry, I lost my thread there. Could you ask me again?",
+  cutOff: "I ran out of room there. Could you ask again, or shall I pass your question to the team?",
   confirmSend: "I’ve ticked the privacy box. Please send my request to the team.",
 } as const;
 
@@ -54,8 +59,10 @@ function updateLast(state: ChatState, update: (message: ChatMessage) => ChatMess
   return { ...state, messages: [...state.messages.slice(0, -1), update(last)] };
 }
 
-const finish = (message: ChatMessage): ChatMessage =>
-  message.content.trim() ? { ...message, state: "final" } : { ...message, content: shadowLines.empty, state: "failed" };
+const finish = (message: ChatMessage, sig?: string): ChatMessage =>
+  message.content.trim()
+    ? { ...message, state: "final", ...(sig ? { sig } : {}) }
+    : { ...message, content: shadowLines.empty, state: "failed" };
 
 export function chatReducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
@@ -94,9 +101,11 @@ function applyEvent(state: ChatState, event: ConciergeEvent): ChatState {
     case "inquiry_failed":
       return { ...state, inquiry: "failed" };
     case "notice":
-      return event.code === "refusal"
-        ? updateLast(state, (m) => ({ ...m, content: shadowLines.refusal, state: "failed" }))
-        : updateLast(state, (m) => ({ ...m, content: `${m.content.trimEnd()}…`, state: "final" }));
+      if (event.code === "refusal") return updateLast(state, (m) => ({ ...m, content: shadowLines.refusal, state: "failed" }));
+      // Keep the text exactly as streamed (it is what the server signs); the ellipsis is only drawn.
+      return updateLast(state, (m) =>
+        m.content.trim() ? { ...m, truncated: true } : { ...m, content: shadowLines.cutOff, state: "failed" },
+      );
     case "error":
       return updateLast(state, (m) => ({
         ...m,
@@ -104,7 +113,7 @@ function applyEvent(state: ChatState, event: ConciergeEvent): ChatState {
         state: "failed",
       }));
     case "done":
-      return updateLast(state, finish);
+      return updateLast(state, (m) => finish(m, event.sig));
   }
 }
 
@@ -113,10 +122,16 @@ function applyEvent(state: ChatState, event: ConciergeEvent): ChatState {
  * the per-message cap, at most MAX_TURNS, starting with the guest, and
  * under the total character cap.
  */
-export function toApiMessages(messages: readonly ChatMessage[]): { role: "user" | "assistant"; content: string }[] {
-  let history = messages
+export interface ApiMessage {
+  readonly role: "user" | "assistant";
+  readonly content: string;
+  readonly sig?: string;
+}
+
+export function toApiMessages(messages: readonly ChatMessage[]): ApiMessage[] {
+  let history: ApiMessage[] = messages
     .filter((m) => m.state === "final" && m.content.trim())
-    .map((m) => ({ role: m.role, content: m.content.trim().slice(0, MAX_MESSAGE_CHARS) }))
+    .map((m) => ({ role: m.role, content: historyText(m.content), ...(m.role === "assistant" && m.sig ? { sig: m.sig } : {}) }))
     .slice(-MAX_TURNS);
   const total = () => history.reduce((sum, m) => sum + m.content.length, 0);
   while (history.length > 1 && (history[0]?.role !== "user" || total() > MAX_TOTAL_CHARS)) {
@@ -140,7 +155,13 @@ export function restoreChat(raw: string | null): ChatState | null {
           typeof m.content === "string" &&
           (m.state === "final" || m.state === "failed"),
       )
-      .map((m) => ({ role: m.role, content: m.content, state: m.state }));
+      .map((m) => ({
+        role: m.role,
+        content: m.content,
+        state: m.state,
+        ...(typeof m.sig === "string" ? { sig: m.sig } : {}),
+        ...(m.truncated === true ? { truncated: true } : {}),
+      }));
     return {
       sessionId: saved.sessionId,
       messages,

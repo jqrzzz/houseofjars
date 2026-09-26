@@ -3,8 +3,9 @@ import type { BetaContentBlock, BetaMessageParam } from "@anthropic-ai/sdk/resou
 import { describe, expect, it, vi } from "vitest";
 import { fakeClaude, toolUse, type Turn } from "@/test/fake-claude";
 import type { SubmitResult } from "../inquiry/submit";
+import { priceLine } from "./guard";
+import type { HistoryMessage } from "./history";
 import type { ConciergeEvent } from "./protocol";
-import type { ConciergeRequest } from "./request";
 import {
   buildParams,
   classifyError,
@@ -15,11 +16,10 @@ import {
 } from "./run";
 import { sendInquiryTool } from "./tool";
 
-const request: ConciergeRequest = {
-  session_id: "0b7a7a4e-3c2f-4d1e-9a58-6f2b8c1d9e10",
-  consent: true,
-  messages: [{ role: "user", content: "Please ask the team about a bed on 3 October. I'm Mai, mai@example.com." }],
-};
+const sessionId = "0b7a7a4e-3c2f-4d1e-9a58-6f2b8c1d9e10";
+const messages: HistoryMessage[] = [
+  { role: "user", content: "Please ask the team about a bed on 3 October. I'm Mai, mai@example.com." },
+];
 const inquiry = { name: "Mai", email: "mai@example.com", message: "A bed on 3 October?" };
 
 async function run(turns: Turn[], options: { consent?: boolean; submit?: SubmitResult } = {}) {
@@ -27,7 +27,9 @@ async function run(turns: Turn[], options: { consent?: boolean; submit?: SubmitR
   const events: ConciergeEvent[] = [];
   const submit = vi.fn(async (payload: unknown) => (void payload, options.submit ?? ({ ok: true, id: "b1", duplicate: false } as const)));
   const promise = runConcierge({
-    request: { ...request, consent: options.consent ?? request.consent },
+    messages,
+    sessionId,
+    consent: options.consent ?? true,
     stream: streamer,
     submit,
     emit: (event) => events.push(event),
@@ -67,9 +69,9 @@ describe("request parameters", () => {
 });
 
 describe("the concierge loop", () => {
-  it("streams a plain answer and stops", async () => {
+  it("streams a plain answer, stops, and resolves with the reply to sign", async () => {
     const { promise, events, calls, submit } = await run([{ text: ["Check-in is ", "from 14:00."], stopReason: "end_turn" }]);
-    await promise;
+    expect(await promise).toBe("Check-in is from 14:00.");
     expect(text(events)).toBe("Check-in is from 14:00.");
     expect(calls).toHaveLength(1);
     expect(submit).not.toHaveBeenCalled();
@@ -83,7 +85,7 @@ describe("the concierge loop", () => {
     await promise;
 
     expect(submit).toHaveBeenCalledOnce();
-    expect(submit.mock.calls[0]![0]).toMatchObject({ source: "website_concierge", client_ref: request.session_id });
+    expect(submit.mock.calls[0]![0]).toMatchObject({ source: "website_concierge", client_ref: sessionId });
     expect(events).toContainEqual({ type: "inquiry_sent" });
     expect(text(events)).toBe("Sending it now.\n\nDone: the team will email you.");
 
@@ -123,6 +125,27 @@ describe("the concierge loop", () => {
     await promise;
     expect(submit).toHaveBeenCalledTimes(MAX_TOOL_ROUNDS);
     expect(calls).toHaveLength(MAX_TOOL_ROUNDS + 1);
+  });
+
+  it("replaces a reply as soon as it quotes a price, and stops generating (R4-04)", async () => {
+    const { promise, events, calls } = await run([
+      { text: ["Sure! Bed 4 is free ", "on the 3rd for 5 ", "USD a night, and ", "more text never sent"], stopReason: "end_turn" },
+    ]);
+    expect(await promise).toBe(priceLine);
+    expect(calls).toHaveLength(1);
+    expect(events).toContainEqual({ type: "rewind", keep: 0 });
+    let shown = "";
+    for (const event of events) {
+      if (event.type === "text") shown += event.text;
+      if (event.type === "rewind") shown = shown.slice(0, event.keep);
+    }
+    expect(shown).toBe(priceLine);
+    expect(text(events)).not.toContain("more text never sent");
+  });
+
+  it("keeps nothing to sign after a refusal, and the text shown before a cut-off", async () => {
+    expect(await (await run([{ text: ["Part"], stopReason: "refusal" }])).promise).toBe("");
+    expect(await (await run([{ text: ["Part of an answer"], stopReason: "max_tokens" }])).promise).toBe("Part of an answer");
   });
 
   it("never runs a tool from a refused or truncated reply", async () => {

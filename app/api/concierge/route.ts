@@ -1,5 +1,6 @@
 import { anthropicStreamer, conciergeModel } from "@/lib/concierge/anthropic";
 import { createConciergeHandler } from "@/lib/concierge/handler";
+import { conciergeSigner } from "@/lib/concierge/signing";
 import { readShadowConfig, submitInquiry } from "@/lib/inquiry/submit";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { siteUrl } from "@/lib/site";
@@ -12,6 +13,7 @@ const limiter = createRateLimiter({ capacity: 20, refillMs: 20_000 });
 
 export const POST = createConciergeHandler({
   streamer: () => anthropicStreamer(),
+  signer: () => conciergeSigner(),
   submit: (payload) => submitInquiry(payload, { config: readShadowConfig() }),
   limiter,
   model: () => conciergeModel(),

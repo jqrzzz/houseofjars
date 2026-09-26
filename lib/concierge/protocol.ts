@@ -17,7 +17,8 @@ export type ConciergeEvent =
   | { type: "notice"; code: "refusal" | "truncated" }
   /** Something went wrong mid-stream. */
   | { type: "error"; code: "busy" | "unavailable" }
-  | { type: "done" };
+  /** The reply is complete; `sig` is the server's signature on it, sent back with the reply as history. */
+  | { type: "done"; sig?: string };
 
 /** Error bodies returned before streaming starts. */
 export type ConciergeErrorCode = "not_configured" | "rate_limited" | "invalid_request" | "payload_too_large";

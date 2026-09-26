@@ -368,6 +368,7 @@ function Message({ message, onNavigate }: { message: ChatMessage; onNavigate: ()
           </a>
         );
       })}
+      {message.truncated ? "…" : null}
     </Bubble>
   );
 }

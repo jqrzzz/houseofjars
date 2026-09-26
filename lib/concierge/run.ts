@@ -10,9 +10,10 @@ import type {
   BetaToolUseBlock,
 } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import type { SubmitResult } from "../inquiry/submit";
+import { mentionsMoney, priceLine } from "./guard";
+import type { HistoryMessage } from "./history";
 import { buildDateLine } from "./prompt";
 import type { ConciergeEvent } from "./protocol";
-import type { ConciergeRequest } from "./request";
 import { runSendInquiry, SEND_INQUIRY, sendInquiryTool } from "./tool";
 
 /** Tool rounds per request: enough for "consent missing" then "sent". */
@@ -34,7 +35,11 @@ export type StreamMessages = (
 ) => MessageStreamLike;
 
 export interface RunConciergeOptions {
-  readonly request: ConciergeRequest;
+  /** The conversation, with only the replies this server signed (see trustedHistory). */
+  readonly messages: readonly HistoryMessage[];
+  readonly sessionId: string;
+  /** Whether the guest ticked the privacy-notice box in the chat window. */
+  readonly consent: boolean;
   readonly stream: StreamMessages;
   readonly submit: (payload: unknown) => Promise<SubmitResult>;
   readonly emit: (event: ConciergeEvent) => void;
@@ -97,24 +102,27 @@ export function isMalformedStream(error: unknown): boolean {
 /**
  * One concierge turn: stream Claude's reply to the client, run send_inquiry
  * when asked (at most MAX_TOOL_ROUNDS times), and stop cleanly on refusal or
- * truncation. Throws the SDK's typed errors; the caller maps them.
+ * truncation. Resolves with the reply the guest was shown, which the caller
+ * signs ("" when there is nothing to keep, as after a refusal). Throws the
+ * SDK's typed errors; the caller maps them.
  */
-export async function runConcierge(options: RunConciergeOptions): Promise<void> {
-  const { request, emit } = options;
-  const messages: BetaMessageParam[] = request.messages.map((m) => ({ role: m.role, content: m.content }));
-  /** Characters of reply text sent to the client so far. */
-  let sent = 0;
+export async function runConcierge(options: RunConciergeOptions): Promise<string> {
+  const { emit } = options;
+  const messages: BetaMessageParam[] = options.messages.map((m) => ({ role: m.role, content: m.content }));
+  /** Everything shown to the guest so far. */
+  let reply = "";
   const sendText = (text: string) => {
     emit({ type: "text", text });
-    sent += text.length;
+    reply += text;
   };
 
   for (let round = 0, retries = 0; ; ) {
-    const keep = sent;
+    const keep = reply.length;
     let message: BetaMessage;
     try {
       const stream = options.stream(buildParams(options, messages), { signal: options.signal });
-      let needsSeparator = sent > 0;
+      let needsSeparator = reply.length > 0;
+      let quotedMoney = false;
       for await (const event of stream) {
         if (event.type === "content_block_delta" && event.delta.type === "text_delta" && event.delta.text) {
           if (needsSeparator) {
@@ -122,14 +130,24 @@ export async function runConcierge(options: RunConciergeOptions): Promise<void> 
             needsSeparator = false;
           }
           sendText(event.delta.text);
+          if (mentionsMoney(reply)) {
+            quotedMoney = true;
+            break; // Leaving the loop aborts the request: nothing more is generated or billed.
+          }
         }
+      }
+      if (quotedMoney) {
+        emit({ type: "rewind", keep: 0 });
+        reply = "";
+        sendText(priceLine);
+        return reply;
       }
       message = await stream.finalMessage();
     } catch (error) {
       if (!isMalformedStream(error) || retries >= MAX_MALFORMED_RETRIES) throw error;
       // Nothing from this round reached a tool; take back its text and ask again.
       retries++;
-      sent = keep;
+      reply = reply.slice(0, keep);
       emit({ type: "rewind", keep });
       continue;
     }
@@ -137,17 +155,17 @@ export async function runConcierge(options: RunConciergeOptions): Promise<void> 
     // Check why the model stopped before using anything it produced.
     if (message.stop_reason === "refusal") {
       emit({ type: "notice", code: "refusal" });
-      return;
+      return "";
     }
     if (message.stop_reason === "max_tokens") {
       // Never run a tool whose input may have been cut off.
       emit({ type: "notice", code: "truncated" });
-      return;
+      return reply;
     }
 
     const content = echoableContent(message.content);
     const toolUses = content.filter((block): block is BetaToolUseBlock => block.type === "tool_use");
-    if (message.stop_reason !== "tool_use" || toolUses.length === 0 || round >= MAX_TOOL_ROUNDS) return;
+    if (message.stop_reason !== "tool_use" || toolUses.length === 0 || round >= MAX_TOOL_ROUNDS) return reply;
 
     messages.push({ role: "assistant", content });
     const results: BetaToolResultBlockParam[] = [];
@@ -157,8 +175,8 @@ export async function runConcierge(options: RunConciergeOptions): Promise<void> 
         continue;
       }
       const outcome = await runSendInquiry(block.input, {
-        consent: request.consent,
-        sessionId: request.session_id,
+        consent: options.consent,
+        sessionId: options.sessionId,
         submit: options.submit,
       });
       if (outcome.event) emit({ type: outcome.event });

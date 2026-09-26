@@ -1,10 +1,13 @@
 import { z } from "zod";
 import { MAX_MESSAGE_CHARS, MAX_TOTAL_CHARS, MAX_TURNS } from "./limits";
 
-const message = z.strictObject({
-  role: z.enum(["user", "assistant"]),
-  content: z.string().trim().min(1).max(MAX_MESSAGE_CHARS),
-});
+const content = z.string().trim().min(1).max(MAX_MESSAGE_CHARS);
+
+const message = z.discriminatedUnion("role", [
+  z.strictObject({ role: z.literal("user"), content }),
+  /** `sig`: the server's signature on its own reply; replies without a valid one never reach Claude. */
+  z.strictObject({ role: z.literal("assistant"), content, sig: z.string().max(128).optional() }),
+]);
 
 export const conciergeRequestSchema = z
   .strictObject({
