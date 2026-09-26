@@ -297,7 +297,7 @@
 .secondaryButton {
   min-height: 2.75rem;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--rule-strong);
+  border: 1px solid var(--field-border);
   border-radius: 999px;
   background: transparent;
   color: var(--text);
@@ -346,7 +346,7 @@
   min-height: 2.75rem;
   max-height: 8.5rem;
   padding: 0.6rem 0.9rem;
-  border: 1px solid var(--rule-strong);
+  border: 1px solid var(--field-border);
   border-radius: 1.4rem;
   background: var(--page);
   color: var(--text);

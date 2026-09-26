@@ -21,8 +21,12 @@
     box-shadow 220ms ease;
 }
 
-/* Hidden while the home hero is on screen (and until that has been checked). */
+/*
+ * Hidden while the home hero is on screen (and until that has been checked),
+ * and while the guest is typing in a form on the page, so it never covers a field.
+ */
 :global(body:has([data-hides-launcher])) .launcher:not([data-hidden="false"]),
+:global(body:has(main :is(input, select, textarea):focus)) .launcher,
 .launcher[data-hidden="true"] {
   opacity: 0;
   visibility: hidden;

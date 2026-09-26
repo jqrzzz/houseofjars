@@ -93,6 +93,16 @@
   background: var(--surface);
 }
 
+/* The button shows a close icon while the menu is open. */
+.menuButton svg[data-icon="close"],
+.mobileMenu[open] .menuButton svg[data-icon="open"] {
+  display: none;
+}
+
+.mobileMenu[open] .menuButton svg[data-icon="close"] {
+  display: block;
+}
+
 .mobilePanel {
   position: absolute;
   left: 0;

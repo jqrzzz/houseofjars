@@ -6,7 +6,8 @@
   --text-soft: var(--deep-text-soft);
   --accent-text: var(--deep-text);
   --focus: var(--saffron-on-brown);
-  padding-bottom: calc(var(--space-2xl) + env(safe-area-inset-bottom));
+  /* Room below the last line for the floating "Ask Shadow" button, so nothing ends up under it. */
+  padding-bottom: calc(var(--space-2xl) + 4.5rem + env(safe-area-inset-bottom));
 }
 
 .band {
