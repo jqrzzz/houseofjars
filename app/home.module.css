@@ -130,7 +130,7 @@
 
 .room {
   display: grid;
-  grid-template-columns: 6rem minmax(0, 1fr);
+  grid-template-columns: 7rem minmax(0, 1fr);
   grid-template-rows: auto 1fr;
   align-content: start;
   column-gap: var(--space-l);

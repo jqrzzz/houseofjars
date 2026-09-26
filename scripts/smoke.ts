@@ -58,14 +58,23 @@ async function open(browser: Browser, viewport: Viewport, scheme: Scheme) {
   return { context, page, errors };
 }
 
-/** Scrolls through once so lazy images load, waits for them, then lets the hero animation finish. */
+/**
+ * Scrolls through once so lazy images load, waits for them, then lets the
+ * hero animation finish. Images the page doesn't show (a drawing hidden on
+ * phones) never load, by design, so they are not waited for.
+ */
 async function settle(page: Page) {
   await page.evaluate(async () => {
     for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight / 2) {
       window.scrollTo(0, y);
       await new Promise((resolve) => setTimeout(resolve, 60));
     }
-    await Promise.all([...document.images].map((image) => (image.complete ? null : image.decode().catch(() => null))));
+    // No named functions in here: tsx would wrap them in a helper the browser doesn't have.
+    const shown = [...document.images].filter((image) => !image.complete && image.checkVisibility());
+    await Promise.race([
+      Promise.all(shown.map((image) => image.decode().catch(() => null))),
+      new Promise((resolve) => setTimeout(resolve, 5_000)),
+    ]);
     window.scrollTo(0, 0);
   });
   await page.waitForTimeout(800);

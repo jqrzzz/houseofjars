@@ -156,5 +156,6 @@ const tufts: readonly (readonly [number, number])[] = [
   [1478, 748],
 ];
 export const TUFTS = tufts
-  .map(([x, y]) => `M${x - 8} ${y - 10}q5 3 8 10q0-9 2-15m-2 15q3-6 9-9`)
+  // Three blades fanning up from one root.
+  .map(([x, y]) => `M${x} ${y}q-3-5-8-7M${x} ${y}q-1-7 1-12M${x} ${y}q3-4 8-5`)
   .join("");

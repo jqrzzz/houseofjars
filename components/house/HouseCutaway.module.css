@@ -39,6 +39,12 @@
   translate: -50% -50%;
 }
 
+/* An open note sits above the other spots (each spot is its own stacking context). */
+.spot[open],
+.spot:hover {
+  z-index: 3;
+}
+
 .dot {
   display: grid;
   place-items: center;

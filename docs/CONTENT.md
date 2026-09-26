@@ -56,15 +56,17 @@ It prints each unconfirmed fact with its value, source and note, then the open q
 
 ## Photos
 
-The site is designed to look finished without photographs: line drawings and stone-coloured frames stand in for them. When real photos arrive, put them in `public/photos/` and pass them to the `PhotoFrame` that is waiting for them, for example on /the-house:
+The site is designed to look finished without photographs: drawings from `public/art/` stand in for them, inside the frames the photos will use. When real photos arrive, put them in `public/photos/` and pass them to the `PhotoFrame` that is waiting for them, for example the café on /the-house:
 
 ```tsx
 <PhotoFrame
-  caption="A pod, curtain half drawn, reading light on"
-  photo={{ src: "/photos/pod.jpg", alt: "A pod bed with its curtain half drawn and the reading light on" }}
-  aspect="4 / 3"
+  caption="Breakfast in the café downstairs"
+  photo={{ src: "/photos/cafe.jpg", alt: "Breakfast on the café counter: eggs, bread, fruit and coffee" }}
+  drawing="cafe"
 />
 ```
+
+The frames waiting for photos are the bathroom, the café and the luggage storage on /the-house, the front of the house on /about, and (only if Nang wishes) her portrait on the home page, which comes from `identity.owner.portrait` in `content/identity.ts`. The numbered pod drawing and the house in section on /the-house are diagrams, not stand-ins, so they stay; when the real layout of the house is known, make the drawing match it (see `content/open-questions.ts`).
 
 `next/image` serves them as AVIF or WebP at the right size. Use photos the house owns; never copy them from booking sites.
 
