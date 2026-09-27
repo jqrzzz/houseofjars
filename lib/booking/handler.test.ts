@@ -13,6 +13,9 @@ import {
   createLookupLimiters,
 } from "./limits";
 
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+
 // Saturday 26 September 2026, midday in Vientiane.
 const START = Date.UTC(2026, 8, 26, 5);
 const TODAY = "2026-09-26";
@@ -96,7 +99,7 @@ describe("GET /api/availability", () => {
       ...stay,
       nights: 2,
       mode: "request",
-      hold_hours: 24,
+      hold_hours: 6,
       limits: { max_guests: 6, min_nights: 1, max_nights: 30, window_days: 365 },
     });
     expect(body).not.toHaveProperty("property");
@@ -222,16 +225,43 @@ describe("GET /api/availability", () => {
     expect(fake.calls).toHaveLength(2);
   });
 
-  it("limits each client, cache hits included, and asks Shadow at most 200 times an hour per instance", async () => {
-    expect(hourlyCeiling(LOOKUP_LIMITS.perInstance)).toBe(200);
+  it("limits each client to 20 lookups in any 10 minutes, cache hits included (F1W-02)", async () => {
     const { lookup } = site();
-    for (let i = 0; i < LOOKUP_LIMITS.perClient.capacity; i++) expect((await lookup(get())).status).toBe(200);
-    const limited = await lookup(get());
+    for (let i = 0; i < LOOKUP_LIMITS.perClient.limit; i++) {
+      expect((await lookup(get(stay, { "x-forwarded-for": `2001:db8:1:2::${i}` }))).status).toBe(200);
+      time += 1_000;
+    }
+    // Every address in one IPv6 /64 is one client.
+    const limited = await lookup(get(stay, { "x-forwarded-for": "2001:db8:1:2::99" }));
     expect(limited.status).toBe(429);
     expect(await limited.json()).toEqual({ error: "rate_limited" });
-    expect(limited.headers.get("retry-after")).toBe("6");
+    // The first lookup leaves the window 10 minutes after it was made.
+    expect(limited.headers.get("retry-after")).toBe(String(10 * 60 - 20));
+    expect(shadowCalls("/api/public/availability")).toBe(1);
+    // Another client is not held back.
+    expect((await lookup(get(stay, { "x-forwarded-for": "198.51.100.7" }))).status).toBe(200);
+    time += 580_000;
+    expect((await lookup(get(stay, { "x-forwarded-for": "2001:db8:1:2::1" }))).status).toBe(200);
+  });
 
-    // Everyone together: distinct queries from distinct addresses, until the instance's allowance is spent.
+  it("lets no one visitor spend the instance's allowance on dates nobody else asks about (F1W-02)", async () => {
+    const { lookup } = site();
+    const nightsFrom = (i: number) => ({ ...stay, check_in: addDays(TODAY, 1 + i), check_out: addDays(TODAY, 3 + i) });
+    const attacker = { "x-forwarded-for": "2001:db8:1:2::1" };
+    for (let i = 0; i < LOOKUP_LIMITS.perClientUncached.limit; i++) {
+      expect((await lookup(get(nightsFrom(i), { "x-forwarded-for": `2001:db8:1:2::${i + 1}` }))).status).toBe(200);
+    }
+    const limited = await lookup(get(nightsFrom(50), attacker));
+    expect(limited.status).toBe(429);
+    expect(Number(limited.headers.get("retry-after"))).toBe(600);
+    // What the cache already knows is still answered, and other guests still reach Shadow.
+    expect((await lookup(get(nightsFrom(0), attacker))).status).toBe(200);
+    expect((await lookup(get(nightsFrom(60), { "x-forwarded-for": "192.0.2.1" }))).status).toBe(200);
+    expect(shadowCalls("/api/public/availability")).toBe(LOOKUP_LIMITS.perClientUncached.limit + 1);
+  });
+
+  it("asks Shadow at most 200 times an hour per instance, whoever asks", async () => {
+    expect(hourlyCeiling(LOOKUP_LIMITS.perInstance)).toBe(200);
     const everyone = site();
     const nightsFrom = (i: number) => ({ ...stay, check_in: addDays(TODAY, 1 + i), check_out: addDays(TODAY, 3 + i) });
     for (let i = 0; i < LOOKUP_LIMITS.perInstance.capacity; i++) {
@@ -240,8 +270,37 @@ describe("GET /api/availability", () => {
     const busy = await everyone.lookup(get(nightsFrom(99), { "x-forwarded-for": "192.0.2.1" }));
     expect(busy.status).toBe(503);
     expect(await busy.json()).toEqual({ error: "busy" });
-    // What is already known is still answered.
+    // What is already known is still answered, and a busy line costs the guest nothing of their own.
     expect((await everyone.lookup(get(nightsFrom(0), { "x-forwarded-for": "192.0.2.1" }))).status).toBe(200);
+  });
+
+  it("finds one cached answer however the query is written (F1W-02)", async () => {
+    const { lookup } = site();
+    const raw = (search: string) =>
+      new Request(`http://localhost/api/availability?${search}`, {
+        headers: { "x-forwarded-for": "203.0.113.9", "sec-fetch-site": "same-origin" },
+      });
+    const spellings = [
+      "check_in=2026-10-03&check_out=2026-10-05&guests=2",
+      "guests=2&check_out=2026-10-05&check_in=2026-10-03",
+      "check_in=2026-10-03&check_out=2026-10-05&guests=02",
+      "check_in=2026-10-03&check_out=2026-10-05&guests=2&guests=5",
+      "check_in=2026-10-03&check_in=2026-10-04&check_out=2026-10-05&guests=2",
+      "check_in=2026-10-03&check_out=2026-10-05&guests=2&_=1727400000&utm_source=x",
+      "check%5Fin=2026%2D10%2D03&check_out=2026-10-05&guests=2",
+    ];
+    for (const search of spellings) expect((await lookup(raw(search))).status, search).toBe(200);
+    expect(fake.calls.map((call) => call.path)).toEqual(["/api/public/availability?check_in=2026-10-03&check_out=2026-10-05&guests=2"]);
+  });
+
+  it("keeps Shadow's refusal of a stay too, so asking again doesn't reach Shadow (F1W-02)", async () => {
+    const { lookup } = site();
+    const group = { ...stay, guests: 7 };
+    for (let i = 0; i < 5; i++) expect((await lookup(get(group))).status).toBe(400);
+    expect(shadowCalls("/api/public/availability")).toBe(1);
+    time += 60_000;
+    expect((await lookup(get(group))).status).toBe(400);
+    expect(shadowCalls("/api/public/availability")).toBe(2);
   });
 
   it("refuses requests another website makes from a visitor's browser", async () => {
@@ -267,7 +326,7 @@ describe("POST /api/booking", () => {
     expect(await response.json()).toEqual({
       reference: expect.stringMatching(/^HOJ-[2-9A-HJ-NP-Z]{6}$/),
       status: "pending",
-      hold_expires_at: new Date(START + 24 * 3_600_000).toISOString(),
+      hold_expires_at: new Date(START + 6 * HOUR).toISOString(),
       total: 380_000,
       currency: "LAK",
     });
@@ -407,31 +466,158 @@ describe("POST /api/booking", () => {
     expect(await response.json()).toMatchObject({ status: "confirmed", hold_expires_at: null });
   });
 
-  it("stays strictly inside Shadow's hourly limit for booking requests", async () => {
-    expect(hourlyCeiling(BOOKING_LIMITS.perClient)).toBe(6);
-    expect(hourlyCeiling(BOOKING_LIMITS.perInstance)).toBe(20);
-    expect(hourlyCeiling(BOOKING_LIMITS.perInstance)).toBeLessThan(SHADOW_BOOKING_HOURLY_LIMIT);
-
+  it("lets each client send at most 3 new requests in any hour and 6 in any day (F1W-01)", async () => {
     const { book } = site();
-    const refs = ["9b2d5c1e-3f4a-4b6c-8d7e-0f1a2b3c4d01", "9b2d5c1e-3f4a-4b6c-8d7e-0f1a2b3c4d02"];
-    // One guest each, so the dorm's 14 beds never run out before the limits do.
+    // One guest each, on their own contact, so neither the beds nor the holds run out before the limits do.
     const fresh = (i: number) => ({
       ...booking,
       guests: 1,
+      email: `guest${i}@example.com`,
       client_ref: `9b2d5c1e-3f4a-4b6c-8d7e-0f1a2b3c4e${String(i).padStart(2, "0")}`,
     });
-    for (let i = 0; i < 5; i++) expect((await book(post({ ...booking, name: "" }))).status).toBe(400);
-    for (let i = 0; i < BOOKING_LIMITS.perClient.capacity; i++) expect((await book(post(fresh(i)))).status).toBe(201);
-    const limited = await book(post({ ...booking, client_ref: refs[0] }));
-    expect(limited.status).toBe(429);
-    expect(await limited.json()).toEqual({ error: "rate_limited" });
+    // Every address in one IPv6 /64 is one client.
+    const v6 = (i: number) => ({ "x-forwarded-for": `2001:db8:1:2::${i}` });
+    for (let i = 0; i < 5; i++) expect((await book(post({ ...booking, name: "" }, v6(i)))).status).toBe(400);
+    // Minutes 0, 10 and 20: three new requests.
+    for (let i = 0; i < 3; i++) {
+      expect((await book(post(fresh(i), v6(i)))).status).toBe(201);
+      time += 10 * MINUTE;
+    }
+    // Minute 30: the first leaves the hour at minute 60.
+    const hourly = await book(post(fresh(3), v6(9)));
+    expect(hourly.status).toBe(429);
+    expect(await hourly.json()).toEqual({ error: "rate_limited" });
+    expect(hourly.headers.get("retry-after")).toBe(String(30 * 60));
 
-    for (let i = 3; i < BOOKING_LIMITS.perInstance.capacity; i++) {
+    // Minutes 60, 70 and 80: three more, the day's last.
+    time += 30 * MINUTE;
+    for (let i = 3; i < 6; i++) {
+      expect((await book(post(fresh(i), v6(i)))).status).toBe(201);
+      time += 10 * MINUTE;
+    }
+    // Minute 200: the hour is free again, but the day is full until the first leaves it, at minute 1,440.
+    time += 110 * MINUTE;
+    const daily = await book(post(fresh(6), v6(1)));
+    expect(daily.status).toBe(429);
+    expect(daily.headers.get("retry-after")).toBe(String((1_440 - 200) * 60));
+    expect(fake.bookings.size).toBe(6);
+    // Another address still can.
+    expect((await book(post(fresh(7), { "x-forwarded-for": "198.51.100.20" }))).status).toBe(201);
+    time += 1_240 * MINUTE;
+    expect((await book(post(fresh(8), v6(1)))).status).toBe(201);
+  });
+
+  it("never counts sending the same request again, so retrying while Shadow fails can't lock a guest out (F1W-11)", async () => {
+    const { book } = site();
+    fake.state.mode = "server_error";
+    for (let i = 0; i < 5; i++) expect((await book(post(booking))).status).toBe(502);
+    fake.state.mode = "open";
+    const sent = await book(post(booking));
+    expect(sent.status).toBe(201);
+    // Two more new requests this hour are still the guest's own.
+    const more = (i: number) => ({ ...booking, guests: 1, client_ref: `2c1d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e0${i}` });
+    expect((await book(post(more(1)))).status).toBe(201);
+    expect((await book(post(more(2)))).status).toBe(201);
+    expect((await book(post(more(3)))).status).toBe(429);
+    // Resending is limited on its own, 10 in any hour (5 so far), and never makes a second booking.
+    for (let i = 0; i < BOOKING_LIMITS.repeatsPerClient.limit - 5; i++) {
+      time += 6 * MINUTE; // the instance's allowance refills meanwhile
+      expect((await book(post(booking))).status).toBe(200);
+    }
+    expect((await book(post(booking))).status).toBe(429);
+    expect(fake.bookings.size).toBe(3);
+  });
+
+  it("stays strictly inside Shadow's hourly limit for booking requests, per instance", async () => {
+    expect(hourlyCeiling(BOOKING_LIMITS.perInstance)).toBe(20);
+    expect(hourlyCeiling(BOOKING_LIMITS.perInstance)).toBeLessThan(SHADOW_BOOKING_HOURLY_LIMIT);
+    const { book } = site();
+    const fresh = (i: number) => ({
+      ...booking,
+      guests: 1,
+      email: `guest${i}@example.com`,
+      client_ref: `9b2d5c1e-3f4a-4b6c-8d7e-0f1a2b3c4e${String(i).padStart(2, "0")}`,
+    });
+    for (let i = 0; i < BOOKING_LIMITS.perInstance.capacity; i++) {
       expect((await book(post(fresh(i), { "x-forwarded-for": `198.51.100.${i}` }))).status).toBe(201);
     }
-    const busy = await book(post({ ...booking, client_ref: refs[1] }, { "x-forwarded-for": "192.0.2.9" }));
+    const guest = { "x-forwarded-for": "192.0.2.9" };
+    const busy = await book(post(fresh(50), guest));
     expect(busy.status).toBe(503);
     expect(await busy.json()).toEqual({ error: "busy" });
+    // A busy line isn't the guest's doing: it costs them none of their own allowance.
+    time += 18 * MINUTE;
+    for (let i = 51; i < 54; i++) expect((await book(post(fresh(i), guest))).status).toBe(201);
+    time += 6 * MINUTE;
+    expect((await book(post(fresh(54), guest))).status).toBe(429);
+  });
+
+  it("sends the total the guest saw, and books nothing when Shadow's differs (F1W-03)", async () => {
+    const { lookup, book } = site();
+    const quoted = { ...booking, quoted_total: 380_000, quoted_currency: "LAK" };
+    await lookup(get());
+    fake.setRate(mixed.id, { currency: "LAK", amount: 150_000 });
+
+    const changed = await book(post(quoted));
+    expect(changed.status).toBe(409);
+    expect(await changed.json()).toEqual({ error: "price_changed", total: 600_000, currency: "LAK" });
+    expect(fake.bookings.size).toBe(0);
+    // The next lookup hears the new price from Shadow, not the cache.
+    expect((await (await lookup(get())).json()).room_types[0].price.total).toBe(600_000);
+
+    // The guest agrees to the new total: a new request, with a new client_ref.
+    const agreed = await book(post({ ...quoted, client_ref: "4a5b6c7d-8e9f-4a0b-9c1d-2e3f4a5b6c7d", quoted_total: 600_000 }));
+    expect(agreed.status).toBe(201);
+    expect(await agreed.json()).toMatchObject({ total: 600_000, currency: "LAK" });
+    const sent = fake.bookings.get("4a5b6c7d-8e9f-4a0b-9c1d-2e3f4a5b6c7d")!.request;
+    expect(Object.keys(sent).slice(-2)).toEqual(["quoted_total", "quoted_currency"]);
+
+    // "Confirmed by the team" is a quote too: a rate set since then is a change the guest must see.
+    fake.setRate(female.id, { currency: "USD", amount: 12 });
+    const unpriced = { ...quoted, client_ref: "5b6c7d8e-9f0a-4b1c-8d2e-3f4a5b6c7d8e", room_type_id: female.id, quoted_total: null, quoted_currency: null };
+    expect(await (await book(post(unpriced))).json()).toEqual({ error: "price_changed", total: 48, currency: "USD" });
+  });
+
+  it("checks the quote: a total and its currency, or no price at all", async () => {
+    const { book } = site();
+    const cases = [
+      { quoted_total: 380_000 },
+      { quoted_currency: "LAK" },
+      { quoted_total: 380_000, quoted_currency: null },
+      { quoted_total: null, quoted_currency: "LAK" },
+      { quoted_total: -1, quoted_currency: "LAK" },
+      { quoted_total: 1, quoted_currency: "EUR" },
+      { quoted_total: "380000", quoted_currency: "LAK" },
+    ];
+    for (const quote of cases) {
+      const response = await book(post({ ...booking, ...quote }));
+      expect(response.status, JSON.stringify(quote)).toBe(400);
+    }
+    expect(fake.calls).toHaveLength(0);
+  });
+
+  it("still books with a Shadow Check-in from before the price protection, sending no quote to it", async () => {
+    fake.state.quotes = false;
+    const { book, logs } = site();
+    const response = await book(post({ ...booking, quoted_total: 380_000, quoted_currency: "LAK" }));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ total: 380_000, currency: "LAK" });
+    expect(fake.bookings.get(booking.client_ref)!.request).not.toHaveProperty("quoted_total");
+    expect(shadowCalls("/api/public/booking-requests")).toBe(2);
+    expect(logs.join("\n")).toContain("Update Shadow Check-in for price protection");
+    // A refusal about the booking itself is the guest's to fix, and isn't sent twice.
+    fake.reset();
+    fake.state.quotes = false;
+    const refused = await book(post({ ...booking, client_ref: "6c7d8e9f-0a1b-4c2d-9e3f-4a5b6c7d8e9f", guests: 7, quoted_total: 1, quoted_currency: "LAK" }));
+    expect(refused.status).toBe(400);
+    expect((await refused.json()).issues).toContainEqual({ field: "guests", message: guestText.guestsRefused });
+  });
+
+  it("passes on a request Shadow accepts without holding its beds (F1W-01)", async () => {
+    fake.state.holdsPerContact = 0;
+    const response = await site().book(post(booking));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ status: "pending", hold_expires_at: null });
   });
 
   it("accepts only same-origin JSON", async () => {

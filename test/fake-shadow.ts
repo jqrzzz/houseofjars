@@ -4,7 +4,11 @@
  * booking contract (docs/BOOKING_API.md) and the inquiry contract
  * (docs/INQUIRY_API.md) from their text, checking requests by hand rather
  * than with the website's own schemas, so a website that drifts from the
- * contract fails against it.
+ * contract fails against it. It follows the contract's additions of 27
+ * September too: the price protection (409 price_changed) and the hold
+ * limits (a 6-hour hold by default, at most 2 active holds per email or
+ * phone; beyond them a request is pending with no hold). The other hold cap,
+ * a share of each room type's beds, is left to Shadow Check-in's own tests.
  *
  *   npm run fake-shadow            # http://127.0.0.1:4010 (FAKE_SHADOW_PORT to change)
  *
@@ -34,6 +38,15 @@ const BOOKING_KEYS = [
   "message",
   "consent",
 ] as const;
+/** The contract's additions of 27 September: the total the guest saw, both or neither. */
+const QUOTE_KEYS = ["quoted_total", "quoted_currency"] as const;
+
+/** Per guest per night; Friday and Saturday nights cost `weekend` when given. */
+export interface FakeRate {
+  readonly currency: "LAK" | "USD";
+  readonly amount: number;
+  readonly weekend?: number;
+}
 
 export interface FakeRoom {
   readonly id: string;
@@ -42,8 +55,8 @@ export interface FakeRoom {
   readonly description: string | null;
   readonly features: readonly string[];
   readonly beds: number;
-  /** Per guest per night; Friday and Saturday nights cost `weekend` when given. Null: no rate set. */
-  readonly rate: { readonly currency: "LAK" | "USD"; readonly amount: number; readonly weekend?: number } | null;
+  /** Null: no rate set. */
+  readonly rate: FakeRate | null;
 }
 
 /** Test fixtures: a priced dorm, a dorm without a rate, and a small room priced in dollars. */
@@ -87,7 +100,20 @@ export type FakeMode = "open" | "not_configured" | "rate_limited" | "server_erro
 export interface FakeState {
   mode: FakeMode;
   bookingMode: "request" | "instant";
+  /** How long a pending request holds its beds (the contract's default: 6 hours). */
   holdHours: number;
+  /**
+   * Active holds allowed per email or phone (the contract: 2). A request
+   * beyond them is still accepted, pending with no hold (hold_expires_at
+   * null), and holds no beds. 0: no request is held.
+   */
+  holdsPerContact: number;
+  /**
+   * The contract's price protection (quoted_total and quoted_currency).
+   * False: a Shadow Check-in from before it, which refuses those keys as
+   * unknown (400), as a strict body does.
+   */
+  quotes: boolean;
   limits: { max_guests: number; min_nights: number; max_nights: number; window_days: number };
   /** Booking requests per key in any rolling hour (the contract's example: 30). */
   hourlyLimit: number;
@@ -113,6 +139,8 @@ export interface FakeShadow {
   readonly inquiries: Map<string, Record<string, unknown>>;
   /** Takes beds for other guests on the nights [from, to), as a booking elsewhere would. */
   occupy(roomId: string, from: string, to: string, beds: number): void;
+  /** The house changes a room's rate (null: no rate set), until reset. */
+  setRate(roomId: string, rate: FakeRate | null): void;
   /** Back to an empty house, open, with the default settings. */
   reset(): void;
   close(): Promise<void>;
@@ -121,7 +149,9 @@ export interface FakeShadow {
 const defaults = (): FakeState => ({
   mode: "open",
   bookingMode: "request",
-  holdHours: 24,
+  holdHours: 6,
+  holdsPerContact: 2,
+  quotes: true,
   limits: { max_guests: 6, min_nights: 1, max_nights: 30, window_days: 365 },
   hourlyLimit: 30,
   delayMs: 0,
@@ -167,6 +197,8 @@ export async function startFakeShadow(
   const take = (roomId: string, nights: string[], beds: number) => {
     for (const night of nights) taken.set(`${roomId}|${night}`, takenOn(roomId, night) + beds);
   };
+  const rates = new Map<string, FakeRate | null>();
+  const rateOf = (room: FakeRoom) => (rates.has(room.id) ? rates.get(room.id)! : room.rate);
   let referenceCount = 0;
 
   const today = () => vientianeDay.format(now());
@@ -197,9 +229,9 @@ export async function startFakeShadow(
     const nights = nightsOf(from, to);
     const freeEachNight = nights.map((night) => ({ date: night, free: Math.max(0, room.beds - takenOn(room.id, night)) }));
     const minFree = Math.min(...freeEachNight.map((night) => night.free));
-    const price = room.rate
+    const rate = rateOf(room);
+    const price = rate
       ? (() => {
-          const rate = room.rate;
           const perNight = nights.map((night) => {
             const day = new Date(`${night}T00:00:00Z`).getUTCDay();
             const weekend = (day === 5 || day === 6) && rate.weekend !== undefined;
@@ -254,8 +286,17 @@ export async function startFakeShadow(
   function bookingIssues(body: Record<string, unknown>): Issue[] {
     const issues: Issue[] = [];
     const keys = Object.keys(body);
-    for (const extra of keys.filter((k) => !(BOOKING_KEYS as readonly string[]).includes(k))) {
+    const known: readonly string[] = state.quotes ? [...BOOKING_KEYS, ...QUOTE_KEYS] : BOOKING_KEYS;
+    for (const extra of keys.filter((k) => !known.includes(k))) {
       issues.push({ field: extra, message: "Unknown key." });
+    }
+    if (state.quotes) {
+      const [total, currency] = [body.quoted_total, body.quoted_currency];
+      const quoted = "quoted_total" in body || "quoted_currency" in body;
+      const whole =
+        (total === null && currency === null) ||
+        (typeof total === "number" && total >= 0 && (currency === "LAK" || currency === "USD"));
+      if (quoted && !whole) issues.push({ field: "quoted_total", message: "A total and its currency, or both null." });
     }
     for (const missing of BOOKING_KEYS.filter((k) => !keys.includes(k))) {
       issues.push({ field: missing, message: "Missing (send null for an empty optional field)." });
@@ -300,9 +341,24 @@ export async function startFakeShadow(
     const [from, to, guests] = [body.check_in as string, body.check_out as string, body.guests as number];
     const { minFree, price } = roomAvailability(room, from, to, guests);
     if (minFree < guests) return [409, { error: "unavailable" }];
+    // The price protection: the total the guest saw must be the one booked, or nothing is.
+    const [total, currency] = [price?.total ?? null, price?.currency ?? null];
+    if ("quoted_total" in body && (body.quoted_total !== total || body.quoted_currency !== currency)) {
+      return [409, { error: "price_changed", total, currency }];
+    }
 
-    take(room.id, nightsOf(from, to), guests);
     const pending = state.bookingMode === "request";
+    // Holds are a courtesy: a contact's requests beyond the limit are pending with no hold, and hold no beds.
+    const sameContact = (request: Record<string, unknown>) =>
+      (body.email !== null && request.email === body.email) || (body.phone !== null && request.phone === body.phone);
+    const holding = [...bookings.values()].filter(
+      (booking) =>
+        typeof booking.response.hold_expires_at === "string" &&
+        Date.parse(booking.response.hold_expires_at) > now() &&
+        sameContact(booking.request),
+    ).length;
+    const held = pending && holding < state.holdsPerContact;
+    if (!pending || held) take(room.id, nightsOf(from, to), guests);
     referenceCount += 1;
     let code = "";
     for (let n = referenceCount * 7_919 + 104_729, i = 0; i < 6; i++, n = Math.floor(n / REFERENCE_ALPHABET.length)) {
@@ -312,9 +368,9 @@ export async function startFakeShadow(
       id: randomUUID(),
       reference: `HOJ-${code}`,
       status: pending ? "pending" : "confirmed",
-      hold_expires_at: pending ? new Date(now() + state.holdHours * 3_600_000).toISOString() : null,
-      total: price?.total ?? null,
-      currency: price?.currency ?? null,
+      hold_expires_at: held ? new Date(now() + state.holdHours * 3_600_000).toISOString() : null,
+      total,
+      currency,
     };
     bookings.set(body.client_ref as string, { request: body, response, at: now() });
     return [201, response];
@@ -397,12 +453,16 @@ export async function startFakeShadow(
     occupy(roomId, from, to, beds) {
       take(roomId, nightsOf(from, to), beds);
     },
+    setRate(roomId, rate) {
+      rates.set(roomId, rate);
+    },
     reset() {
       Object.assign(state, defaults());
       calls.length = 0;
       bookings.clear();
       inquiries.clear();
       taken.clear();
+      rates.clear();
     },
     close() {
       server.closeAllConnections();

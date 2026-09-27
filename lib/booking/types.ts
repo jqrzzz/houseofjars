@@ -63,6 +63,12 @@ export interface Availability {
   readonly room_types: readonly RoomType[];
 }
 
+/** The total a guest saw for their stay: null when the page said the team confirms the price. */
+export interface Quote {
+  readonly total: number | null;
+  readonly currency: Currency | null;
+}
+
 /** The body of POST /api/booking: exactly the body Shadow receives. */
 export interface BookingRequest {
   readonly client_ref: string;
@@ -77,6 +83,13 @@ export interface BookingRequest {
   readonly arrival_time: string | null;
   readonly message: string | null;
   readonly consent: true;
+  /**
+   * The total the guest saw (the contract's price protection): Shadow books
+   * nothing and answers 409 price_changed if its own total differs. Both or
+   * neither; a page from before the protection sends neither.
+   */
+  readonly quoted_total?: number | null;
+  readonly quoted_currency?: Currency | null;
 }
 
 /** What POST /api/booking answers with 201 (or 200 when the booking was already received). */
@@ -100,9 +113,17 @@ export interface FieldIssue {
  * - busy: the line to Shadow Check-in is busy (never the guest's fault);
  * - not_configured: online booking is not open;
  * - unavailable: Shadow Check-in could not be reached;
- * - taken (bookings only): the beds went while the guest was booking.
+ * - taken (bookings only): the beds went while the guest was booking;
+ * - price_changed (bookings only): the total isn't the one the guest saw, so nothing was booked.
  */
-export type BookingProblem = "invalid" | "rate_limited" | "busy" | "not_configured" | "unavailable" | "taken";
+export type BookingProblem =
+  | "invalid"
+  | "rate_limited"
+  | "busy"
+  | "not_configured"
+  | "unavailable"
+  | "taken"
+  | "price_changed";
 
 /** The website's own limits, whatever the house sets: a sanity bound on what is sent to Shadow. */
 export const MAX_GUESTS = 20;

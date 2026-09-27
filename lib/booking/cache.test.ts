@@ -20,15 +20,17 @@ describe("availability cache", () => {
     expect(cache.get(q("2026-10-03", "2026-10-05"))).toBeNull();
   });
 
-  it("keeps availability and 'not open', and drops failures once they arrive", async () => {
+  it("keeps availability, 'not open' and Shadow turning the stay down, and drops failures once they arrive", async () => {
     const cache = createAvailabilityCache(() => 0);
     cache.put(q("2026-10-01", "2026-10-02"), answer({ ok: false, error: "not_configured" }));
     cache.put(q("2026-10-02", "2026-10-03"), answer({ ok: false, error: "unavailable" }));
     cache.put(q("2026-10-03", "2026-10-04"), answer({ ok: false, error: "busy" }));
+    cache.put(q("2026-10-04", "2026-10-05", 7), answer({ ok: false, error: "invalid_request", issues: [] }));
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(cache.get(q("2026-10-01", "2026-10-02"))).not.toBeNull();
     expect(cache.get(q("2026-10-02", "2026-10-03"))).toBeNull();
     expect(cache.get(q("2026-10-03", "2026-10-04"))).toBeNull();
+    expect(cache.get(q("2026-10-04", "2026-10-05", 7))).not.toBeNull();
   });
 
   it("forgets answers that share a night with a booking, and only those", () => {

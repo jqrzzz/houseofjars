@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { parseBookingRequest, readAvailability, readConfirmation, refusedIssues, guestText } from "./contract";
+import {
+  guestText,
+  parseBookingRequest,
+  readAvailability,
+  readConfirmation,
+  readPriceChange,
+  refusedIssues,
+  refusedOnlyTheBody,
+  withoutQuote,
+} from "./contract";
 
 const NOW = Date.UTC(2026, 8, 26, 5);
 const query = { check_in: "2026-10-03", check_out: "2026-10-05", guests: 2 };
@@ -116,6 +125,16 @@ describe("the booking request body", () => {
     expect(parsed.ok).toBe(false);
   });
 
+  it("carries the total the guest saw after the contract's keys, and only when the page sent one (F1W-03)", () => {
+    const quoted = parseBookingRequest({ ...body, quoted_total: 360_000, quoted_currency: "LAK" }, NOW);
+    expect(quoted.ok && Object.keys(quoted.request).slice(-3)).toEqual(["consent", "quoted_total", "quoted_currency"]);
+    const unpriced = parseBookingRequest({ ...body, quoted_total: null, quoted_currency: null }, NOW);
+    expect(unpriced.ok && unpriced.request).toMatchObject({ quoted_total: null, quoted_currency: null });
+    const older = parseBookingRequest(body, NOW);
+    expect(older.ok && older.request).not.toHaveProperty("quoted_total");
+    expect(quoted.ok && Object.keys(withoutQuote(quoted.request))).toEqual(Object.keys(body));
+  });
+
   it("needs an email or a phone number, a real time, and consent", () => {
     const issues = (change: Record<string, unknown>) => {
       const parsed = parseBookingRequest({ ...body, ...change }, NOW);
@@ -193,5 +212,32 @@ describe("Shadow's 400, in the guest's words", () => {
   it("falls back to a general line when nothing can be placed", () => {
     expect(refusedIssues({ issues: [{ field: "body", message: "?" }] })).toEqual([{ field: "form", message: guestText.checkForm }]);
     expect(refusedIssues("not json")).toEqual([{ field: "form", message: guestText.checkForm }]);
+  });
+
+  it("tells a refusal of the body as a whole (keys an older Shadow doesn't know) from one about the booking", () => {
+    // How Shadow Check-in's strict schema reports unknown keys today (lib/inquiries/contract.ts toIssues).
+    const unknownKeys = { error: "invalid_request", issues: [{ field: "body", message: 'Unrecognized keys: "quoted_total", "quoted_currency"' }] };
+    expect(refusedOnlyTheBody(unknownKeys)).toBe(true);
+    expect(refusedOnlyTheBody({ issues: [{ field: "quoted_total", message: "Unknown key." }] })).toBe(true);
+    expect(refusedOnlyTheBody({ issues: [{ field: "body", message: "?" }, { field: "guests", message: "too many" }] })).toBe(false);
+  });
+});
+
+describe("Shadow's 409", () => {
+  it("reads a price change with the total Shadow would book at now (F1W-03)", () => {
+    expect(readPriceChange({ error: "price_changed", total: 600_000, currency: "LAK" })).toEqual({
+      changed: true,
+      quote: { total: 600_000, currency: "LAK" },
+    });
+    expect(readPriceChange({ error: "price_changed", total: null, currency: null })).toEqual({
+      changed: true,
+      quote: { total: null, currency: null },
+    });
+  });
+
+  it("takes anything else as the beds being gone", () => {
+    for (const body of [{ error: "unavailable" }, { error: "price_changed", total: 1, currency: null }, { error: "price_changed", total: "1", currency: "LAK" }, null]) {
+      expect(readPriceChange(body), JSON.stringify(body)).toEqual({ changed: false });
+    }
   });
 });

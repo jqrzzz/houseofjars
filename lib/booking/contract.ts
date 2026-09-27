@@ -17,6 +17,7 @@ import {
   type BookingConfirmation,
   type BookingRequest,
   type FieldIssue,
+  type Quote,
   type RoomKind,
 } from "./types";
 
@@ -26,7 +27,8 @@ import {
  *  - availabilitySchema: Shadow's 200 answer to GET /api/public/availability;
  *  - bookingRequestSchema: the body of POST /api/booking, which is exactly
  *    the body POSTed to Shadow's /api/public/booking-requests;
- *  - bookingCreatedSchema: Shadow's 201 (or 200) answer to it.
+ *  - bookingCreatedSchema: Shadow's 201 (or 200) answer to it, and
+ *    priceChangedSchema its 409 when the total isn't the one the guest saw.
  * What the website sends is strict. Shadow's answers may carry fields the
  * website doesn't use yet; those are dropped.
  */
@@ -157,11 +159,18 @@ const bookingRequestSchema = z
     arrival_time: optional(z.string().trim().regex(ARRIVAL_TIME, guestText.arrival)),
     message: optional(z.string().trim().max(MAX_MESSAGE, guestText.message)),
     consent: z.literal(true, guestText.consent),
+    // The total the guest saw; a page from before the price protection sends neither.
+    quoted_total: z.number(guestText.checkForm).nonnegative(guestText.checkForm).nullable().optional(),
+    quoted_currency: z.enum(CURRENCIES, guestText.checkForm).nullable().optional(),
   })
   .superRefine((value, ctx) => {
     if (!value.email && !value.phone) {
       ctx.addIssue({ code: "custom", path: ["email"], message: guestText.contact });
     }
+    // A total and its currency, or no price at all (the team confirms it): nothing in between.
+    const [total, currency] = [value.quoted_total, value.quoted_currency];
+    const whole = total === undefined ? currency === undefined : currency !== undefined && (total === null) === (currency === null);
+    if (!whole) ctx.addIssue({ code: "custom", path: ["quoted_total"], message: guestText.checkForm });
   });
 
 /** The body for Shadow, keys in the contract's order, or what the guest must fix. */
@@ -194,6 +203,7 @@ export function parseBookingRequest(
       arrival_time: v.arrival_time,
       message: v.message,
       consent: true,
+      ...(v.quoted_total === undefined ? {} : { quoted_total: v.quoted_total, quoted_currency: v.quoted_currency ?? null }),
     },
   };
 }
@@ -219,6 +229,36 @@ export function readConfirmation(body: unknown): BookingConfirmation | null {
   return { reference, status, hold_expires_at, total, currency };
 }
 
+const priceChangedSchema = z
+  .object({
+    error: z.literal("price_changed"),
+    total: z.number().nonnegative().nullable(),
+    currency: z.enum(CURRENCIES).nullable(),
+  })
+  .refine((body) => (body.total === null) === (body.currency === null));
+
+/**
+ * Shadow's 409: "price_changed" with the total it would book at now, or null
+ * for any other 409 (the beds are no longer free).
+ */
+export function readPriceChange(body: unknown): { changed: true; quote: Quote } | { changed: false } {
+  const parsed = priceChangedSchema.safeParse(body);
+  return parsed.success ? { changed: true, quote: { total: parsed.data.total, currency: parsed.data.currency } } : { changed: false };
+}
+
+/** Whether a request carries the total the guest saw (the price protection). */
+export function hasQuote(request: BookingRequest): boolean {
+  return request.quoted_total !== undefined;
+}
+
+/** The same request without the quote, for a Shadow Check-in that doesn't take one yet. */
+export function withoutQuote(request: BookingRequest): BookingRequest {
+  const copy = { ...request };
+  delete copy.quoted_total;
+  delete copy.quoted_currency;
+  return copy;
+}
+
 const shadowIssuesSchema = z.object({ issues: z.array(z.object({ field: z.string(), message: z.string() })) });
 
 /** Guest wording for the fields Shadow's 400 names (its own messages are written for developers). */
@@ -236,13 +276,26 @@ const refusedField: Readonly<Record<string, string>> = {
   consent: guestText.consent,
 };
 
-/** Shadow's 400 issues in the guest's words, one per field; "form" when none can be placed. */
-export function refusedIssues(body: unknown): FieldIssue[] {
+/** The issues of Shadow's 400 the website can place on a field of the guest's booking, in the guest's words. */
+function placedIssues(body: unknown): FieldIssue[] {
   const parsed = shadowIssuesSchema.safeParse(body);
   const fields = parsed.success ? parsed.data.issues.map((issue) => issue.field.split(".")[0] ?? "") : [];
-  const issues = [...new Set(fields)].flatMap((field) => {
+  return [...new Set(fields)].flatMap((field) => {
     const message = refusedField[field];
     return message ? [{ field, message }] : [];
   });
+}
+
+/** Shadow's 400 issues in the guest's words, one per field; "form" when none can be placed. */
+export function refusedIssues(body: unknown): FieldIssue[] {
+  const issues = placedIssues(body);
   return issues.length > 0 ? issues : [{ field: "form", message: guestText.checkForm }];
+}
+
+/**
+ * Whether a 400 says nothing about the guest's booking itself: the body as a
+ * whole was refused (for example keys Shadow doesn't know yet).
+ */
+export function refusedOnlyTheBody(body: unknown): boolean {
+  return placedIssues(body).length === 0;
 }

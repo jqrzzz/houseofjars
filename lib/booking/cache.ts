@@ -15,19 +15,27 @@ interface Entry {
 export interface AvailabilityCache {
   /** The answer (or the lookup still under way) for exactly this query, while fresh. */
   get(query: AvailabilityQuery): Promise<LookupResult> | null;
-  /** Keeps a lookup for AVAILABILITY_TTL_MS; answers worth asking again for are dropped once they arrive. */
+  /** Keeps a lookup for AVAILABILITY_TTL_MS; failures worth asking again about are dropped once they arrive. */
   put(query: AvailabilityQuery, result: Promise<LookupResult>): void;
   /** Forgets every answer about a night in [checkIn, checkOut): beds there were just booked, or turned out taken. */
   invalidate(checkIn: string, checkOut: string): void;
   readonly size: number;
 }
 
+/**
+ * One key per stay: the query as parseAvailabilityQuery checked it (real
+ * dates, a whole number of guests), never the text of the URL, so the order
+ * of the parameters, repeated or extra ones, or "02" for 2 guests all find
+ * the same answer.
+ */
 const keyOf = (query: AvailabilityQuery) => `${query.check_in}|${query.check_out}|${query.guests}`;
 
 /**
  * In memory, per server instance. Identical lookups share one call to
- * Shadow, even while it is still on its way. Only availability and "not
- * open" are kept: a failure is worth asking again about straight away.
+ * Shadow, even while it is still on its way. Answers are kept: availability,
+ * "not open", and Shadow turning the stay down (the house's limits), which
+ * it would do again for the same query. Failures (busy, unreachable) are
+ * worth asking again about straight away.
  */
 export function createAvailabilityCache(now: () => number = Date.now): AvailabilityCache {
   const entries = new Map<string, Entry>();
@@ -53,7 +61,7 @@ export function createAvailabilityCache(now: () => number = Date.now): Availabil
         entries.delete(oldKey);
       }
       void result.then((answer) => {
-        const keep = answer.ok || answer.error === "not_configured";
+        const keep = answer.ok || answer.error === "not_configured" || answer.error === "invalid_request";
         if (!keep && entries.get(key) === entry) entries.delete(key);
       });
     },

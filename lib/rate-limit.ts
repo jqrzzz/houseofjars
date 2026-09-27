@@ -64,6 +64,67 @@ export function createRateLimiter(options: RateLimiterOptions) {
   };
 }
 
+export interface WindowLimiterOptions {
+  /** Requests allowed in any window. */
+  readonly limit: number;
+  /** The window's length in milliseconds (an hour, a day). */
+  readonly windowMs: number;
+  /** Upper bound on tracked keys, so memory stays bounded. */
+  readonly maxKeys?: number;
+  readonly now?: () => number;
+}
+
+export interface WindowLimiter {
+  /** Whether one more request would be allowed now, without counting it. */
+  check(key: string): RateLimitDecision;
+  /** Counts a request. */
+  record(key: string): void;
+  /** Number of keys currently tracked (for tests). */
+  readonly size: number;
+}
+
+/**
+ * At most `limit` requests per key in any `windowMs`: a sliding window over
+ * the times of each key's last `limit` requests. Checking and counting are
+ * separate, so a request that another limit turns away costs nothing here.
+ * In memory, per server instance, like createRateLimiter.
+ */
+export function createWindowLimiter(options: WindowLimiterOptions): WindowLimiter {
+  const { limit, windowMs, maxKeys = 10_000, now = Date.now } = options;
+  // Per key, the times of its latest requests (oldest first), in least-recently-counted order.
+  const hits = new Map<string, number[]>();
+  const recent = (key: string, time: number) => (hits.get(key) ?? []).filter((at) => time - at < windowMs);
+
+  return {
+    check(key) {
+      const time = now();
+      const times = recent(key, time);
+      if (times.length < limit) return { allowed: true, retryAfterSeconds: 0 };
+      // The next request is allowed once the oldest of the last `limit` leaves the window.
+      const oldest = times[times.length - limit]!;
+      return { allowed: false, retryAfterSeconds: Math.ceil((oldest + windowMs - time) / 1000) };
+    },
+    record(key) {
+      const time = now();
+      // Keys whose latest request has left the window are no different from new ones.
+      for (const [staleKey, stale] of hits) {
+        if (time - stale[stale.length - 1]! < windowMs) break;
+        hits.delete(staleKey);
+      }
+      const times = [...recent(key, time), time].slice(-limit);
+      hits.delete(key);
+      hits.set(key, times);
+      if (hits.size > maxKeys) {
+        const oldest = hits.keys().next().value;
+        if (oldest !== undefined) hits.delete(oldest);
+      }
+    },
+    get size() {
+      return hits.size;
+    },
+  };
+}
+
 /**
  * The client's address as the hosting platform saw it. Vercel overwrites
  * x-forwarded-for with the one address it saw; behind another proxy the last

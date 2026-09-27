@@ -1,11 +1,15 @@
 import type { ShadowConfig } from "../inquiry/submit";
 import {
+  hasQuote,
   readAvailability,
   readConfirmation,
+  readPriceChange,
   refusedIssues,
+  refusedOnlyTheBody,
+  withoutQuote,
   type AvailabilityQuery,
 } from "./contract";
-import type { Availability, BookingConfirmation, BookingRequest, FieldIssue } from "./types";
+import type { Availability, BookingConfirmation, BookingRequest, FieldIssue, Quote } from "./types";
 
 /*
  * The website's two calls to Shadow Check-in's booking API, with the
@@ -28,6 +32,8 @@ export type BookingResult =
   | { readonly ok: true; readonly confirmation: BookingConfirmation; readonly repeat: boolean }
   /** Shadow's 409: the beds are no longer free. */
   | { readonly ok: false; readonly error: "taken" }
+  /** Shadow's 409: its total isn't the one the guest saw, so nothing was booked; `quote` is its total now. */
+  | { readonly ok: false; readonly error: "price_changed"; readonly quote: Quote }
   | { readonly ok: false; readonly error: "invalid_request"; readonly issues: readonly FieldIssue[] }
   | { readonly ok: false; readonly error: ShadowProblem };
 
@@ -97,14 +103,35 @@ export async function lookUpAvailability(query: AvailabilityQuery, deps: ShadowC
   return { ok: false, error: problemFor(response.status, deps, "availability") };
 }
 
-/** POST {SHADOW_API_URL}/api/public/booking-requests */
+/**
+ * POST {SHADOW_API_URL}/api/public/booking-requests
+ *
+ * The request carries the total the guest saw (quoted_total and
+ * quoted_currency), so Shadow books nothing at a price the guest didn't see.
+ * A Shadow Check-in from before that part of the contract refuses keys it
+ * doesn't know: when its 400 is about the body as a whole, the same request
+ * goes again without the quote (nothing was stored), and the confirmation
+ * still says if the total differs from the one shown.
+ */
 export async function sendBookingRequest(request: BookingRequest, deps: ShadowCallDeps): Promise<BookingResult> {
-  const response = await call(
-    "/api/public/booking-requests",
-    { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(request) },
-    deps,
-    "booking request",
-  );
+  const post = (body: BookingRequest) =>
+    call(
+      "/api/public/booking-requests",
+      { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) },
+      deps,
+      "booking request",
+    );
+  let response = await post(request);
+  if (response?.status === 400 && hasQuote(request)) {
+    const refusal: unknown = await response
+      .clone()
+      .json()
+      .catch(() => null);
+    if (refusedOnlyTheBody(refusal)) {
+      log(deps, "[booking] Shadow refused the price quote (400); sent the request without it. Update Shadow Check-in for price protection.");
+      response = await post(withoutQuote(request));
+    }
+  }
   if (!response) return { ok: false, error: "unavailable" };
 
   if (response.status === 201 || response.status === 200) {
@@ -115,8 +142,10 @@ export async function sendBookingRequest(request: BookingRequest, deps: ShadowCa
     return { ok: false, error: "unavailable" };
   }
   switch (response.status) {
-    case 409:
-      return { ok: false, error: "taken" };
+    case 409: {
+      const change = readPriceChange(await response.json().catch(() => null));
+      return change.changed ? { ok: false, error: "price_changed", quote: change.quote } : { ok: false, error: "taken" };
+    }
     case 400:
       log(deps, "[booking] Shadow rejected the booking request (400)");
       return { ok: false, error: "invalid_request", issues: refusedIssues(await response.json().catch(() => null)) };

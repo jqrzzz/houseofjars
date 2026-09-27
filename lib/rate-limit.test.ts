@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clientIp, clientKey, createRateLimiter, rateLimitKey } from "./rate-limit";
+import { clientIp, clientKey, createRateLimiter, createWindowLimiter, rateLimitKey } from "./rate-limit";
 
 function clock(start = 0) {
   let time = start;
@@ -53,6 +53,57 @@ describe("token bucket rate limiter", () => {
     expect(limiter.size).toBe(2);
     // "a" was evicted, so it starts with a full bucket again.
     expect(limiter.take("a").allowed).toBe(true);
+  });
+});
+
+describe("sliding window limiter", () => {
+  it("allows at most `limit` in any window, and says when the next one is allowed", () => {
+    const time = clock();
+    const limiter = createWindowLimiter({ limit: 3, windowMs: 3_600_000, now: time.now });
+    for (const minute of [0, 10, 20]) {
+      time.advance(minute === 0 ? 0 : 600_000);
+      expect(limiter.check("a").allowed).toBe(true);
+      limiter.record("a");
+    }
+    // The first request (at 0) leaves the window at 60 minutes; it is now 20 minutes in.
+    expect(limiter.check("a")).toEqual({ allowed: false, retryAfterSeconds: 40 * 60 });
+    time.advance(40 * 60_000 - 1);
+    expect(limiter.check("a").allowed).toBe(false);
+    time.advance(1);
+    expect(limiter.check("a").allowed).toBe(true);
+  });
+
+  it("only counts what is recorded, per key", () => {
+    const limiter = createWindowLimiter({ limit: 1, windowMs: 60_000, now: clock().now });
+    expect(limiter.check("a").allowed).toBe(true);
+    expect(limiter.check("a").allowed).toBe(true);
+    limiter.record("a");
+    expect(limiter.check("a").allowed).toBe(false);
+    expect(limiter.check("b").allowed).toBe(true);
+  });
+
+  it("keeps a day's window as strictly as an hour's", () => {
+    const time = clock();
+    const day = createWindowLimiter({ limit: 6, windowMs: 86_400_000, now: time.now });
+    for (let i = 0; i < 6; i++) {
+      day.record("a");
+      time.advance(3_600_000);
+    }
+    // Six hours after the first request, the day is full until 24 hours after it.
+    expect(day.check("a")).toEqual({ allowed: false, retryAfterSeconds: 18 * 3600 });
+  });
+
+  it("forgets keys whose requests have all left the window, and stays bounded", () => {
+    const time = clock();
+    const limiter = createWindowLimiter({ limit: 2, windowMs: 1_000, maxKeys: 2, now: time.now });
+    limiter.record("a");
+    limiter.record("b");
+    time.advance(1_000);
+    limiter.record("c");
+    expect(limiter.size).toBe(1);
+    limiter.record("d");
+    limiter.record("e");
+    expect(limiter.size).toBe(2);
   });
 });
 
