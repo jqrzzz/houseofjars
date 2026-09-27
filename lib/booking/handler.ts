@@ -4,14 +4,13 @@ import { clientKey } from "../rate-limit";
 import type { AvailabilityCache } from "./cache";
 import { MAX_BOOKING_BYTES, parseAvailabilityQuery, parseBookingRequest } from "./contract";
 import type { BookingGate, LookupLimiters } from "./limits";
-import { lookUpAvailability, sendBookingRequest } from "./shadow";
+import { lookUpAvailability, sendBookingRequest, type LookupResult } from "./shadow";
 
-interface ShadowRouteDeps {
+interface ShadowCallsDeps {
   /** Shadow's address and the property's key; null when either is not set. */
   readonly config: () => ShadowConfig | null;
   /** Answers about the same dates and guests, shared by both routes. */
   readonly cache: AvailabilityCache;
-  readonly siteUrl: string;
   readonly fetch?: typeof fetch;
   /** How long to wait for Shadow (default 10 seconds). */
   readonly timeoutMs?: number;
@@ -19,13 +18,62 @@ interface ShadowRouteDeps {
   readonly log?: (message: string) => void;
 }
 
-export interface AvailabilityHandlerDeps extends ShadowRouteDeps {
+interface ShadowRouteDeps extends ShadowCallsDeps {
+  readonly siteUrl: string;
+}
+
+/** Everything a lookup of free beds needs: /api/availability and Shadow the concierge pass the same. */
+export interface AvailabilityDeps extends ShadowCallsDeps {
   readonly limiters: LookupLimiters;
 }
+
+export interface AvailabilityHandlerDeps extends AvailabilityDeps, ShadowRouteDeps {}
 
 export interface BookingHandlerDeps extends ShadowRouteDeps {
   /** Per client and per instance, strictly inside Shadow's limit for the key. */
   readonly gate: BookingGate;
+}
+
+/**
+ * Shadow's answer, or why the website didn't ask: rate_limited when this
+ * client has looked up too much, busy when every client together has (the
+ * instance's allowance), with how long to wait.
+ */
+export type AvailabilityAnswer =
+  | LookupResult
+  | { readonly ok: false; readonly error: "rate_limited" | "busy"; readonly retryAfterSeconds: number };
+
+/**
+ * The free beds for a stay, as the website's one way of asking: the booking
+ * form (through /api/availability) and Shadow the concierge (check_availability)
+ * both come here, so both get the same checks, the same cache and the same
+ * limits. `params` is a query as /api/availability receives it; `client` is
+ * the guest's own address (clientKey), which the per-client limits count against.
+ */
+export async function findAvailability(params: URLSearchParams, client: string, deps: AvailabilityDeps): Promise<AvailabilityAnswer> {
+  const config = deps.config();
+  if (!config) return { ok: false, error: "not_configured" };
+
+  const parsed = parseAvailabilityQuery(params, deps.now?.());
+  if (!parsed.ok) return { ok: false, error: "invalid_request", issues: parsed.issues };
+
+  const own = deps.limiters.perClient.check(client);
+  if (!own.allowed) return { ok: false, error: "rate_limited", retryAfterSeconds: own.retryAfterSeconds };
+  deps.limiters.perClient.record(client);
+
+  // The cache's key is the checked query (parseAvailabilityQuery), so no way of writing a query can get past it.
+  let lookup = deps.cache.get(parsed.query);
+  if (!lookup) {
+    // Only lookups that reach Shadow count against the client's share and everyone's allowance.
+    const fresh = deps.limiters.perClientUncached.check(client);
+    if (!fresh.allowed) return { ok: false, error: "rate_limited", retryAfterSeconds: fresh.retryAfterSeconds };
+    const everyone = deps.limiters.perInstance.take("all");
+    if (!everyone.allowed) return { ok: false, error: "busy", retryAfterSeconds: everyone.retryAfterSeconds };
+    deps.limiters.perClientUncached.record(client);
+    lookup = lookUpAvailability(parsed.query, { config, fetch: deps.fetch, timeoutMs: deps.timeoutMs, log: deps.log });
+    deps.cache.put(parsed.query, lookup);
+  }
+  return lookup;
 }
 
 const rateLimited = (retryAfterSeconds: number) =>
@@ -37,34 +85,21 @@ export function createAvailabilityHandler(deps: AvailabilityHandlerDeps) {
     const refused = rejectForeignOrigin(request, deps.siteUrl);
     if (refused) return refused;
 
-    const config = deps.config();
-    if (!config) return json({ error: "not_configured" }, 503);
-
-    const parsed = parseAvailabilityQuery(new URL(request.url).searchParams, deps.now?.());
-    if (!parsed.ok) return json({ error: "invalid_request", issues: parsed.issues }, 400);
-
-    const client = clientKey(request.headers);
-    const own = deps.limiters.perClient.check(client);
-    if (!own.allowed) return rateLimited(own.retryAfterSeconds);
-    deps.limiters.perClient.record(client);
-
-    // The cache's key is the checked query (parseAvailabilityQuery), so no way of writing a query can get past it.
-    let lookup = deps.cache.get(parsed.query);
-    if (!lookup) {
-      // Only lookups that reach Shadow count against the client's share and everyone's allowance.
-      const fresh = deps.limiters.perClientUncached.check(client);
-      if (!fresh.allowed) return rateLimited(fresh.retryAfterSeconds);
-      const everyone = deps.limiters.perInstance.take("all");
-      if (!everyone.allowed) return json({ error: "busy" }, 503, { "retry-after": String(everyone.retryAfterSeconds) });
-      deps.limiters.perClientUncached.record(client);
-      lookup = lookUpAvailability(parsed.query, { config, fetch: deps.fetch, timeoutMs: deps.timeoutMs, log: deps.log });
-      deps.cache.put(parsed.query, lookup);
-    }
-
-    const result = await lookup;
+    const result = await findAvailability(new URL(request.url).searchParams, clientKey(request.headers), deps);
     if (result.ok) return json(result.availability);
-    if (result.error === "invalid_request") return json({ error: "invalid_request", issues: result.issues }, 400);
-    return json({ error: result.error }, submitErrorStatus[result.error]);
+    switch (result.error) {
+      case "invalid_request":
+        return json({ error: "invalid_request", issues: result.issues }, 400);
+      case "rate_limited":
+        return rateLimited(result.retryAfterSeconds);
+      default:
+        // "busy" from this instance's allowance says when to try again; Shadow's own busy line doesn't.
+        return json(
+          { error: result.error },
+          submitErrorStatus[result.error],
+          "retryAfterSeconds" in result ? { "retry-after": String(result.retryAfterSeconds) } : {},
+        );
+    }
   };
 }
 
