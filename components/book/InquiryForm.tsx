@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode } from "react";
 import { inquiryPrefill } from "@/lib/inquiry/prefill";
 import { replyChannel } from "@/lib/inquiry/reply";
 import { pages } from "@/lib/site";
@@ -9,7 +8,10 @@ import { uuid } from "@/lib/uuid";
 import { ContactDetails } from "../contact/ContactDetails";
 import buttons from "../ui/button.module.css";
 import { ArrowIcon } from "../ui/icons";
+import { FollowLinks } from "./FollowLinks";
 import styles from "./InquiryForm.module.css";
+
+const subscribeNothing = () => () => {};
 
 type Problem = "invalid" | "rate_limited" | "busy" | "not_configured" | "unavailable";
 
@@ -82,17 +84,24 @@ export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
   const id = useId();
   const fieldId = (field: FieldName) => `${id}-${field}`;
 
-  // Dates in the past make no sense here; set the floor once the browser knows today's date.
-  // A link from the booking card (or an assistant) may carry dates and guests: fill them in.
-  useEffect(() => {
-    if (checkInRef.current) checkInRef.current.min = today();
-    const prefill = inquiryPrefill(window.location.search);
+  const inBrowser = useSyncExternalStore(subscribeNothing, () => true, () => false);
+
+  /** A link from the booking card, Shadow or an assistant may carry dates and guests: fill them in. */
+  function fillFromLink(search: string) {
+    const prefill = inquiryPrefill(search);
     if (prefill.check_in && checkInRef.current && checkOutRef.current) {
       checkInRef.current.value = prefill.check_in;
       checkOutRef.current.min = prefill.check_in;
       if (prefill.check_out) checkOutRef.current.value = prefill.check_out;
     }
     if (prefill.guests && guestsRef.current) guestsRef.current.value = String(prefill.guests);
+  }
+
+  // Dates in the past make no sense here; set the floor once the browser knows today's date.
+  useEffect(() => {
+    if (checkInRef.current) checkInRef.current.min = today();
+    // Once, on arrival; later links are followed by FollowLinks.
+    fillFromLink(window.location.search);
   }, []);
 
   useEffect(() => {
@@ -344,8 +353,12 @@ export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
           aria-describedby={describedBy("consent")}
         />
         <label htmlFor={fieldId("consent")}>
-          I agree to the <Link href={pages.privacy.path}>privacy notice</Link> and want the House of Jars team to
-          contact me about this message.
+          I agree to the{" "}
+          {/* A new tab, so reading it never loses what the guest has typed (F1W-06). */}
+          <a href={pages.privacy.path} target="_blank" rel="noopener">
+            privacy notice<span className="visually-hidden"> (opens in a new tab)</span>
+          </a>{" "}
+          and want the House of Jars team to contact me about this message.
         </label>
         {error("consent")}
       </div>
@@ -371,6 +384,7 @@ export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
           <ContactDetails compact />
         </div>
       ) : null}
+      {inBrowser ? <FollowLinks onLink={fillFromLink} /> : null}
     </form>
   );
 }

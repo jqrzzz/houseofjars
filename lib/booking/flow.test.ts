@@ -9,11 +9,15 @@ import {
   fetchAvailability,
   formatMoney,
   freeBedsText,
+  houseTodayNow,
   kindLabel,
   postBooking,
   priceLines,
+  quoteOf,
+  quoteText,
   stepForIssues,
   unavailableText,
+  waitText,
 } from "./flow";
 import type { RoomType } from "./types";
 
@@ -37,8 +41,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function answer(status: number, body: unknown) {
-  const fetch = vi.fn(async () => new Response(JSON.stringify(body), { status }));
+const NO_QUOTE = { total: null, currency: null } as const;
+
+function answer(status: number, body: unknown, headers: HeadersInit = {}) {
+  const fetch = vi.fn(async () => new Response(JSON.stringify(body), { status, headers }));
   vi.stubGlobal("fetch", fetch);
   return fetch;
 }
@@ -64,13 +70,50 @@ describe("talking to the website's booking routes", () => {
     ];
     for (const [status, body, problem] of cases) {
       answer(status, body);
-      expect(await postBooking(bookingBody("r", stay, room.id, { ...EMPTY_DETAILS, name: "Mai" })), String(status)).toMatchObject({
+      expect(await postBooking(bookingBody("r", stay, room.id, { ...EMPTY_DETAILS, name: "Mai" }, NO_QUOTE)), String(status)).toMatchObject({
         ok: false,
         problem,
       });
     }
     vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("offline"))));
-    expect(await fetchAvailability(stay)).toEqual({ ok: false, problem: "unavailable", issues: [] });
+    expect(await fetchAvailability(stay)).toMatchObject({ ok: false, problem: "unavailable", issues: [] });
+  });
+
+  it("brings back the new total when the price changed, and nothing was booked (F1W-03)", async () => {
+    answer(409, { error: "price_changed", total: 600_000, currency: "LAK" });
+    const body = bookingBody("r", stay, room.id, { ...EMPTY_DETAILS, name: "Mai" }, { total: 360_000, currency: "LAK" });
+    expect(await postBooking(body)).toMatchObject({ ok: false, problem: "price_changed", quote: { total: 600_000, currency: "LAK" } });
+    answer(409, { error: "price_changed", total: 600_000, currency: null });
+    expect(await postBooking(body)).toMatchObject({ problem: "taken", quote: null });
+  });
+
+  it("says how long to wait, from the website's Retry-After (F1W-11)", async () => {
+    answer(429, { error: "rate_limited" }, { "retry-after": "1200" });
+    const outcome = await postBooking(bookingBody("r", stay, room.id, { ...EMPTY_DETAILS, name: "Mai" }, NO_QUOTE));
+    expect(outcome).toMatchObject({ problem: "rate_limited", retryAfterSeconds: 1200 });
+    expect(waitText(1200)).toBe("in about 20 minutes");
+    expect(waitText(45)).toBe("in a minute or two");
+    expect(waitText(null)).toBe("in a minute or two");
+    expect(waitText(3 * 3600 + 60)).toBe("in about 3 hours");
+    expect(waitText(3600)).toBe("in about an hour");
+    expect(waitText(23.9 * 3600)).toBe("tomorrow");
+  });
+
+  it("takes today at the house from the website's clock, not this device's (F1W-09)", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      // The device thinks it is 23:58 on 26 September in Vientiane; the website says 00:05 on the 27th.
+      vi.setSystemTime(Date.UTC(2026, 8, 26, 16, 58));
+      expect(houseTodayNow()).toBe("2026-09-26");
+      answer(200, { room_types: [] }, { date: new Date(Date.UTC(2026, 8, 26, 17, 5)).toUTCString() });
+      await fetchAvailability(stay);
+      expect(houseTodayNow()).toBe("2026-09-27");
+      // And it keeps counting from there.
+      vi.setSystemTime(Date.UTC(2026, 8, 27, 16, 58));
+      expect(houseTodayNow()).toBe("2026-09-28");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
@@ -153,8 +196,8 @@ describe("the guest's details", () => {
     );
   });
 
-  it("builds the contract's body: trimmed, blanks as null, no price", () => {
-    const body = bookingBody("ref", stay, room.id, { ...valid, name: " Mai ", message: "  " });
+  it("builds the contract's body: trimmed, blanks as null, and the total the guest saw last", () => {
+    const body = bookingBody("ref", stay, room.id, { ...valid, name: " Mai ", message: "  " }, { total: 360_000, currency: "LAK" });
     expect(body).toEqual({
       client_ref: "ref",
       room_type_id: room.id,
@@ -166,7 +209,17 @@ describe("the guest's details", () => {
       arrival_time: null,
       message: null,
       consent: true,
+      quoted_total: 360_000,
+      quoted_currency: "LAK",
     });
+    // No rate set: the guest was told the team confirms the price, and that is what they agree to.
+    expect(bookingBody("ref", stay, room.id, valid, quoteOf(null))).toMatchObject({ quoted_total: null, quoted_currency: null });
+  });
+
+  it("writes a quote as the page shows it", () => {
+    expect(quoteText({ total: 360_000, currency: "LAK" })).toBe("LAK\u00a0360,000");
+    expect(quoteText(NO_QUOTE)).toBeNull();
+    expect(quoteOf({ currency: "USD", per_guest_per_night: [], total: 36 })).toEqual({ total: 36, currency: "USD" });
   });
 });
 
@@ -174,10 +227,12 @@ describe("resending", () => {
   it("reuses the client_ref for exactly the same request, and only then", () => {
     let n = 0;
     const next = () => `ref-${++n}`;
-    const request = bookingBody("", stay, room.id, { ...EMPTY_DETAILS, name: "Mai", consent: true });
+    const request = bookingBody("", stay, room.id, { ...EMPTY_DETAILS, name: "Mai", consent: true }, NO_QUOTE);
     const first = clientRefFor(null, request, next);
     expect(clientRefFor(first, request, next).ref).toBe("ref-1");
     expect(clientRefFor(first, { ...request, room_type_id: "other" }, next).ref).toBe("ref-2");
+    // Agreeing to a new price is a new request: Shadow must not answer with the one it refused (F1W-03).
+    expect(clientRefFor(first, { ...request, quoted_total: 600_000, quoted_currency: "LAK" }, next).ref).toBe("ref-3");
   });
 
   it("sends the guest back to the step that can fix a problem", () => {

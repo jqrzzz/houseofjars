@@ -1,6 +1,17 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  useEffect,
+  useEffectEvent,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import {
   NO_DATES,
   calendarRules,
@@ -16,9 +27,11 @@ import {
   clientRefFor,
   fetchAvailability,
   forgetBooking,
-  formatMoney,
+  houseTodayNow,
   loadBooking,
   postBooking,
+  quoteOf,
+  quoteText,
   requestSignature,
   saveBooking,
   stepForIssues,
@@ -28,12 +41,14 @@ import {
   type Stay,
   type Step,
 } from "@/lib/booking/flow";
-import type { Availability, BookingMode, BookingProblem, FieldIssue } from "@/lib/booking/types";
-import { addDays, houseToday } from "@/lib/dates";
+import { guestText } from "@/lib/booking/text";
+import type { Availability, BookingLimits, BookingMode, BookingProblem, FieldIssue, Quote } from "@/lib/booking/types";
+import { addDays } from "@/lib/dates";
 import { inquiryPrefill } from "@/lib/inquiry/prefill";
 import { replyChannel } from "@/lib/inquiry/reply";
 import { uuid } from "@/lib/uuid";
 import { TextileBand } from "../brand/TextileBand";
+import { entryFromBookingForm } from "./FollowLinks";
 import {
   Closed,
   Confirmation,
@@ -49,21 +64,33 @@ import {
 import styles from "./BookingFlow.module.css";
 
 interface Terms {
-  readonly rules: CalendarRules;
+  /** Null when Shadow hasn't said its limits: the calendar then keeps only the website's own bounds. */
+  readonly limits: BookingLimits | null;
   readonly mode: BookingMode;
   readonly holdHours: number | null;
-  readonly maxGuests: number | null;
-  /** False when Shadow hasn't said its limits: the calendar then keeps only the website's own bounds. */
-  readonly known: boolean;
 }
 
 type Search =
   | { readonly status: "idle" }
   | { readonly status: "loading"; readonly stay: Stay }
   | { readonly status: "loaded"; readonly stay: Stay; readonly availability: Availability }
-  | { readonly status: "problem"; readonly stay: Stay; readonly problem: BookingProblem };
+  | { readonly status: "problem"; readonly stay: Stay; readonly problem: BookingProblem; readonly retryAfterSeconds: number | null };
 
-type Sending = { readonly status: "idle" | "sending" } | { readonly status: "problem"; readonly problem: BookingProblem };
+type Sending =
+  | { readonly status: "idle" | "sending" }
+  | { readonly status: "problem"; readonly problem: BookingProblem; readonly retryAfterSeconds: number | null };
+
+/**
+ * Shadow's total changed while the guest was booking, so nothing was booked
+ * (F1W-03): the review shows the new total for this stay and room, and the
+ * guest decides.
+ */
+interface PriceChange {
+  readonly stay: Stay;
+  readonly roomId: string;
+  readonly was: Quote;
+  readonly now: Quote;
+}
 
 /** open, closed (Shadow isn't taking bookings), still asking, or a problem reaching Shadow. */
 type Status = "loading" | "open" | "closed" | BookingProblem;
@@ -75,14 +102,21 @@ const HEADINGS: Record<Exclude<Step, "done">, (mode: BookingMode) => string> = {
   review: (mode) => (mode === "instant" ? "Check and book" : "Check and send"),
 };
 
-function termsFrom(availability: Availability, today: string): Terms {
-  return {
-    rules: calendarRules(today, availability.limits),
-    mode: availability.mode,
-    holdHours: availability.hold_hours,
-    maxGuests: availability.limits.max_guests,
-    known: true,
-  };
+function termsFrom(availability: Availability): Terms {
+  return { limits: availability.limits, mode: availability.mode, holdHours: availability.hold_hours };
+}
+
+/** The calendar's rules on a given day: Shadow's limits when known, else the website's own bounds. */
+const rulesFor = (today: string, limits: BookingLimits | null): CalendarRules =>
+  limits ? calendarRules(today, limits) : looseRules(today);
+
+const sameStay = (a: Stay, b: Stay) => a.check_in === b.check_in && a.check_out === b.check_out && a.guests === b.guests;
+
+/** The dates and guests a /book link carries (lib/inquiry/prefill.ts), inside the website's own bounds. */
+function linkedStay(search: string, today: string): { range: DateRange; guests: number } {
+  const prefill = inquiryPrefill(search);
+  const range = fitRange({ checkIn: prefill.check_in ?? null, checkOut: prefill.check_out ?? null }, looseRules(today));
+  return { range, guests: prefill.guests ?? 1 };
 }
 
 /** What the page arrived with: today at the house, dates from a link, or a confirmation to show again. */
@@ -93,14 +127,18 @@ interface Arrival {
   readonly guests: number;
 }
 
-function readArrival(): Arrival {
-  const today = houseToday();
+/**
+ * `search` is the address's query as Next.js has it (useSearchParams): after
+ * a link inside the site, the page renders before the browser's address
+ * changes, so window.location would still be the page the guest came from.
+ */
+function readArrival(search: string): Arrival {
+  const today = houseTodayNow();
   const step = (window.history.state as { booking?: Step } | null)?.booking;
   const saved = step === "done" ? loadBooking() : null;
-  const prefill = inquiryPrefill(window.location.search);
-  const range = fitRange({ checkIn: prefill.check_in ?? null, checkOut: prefill.check_out ?? null }, looseRules(today));
-  return { today, saved, range, guests: prefill.guests ?? 1 };
+  return { today, saved, ...linkedStay(search, today) };
 }
+
 
 const subscribeNothing = () => () => {};
 
@@ -182,22 +220,24 @@ function Frame({
 
 function Flow({ house }: { house: HouseNotes }) {
   const id = useId();
-  const [arrival] = useState(readArrival);
-  const { today } = arrival;
-  const linkedStay: Stay | null =
+  const search = useSearchParams().toString();
+  const [arrival] = useState(() => readArrival(search));
+  const arrivedStay: Stay | null =
     arrival.range.checkIn && arrival.range.checkOut
       ? { check_in: arrival.range.checkIn, check_out: arrival.range.checkOut, guests: arrival.guests }
       : null;
 
+  const [today, setToday] = useState(arrival.today);
   const [terms, setTerms] = useState<Terms | null>(null);
   const [status, setStatus] = useState<Status>(arrival.saved ? "open" : "loading");
-  const [step, setStep] = useState<Step>(arrival.saved ? "done" : linkedStay ? "rooms" : "dates");
+  const [step, setStep] = useState<Step>(arrival.saved ? "done" : arrivedStay ? "rooms" : "dates");
   const [range, setRange] = useState<DateRange>(arrival.range);
   const [guests, setGuests] = useState(arrival.guests);
   const [dateIssues, setDateIssues] = useState<readonly FieldIssue[]>([]);
-  const [search, setSearch] = useState<Search>(linkedStay ? { status: "loading", stay: linkedStay } : { status: "idle" });
+  const [lookup, setLookup] = useState<Search>(arrivedStay ? { status: "loading", stay: arrivedStay } : { status: "idle" });
   const [roomId, setRoomId] = useState<string | null>(null);
   const [taken, setTaken] = useState(false);
+  const [priceChange, setPriceChange] = useState<PriceChange | null>(null);
   const [details, setDetails] = useState<GuestDetails>(EMPTY_DETAILS);
   const [detailErrors, setDetailErrors] = useState<Partial<Record<DetailsField, string>>>({});
   const [sending, setSending] = useState<Sending>({ status: "idle" });
@@ -209,6 +249,7 @@ function Flow({ house }: { house: HouseNotes }) {
   const started = useRef(false);
   const searchCount = useRef(0);
   const lastRequest = useRef<{ signature: string; ref: string } | null>(null);
+  const todayNow = useRef(arrival.today);
 
   function show(next: Step, history: "push" | "replace" = "push", url?: string) {
     moved.current = true;
@@ -217,11 +258,26 @@ function Flow({ house }: { house: HouseNotes }) {
     else window.history.replaceState({ booking: next }, "", url);
   }
 
+  /**
+   * Today at the house, asked again: midnight in Vientiane may have passed
+   * while the page was open, or the website's answers have shown that this
+   * device's clock is off (F1W-09). Dates before it are dropped.
+   */
+  function refreshToday(): string {
+    const now = houseTodayNow();
+    if (now !== todayNow.current) {
+      todayNow.current = now;
+      setToday(now);
+      setRange((current) => fitRange(current, looseRules(now)));
+    }
+    return now;
+  }
+
   /** New limits from Shadow: dates and guests they no longer allow are dropped or brought down to them. */
   function applyTerms(next: Terms) {
     setTerms(next);
-    setRange((current) => fitRange(current, next.rules));
-    if (next.maxGuests) setGuests((current) => Math.min(current, next.maxGuests!));
+    setRange((current) => fitRange(current, rulesFor(todayNow.current, next.limits)));
+    if (next.limits) setGuests((current) => Math.min(current, next.limits!.max_guests));
   }
 
   /** The free beds for a stay. `known`: the terms so far (null when the calendar still needs them). */
@@ -230,9 +286,11 @@ function Flow({ house }: { house: HouseNotes }) {
     return fetchAvailability(stay).then((outcome) => {
       if (count !== searchCount.current) return; // The guest has asked about other dates since.
       if (outcome.ok) {
-        applyTerms(termsFrom(outcome.availability, today));
+        applyTerms(termsFrom(outcome.availability));
         setStatus("open");
-        setSearch({ status: "loaded", stay, availability: outcome.availability });
+        setLookup({ status: "loaded", stay, availability: outcome.availability });
+        // Fresh prices: an earlier change is part of them now.
+        setPriceChange(null);
         // Keep the guest's choice only while it can still be booked.
         setRoomId((chosen) =>
           outcome.availability.room_types.some((room) => room.id === chosen && room.bookable) ? chosen : null,
@@ -248,30 +306,70 @@ function Flow({ house }: { house: HouseNotes }) {
       if (!known) void loadTerms();
       if (outcome.problem === "invalid") {
         // Shadow turned the dates or the party down: back to the first step, in its words.
-        setSearch({ status: "idle" });
+        // If the check-in is in the past by the website's clock, today moves on and the dates go.
+        if (outcome.issues.some((issue) => issue.field === "check_in")) refreshToday();
+        setLookup({ status: "idle" });
         setDateIssues(outcome.issues);
         show("dates");
         return;
       }
-      setSearch({ status: "problem", stay, problem: outcome.problem });
+      setLookup({ status: "problem", stay, problem: outcome.problem, retryAfterSeconds: outcome.retryAfterSeconds });
     });
   }
 
   /** The house's rules for the calendar, from a lookup of tonight for one guest. */
-  function loadTerms() {
-    return fetchAvailability({ check_in: today, check_out: addDays(today, 1), guests: 1 }).then((outcome) => {
+  function loadTerms(again = false): Promise<void> {
+    const day = refreshToday();
+    return fetchAvailability({ check_in: day, check_out: addDays(day, 1), guests: 1 }).then((outcome) => {
       if (outcome.ok) {
-        applyTerms(termsFrom(outcome.availability, today));
+        applyTerms(termsFrom(outcome.availability));
         setStatus("open");
       } else if (outcome.problem === "not_configured") {
         moved.current = true;
         setStatus("closed");
+      } else if (outcome.problem === "invalid" && !again && refreshToday() !== day) {
+        // "Tonight" was already yesterday at the house: ask about the right night.
+        return loadTerms(true);
       } else {
         // Shadow still checks its limits (and explains) when the guest looks for beds.
-        setTerms((current) => current ?? { rules: looseRules(today), mode: "request", holdHours: null, maxGuests: null, known: false });
+        setTerms((current) => current ?? { limits: null, mode: "request", holdHours: null });
         setStatus(outcome.problem === "invalid" ? "open" : outcome.problem);
       }
     });
+  }
+
+  /**
+   * A link inside the site to /book with dates (one in Shadow's replies)
+   * while the form is open: Next.js changes the address without a reload, so
+   * the form starts from the linked stay itself, as on arrival (F1W-04). The
+   * guest's details and choices are kept.
+   */
+  function followLink(linked: string) {
+    const now = refreshToday();
+    const link = linkedStay(linked, now);
+    if (!link.range.checkIn) {
+      // A link without dates (the Book button in the header) leaves the form as it is.
+      window.history.replaceState({ booking: stepNow.current }, "");
+      return;
+    }
+    const range = fitRange(link.range, rulesFor(now, terms?.limits ?? null));
+    const party = Math.min(link.guests, terms?.limits?.max_guests ?? link.guests);
+    setRange(range);
+    setGuests(party);
+    setDateIssues([]);
+    setTaken(false);
+    setSending({ status: "idle" });
+    // The dates one step back, as on arrival; then the free beds for them.
+    window.history.replaceState({ booking: "dates" }, "");
+    if (range.checkIn && range.checkOut) {
+      const stay = { check_in: range.checkIn, check_out: range.checkOut, guests: party };
+      setLookup({ status: "loading", stay });
+      show("rooms", "push", `?${stayQuery(stay)}${window.location.hash}`);
+      void lookUp(stay, terms);
+    } else {
+      setLookup({ status: "idle" });
+      show("dates", "replace");
+    }
   }
 
   // On arrival: the history entries for the steps, then Shadow's rules or the linked dates' free beds.
@@ -279,15 +377,43 @@ function Flow({ house }: { house: HouseNotes }) {
     if (started.current || arrival.saved) return;
     started.current = true;
     window.history.replaceState({ booking: "dates" }, "");
-    if (linkedStay) {
+    if (arrivedStay) {
       // Dates from a link: straight to the free beds, with the dates one step back.
-      window.history.pushState({ booking: "rooms" }, "", `?${stayQuery(linkedStay)}${window.location.hash}`);
-      void lookUp(linkedStay, null);
+      window.history.pushState({ booking: "rooms" }, "", `?${stayQuery(arrivedStay)}${window.location.hash}`);
+      void lookUp(arrivedStay, null);
     } else {
       void loadTerms();
     }
     // Runs once, on arrival.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // The address changed without a reload. The form's own steps (and Back and Forward between them) carry
+  // their step in the history entry and are left to it; a link from elsewhere in the site is followed.
+  // Which it was shows only once Next.js has written the new entry, while committing: it is read in a
+  // layout effect, and the link is followed afterwards, so the message form below reads the entry first.
+  const seenSearch = useRef(search);
+  const linkToFollow = useRef<string | null>(null);
+  const onLink = useEffectEvent(followLink);
+  useLayoutEffect(() => {
+    if (search === seenSearch.current) return;
+    seenSearch.current = search;
+    if (!entryFromBookingForm()) linkToFollow.current = search;
+  }, [search]);
+  useEffect(() => {
+    const linked = linkToFollow.current;
+    linkToFollow.current = null;
+    if (linked !== null) onLink(linked);
+  }, [search]);
+
+  // Back at the page after a while (the phone was locked overnight): today may have moved on.
+  const onVisible = useEffectEvent(() => {
+    if (document.visibilityState === "visible") refreshToday();
+  });
+  useEffect(() => {
+    const listener = () => onVisible();
+    document.addEventListener("visibilitychange", listener);
+    return () => document.removeEventListener("visibilitychange", listener);
   }, []);
 
   // The Back and Forward buttons move between the steps. Entries the form didn't make (a link to
@@ -297,12 +423,31 @@ function Flow({ house }: { house: HouseNotes }) {
   useEffect(() => {
     stepNow.current = step;
   }, [step]);
+  const onHistory = useEffectEvent((target: Step) => {
+    // An entry from before a followed link carries another stay in its address than the one on screen:
+    // show that stay again (its dates, and its free beds on a later step). Only then: a stay Shadow
+    // turned down shows nothing, and looking it up again would add a step each time Back is pressed.
+    const link = linkedStay(window.location.search, todayNow.current);
+    const { checkIn, checkOut } = link.range;
+    const showing = lookup.status === "idle" ? null : lookup.stay;
+    const stay = checkIn && checkOut ? { check_in: checkIn, check_out: checkOut, guests: link.guests } : null;
+    if (stay && showing && target !== "done" && !sameStay(stay, showing)) {
+      setRange(link.range);
+      setGuests(link.guests);
+      setDateIssues([]);
+      if (target !== "dates") {
+        setLookup({ status: "loading", stay });
+        void lookUp(stay, terms);
+      }
+    }
+    if (target === stepNow.current) return;
+    moved.current = true;
+    setStep(target);
+  });
   useEffect(() => {
     function onPopState(event: PopStateEvent) {
       const target = (event.state as { booking?: Step } | null)?.booking;
-      if (!target || target === stepNow.current) return;
-      moved.current = true;
-      setStep(target);
+      if (target) onHistory(target);
     }
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -316,26 +461,38 @@ function Flow({ house }: { house: HouseNotes }) {
     if ((sectionRef.current?.getBoundingClientRect().top ?? 0) < 0) sectionRef.current?.scrollIntoView({ block: "start" });
   }, [step, status]);
 
+  const rules = terms ? rulesFor(today, terms.limits) : null;
   const stay: Stay | null =
     range.checkIn && range.checkOut ? { check_in: range.checkIn, check_out: range.checkOut, guests } : null;
-  const shown = search.status === "loaded" ? search : null;
+  const shown = lookup.status === "loaded" ? lookup : null;
   const room = shown?.availability.room_types.find((candidate) => candidate.id === roomId) ?? null;
   const mode = terms?.mode ?? "request";
   const replyBy = replyChannel(details.preferred_contact || null, details.email.trim() || null, details.phone.trim() || null);
+  const change =
+    priceChange && shown && room && priceChange.roomId === room.id && sameStay(priceChange.stay, shown.stay) ? priceChange : null;
+  // The total the guest is shown for their beds, and the one the request carries.
+  const quote: Quote | null = room ? (change?.now ?? quoteOf(room.price)) : null;
 
   function findBeds() {
+    const now = refreshToday();
     if (!stay) return;
+    if (stay.check_in < now) {
+      // Midnight passed at the house while the page was open: the check-in is gone from the calendar.
+      setDateIssues([{ field: "check_in", message: guestText.fromToday }]);
+      return;
+    }
     setDateIssues([]);
     setTaken(false);
-    setSearch({ status: "loading", stay });
+    setLookup({ status: "loading", stay });
     show("rooms", "push", `?${stayQuery(stay)}`);
     void lookUp(stay, terms);
   }
 
   function retrySearch() {
-    if (search.status === "idle") return;
-    setSearch({ status: "loading", stay: search.stay });
-    void lookUp(search.stay, terms);
+    if (lookup.status === "idle") return;
+    refreshToday();
+    setLookup({ status: "loading", stay: lookup.stay });
+    void lookUp(lookup.stay, terms);
   }
 
   function continueToReview(): boolean {
@@ -348,16 +505,16 @@ function Flow({ house }: { house: HouseNotes }) {
   }
 
   function send() {
-    if (!shown || !room || sending.status === "sending") return;
-    const draft = bookingBody("", shown.stay, room.id, details);
+    if (!shown || !room || !quote || sending.status === "sending") return;
+    const draft = bookingBody("", shown.stay, room.id, details, quote);
     const next = clientRefFor(lastRequest.current, draft, uuid);
     lastRequest.current = next;
     setSending({ status: "sending" });
     void postBooking({ ...draft, client_ref: next.ref }).then((outcome) => {
       if (outcome.ok) {
         const booked = outcome.confirmation;
-        const shownTotal = room.price ? formatMoney(room.price.total, room.price.currency) : null;
-        const bookedTotal = booked.total !== null && booked.currency ? formatMoney(booked.total, booked.currency) : null;
+        // A Shadow Check-in from before the price protection books at its own total: say so if it differs.
+        const [shownTotal, bookedTotal] = [quoteText(quote), quoteText(booked)];
         const done: SavedBooking = {
           confirmation: booked,
           stay: shown.stay,
@@ -368,15 +525,21 @@ function Flow({ house }: { house: HouseNotes }) {
         };
         saveBooking(done);
         setSaved(done);
+        setPriceChange(null);
         setSending({ status: "idle" });
         show("done", "replace");
         return;
       }
       setSending({ status: "idle" });
+      if (outcome.problem === "price_changed" && outcome.quote) {
+        // Nothing was booked: the review shows the new total, and the guest decides.
+        setPriceChange({ stay: shown.stay, roomId: room.id, was: quote, now: outcome.quote });
+        return;
+      }
       if (outcome.problem === "taken") {
         // The beds went while the guest was booking: fresh availability, their details kept.
         setTaken(true);
-        setSearch({ status: "loading", stay: shown.stay });
+        setLookup({ status: "loading", stay: shown.stay });
         show("rooms");
         void lookUp(shown.stay, terms);
         return;
@@ -392,7 +555,7 @@ function Flow({ house }: { house: HouseNotes }) {
         if (target === "details") setDetailErrors(Object.fromEntries(outcome.issues.map((issue) => [issue.field, issue.message])));
         if (target === "rooms") {
           setRoomId(null);
-          setSearch({ status: "loading", stay: shown.stay });
+          setLookup({ status: "loading", stay: shown.stay });
           void lookUp(shown.stay, terms);
         }
         if (target !== "review") {
@@ -400,7 +563,7 @@ function Flow({ house }: { house: HouseNotes }) {
           return;
         }
       }
-      setSending({ status: "problem", problem: outcome.problem });
+      setSending({ status: "problem", problem: outcome.problem, retryAfterSeconds: outcome.retryAfterSeconds });
     });
   }
 
@@ -409,24 +572,24 @@ function Flow({ house }: { house: HouseNotes }) {
     lastRequest.current = null;
     setSaved(null);
     setRange(NO_DATES);
-    setSearch({ status: "idle" });
+    setLookup({ status: "idle" });
     setRoomId(null);
     setDetails(EMPTY_DETAILS);
     setTaken(false);
+    setPriceChange(null);
     show("dates", "replace", window.location.pathname);
     if (!terms) void loadTerms();
   }
 
   const headingId = `${id}-step`;
   const booked = step === "done" && saved ? saved : null;
-  const bookedTotal = booked?.confirmation.total != null && booked.confirmation.currency ? formatMoney(booked.confirmation.total, booked.confirmation.currency) : null;
   const stub = booked ? (
-    <StayStub stay={booked.stay} beds={booked.roomName} price={bookedTotal ?? "Confirmed by the team"} />
+    <StayStub stay={booked.stay} beds={booked.roomName} price={quoteText(booked.confirmation) ?? "Confirmed by the team"} />
   ) : (
     <StayStub
       stay={shown?.stay ?? stay}
       beds={room?.name ?? null}
-      price={room ? (room.price ? formatMoney(room.price.total, room.price.currency) : "Confirmed by the team") : null}
+      price={quote ? (quoteText(quote) ?? "Confirmed by the team") : null}
     />
   );
 
@@ -434,7 +597,7 @@ function Flow({ house }: { house: HouseNotes }) {
   // after a reload they are gone altogether.
   const needsRoom = step === "details" || step === "review";
   const current: Exclude<Step, "done"> | null =
-    step === "done" ? null : needsRoom && !(shown && room) ? (search.status === "idle" ? null : "rooms") : step;
+    step === "done" ? null : needsRoom && !(shown && room) ? (lookup.status === "idle" ? null : "rooms") : step;
 
   let content: ReactNode;
   if (status === "closed") {
@@ -452,15 +615,15 @@ function Flow({ house }: { house: HouseNotes }) {
           <DatesStep
             id={id}
             headingId={headingId}
-            rules={terms?.rules ?? null}
-            rulesKnown={terms?.known ?? false}
+            rules={rules}
+            rulesKnown={Boolean(terms?.limits)}
             range={range}
             onRange={(next) => {
               setRange(next);
               setDateIssues([]);
             }}
             guests={guests}
-            maxGuests={terms?.maxGuests ?? null}
+            maxGuests={terms?.limits?.max_guests ?? null}
             onGuests={(next) => {
               setGuests(next);
               setDateIssues([]);
@@ -472,7 +635,7 @@ function Flow({ house }: { house: HouseNotes }) {
           />
         ) : current === "rooms" ? (
           <RoomsStep
-            search={search}
+            search={lookup}
             roomId={roomId}
             onRoom={setRoomId}
             taken={taken}
@@ -492,7 +655,7 @@ function Flow({ house }: { house: HouseNotes }) {
             onChangeRoom={() => show("rooms")}
             onContinue={continueToReview}
           />
-        ) : shown && room ? (
+        ) : shown && room && quote ? (
           <ReviewStep
             stay={shown.stay}
             room={room}
@@ -500,16 +663,19 @@ function Flow({ house }: { house: HouseNotes }) {
             mode={mode}
             holdHours={terms?.holdHours ?? null}
             replyBy={replyBy}
+            priceChange={change ? { was: change.was, now: change.now } : null}
             sending={sending.status === "sending"}
             sentAs={
-              saved && lastRequest.current?.signature === requestSignature(bookingBody("", shown.stay, room.id, details))
+              saved && lastRequest.current?.signature === requestSignature(bookingBody("", shown.stay, room.id, details, quote))
                 ? saved.confirmation.reference
                 : null
             }
             onChange={(target) => show(target)}
             onSend={send}
           >
-            {sending.status === "problem" ? <Problem problem={sending.problem} action="send" /> : null}
+            {sending.status === "problem" ? (
+              <Problem problem={sending.problem} action="send" retryAfterSeconds={sending.retryAfterSeconds} />
+            ) : null}
           </ReviewStep>
         ) : null}
       </>

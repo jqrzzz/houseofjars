@@ -25,10 +25,18 @@
  * only the booking sites and the message form. Against the fake Shadow
  * Check-in it walks online booking on a phone and a desktop (dates by
  * keyboard, beds, details, review, confirmation), then beds taken while
- * booking (409), booking closed (503) and a busy line (429), and sends the
- * message form. Against a real Shadow Check-in nothing is sent (no test
- * bookings or inquiries reach the team). Screenshots are saved to
- * ./screenshots.
+ * booking (409), a price that changes while booking (409 price_changed, then
+ * the guest agrees to the new total), a request Shadow takes without holding
+ * its beds, booking closed (503) and a busy line (429), and sends the message
+ * form. In both, a dated /book link followed without a reload (as Next.js
+ * follows the links in Shadow's replies), from another page and from /book
+ * itself, must fill in the forms. Against a real Shadow Check-in nothing is
+ * sent (no test bookings or inquiries reach the team). Screenshots are saved
+ * to ./screenshots.
+ *
+ * Start the site afresh for each run against the fake: the site's own limits
+ * (per server instance, 10 booking requests at once, then one every 6
+ * minutes) would still count the last run's bookings.
  *
  * Uses the Chromium at CHROMIUM_PATH (default /opt/pw-browsers/chromium)
  * and never downloads a browser.
@@ -37,10 +45,11 @@ import { mkdir } from "node:fs/promises";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
 import { content } from "../content";
 import { isFirm } from "../content/certainty";
-import { addDays, houseToday } from "../lib/dates";
+import { formatMoney } from "../lib/booking/flow";
+import { addDays, formatDay, houseToday, nightsBetween } from "../lib/dates";
 import { dateWindow } from "../lib/inquiry/dates";
 import { collectFacts, factsMentionedIn } from "../lib/content-audit";
-import { allPages, metaTitle } from "../lib/pages";
+import { metaTitle, sitePages } from "../lib/pages";
 import { siteUrl } from "../lib/site";
 import { FAKE_ROOMS, FAKE_SHADOW_KEY, startFakeShadow, type FakeShadow } from "../test/fake-shadow";
 import { typesOf, isA, validateJsonLd } from "../test/schema-org";
@@ -58,15 +67,19 @@ type Viewport = (typeof viewports)[number];
 const schemes = ["light", "dark"] as const;
 type Scheme = (typeof schemes)[number];
 
-const routes = [
-  ...allPages.map((page) => ({
-    name: page.path === "/" ? "home" : page.path.slice(1).replaceAll("/", "-"),
-    path: page.path,
-    title: metaTitle(page),
-    status: 200,
-  })),
-  { name: "not-found", path: "/this-page-does-not-exist", title: null, status: 404 },
-];
+/** Every page as the running build names it: /book is named for online booking when the build has it. */
+function routesFor(online: boolean) {
+  return [
+    ...sitePages(online).map((page) => ({
+      name: page.path === "/" ? "home" : page.path.slice(1).replaceAll("/", "-"),
+      path: page.path,
+      title: metaTitle(page),
+      status: 200,
+    })),
+    { name: "not-found", path: "/this-page-does-not-exist", title: null, status: 404 },
+  ];
+}
+type Route = ReturnType<typeof routesFor>[number];
 
 const softFacts = collectFacts(content, "content").filter((found) => !isFirm(found.fact));
 
@@ -125,7 +138,7 @@ async function settle(page: Page) {
   await page.waitForTimeout(800);
 }
 
-async function visit(browser: Browser, route: (typeof routes)[number], viewport: Viewport, scheme: Scheme) {
+async function visit(browser: Browser, route: Route, viewport: Viewport, scheme: Scheme) {
   const { context, page, errors } = await open(browser, viewport, scheme);
   const label = `${route.path} (${viewport.name}, ${scheme})`;
   const response = await page.goto(base + route.path, { waitUntil: "networkidle" });
@@ -270,6 +283,7 @@ async function bookingForm(browser: Browser, viewport: Viewport, mode: BookingMo
   await form.getByRole("textbox", { name: "Email" }).fill("smoke@example.com");
   await form.getByLabel("Your message").fill("Checking the form works.");
   await form.getByLabel(/I agree to the privacy notice/).check();
+  check((await form.getByRole("link", { name: /privacy notice/ }).getAttribute("target")) === "_blank", `${label}: the privacy notice link leaves the form`);
   const sent = fake?.inquiries.size ?? 0;
   await form.getByRole("button", { name: "Send message" }).click();
   if (mode === "fake") {
@@ -360,6 +374,8 @@ async function bookingWalk(browser: Browser, viewport: Viewport, scheme: Scheme,
     `${label}: the keyboard chose "${names.join('" and "')}"`,
   );
   await flow.getByRole("button", { name: "More guests" }).click();
+  // Each weekday column is named in full for screen readers (F1W-10).
+  check((await flow.getByRole("columnheader", { name: "Monday", exact: true }).count()) >= 1, `${label}: the calendar's columns have no names`);
   await shot("1-dates");
   await flow.getByRole("button", { name: "See free beds" }).click();
 
@@ -375,6 +391,9 @@ async function bookingWalk(browser: Browser, viewport: Viewport, scheme: Scheme,
   await flow.getByRole("radio", { name: "WhatsApp" }).check();
   await flow.getByLabel("Arrival time").fill("15:30");
   await flow.getByRole("checkbox", { name: /I agree to the privacy notice/ }).check();
+  // Reading the notice opens a new tab, so nothing typed here is lost (F1W-06).
+  const privacy = flow.getByRole("link", { name: /privacy notice/ });
+  check((await privacy.getAttribute("target")) === "_blank", `${label}: the privacy notice link leaves the form`);
   await shot("3-details");
   await flow.getByRole("button", { name: "Continue" }).click();
 
@@ -448,6 +467,128 @@ async function bookingTaken(browser: Browser, fake: FakeShadow) {
   await context.close();
 }
 
+/**
+ * The house changes its rate while a guest is booking: nothing is booked, the
+ * review shows the new total and the guest books at it (F1W-03). Shadow also
+ * takes this request without holding its beds (its hold limits), so the
+ * confirmation says the team will confirm availability (F1W-01).
+ */
+async function bookingPriceChange(browser: Browser, fake: FakeShadow) {
+  const { context, page, errors } = await open(browser, viewports[0], "light");
+  const label = "booking, price changed (phone)";
+  const flow = page.locator("#book-online");
+  const dorm = FAKE_ROOMS[0]!;
+  const [checkIn, checkOut] = [houseDay(30), houseDay(32)];
+  const rate = 150_000;
+  const total = rate * nightsBetween(checkIn, checkOut);
+  const totalText = formatMoney(total, "LAK");
+  try {
+    await page.goto(`${base}/book?check_in=${checkIn}&check_out=${checkOut}&guests=1`, { waitUntil: "networkidle" });
+    await flow.getByRole("radio", { name: dorm.name }).check();
+    await flow.getByRole("button", { name: "Continue" }).click();
+    await flow.getByRole("textbox", { name: "Your name" }).fill("Smoke Test");
+    await flow.getByRole("textbox", { name: "Email" }).fill("price-change@example.com");
+    await flow.getByRole("checkbox", { name: /I agree to the privacy notice/ }).check();
+    await flow.getByRole("button", { name: "Continue" }).click();
+    await flow.getByRole("heading", { name: "Check and send" }).waitFor();
+
+    fake.setRate(dorm.id, { currency: "LAK", amount: rate });
+    fake.state.holdsPerContact = 0;
+    const before = fake.bookings.size;
+    await flow.getByRole("button", { name: "Send booking request" }).click();
+    const notice = flow.getByRole("alert").filter({ hasText: "The price changed while you were booking" });
+    await notice.waitFor();
+    check(((await notice.textContent()) ?? "").includes(totalText), `${label}: the notice doesn't give the new total ${totalText}`);
+    check(fake.bookings.size === before, `${label}: Shadow booked at a price the guest hadn't seen`);
+    const price = ((await flow.locator("dl").first().textContent()) ?? "").includes(totalText);
+    check(price, `${label}: the review's price isn't the new total`);
+    await flow.screenshot({ path: `${outDir}/booking-price-changed-390-light.png` });
+
+    await flow.getByRole("button", { name: "Send booking request" }).click();
+    await flow.getByRole("heading", { name: "Booking request sent" }).waitFor();
+    const sent = [...fake.bookings.values()].at(-1)?.request;
+    check(
+      fake.bookings.size === before + 1 && sent?.quoted_total === total && sent.quoted_currency === "LAK",
+      `${label}: Shadow received ${JSON.stringify(sent)}`,
+    );
+    const confirmation = (await flow.textContent()) ?? "";
+    check(confirmation.includes(`The total is ${totalText}`), `${label}: the confirmation doesn't give the total agreed`);
+    check(
+      confirmation.includes("The team will confirm availability") && !confirmation.includes("Your beds are held for you until"),
+      `${label}: a request without a hold reads as held`,
+    );
+    await flow.screenshot({ path: `${outDir}/booking-no-hold-390-light.png` });
+  } finally {
+    fake.setRate(dorm.id, dorm.rate);
+    fake.state.holdsPerContact = 2;
+  }
+  const unexpected = errors.filter((error) => !error.includes("409"));
+  check(unexpected.length === 0, `${label}: console errors: ${unexpected.join(" | ")}`);
+  await context.close();
+}
+
+/**
+ * A dated /book link followed without a reload, as Next.js follows the links
+ * in Shadow's replies: from another page, then from /book itself. The booking
+ * form (when the build has it) opens at the free beds for those dates, and
+ * the message form below has them too (F1W-04).
+ */
+async function bookingSoftNavigation(browser: Browser, mode: BookingMode, fake: FakeShadow | null) {
+  const { context, page, errors } = await open(browser, viewports[0], "light");
+  const label = "dated link without a reload";
+  const flow = page.locator("#book-online");
+  const message = page.getByRole("form", { name: "Send the team a message" });
+  const stayShown = async () => (await flow.getByRole("complementary", { name: "Your stay" }).textContent()) ?? "";
+  const shows = (text: string, checkIn: string, checkOut: string) => text.includes(formatDay(checkIn)) && text.includes(formatDay(checkOut));
+  await page.goto(`${base}/faq`, { waitUntil: "networkidle" });
+  // Days no other walk asks about, so Shadow (or the fake) is asked about them.
+  const links = [
+    [houseDay(60), 2, "from /faq"],
+    [houseDay(64), 3, "on /book"],
+  ] as const;
+  for (const [checkIn, nights, where] of links) {
+    const checkOut = addDays(checkIn, nights);
+    // What next/link does when a guest clicks a link in Shadow's reply.
+    await page.evaluate(
+      (url) => (window as unknown as { next: { router: { push(href: string): void } } }).next.router.push(url),
+      `/book?check_in=${checkIn}&check_out=${checkOut}&guests=2`,
+    );
+    await page.waitForFunction((day) => document.querySelector<HTMLInputElement>('input[name="check_in"]')?.value === day, checkIn);
+    const dates = [
+      await message.getByLabel("Check-in").inputValue(),
+      await message.getByLabel("Check-out").inputValue(),
+      await message.getByLabel("Guests").inputValue(),
+    ].join();
+    check(dates === [checkIn, checkOut, "2"].join(), `${label} (${where}): the message form shows ${dates}`);
+    if (mode === "off") continue;
+    await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
+    const stay = await stayShown();
+    check(shows(stay, checkIn, checkOut), `${label} (${where}): the booking form shows "${stay.slice(0, 80)}", expected ${checkIn} to ${checkOut}`);
+    if (fake) {
+      const asked = fake.calls.some((call) => call.path === `/api/public/availability?check_in=${checkIn}&check_out=${checkOut}&guests=2`);
+      check(asked, `${label} (${where}): the free beds for the linked dates were never looked up`);
+      await flow.getByRole("radio", { name: FAKE_ROOMS[0]!.name }).waitFor();
+    }
+  }
+  if (mode !== "off") {
+    await flow.screenshot({ path: `${outDir}/booking-soft-link-390-light.png` });
+    // Back: the second link's dates one step back, then the first link's beds again.
+    await page.goBack();
+    await flow.getByRole("heading", { name: "When would you like to stay?" }).waitFor();
+    await page.goBack();
+    await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
+    const [checkIn, nights] = links[0];
+    await page.waitForFunction(
+      (day) => document.querySelector("#book-online aside")?.textContent?.includes(day) ?? false,
+      formatDay(checkIn),
+    );
+    const stay = await stayShown();
+    check(shows(stay, checkIn, addDays(checkIn, nights)), `${label}: Back to the first link shows "${stay.slice(0, 80)}"`);
+  }
+  check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
+  await context.close();
+}
+
 /** Shadow Check-in not taking bookings (503), then a busy line (429) that clears. */
 async function bookingClosedAndBusy(browser: Browser, fake: FakeShadow) {
   const { context, page, errors } = await open(browser, viewports[0], "light");
@@ -483,6 +624,8 @@ async function bookingClosedAndBusy(browser: Browser, fake: FakeShadow) {
 }
 
 async function files(context: BrowserContext) {
+  // The same paths with or without online booking.
+  const allPages = sitePages(false);
   const expectations = [
     { path: "/robots.txt", type: "text/plain", contains: "Sitemap:" },
     { path: "/sitemap.xml", type: "xml", contains: "<lastmod>" },
@@ -566,7 +709,7 @@ async function main() {
     );
     await context.close();
 
-    for (const route of routes) {
+    for (const route of routesFor(mode !== "off")) {
       for (const viewport of viewports) {
         for (const scheme of schemes) await visit(browser, route, viewport, scheme);
       }
@@ -576,11 +719,13 @@ async function main() {
     await concierge(browser, viewports[0], "light");
     await concierge(browser, viewports[1], "dark");
     await bookingPages(browser, mode);
+    await bookingSoftNavigation(browser, mode, fake);
     if (mode === "fake" && fake) {
       await bookingWalk(browser, viewports[0], "light", fake, 10);
       await bookingWalk(browser, viewports[1], "light", fake, 12);
       await bookingWalk(browser, viewports[0], "dark", fake, 14);
       await bookingTaken(browser, fake);
+      await bookingPriceChange(browser, fake);
       await bookingClosedAndBusy(browser, fake);
     }
     for (const viewport of viewports) await bookingForm(browser, viewport, mode, fake);

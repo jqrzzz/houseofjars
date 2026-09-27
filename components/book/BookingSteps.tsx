@@ -1,24 +1,33 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 import { identity } from "@/content/identity";
 import { NO_DATES, nightsText, type CalendarRules, type DateRange } from "@/lib/booking/calendar";
 import {
   DETAILS_FIELDS,
   STEPS,
-  formatMoney,
   freeBedsText,
   kindLabel,
   priceLines,
+  quoteText,
   unavailableText,
+  waitText,
   type DetailsField,
   type GuestDetails,
   type SavedBooking,
   type Stay,
   type Step,
 } from "@/lib/booking/flow";
-import { MAX_GUESTS, MAX_MESSAGE, MAX_NAME, type BookingMode, type BookingProblem, type FieldIssue, type RoomType } from "@/lib/booking/types";
+import {
+  MAX_GUESTS,
+  MAX_MESSAGE,
+  MAX_NAME,
+  type BookingMode,
+  type BookingProblem,
+  type FieldIssue,
+  type Quote,
+  type RoomType,
+} from "@/lib/booking/types";
 import { formatDay, formatHouseTime, nightsBetween } from "@/lib/dates";
 import { pages } from "@/lib/site";
 import { AskShadowButton } from "../concierge/AskShadowButton";
@@ -259,7 +268,7 @@ type SearchView =
   | { readonly status: "idle" }
   | { readonly status: "loading"; readonly stay: Stay }
   | { readonly status: "loaded"; readonly stay: Stay; readonly availability: { readonly room_types: readonly RoomType[] } }
-  | { readonly status: "problem"; readonly stay: Stay; readonly problem: BookingProblem };
+  | { readonly status: "problem"; readonly stay: Stay; readonly problem: BookingProblem; readonly retryAfterSeconds: number | null };
 
 export function RoomsStep({
   search,
@@ -306,7 +315,7 @@ export function RoomsStep({
           </div>
         </>
       ) : search.status === "problem" ? (
-        <Problem problem={search.problem} action="check" onRetry={onRetry} />
+        <Problem problem={search.problem} action="check" onRetry={onRetry} retryAfterSeconds={search.retryAfterSeconds} />
       ) : search.status === "loaded" ? (
         <>
           {rooms.some((room) => room.bookable) ? null : (
@@ -598,8 +607,12 @@ export function DetailsStep({
           aria-describedby={describedBy("consent")}
         />
         <label htmlFor={fieldId("consent")}>
-          I agree to the <Link href={pages.privacy.path}>privacy notice</Link> and want the House of Jars team to contact
-          me about this booking.
+          I agree to the{" "}
+          {/* A new tab, so reading it never loses what the guest has typed (F1W-06). */}
+          <a href={pages.privacy.path} target="_blank" rel="noopener">
+            privacy notice<span className="visually-hidden"> (opens in a new tab)</span>
+          </a>{" "}
+          and want the House of Jars team to contact me about this booking.
         </label>
         {error("consent")}
       </div>
@@ -640,6 +653,17 @@ function Field({
   );
 }
 
+/** What the review says when Shadow's total changed while the guest was booking (F1W-03). */
+function priceChangeText(change: { was: Quote; now: Quote }, action: string): string {
+  const [was, now] = [quoteText(change.was), quoteText(change.now)];
+  const changed = now
+    ? was
+      ? `The price changed while you were booking, so nothing has been booked yet. The total for your stay is now ${now} (it was ${was}).`
+      : `The house set a price for these beds while you were booking, so nothing has been booked yet. The total for your stay is ${now}.`
+    : "The house took its online price for these beds away while you were booking, so nothing has been booked yet. The team will confirm the price with your booking.";
+  return `${changed} To go ahead${now ? " at this price" : ""}, press ${action}; or change your dates or beds.`;
+}
+
 export function ReviewStep({
   stay,
   room,
@@ -647,6 +671,7 @@ export function ReviewStep({
   mode,
   holdHours,
   replyBy,
+  priceChange,
   sending,
   sentAs,
   onChange,
@@ -659,6 +684,8 @@ export function ReviewStep({
   mode: BookingMode;
   holdHours: number | null;
   replyBy: string;
+  /** Shadow's total changed since the beds were chosen: `now` is the one to show and send. */
+  priceChange: { was: Quote; now: Quote } | null;
   sending: boolean;
   /** The reference, when exactly this request has already been booked. */
   sentAs: string | null;
@@ -666,11 +693,27 @@ export function ReviewStep({
   onSend: () => void;
   children: ReactNode;
 }) {
+  const noticeRef = useRef<HTMLDivElement>(null);
   const lines = room.price ? priceLines(room.price, stay) : null;
   const kind = kindLabel(room);
   const contact = [details.email.trim(), details.phone.trim()].filter(Boolean);
+  const action = mode === "instant" ? "Book now" : "Send booking request";
+  const newTotal = priceChange ? quoteText(priceChange.now) : null;
+
+  // The new price takes focus, so the guest hears it before anything else.
+  useEffect(() => {
+    if (priceChange) noticeRef.current?.focus();
+  }, [priceChange]);
+
   return (
     <div className={styles.stack}>
+      {priceChange ? (
+        <div ref={noticeRef} tabIndex={-1} role="alert" className={styles.notice}>
+          <p>
+            <strong>{priceChangeText(priceChange, action)}</strong>
+          </p>
+        </div>
+      ) : null}
       <dl className={styles.review}>
         <ReviewRow term="Dates" change="Change dates" onChange={() => onChange("dates")}>
           <span className="tnum">
@@ -685,7 +728,21 @@ export function ReviewStep({
           {kind ? <span className={styles.reviewNote}>{kind}</span> : null}
         </ReviewRow>
         <ReviewRow term="Price">
-          {lines ? (
+          {priceChange ? (
+            newTotal ? (
+              <>
+                <span className="tnum">{newTotal}</span>
+                <span className={styles.reviewNote}>
+                  The new total for {lines?.totalFor ?? `${plural(stay.guests, "guest")}, ${stayNightsText(stay)}`}
+                </span>
+              </>
+            ) : (
+              <>
+                Confirmed by the team
+                <span className={styles.reviewNote}>The house no longer shows an online price for these beds.</span>
+              </>
+            )
+          ) : lines ? (
             <>
               <span className="tnum">{lines.total}</span>
               <span className={styles.reviewNote}>
@@ -725,7 +782,7 @@ export function ReviewStep({
       <p className={styles.next}>
         {mode === "instant"
           ? "Your beds are booked as soon as you press Book now."
-          : `The team confirms your booking ${replyBy}${holdHours ? ` within ${plural(holdHours, "hour")}, and your beds are held for you until then` : ""}.`}{" "}
+          : `The team confirms your booking ${replyBy}.${holdHours ? ` While they check, your beds can be held for you for up to ${plural(holdHours, "hour")}: your confirmation will say if they are.` : ""}`}{" "}
         Nothing to pay now: you pay at the house.
       </p>
       {sentAs ? (
@@ -741,7 +798,7 @@ export function ReviewStep({
           aria-disabled={sending || undefined}
           onClick={onSend}
         >
-          {sending ? "Sending…" : mode === "instant" ? "Book now" : "Send booking request"}
+          {sending ? "Sending…" : action}
           <ArrowIcon />
         </button>
       </div>
@@ -795,7 +852,7 @@ export function Confirmation({
   const { confirmation, stay } = saved;
   const pending = confirmation.status === "pending";
   const until = confirmation.hold_expires_at ? formatHouseTime(confirmation.hold_expires_at) : null;
-  const total = confirmation.total !== null && confirmation.currency ? formatMoney(confirmation.total, confirmation.currency) : null;
+  const total = quoteText(confirmation);
 
   return (
     <div className={styles.done}>
@@ -820,9 +877,12 @@ export function Confirmation({
       <h3 className={styles.nextTitle}>What happens next</h3>
       <ol className={styles.nextSteps}>
         <li>
-          {pending
-            ? `The team checks your request and confirms it ${saved.replyBy}${until ? `, by ${until} (Vientiane time). Your beds are held for you until then` : ""}.`
-            : "Your beds are booked. Keep your reference: it is how the team finds your booking."}
+          {!pending
+            ? "Your beds are booked. Keep your reference: it is how the team finds your booking."
+            : until
+              ? `The team checks your request and confirms it ${saved.replyBy}, by ${until} (Vientiane time). Your beds are held for you until then.`
+              : // Shadow took the request without holding beds for it (its hold limits): nothing is promised yet.
+                `The team will confirm availability and your booking ${saved.replyBy}. Your beds aren’t held for you until then.`}
         </li>
         <li>
           {total
@@ -907,27 +967,39 @@ export function StayStub({ stay, beds, price }: { stay: Stay | null; beds: strin
   );
 }
 
-const PROBLEM_TEXT: Record<"check" | "send", Record<"rate_limited" | "busy" | "unavailable" | "other", string>> = {
+/** `wait`: when to try again, from the website's Retry-After ("in about 20 minutes"). */
+const PROBLEM_TEXT: Record<"check" | "send", Record<"rate_limited" | "busy" | "unavailable" | "other", (wait: string) => string>> = {
   check: {
-    rate_limited: "You have looked up a lot of dates in a short time. Please wait a minute, then try again.",
-    busy: "Our booking line is busy right now. Please try again in a minute, or contact the team directly:",
-    unavailable: "We couldn’t check the free beds just now. Please try again in a moment, or contact the team directly:",
-    other: "Something went wrong. Please try again, or contact the team directly:",
+    rate_limited: (wait) => `Many dates have been looked up from this connection in a short time. Please try again ${wait}.`,
+    busy: () => "Our booking line is busy right now. Please try again in a minute, or contact the team directly:",
+    unavailable: () => "We couldn’t check the free beds just now. Please try again in a moment, or contact the team directly:",
+    other: () => "Something went wrong. Please try again, or contact the team directly:",
   },
   send: {
-    rate_limited: "You have sent several requests in a short time. Please wait a few minutes, or contact the team directly:",
-    busy: "Our booking line is busy right now, so your request wasn’t sent. Please try again in a minute, or contact the team directly:",
-    unavailable:
+    rate_limited: (wait) =>
+      `Several booking requests have come from this connection recently. Please try again ${wait}, or contact the team directly:`,
+    busy: () => "Our booking line is busy right now, so your request wasn’t sent. Please try again in a minute, or contact the team directly:",
+    unavailable: () =>
       "We couldn’t send your request just now. Please try again in a moment (sending it again won’t book twice), or contact the team directly:",
-    other: "Please check your booking and try again, or contact the team directly:",
+    other: () => "Please check your booking and try again, or contact the team directly:",
   },
 };
 
-export function Problem({ problem, action, onRetry }: { problem: BookingProblem; action: "check" | "send"; onRetry?: () => void }) {
+export function Problem({
+  problem,
+  action,
+  onRetry,
+  retryAfterSeconds = null,
+}: {
+  problem: BookingProblem;
+  action: "check" | "send";
+  onRetry?: () => void;
+  retryAfterSeconds?: number | null;
+}) {
   const key = problem === "rate_limited" || problem === "busy" || problem === "unavailable" ? problem : "other";
   return (
     <div role="alert" className={form.problem}>
-      <p>{PROBLEM_TEXT[action][key]}</p>
+      <p>{PROBLEM_TEXT[action][key](waitText(retryAfterSeconds))}</p>
       {onRetry ? (
         <p>
           <button type="button" className={styles.textButton} onClick={onRetry}>

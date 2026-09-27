@@ -1,4 +1,4 @@
-import { formatDay, nightsBetween } from "../dates";
+import { formatDay, houseToday, nightsBetween } from "../dates";
 import type { ContactMethod } from "../inquiry/reply";
 import { nightsText } from "./calendar";
 import { guestText } from "./text";
@@ -14,6 +14,7 @@ import {
   type Currency,
   type FieldIssue,
   type Price,
+  type Quote,
   type RoomKind,
   type RoomType,
 } from "./types";
@@ -39,13 +40,37 @@ export interface Stay {
   readonly guests: number;
 }
 
-export type Outcome<T> =
-  | ({ readonly ok: true } & T)
-  | { readonly ok: false; readonly problem: BookingProblem; readonly issues: readonly FieldIssue[] };
+export interface Failure {
+  readonly ok: false;
+  readonly problem: BookingProblem;
+  readonly issues: readonly FieldIssue[];
+  /** From Retry-After, when the website asked the guest to wait (rate_limited). */
+  readonly retryAfterSeconds: number | null;
+  /** With price_changed: the total Shadow would book at now. */
+  readonly quote: Quote | null;
+}
 
-async function problemFrom(response: Response): Promise<Outcome<never>> {
-  const body = (await response.json().catch(() => null)) as { error?: unknown; issues?: unknown } | null;
+export type Outcome<T> = ({ readonly ok: true } & T) | Failure;
+
+const failure = (problem: BookingProblem, more: Partial<Omit<Failure, "ok" | "problem">> = {}): Failure => ({
+  ok: false,
+  problem,
+  issues: more.issues ?? [],
+  retryAfterSeconds: more.retryAfterSeconds ?? null,
+  quote: more.quote ?? null,
+});
+
+const isQuote = (value: { total?: unknown; currency?: unknown }): value is Quote =>
+  (value.total === null && value.currency === null) ||
+  (typeof value.total === "number" && (value.currency === "LAK" || value.currency === "USD"));
+
+async function problemFrom(response: Response): Promise<Failure> {
+  const body = (await response.json().catch(() => null)) as { error?: unknown; issues?: unknown; total?: unknown; currency?: unknown } | null;
   const issues = Array.isArray(body?.issues) ? (body.issues as FieldIssue[]) : [];
+  if (response.status === 409 && body?.error === "price_changed" && isQuote(body)) {
+    return failure("price_changed", { quote: { total: body.total, currency: body.currency } });
+  }
+  const wait = Number(response.headers.get("retry-after"));
   const problem: BookingProblem =
     response.status === 400
       ? "invalid"
@@ -58,7 +83,24 @@ async function problemFrom(response: Response): Promise<Outcome<never>> {
               ? "busy"
               : "not_configured"
             : "unavailable";
-  return { ok: false, problem, issues };
+  return failure(problem, { issues, retryAfterSeconds: wait > 0 ? wait : null });
+}
+
+/**
+ * The website's clock, from the Date header of its last answer, and when this
+ * device received it: "today at the house" then follows the server, which
+ * checks the dates, even when this device's clock is off (F1W-09).
+ */
+let serverClock: { readonly server: number; readonly received: number } | null = null;
+
+function learnClock(response: Response): void {
+  const server = Date.parse(response.headers.get("date") ?? "");
+  if (!Number.isNaN(server)) serverClock = { server, received: Date.now() };
+}
+
+/** Today at the house, by the website's clock once it has answered (this device's until then). */
+export function houseTodayNow(): string {
+  return houseToday(serverClock ? serverClock.server + (Date.now() - serverClock.received) : Date.now());
 }
 
 /** GET /api/availability. Never throws: a network failure is "unavailable". */
@@ -66,10 +108,11 @@ export async function fetchAvailability(stay: Stay, signal?: AbortSignal): Promi
   const query = new URLSearchParams({ check_in: stay.check_in, check_out: stay.check_out, guests: String(stay.guests) });
   try {
     const response = await fetch(`/api/availability?${query}`, { signal });
+    learnClock(response);
     if (response.ok) return { ok: true, availability: (await response.json()) as Availability };
     return await problemFrom(response);
   } catch {
-    return { ok: false, problem: "unavailable", issues: [] };
+    return failure("unavailable");
   }
 }
 
@@ -81,11 +124,21 @@ export async function postBooking(body: BookingRequest): Promise<Outcome<{ confi
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
+    learnClock(response);
     if (response.ok) return { ok: true, confirmation: (await response.json()) as BookingConfirmation };
     return await problemFrom(response);
   } catch {
-    return { ok: false, problem: "unavailable", issues: [] };
+    return failure("unavailable");
   }
+}
+
+/** "in about 20 minutes", "in about 3 hours": how long a guest is asked to wait, from Retry-After. */
+export function waitText(seconds: number | null): string {
+  if (seconds === null || seconds <= 90) return "in a minute or two";
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes < 60) return `in about ${minutes} minutes`;
+  const hours = Math.round(minutes / 60);
+  return hours < 24 ? `in about ${hours === 1 ? "an hour" : `${hours} hours`}` : "tomorrow";
 }
 
 const KIND_LABELS: Readonly<Record<RoomKind, string>> = {
@@ -214,8 +267,21 @@ export function checkDetails(details: GuestDetails): Partial<Record<DetailsField
   return errors;
 }
 
-/** The request body, in the contract's order; blank optional fields are null. */
-export function bookingBody(clientRef: string, stay: Stay, roomTypeId: string, details: GuestDetails): BookingRequest {
+/** The total a room's price comes to, as the guest sees it; no price means the team confirms it. */
+export function quoteOf(price: Price | null): Quote {
+  return price ? { total: price.total, currency: price.currency } : { total: null, currency: null };
+}
+
+/** "LAK 360,000", or null when the team confirms the price. */
+export function quoteText(quote: Quote): string | null {
+  return quote.total !== null && quote.currency ? formatMoney(quote.total, quote.currency) : null;
+}
+
+/**
+ * The request body, in the contract's order; blank optional fields are null.
+ * `quote` is the total the review shows: Shadow books nothing at another.
+ */
+export function bookingBody(clientRef: string, stay: Stay, roomTypeId: string, details: GuestDetails, quote: Quote): BookingRequest {
   const blank = (value: string) => value.trim() || null;
   return {
     client_ref: clientRef,
@@ -230,10 +296,12 @@ export function bookingBody(clientRef: string, stay: Stay, roomTypeId: string, d
     arrival_time: blank(details.arrival_time),
     message: blank(details.message),
     consent: true,
+    quoted_total: quote.total,
+    quoted_currency: quote.currency,
   };
 }
 
-/** What makes two requests the same booking: everything but the client_ref. */
+/** What makes two requests the same booking: everything but the client_ref (the quote included, so a new price is a new request). */
 export function requestSignature(request: BookingRequest): string {
   return JSON.stringify({ ...request, client_ref: null });
 }
