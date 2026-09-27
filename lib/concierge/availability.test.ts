@@ -150,7 +150,25 @@ describe("what Claude reads (result shaping)", () => {
   it("gives each room type's name, kind, fewest free beds and whether it can be booked, and never a price", () => {
     const answer = answerWith([
       room({ name: "Mixed dorm", min_free: 14, bookable: true, price: priced }),
-      room({ name: "Private room", kind: "private", min_free: 1, bookable: false, price: { ...priced, currency: "USD", total: 72 } }),
+      room({
+        name: "Private room",
+        kind: "private",
+        min_free: 1,
+        bookable: false,
+        // Priced as a whole room (Shadow Check-in's per_room_per_night): none of it reaches Claude either.
+        price: {
+          currency: "USD",
+          per_guest_per_night: [
+            { date: "2026-10-03", amount: 18 },
+            { date: "2026-10-04", amount: 18 },
+          ],
+          per_room_per_night: [
+            { date: "2026-10-03", amount: 36 },
+            { date: "2026-10-04", amount: 36 },
+          ],
+          total: 72,
+        },
+      }),
     ]);
     const outcome = shapeAvailability(stay, { ok: true, availability: answer }, TODAY);
     const result = read(outcome.content);
@@ -164,7 +182,7 @@ describe("what Claude reads (result shaping)", () => {
       ],
       booking_card_shown: true,
     });
-    expect(outcome.content).not.toMatch(/price|total|amount|currency|per_guest|LAK|USD|380|100000|90000|72/i);
+    expect(outcome.content).not.toMatch(/price|total|amount|currency|per_guest|per_room|LAK|USD|380|100000|90000|72|36/i);
     expect(JSON.stringify(outcome.card)).not.toMatch(/price|total|amount|currency/i);
     expect(outcome.isError).toBe(false);
   });

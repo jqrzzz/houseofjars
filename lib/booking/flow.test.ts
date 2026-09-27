@@ -141,6 +141,7 @@ describe("rooms and prices", () => {
     };
     expect(priceLines(price, stay)).toEqual({
       perNight: "LAK 90,000 to 100,000",
+      per: "per guest per night",
       total: "LAK 380,000",
       totalFor: "2 guests, 2 nights",
     });
@@ -155,6 +156,32 @@ describe("rooms and prices", () => {
     expect(priceLines(dollars, stay).perNight).toBe("USD\u00a018.50 to 20.00");
     const flat = { ...price, per_guest_per_night: price.per_guest_per_night.map((n) => ({ ...n, amount: 90_000 })) };
     expect(priceLines(flat, { ...stay, guests: 1 }).perNight).toBe("LAK 90,000");
+  });
+
+  it("gives a private room priced as a whole per room per night, whatever the guests", () => {
+    const room = {
+      currency: "USD" as const,
+      per_guest_per_night: [
+        { date: "2026-10-03", amount: 11.67 },
+        { date: "2026-10-04", amount: 13.33 },
+      ],
+      per_room_per_night: [
+        { date: "2026-10-03", amount: 35 },
+        { date: "2026-10-04", amount: 40 },
+      ],
+      total: 75,
+    };
+    expect(priceLines(room, { ...stay, guests: 3 })).toEqual({
+      perNight: "USD\u00a035 to 40",
+      per: "per room per night",
+      total: "USD\u00a075",
+      totalFor: "3 guests, 2 nights",
+    });
+    // Without the room's own prices, the price per guest as before.
+    expect(priceLines({ ...room, per_room_per_night: [] }, stay)).toMatchObject({
+      perNight: "USD\u00a011.67 to 13.33",
+      per: "per guest per night",
+    });
   });
 
   it("says how many beds are free, and why a room can't be booked", () => {

@@ -54,7 +54,7 @@ import { dateWindow } from "../lib/inquiry/dates";
 import { collectFacts, factsMentionedIn } from "../lib/content-audit";
 import { metaTitle, sitePages } from "../lib/pages";
 import { siteUrl } from "../lib/site";
-import { FAKE_ROOMS, FAKE_SHADOW_KEY, startFakeShadow, type FakeShadow } from "../test/fake-shadow";
+import { FAKE_ROOMS, FAKE_SHADOW_KEY, startFakeShadow, type FakeRoom, type FakeShadow } from "../test/fake-shadow";
 import { typesOf, isA, validateJsonLd } from "../test/schema-org";
 
 const base = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
@@ -450,6 +450,18 @@ async function bookingWalk(browser: Browser, viewport: Viewport, scheme: Scheme,
   await flow.getByRole("button", { name: "See free beds" }).click();
 
   await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
+  // A private room is priced as a whole (per_room_per_night), a dorm per guest.
+  const priceOf = async (room: FakeRoom) =>
+    (await flow.locator("label", { has: page.getByRole("radio", { name: room.name }) }).textContent()) ?? "";
+  const [dormPrice, roomPrice] = [await priceOf(FAKE_ROOMS[0]!), await priceOf(FAKE_ROOMS[2]!)];
+  // The dorm's nightly rate depends on the weekday; the private room's (USD 36 a night, whole) doesn't.
+  check(
+    dormPrice.includes("per guest per night") &&
+      !dormPrice.includes("per room") &&
+      roomPrice.includes(`${formatMoney(36, "USD")}per room per night`) &&
+      roomPrice.includes(`${formatMoney(72, "USD")} in all for 2 guests, 2 nights`),
+    `${label}: the beds' prices read "${dormPrice.slice(-120)}" and "${roomPrice.slice(-120)}"`,
+  );
   await flow.getByRole("radio", { name: FAKE_ROOMS[0]!.name }).check();
   await shot("2-beds");
   await flow.getByRole("button", { name: "Continue" }).click();

@@ -80,9 +80,13 @@ export function parseAvailabilityQuery(
 const isoDate = z.iso.date();
 const count = z.number().int().min(0);
 
+const nightAmounts = z.array(z.object({ date: isoDate, amount: z.number().nonnegative() }));
+
 const priceSchema = z.object({
   currency: z.enum(CURRENCIES),
-  per_guest_per_night: z.array(z.object({ date: isoDate, amount: z.number().nonnegative() })),
+  per_guest_per_night: nightAmounts,
+  // A private room priced as a whole: the room's price each night (per_guest_per_night then shares it).
+  per_room_per_night: nightAmounts.optional(),
   total: z.number().nonnegative(),
 });
 

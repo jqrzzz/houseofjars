@@ -64,6 +64,25 @@ describe("Shadow's availability", () => {
     expect(readAvailability(euros, query)).toBeNull();
   });
 
+  it("reads a private room priced as a whole: the room's price each night, shared per guest", () => {
+    const price = {
+      currency: "LAK",
+      per_guest_per_night: [
+        { date: "2026-10-03", amount: 90000 },
+        { date: "2026-10-04", amount: 90000 },
+      ],
+      per_room_per_night: [
+        { date: "2026-10-03", amount: 180000 },
+        { date: "2026-10-04", amount: 180000 },
+      ],
+      total: 360000,
+    };
+    const room = { ...example.room_types[0], kind: "private", price };
+    expect(readAvailability({ ...example, room_types: [room] }, query)?.room_types[0]?.price).toEqual(price);
+    const broken = { ...room, price: { ...price, per_room_per_night: [{ date: "2026-10-03", amount: -1 }] } };
+    expect(readAvailability({ ...example, room_types: [broken] }, query)).toBeNull();
+  });
+
   it("tolerates what a newer Shadow might add, and promises less when unsure", () => {
     const newer = {
       ...example,

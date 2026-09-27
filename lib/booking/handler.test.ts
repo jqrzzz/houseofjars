@@ -5,6 +5,7 @@ import { hourlyCeiling } from "../gate";
 import { createAvailabilityCache } from "./cache";
 import { guestText } from "./contract";
 import { createAvailabilityHandler, createBookingHandler } from "./handler";
+import type { RoomType } from "./types";
 import {
   BOOKING_LIMITS,
   LOOKUP_LIMITS,
@@ -19,7 +20,7 @@ const HOUR = 60 * MINUTE;
 // Saturday 26 September 2026, midday in Vientiane.
 const START = Date.UTC(2026, 8, 26, 5);
 const TODAY = "2026-09-26";
-const [mixed, female] = [FAKE_ROOMS[0]!, FAKE_ROOMS[1]!];
+const [mixed, female, privateRoom] = [FAKE_ROOMS[0]!, FAKE_ROOMS[1]!, FAKE_ROOMS[2]!];
 const siteUrl = "https://thehouseofjars.com";
 
 let fake: FakeShadow;
@@ -135,6 +136,18 @@ describe("GET /api/availability", () => {
     });
     expect(womens).toMatchObject({ id: female.id, kind: "female_dorm", description: null, price: null });
     expect(shadowCalls("/api/public/availability?check_in=2026-10-03&check_out=2026-10-05&guests=2")).toBe(1);
+  });
+
+  it("prices a private room as a whole: the same total for one guest or two, shared per guest", async () => {
+    const { lookup } = site();
+    const priceFor = async (guests: number) =>
+      ((await (await lookup(get({ ...stay, guests }))).json()).room_types as RoomType[]).find((room) => room.id === privateRoom.id)!.price;
+    const nights = (amount: number) => [
+      { date: "2026-10-03", amount },
+      { date: "2026-10-04", amount },
+    ];
+    expect(await priceFor(1)).toEqual({ currency: "USD", per_guest_per_night: nights(36), per_room_per_night: nights(36), total: 72 });
+    expect(await priceFor(2)).toEqual({ currency: "USD", per_guest_per_night: nights(18), per_room_per_night: nights(36), total: 72 });
   });
 
   it("checks the query before anything reaches Shadow", async () => {
@@ -620,6 +633,19 @@ describe("POST /api/booking", () => {
     const refused = await book(post({ ...booking, client_ref: "6c7d8e9f-0a1b-4c2d-9e3f-4a5b6c7d8e9f", guests: 7, quoted_total: 1, quoted_currency: "LAK" }));
     expect(refused.status).toBe(400);
     expect((await refused.json()).issues).toContainEqual({ field: "guests", message: guestText.guestsRefused });
+  });
+
+  it("books a private room for one guest at the room's price, and then it is full", async () => {
+    const { book, lookup } = site();
+    const alone = { ...booking, room_type_id: privateRoom.id, guests: 1, quoted_total: 72, quoted_currency: "USD" };
+    const response = await book(post(alone));
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ total: 72, currency: "USD" });
+    // One guest takes the whole room.
+    const after = ((await (await lookup(get({ ...stay, guests: 1 }))).json()).room_types as RoomType[]).find(
+      (room) => room.id === privateRoom.id,
+    );
+    expect(after).toMatchObject({ min_free: 0, bookable: false });
   });
 
   it("never sends a request again without its quote when Shadow refuses the quote itself", async () => {

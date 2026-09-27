@@ -416,7 +416,7 @@ function RoomOption({
         {lines ? (
           <>
             <span className={`${styles.amount} tnum`}>{lines.perNight}</span>
-            <span>per guest per night</span>
+            <span>{lines.per}</span>
             <span className={styles.roomTotal}>
               <span className="tnum">{lines.total}</span> in all for {lines.totalFor}
             </span>
@@ -746,7 +746,7 @@ export function ReviewStep({
             <>
               <span className="tnum">{lines.total}</span>
               <span className={styles.reviewNote}>
-                {lines.perNight} per guest per night, for {lines.totalFor}
+                {lines.perNight} {lines.per}, for {lines.totalFor}
               </span>
             </>
           ) : (

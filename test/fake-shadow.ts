@@ -41,11 +41,16 @@ const BOOKING_KEYS = [
 /** The contract's additions of 27 September: the total the guest saw, both or neither. */
 const QUOTE_KEYS = ["quoted_total", "quoted_currency"] as const;
 
-/** Per guest per night; Friday and Saturday nights cost `weekend` when given. */
+/**
+ * Per guest per night; Friday and Saturday nights cost `weekend` when given.
+ * `per: "room"`: the whole room each night, however many guests it sleeps,
+ * as Shadow Check-in prices a private room.
+ */
 export interface FakeRate {
   readonly currency: "LAK" | "USD";
   readonly amount: number;
   readonly weekend?: number;
+  readonly per?: "guest" | "room";
 }
 
 export interface FakeRoom {
@@ -59,7 +64,10 @@ export interface FakeRoom {
   readonly rate: FakeRate | null;
 }
 
-/** Test fixtures: a priced dorm, a dorm without a rate, and a small room priced in dollars. */
+/**
+ * Test fixtures: a priced dorm, a dorm without a rate, and a private room for
+ * two priced per room in dollars (one unit: any stay takes it whole).
+ */
 export const FAKE_ROOMS: readonly FakeRoom[] = [
   {
     id: "5b0c3a0e-2f7e-4c55-9a55-1f6f3c1d2a01",
@@ -86,7 +94,7 @@ export const FAKE_ROOMS: readonly FakeRoom[] = [
     description: "Two beds and a desk.",
     features: ["Two beds", "Desk"],
     beds: 2,
-    rate: { currency: "USD", amount: 18 },
+    rate: { currency: "USD", amount: 36, per: "room" },
   },
 ];
 
@@ -195,7 +203,10 @@ export async function startFakeShadow(
   const taken = new Map<string, number>();
   const takenOn = (roomId: string, night: string) => taken.get(`${roomId}|${night}`) ?? 0;
   const take = (roomId: string, nights: string[], beds: number) => {
-    for (const night of nights) taken.set(`${roomId}|${night}`, takenOn(roomId, night) + beds);
+    // A private room is one unit: any stay takes it whole.
+    const room = FAKE_ROOMS.find((candidate) => candidate.id === roomId);
+    const places = room?.kind === "private" ? room.beds : beds;
+    for (const night of nights) taken.set(`${roomId}|${night}`, takenOn(roomId, night) + places);
   };
   const rates = new Map<string, FakeRate | null>();
   const rateOf = (room: FakeRoom) => (rates.has(room.id) ? rates.get(room.id)! : room.rate);
@@ -237,10 +248,17 @@ export async function startFakeShadow(
             const weekend = (day === 5 || day === 6) && rate.weekend !== undefined;
             return { date: night, amount: weekend ? rate.weekend! : rate.amount };
           });
+          const nightsTotal = perNight.reduce((sum, night) => sum + night.amount, 0);
+          if (rate.per !== "room") {
+            return { currency: rate.currency, per_guest_per_night: perNight, total: nightsTotal * guests };
+          }
+          // The room's price each night, shared among the guests to the kip or the cent; the total is exact.
+          const unit = rate.currency === "USD" ? 100 : 1;
           return {
             currency: rate.currency,
-            per_guest_per_night: perNight,
-            total: perNight.reduce((sum, night) => sum + night.amount, 0) * guests,
+            per_guest_per_night: perNight.map((night) => ({ date: night.date, amount: Math.round((night.amount * unit) / guests) / unit })),
+            per_room_per_night: perNight,
+            total: nightsTotal,
           };
         })()
       : null;

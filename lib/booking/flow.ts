@@ -172,13 +172,17 @@ const plural = (count: number, one: string, many = `${one}s`) => `${count} ${cou
 export interface PriceLines {
   /** "LAK 90,000", or "LAK 90,000 to 100,000" when nights differ. */
   readonly perNight: string;
+  /** What perNight is for: "per guest per night", or "per room per night" for a room priced as a whole. */
+  readonly per: string;
   readonly total: string;
   /** "2 guests, 2 nights" */
   readonly totalFor: string;
 }
 
 export function priceLines(price: Price, stay: Stay): PriceLines {
-  const amounts = price.per_guest_per_night.map((night) => night.amount);
+  // A private room priced as a whole shows the room's price; dorms, the price per guest.
+  const perRoom = price.per_room_per_night?.length ? price.per_room_per_night : null;
+  const amounts = (perRoom ?? price.per_guest_per_night).map((night) => night.amount);
   const [low, high] = [Math.min(...amounts), Math.max(...amounts)];
   // Both ends of a range in cents if either has them.
   const cents = price.currency === "USD" && !(Number.isInteger(low) && Number.isInteger(high));
@@ -188,6 +192,7 @@ export function priceLines(price: Price, stay: Stay): PriceLines {
       : `${price.currency}\u00a0${formatAmount(low, price.currency, cents)} to ${formatAmount(high, price.currency, cents)}`;
   return {
     perNight,
+    per: perRoom ? "per room per night" : "per guest per night",
     total: formatMoney(price.total, price.currency),
     totalFor: `${plural(stay.guests, "guest")}, ${nightsText(nightsBetween(stay.check_in, stay.check_out))}`,
   };

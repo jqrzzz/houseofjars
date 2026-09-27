@@ -44,6 +44,8 @@ If Shadow Check-in itself answers `503 {"error":"not_configured"}` (booking not 
 
 - `kind` is `mixed_dorm`, `female_dorm`, `male_dorm` or `private`.
 - `price` is `null`, or `{ "currency": "LAK" | "USD", "per_guest_per_night": [{ "date": "…", "amount": 90000 }], "total": 360000 }`, where `total` covers every guest and night.
+  - A dorm's rate is per guest: `per_guest_per_night` is the rate.
+  - A private room's rate is for the whole room, however many guests it sleeps: its price also has `"per_room_per_night": [{ "date": "…", "amount": 180000 }]`, the room's price each night, and `total` is the sum of those nights, so one guest and two guests pay the same. `per_guest_per_night` then shares each night among the guests asked about (to the kip or the cent; the total is exact). The booking form shows a room with `per_room_per_night` "per room per night", and everything else "per guest per night".
 - `bookable` means `min_free >= guests`, within the limits, with the dates inside the window.
 - Errors: `400 {"error":"invalid_request","issues":[{"field","message"}]}` (bad or past dates, `check_out <= check_in`, limits), `401`, `429`, `503 {"error":"not_configured"}`.
 
@@ -140,7 +142,7 @@ The website has one key for Shadow, so its limits stay strictly inside Shadow's.
 
 | Shadow answers | The website answers | The booking form shows |
 | --- | --- | --- |
-| 200 (availability) | 200 | The room types, with free beds each night, features, and the price per guest per night and total when Shadow sends one, otherwise "Price confirmed by the team". |
+| 200 (availability) | 200 | The room types, with free beds each night, features, and the price per guest per night (per room per night for a private room priced as a whole) and total when Shadow sends one, otherwise "Price confirmed by the team". |
 | 201 / 200 (booking) | 201 / 200 | A stamped confirmation: the reference, the hold time on the house's clock, the total or "the team confirms the price", "you pay at the house", check-in time and what to bring, and how to change or cancel. `pending` with no hold: "The team will confirm availability and your booking…; your beds aren't held for you until then." |
 | 409 `unavailable` | 409 `taken` | "Sorry, those beds were taken while you were booking", fresh availability, the guest's details kept. |
 | 409 `price_changed` | 409 `price_changed` | The review again, with an alert that takes focus: "The price changed while you were booking, so nothing has been booked yet. The total for your stay is now … (it was …)", the new total in the Price row and the stub; sending again books at it. |

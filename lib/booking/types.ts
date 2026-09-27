@@ -20,8 +20,11 @@ export interface NightFree {
 
 export interface Price {
   readonly currency: Currency;
+  /** Each night's rate per guest; for a room priced as a whole, its price shared among the guests. */
   readonly per_guest_per_night: readonly { readonly date: string; readonly amount: number }[];
-  /** For every guest and night together. */
+  /** A private room priced as a whole, however many guests it sleeps: the room's price each night. */
+  readonly per_room_per_night?: readonly { readonly date: string; readonly amount: number }[];
+  /** For every guest and night together (exact, even when shared per guest). */
   readonly total: number;
 }
 
