@@ -558,10 +558,11 @@
   font-weight: 600;
 }
 
+/* Chosen in saffron, like a chosen day, room or step (ink on saffron is 7:1). */
 .chip input:checked + span {
-  border-color: var(--text);
-  background: var(--text);
-  color: var(--page);
+  border-color: var(--saffron);
+  background: var(--saffron);
+  color: var(--ink);
 }
 
 .chip input:focus-visible + span {

@@ -4,6 +4,7 @@ import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import buttons from "@/components/ui/button.module.css";
 import { ArrowIcon } from "@/components/ui/icons";
 import { identity } from "@/content/identity";
+import { bookingLabel } from "@/lib/booking/config";
 import { MekongDawn } from "./MekongDawn";
 import styles from "./Hero.module.css";
 
@@ -35,7 +36,7 @@ export function Hero() {
             <p className={styles.owner}>Owned and run by {identity.owner.name.value}.</p>
             <div className={styles.actions}>
               <Link href="/book" className={`${buttons.button} ${buttons.primary}`}>
-                Prices and booking
+                {bookingLabel()}
                 <ArrowIcon />
               </Link>
               <AskShadowButton className={`${buttons.button} ${buttons.secondary}`}>Ask Shadow</AskShadowButton>

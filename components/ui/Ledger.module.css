@@ -111,13 +111,17 @@
   stroke-dasharray: 1;
 }
 
-/* Where the browser can, the tick draws itself as its row comes into view. */
+/*
+ * Where the browser can, the tick draws itself as its row slides into view,
+ * and is whole by the time the row is: a row already on screen never shows
+ * half a tick.
+ */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .tick path {
       animation: tick linear both;
       animation-timeline: view();
-      animation-range: entry 40% cover 35%;
+      animation-range: entry 10% entry 100%;
     }
   }
 }
