@@ -249,6 +249,17 @@ html {
   scroll-padding-top: var(--space-xl);
 }
 
+/*
+ * Phones (and laptops zoomed past 200%): the Ask Shadow dock covers the bottom
+ * of the screen, so focus moved by keyboard scrolls far enough to stay clear
+ * of it (WCAG 2.4.11). The dock is about 4.1rem tall.
+ */
+@media (max-width: 47.99rem) {
+  html {
+    scroll-padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;

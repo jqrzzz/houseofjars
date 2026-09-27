@@ -140,7 +140,8 @@ export function DateRangePicker({
               <thead>
                 <tr>
                   {WEEKDAYS.map((name) => (
-                    <th key={name} scope="col" abbr={name}>
+                    <th key={name} scope="col">
+                      <span className="visually-hidden">{name}</span>
                       <span aria-hidden="true">{name.slice(0, 2)}</span>
                     </th>
                   ))}

@@ -10,6 +10,27 @@ describe("price guard", () => {
     }
   });
 
+  it("spots amounts written in words, with k or a scale, and a currency named around them (F1W-08)", () => {
+    for (const text of [
+      "A dorm bed is about 10 US dollars a night.",
+      "Beds start at 90,000 Lao kip.",
+      "Usually around 90k kip per night.",
+      "It costs 90K LAK.",
+      "Around ten dollars a night.",
+      "Roughly 300 thousand kip for two nights.",
+      "It is 1.5 million kip for a week.",
+      "The price is 250 Thai baht.",
+      "about 10 bucks",
+      "twenty-five dollars",
+      "a hundred dollars",
+      "one hundred and fifty thousand kip",
+      "10 U.S. dollars",
+      "5 euros",
+    ]) {
+      expect(mentionsMoney(text), text).toBe(true);
+    }
+  });
+
   it("leaves ordinary answers alone", () => {
     for (const text of [
       "Check-in is from 14:00 and check-out is by 12:00.",
@@ -17,6 +38,10 @@ describe("price guard", () => {
       "WhatsApp +856 20 5555 1234 or email the team.",
       "Prices change with the dates; see Booking.com or Agoda.",
       "Wattay International Airport is about 4 km away.",
+      "It is 5 minutes on foot.",
+      "It takes ten minutes by tuk-tuk.",
+      "Someone at reception can help, 24 hours a day.",
+      "One of the team will reply.",
     ]) {
       expect(mentionsMoney(text), text).toBe(false);
     }
@@ -24,6 +49,7 @@ describe("price guard", () => {
 
   it("never fires on the house knowledge, which quotes no prices", () => {
     expect(mentionsMoney(buildSystemPrompt("https://thehouseofjars.com"))).toBe(false);
+    expect(mentionsMoney(buildSystemPrompt("https://thehouseofjars.com", { onlineBooking: true }))).toBe(false);
   });
 
   it("offers the live-price links instead", () => {

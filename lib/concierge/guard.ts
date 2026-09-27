@@ -6,12 +6,19 @@ import { identity } from "@/content/identity";
  * this line as soon as one appears, before the guest can screenshot a price.
  */
 
+/** An amount in words or digits: "90,000", "1.5", "90k", "ten", "three hundred thousand". */
+const NUMBER_WORDS =
+  "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million";
+const AMOUNT = String.raw`(?:\d[\d,.]*(?:\s?(?:k|m|mil)\b)?|\b(?:${NUMBER_WORDS})\b)(?:[\s-]+(?:${NUMBER_WORDS}|and)\b)*`;
+/** A currency named in words, with what may stand between it and the amount ("Lao kip", "US dollars"). */
+const CURRENCY_WORD = String.raw`(?:(?:lao|thai|us|u\.s\.|american)\s+)?(?:kip|lak|baht|thb|usd|dollars?|bucks?|eur|euros?|gbp|pounds?)\b`;
+
 const MONEY = new RegExp(
   [
     String.raw`(?:US\$|\$|₭|฿|€|£)\s?\d`,
     String.raw`\d\s?(?:US\$|\$|₭|฿|€|£)`,
     String.raw`\b(?:USD|LAK|THB|EUR|GBP|kip|baht)\s?\d`,
-    String.raw`\d\s?(?:USD|LAK|THB|EUR|GBP|kip|baht|dollars?|euros?)\b`,
+    String.raw`${AMOUNT}\s*${CURRENCY_WORD}`,
   ].join("|"),
   "i",
 );
