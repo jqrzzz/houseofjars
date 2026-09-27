@@ -98,12 +98,12 @@ export function DraftCard({ sessionId, draft, onSent, onChange, onNavigate }: Dr
   }
 
   return (
-    <section className={styles.consent} aria-labelledby={titleId}>
-      <h3 id={titleId} className={styles.draftTitle}>
+    <section className={styles.card} aria-labelledby={titleId}>
+      <h3 id={titleId} className={styles.cardTitle}>
         Your message to the team
       </h3>
       <p>Please check it. Nothing is sent until you press Send.</p>
-      <dl className={styles.draftDetails}>
+      <dl className={styles.cardDetails}>
         {rows.map(([label, value]) => (
           <div key={label}>
             <dt>{label}</dt>

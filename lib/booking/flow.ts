@@ -194,7 +194,7 @@ export function priceLines(price: Price, stay: Stay): PriceLines {
 }
 
 /** Free beds for the stay: "4 beds free every night". */
-export function freeBedsText(room: RoomType, nights: number): string {
+export function freeBedsText(room: Pick<RoomType, "min_free">, nights: number): string {
   const beds = plural(room.min_free, "bed");
   return nights === 1 ? `${beds} free that night` : `${beds} free every night`;
 }

@@ -34,6 +34,7 @@ import { ContactDetails } from "../contact/ContactDetails";
 import { ShadowFigure } from "../shadow/ShadowFigure";
 import { ShadowWriting } from "../shadow/ShadowWriting";
 import { CloseIcon, RestartIcon, SendIcon } from "../ui/icons";
+import { AvailabilityCard } from "./AvailabilityCard";
 import styles from "./ConciergePanel.module.css";
 import { DraftCard } from "./DraftCard";
 
@@ -339,20 +340,26 @@ function Message({ message, onNavigate }: { message: ChatMessage; onNavigate: ()
   if (message.role === "user") return <Bubble role="user">{message.content}</Bubble>;
 
   return (
-    <Bubble role="assistant" failed={message.state === "failed"}>
-      {linkify(message.content, siteUrl, linkHosts).map((part, index) => {
-        if (part.kind === "text") return <span key={index}>{part.text}</span>;
-        return part.internal ? (
-          <Link key={index} href={part.href} onClick={onNavigate}>
-            {part.text}
-          </Link>
-        ) : (
-          <a key={index} href={part.href} target="_blank" rel="noopener noreferrer">
-            {part.text}
-          </a>
-        );
-      })}
-      {message.truncated ? "…" : null}
-    </Bubble>
+    <>
+      <Bubble role="assistant" failed={message.state === "failed"}>
+        {linkify(message.content, siteUrl, linkHosts).map((part, index) => {
+          if (part.kind === "text") return <span key={index}>{part.text}</span>;
+          return part.internal ? (
+            <Link key={index} href={part.href} onClick={onNavigate}>
+              {part.text}
+            </Link>
+          ) : (
+            <a key={index} href={part.href} target="_blank" rel="noopener noreferrer">
+              {part.text}
+            </a>
+          );
+        })}
+        {message.truncated ? "…" : null}
+      </Bubble>
+      {/* The free beds his reply points to: one card per stay he looked up. */}
+      {message.cards?.map((card) => (
+        <AvailabilityCard key={`${card.check_in} ${card.check_out} ${card.guests}`} card={card} onNavigate={onNavigate} />
+      ))}
+    </>
   );
 }
