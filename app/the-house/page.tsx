@@ -10,6 +10,7 @@ import { ReadNext } from "@/components/guide/ReadNext";
 import { honestNotes } from "@/content/reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building } from "@/content/stay";
 import { countWord, joinList, lowerFirst } from "@/content/text";
+import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
 import styles from "./the-house.module.css";
@@ -34,8 +35,18 @@ export default function TheHousePage() {
           </p>
           <TickList numbered items={beds.perBed.value} />
           <p>
-            The dorms include {joinList(beds.dorms.value)}. To see which beds are free on your dates, check
-            Booking.com or Agoda, or <Link href={pages.book.path}>ask us</Link>.
+            The dorms include {joinList(beds.dorms.value)}.{" "}
+            {onlineBookingConfigured() ? (
+              <>
+                To see which beds are free on your dates, see the <Link href={pages.book.path}>booking page</Link>, or
+                Booking.com and Agoda.
+              </>
+            ) : (
+              <>
+                To see which beds are free on your dates, check Booking.com or Agoda, or{" "}
+                <Link href={pages.book.path}>ask us</Link>.
+              </>
+            )}
           </p>
         </Prose>
         <PodDiagram />

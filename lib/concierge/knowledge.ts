@@ -1,5 +1,5 @@
 import { airportTransport, immigration, location, plainOfJars } from "@/content/area";
-import { faq } from "@/content/faq";
+import { faqFor } from "@/content/faq";
 import { guideList, guidePath } from "@/content/guides";
 import { formatAddress, identity } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
@@ -111,7 +111,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
         options.onlineBooking
           ? [
               "You cannot see prices or availability yourself, so never promise a bed: only the booking page can say what is free.",
-              `Book on this website: ${book.page} shows the free beds for any dates and, where the house has set them, the price. The guest sends a booking request there; the team confirms it by email or WhatsApp, and the guest pays at the house. With the guest's dates and party filled in: ${book.withDates}`,
+              `Book on this website: ${book.page} shows the free beds for any dates and, where the house has set them, the price. The guest books there directly with the house: the page says whether the booking is confirmed straight away or once the team has checked it (they reply by email or WhatsApp), and the guest pays at the house. With the guest's dates and party filled in: ${book.withDates}`,
               `Live prices are also on Booking.com (${identity.links.booking.value}) and Agoda (${identity.links.agoda.value}).`,
               "There is no online payment on this website.",
             ]
@@ -126,7 +126,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
     ],
     [
       "Questions and answers",
-      faq
+      faqFor(Boolean(options.onlineBooking))
         .flatMap((group) => group.entries)
         .map((entry) => `Q: ${entry.question}\nA: ${inlineToTextWithUrls(entry.answer, siteUrl)}`)
         .join("\n\n"),

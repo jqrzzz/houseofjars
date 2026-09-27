@@ -97,12 +97,22 @@ describe("with online booking (W3)", () => {
       expect(text).toContain(`[Book online](${site}/book)`);
       expect(text).toContain(onlineBookingLinkTemplate(site));
       expect(text).toContain("the guest pays at the house");
-      expect(text).toContain("nothing is booked until the guest sends the request");
+      expect(text).toContain("nothing is booked until the guest sends the booking");
+      // Shadow's mode (the team checks first, or not) isn't known when the site is built (F1W-07).
+      expect(text).toContain("confirmed straight away or once the team has checked it");
       // The message form and the booking sites stay alternatives.
       expect(text).toContain(bookingLinkTemplate(site));
       expect(text).toContain(identity.links.agoda.value);
     }
     expect(shortOnline).not.toContain("Prices and availability are not published here");
+  });
+
+  it("lists /book as the page to book on, and answers the booking questions that way (F1W-07)", () => {
+    expect(shortOnline).toContain(`[Book a bed · House of Jars Hostel, Vientiane](${site}/book): See the free beds for your dates`);
+    expect(short).toContain(`[Prices, booking and contact · House of Jars Hostel, Vientiane](${site}/book)`);
+    expect(fullOnline).toMatch(/\*\*How do I book\?\*\*\nChoose your dates on the booking page/);
+    expect(fullOnline).not.toContain("so we don’t list them here");
+    expect(full).toContain("so we don’t list them here");
   });
 
   it("still publishes no prices, and names no fact it can't stand behind", () => {

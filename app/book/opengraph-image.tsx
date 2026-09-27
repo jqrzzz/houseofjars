@@ -1,10 +1,10 @@
 import { ogContentType, ogSize, renderOgImage } from "@/lib/og";
-import { pages } from "@/lib/site";
+import { bookPage } from "@/lib/pages";
 
-export const alt = `${pages.book.title} · House of Jars`;
+export const alt = `${bookPage().title} · House of Jars`;
 export const size = ogSize;
 export const contentType = ogContentType;
 
 export default function Image() {
-  return renderOgImage(pages.book);
+  return renderOgImage(bookPage());
 }

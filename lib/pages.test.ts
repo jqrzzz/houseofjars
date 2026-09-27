@@ -6,13 +6,17 @@ import { creditCues, isFirm, standingOf } from "@/content/certainty";
 import { identity } from "@/content/identity";
 import { times } from "@/content/stay";
 import { collectFacts, factsMentionedIn } from "./content-audit";
-import { allPages, breadcrumbTrail, findPage, metaTitle } from "./pages";
+import { allPages, bookPage, breadcrumbTrail, findPage, metaTitle, sitePages } from "./pages";
 import { absoluteUrl } from "./site";
 
 const softFacts = collectFacts(content, "content").filter((found) => !isFirm(found.fact));
 const today = new Date().toISOString().slice(0, 10);
 
-describe("titles and descriptions", () => {
+describe.each([
+  ["without online booking", false],
+  ["with online booking", true],
+])("titles and descriptions, %s", (_, online) => {
+  const allPages = sitePages(online);
   const titles = allPages.map(metaTitle);
   const descriptions = allPages.map((page) => page.description);
 
@@ -50,6 +54,18 @@ describe("titles and descriptions", () => {
         if (standing in creditCues) expect(page.description).toMatch(creditCues[standing as keyof typeof creditCues]);
       }
     }
+  });
+});
+
+describe("/book, with and without online booking (F1W-07)", () => {
+  it("is named for what it does in each build", () => {
+    expect(metaTitle(bookPage(true))).toBe("Book a bed · House of Jars Hostel, Vientiane");
+    expect(bookPage(true).description).not.toMatch(/Live prices and free beds on Booking\.com/);
+    expect(metaTitle(bookPage(false))).toBe("Prices, booking and contact · House of Jars Hostel, Vientiane");
+    const online = sitePages(true).find((page) => page.path === "/book")!;
+    expect(online.title).toBe("Book a bed");
+    expect(online.updated > CONTENT_UPDATED).toBe(true);
+    expect(sitePages(false).find((page) => page.path === "/book")!.updated).toBe(CONTENT_UPDATED);
   });
 });
 

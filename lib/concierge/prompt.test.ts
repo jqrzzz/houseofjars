@@ -73,8 +73,13 @@ describe("with online booking (W3)", () => {
   it("points guests to the booking page, with their dates filled in", () => {
     expect(prompt).toContain(`${site}/book?check_in=YYYY-MM-DD&check_out=YYYY-MM-DD&guests=N`);
     expect(prompt).toContain("To book, point them to the booking page instead.");
-    expect(knowledge).toContain("The guest sends a booking request there; the team confirms it");
+    expect(knowledge).toContain("The guest books there directly with the house");
+    expect(knowledge).toContain("confirmed straight away or once the team has checked it");
     expect(knowledge).toContain("the guest pays at the house");
+    // The questions and answers agree with the rest (F1W-07).
+    expect(knowledge).toContain("Q: How do I book?\nA: Choose your dates on the booking page");
+    expect(knowledge).not.toContain("so we don’t list them here");
+    expect(buildHouseKnowledge(site)).toContain("so we don’t list them here");
   });
 
   it("still never quotes a price or promises a bed", () => {

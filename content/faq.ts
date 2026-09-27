@@ -8,6 +8,8 @@ export interface FaqEntry {
   readonly id: string;
   readonly question: string;
   readonly answer: readonly Inline[];
+  /** The answer when the site takes bookings online (faqFor). */
+  readonly online?: readonly Inline[];
 }
 
 export interface FaqGroup {
@@ -127,6 +129,11 @@ export const faq: readonly FaqGroup[] = [
           { text: "ask us directly", href: "/book" },
           ".",
         ],
+        online: [
+          "Prices change with the dates and the season. The ",
+          { text: "booking page", href: "/book" },
+          " shows the free beds for your dates, with the price wherever the house has set one; Booking.com and Agoda show live prices too.",
+        ],
       },
       {
         id: "how-to-book",
@@ -135,6 +142,11 @@ export const faq: readonly FaqGroup[] = [
           "Book on Booking.com or Agoda, or send us a message from the ",
           { text: "booking page", href: "/book" },
           " and the team will reply by email or WhatsApp.",
+        ],
+        online: [
+          "Choose your dates on the ",
+          { text: "booking page", href: "/book" },
+          " and book directly with the house: there is nothing to pay online, and you pay when you arrive. You can also book on Booking.com or Agoda, or send the team a message from the same page.",
         ],
       },
     ],
@@ -180,3 +192,12 @@ export const faq: readonly FaqGroup[] = [
     ],
   },
 ];
+
+/** The questions and answers as a build shows them: with online booking, the booking answers say so. */
+export function faqFor(onlineBooking: boolean): readonly FaqGroup[] {
+  if (!onlineBooking) return faq;
+  return faq.map((group) => ({
+    ...group,
+    entries: group.entries.map((entry) => (entry.online ? { ...entry, answer: entry.online } : entry)),
+  }));
+}

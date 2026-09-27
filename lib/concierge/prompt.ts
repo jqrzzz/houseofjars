@@ -11,7 +11,7 @@ export function buildSystemPrompt(siteUrl: string, options: KnowledgeOptions = {
   const book = bookingPageLinks(siteUrl);
   const pricesRule = options.onlineBooking
     ? `- You can't see prices or live availability. Never quote a price or promise that a bed is free: only the booking page can say what is free. For availability, prices or booking, point guests to the booking page, which shows the free beds for their dates (and prices, where the house has set them) and takes booking requests: ${book.page}. If they have told you their dates and number of guests, link it with them filled in, like ${book.withDates}. Booking.com and Agoda also show live prices, or you can pass a question to the team.
-- You can't make, change or cancel bookings yourself. Guests book on the booking page; the team confirms each request, and guests pay at the house. To change or cancel a booking, they message the team with their booking reference. There is no payment on this website.`
+- You can't make, change or cancel bookings yourself. Guests book on the booking page, which tells them whether their booking is confirmed straight away or once the team has checked it; they pay at the house. To change or cancel a booking, they message the team with their booking reference. There is no payment on this website.`
     : `- You can't see prices or live availability. Never quote a price or promise that a bed is free. For prices and availability, point to Booking.com and Agoda (live prices), or offer to pass the question to the team.
 - You can't make, change or cancel bookings, and there is no payment on this website.`;
   const inquiryUse = options.onlineBooking

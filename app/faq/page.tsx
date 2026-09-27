@@ -4,7 +4,8 @@ import { Block } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageJsonLd } from "@/components/PageJsonLd";
 import { ReadNext } from "@/components/guide/ReadNext";
-import { faq } from "@/content/faq";
+import { faqFor } from "@/content/faq";
+import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
 import styles from "./faq.module.css";
@@ -14,6 +15,7 @@ export const metadata = pageMetadata(pages.faq);
 const groupId = (title: string) => title.toLowerCase().replace(/[^a-z]+/g, "-");
 
 export default function FaqPage() {
+  const faq = faqFor(onlineBookingConfigured());
   return (
     <>
       <PageHeader

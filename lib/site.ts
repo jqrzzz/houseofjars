@@ -93,6 +93,20 @@ export const pages = {
   },
 } as const satisfies Record<string, PageInfo>;
 
+/**
+ * /book when the site takes bookings online (Shadow Check-in's address and
+ * key set when it is built; lib/pages.ts bookPage). Words that fit both of
+ * Shadow's modes: confirmed straight away, or once the team has checked.
+ */
+export const bookOnlinePage = {
+  path: pages.book.path,
+  nav: pages.book.nav,
+  title: "Book a bed",
+  description:
+    "See the free beds for your dates and book directly with House of Jars: nothing to pay online, you pay when you arrive. Or book on Booking.com or Agoda.",
+  teaser: "The free beds for your dates, booked directly with the house.",
+} as const satisfies PageInfo;
+
 export const primaryNav = [pages.house, pages.rules, pages.vientiane, pages.faq, pages.about] as const;
 
 export function absoluteUrl(path: string): string {

@@ -2,7 +2,8 @@ import { CONTENT_UPDATED } from "@/content";
 import { guideList, guidePath, type Guide } from "@/content/guides";
 import { identity } from "@/content/identity";
 import { PRIVACY_UPDATED } from "@/content/privacy";
-import { pages, type PageInfo } from "./site";
+import { onlineBookingConfigured } from "./booking/config";
+import { bookOnlinePage, pages, type PageInfo } from "./site";
 
 /*
  * Every page on the site with what search engines and assistants need to
@@ -50,17 +51,32 @@ export const guidePages: readonly SitePage[] = guideList.map((guide) => ({
   guide,
 }));
 
-/** Every page, in the sitemap's order. */
-export const allPages: readonly SitePage[] = [
-  ...Object.values(pages).map(
-    (page): SitePage => ({
-      ...page,
-      type: types[page.path] ?? "WebPage",
-      updated: latest([ownDates[page.path] ?? CONTENT_UPDATED]),
+/** When the words of /book with online booking last changed. */
+const ONLINE_BOOKING_UPDATED = "2026-09-27";
+
+/**
+ * /book as a build shows it: online booking when Shadow Check-in's address
+ * and key are set when the site is built, else the message form and the
+ * booking sites.
+ */
+export function bookPage(online = onlineBookingConfigured()): PageInfo {
+  return online ? bookOnlinePage : pages.book;
+}
+
+/** Every page, in the sitemap's order, as a build with or without online booking has them. */
+export function sitePages(online: boolean): readonly SitePage[] {
+  return [
+    ...Object.values(pages).map((listed): SitePage => {
+      const page = listed.path === pages.book.path ? bookPage(online) : listed;
+      const own = page === bookOnlinePage ? ONLINE_BOOKING_UPDATED : ownDates[page.path];
+      return { ...page, type: types[page.path] ?? "WebPage", updated: latest([own ?? CONTENT_UPDATED]) };
     }),
-  ),
-  ...guidePages,
-];
+    ...guidePages,
+  ];
+}
+
+/** Every page of this build. */
+export const allPages: readonly SitePage[] = sitePages(onlineBookingConfigured());
 
 export function findPage(path: string): SitePage {
   const page = allPages.find((candidate) => candidate.path === path);

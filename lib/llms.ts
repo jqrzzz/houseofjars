@@ -1,7 +1,7 @@
 import { CONTENT_UPDATED, content } from "@/content";
 import { airportTransport, immigration, location, plainOfJars } from "@/content/area";
 import { creditFor, isFirm } from "@/content/certainty";
-import { faq } from "@/content/faq";
+import { faqFor } from "@/content/faq";
 import { guideList, guidePath, type Guide } from "@/content/guides";
 import { formatAddress, identity, whatsappUrl } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
@@ -10,7 +10,7 @@ import { honestNotes, praise, ratings } from "@/content/reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, staff, times } from "@/content/stay";
 import { joinList, lowerFirst } from "@/content/text";
 import { collectFacts, factsMentionedIn } from "./content-audit";
-import { allPages, metaTitle } from "./pages";
+import { metaTitle, sitePages } from "./pages";
 import { pages } from "./site";
 
 /*
@@ -81,7 +81,7 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
   return [
     ...(onlineBooking
       ? [
-          `- [Book online](${url(pages.book.path)}): the free beds for the guest's dates and a booking request; the team confirms it by email or WhatsApp, and the guest pays at the house. ${onlineBookingLinkTemplate(siteUrl)} opens it at the free beds for those dates. Prices show there only where the house has set them, and nothing is booked until the guest sends the request.`,
+          `- [Book online](${url(pages.book.path)}): the free beds for the guest's dates, booked directly with the house; the page says whether a booking is confirmed straight away or once the team has checked it (they reply by email or WhatsApp), and the guest pays at the house. ${onlineBookingLinkTemplate(siteUrl)} opens it at the free beds for those dates. Prices show there only where the house has set them, and nothing is booked until the guest sends the booking.`,
         ]
       : []),
     `- [Booking.com](${identity.links.booking.value}): live prices and free beds`,
@@ -93,7 +93,7 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
 /** /llms.txt: what the house is, the key facts, and every page. */
 export function buildLlmsTxt(siteUrl: string, options: LlmsOptions = {}): string {
   const url = (path: string) => new URL(path, `${siteUrl}/`).toString();
-  const mainPages = allPages.filter((page) => !page.guide && page.path !== pages.privacy.path);
+  const mainPages = sitePages(Boolean(options.onlineBooking)).filter((page) => !page.guide && page.path !== pages.privacy.path);
   return [
     `# ${identity.fullName.value}`,
     "",
@@ -225,7 +225,7 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
     "",
     ...guideList.flatMap((guide) => guideText(guide, siteUrl)),
     "## Questions and answers",
-    ...faq.flatMap((group) => [
+    ...faqFor(Boolean(options.onlineBooking)).flatMap((group) => [
       "",
       `### ${group.title}`,
       ...group.entries.flatMap((entry) => ["", `**${entry.question}**`, credited(inlineToTextWithUrls(entry.answer, siteUrl))]),

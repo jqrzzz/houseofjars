@@ -11,10 +11,11 @@ import { rules, times } from "@/content/stay";
 import { lowerFirst } from "@/content/text";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pageMetadata } from "@/lib/metadata";
+import { bookPage } from "@/lib/pages";
 import { pages } from "@/lib/site";
 import styles from "./book.module.css";
 
-export const metadata = pageMetadata(pages.book);
+export const metadata = pageMetadata(bookPage());
 
 const platforms = [
   { name: "Booking.com", href: identity.links.booking.value },
