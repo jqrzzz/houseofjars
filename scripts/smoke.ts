@@ -30,9 +30,11 @@
  * its beds, booking closed (503) and a busy line (429), and sends the message
  * form. In both, a dated /book link followed without a reload (as Next.js
  * follows the links in Shadow's replies), from another page and from /book
- * itself, must fill in the forms. Against a real Shadow Check-in nothing is
- * sent (no test bookings or inquiries reach the team). Screenshots are saved
- * to ./screenshots.
+ * itself, must fill in the forms. With online booking, Shadow's free-beds
+ * card is checked too, from a canned reply (this test doesn't fake Claude):
+ * its stay, its rooms, and Book these dates opening /book at those dates.
+ * Against a real Shadow Check-in nothing is sent (no test bookings or
+ * inquiries reach the team). Screenshots are saved to ./screenshots.
  *
  * Start the site afresh for each run against the fake: the site's own limits
  * (per server instance, 10 booking requests at once, then one every 6
@@ -46,6 +48,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from "playwrig
 import { content } from "../content";
 import { isFirm } from "../content/certainty";
 import { formatMoney } from "../lib/booking/flow";
+import { encodeEvent, type AvailabilityCard, type ConciergeEvent } from "../lib/concierge/protocol";
 import { addDays, formatDay, houseToday, nightsBetween } from "../lib/dates";
 import { dateWindow } from "../lib/inquiry/dates";
 import { collectFacts, factsMentionedIn } from "../lib/content-audit";
@@ -264,6 +267,73 @@ async function concierge(browser: Browser, viewport: Viewport, scheme: Scheme) {
   await dialog.waitFor({ state: "hidden" });
   const unexpected = errors.filter((error) => !(error.includes("503") && !configured));
   check(unexpected.length === 0, `${label}: console errors: ${unexpected.join(" | ")}`);
+  await context.close();
+}
+
+/**
+ * Free beds in Shadow's reply (check_availability). This test doesn't fake
+ * Claude, so the chat window is given a canned reply in the protocol's own
+ * events, carrying a card as the server builds it from Shadow Check-in's
+ * answer. The card must show the stay and its rooms, and Book these dates
+ * must open /book at those dates without a reload.
+ */
+async function conciergeCard(browser: Browser, viewport: Viewport, scheme: Scheme, offset: number) {
+  const { context, page, errors } = await open(browser, viewport, scheme);
+  const label = `free beds card (${viewport.name}, ${scheme})`;
+  const [checkIn, checkOut] = [houseDay(offset), houseDay(offset + 2)];
+  const card: AvailabilityCard = {
+    check_in: checkIn,
+    check_out: checkOut,
+    nights: 2,
+    guests: 2,
+    rooms: [
+      { name: FAKE_ROOMS[0]!.name, kind: "mixed_dorm", free: FAKE_ROOMS[0]!.beds },
+      { name: FAKE_ROOMS[1]!.name, kind: "female_dorm", free: FAKE_ROOMS[1]!.beds },
+    ],
+  };
+  const reply: ConciergeEvent[] = [
+    { type: "availability", card },
+    { type: "text", text: "Yes: beds are free for those two nights, in the mixed dorm and the female dorm. " },
+    { type: "text", text: "Press Book these dates below to book them; nothing is held for you until you send the request." },
+    { type: "done" },
+  ];
+  await page.route("**/api/concierge", (route) =>
+    route.fulfill({ status: 200, contentType: "application/x-ndjson; charset=utf-8", body: reply.map(encodeEvent).join("") }),
+  );
+
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  const question = page.locator("[data-ask-shadow]", { hasText: "Is breakfast included?" });
+  await question.scrollIntoViewIfNeeded();
+  await question.click();
+  const dialog = page.getByRole("dialog", { name: "Shadow" });
+  await dialog.waitFor({ state: "visible" });
+  await dialog.getByRole("textbox", { name: "Your question for Shadow" }).fill("Any beds for two of us, for two nights?");
+  await dialog.getByRole("button", { name: "Send" }).click();
+
+  const shown = dialog.getByRole("region", { name: "Free beds for your dates" });
+  await shown.waitFor();
+  const text = (await shown.textContent()) ?? "";
+  check(
+    text.includes(`${formatDay(checkIn)} to ${formatDay(checkOut)} 2 nights`) &&
+      card.rooms.every((room) => text.includes(`${room.name} ${room.free} beds free every night`)),
+    `${label}: shows "${text.slice(0, 160)}"`,
+  );
+  const book = shown.getByRole("link", { name: "Book these dates" });
+  const href = await book.getAttribute("href");
+  check(href === `/book?check_in=${checkIn}&check_out=${checkOut}&guests=2`, `${label}: Book these dates links to ${href}`);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${outDir}/concierge-card-${viewport.width}-${scheme}.png` });
+
+  await book.click();
+  await dialog.waitFor({ state: "hidden" });
+  const flow = page.locator("#book-online");
+  await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
+  const stay = (await flow.getByRole("complementary", { name: "Your stay" }).textContent()) ?? "";
+  check(
+    stay.includes(formatDay(checkIn)) && stay.includes(formatDay(checkOut)),
+    `${label}: /book shows "${stay.slice(0, 80)}", expected ${checkIn} to ${checkOut}`,
+  );
+  check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
   await context.close();
 }
 
@@ -720,6 +790,13 @@ async function main() {
     await concierge(browser, viewports[1], "dark");
     await bookingPages(browser, mode);
     await bookingSoftNavigation(browser, mode, fake);
+    // Shadow has check_availability only when the site takes bookings online.
+    if (mode !== "off") {
+      let offset = 80;
+      for (const viewport of viewports) {
+        for (const scheme of schemes) await conciergeCard(browser, viewport, scheme, (offset += 3));
+      }
+    }
     if (mode === "fake" && fake) {
       await bookingWalk(browser, viewports[0], "light", fake, 10);
       await bookingWalk(browser, viewports[1], "light", fake, 12);
