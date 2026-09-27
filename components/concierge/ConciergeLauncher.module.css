@@ -1,41 +1,72 @@
-.launcher {
+/*
+ * Phones: a dock along the bottom of the screen, opaque like a toolbar, so
+ * the button has its own lane and never lies over the page (the footer keeps
+ * room for it at the end of every page). Wider screens: the button floats in
+ * the corner, in the margin beside the page.
+ */
+.dock {
+  --away: translateY(calc(100% + 1px));
+  --away-opacity: 1;
   position: fixed;
   z-index: 40;
-  right: max(1rem, env(safe-area-inset-right));
-  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-s);
+  padding: 0.5rem max(1rem, env(safe-area-inset-right)) calc(0.5rem + env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  border-top: 1px solid var(--rule);
+  background: var(--page);
+  box-shadow: 0 -6px 20px rgb(35 23 16 / 0.06);
+  transition:
+    transform 240ms var(--ease-out),
+    opacity 240ms ease,
+    visibility 240ms;
+}
+
+/*
+ * Out of the way while something that offers Shadow itself, or asks for the
+ * guest's attention (the booking form), reaches into the bottom of the screen
+ * (and until that has been checked); while the guest is typing in a form, so
+ * it never covers a field or sits on the keyboard; and while the phone menu
+ * is open.
+ */
+:global(body:has([data-hides-launcher])) .dock:not([data-hidden="false"]),
+:global(body:has(main :is(input, select, textarea):focus)) .dock,
+:global(body:has(header details[open])) .dock,
+.dock[data-hidden="true"] {
+  opacity: var(--away-opacity);
+  visibility: hidden;
+  transform: var(--away);
+  pointer-events: none;
+}
+
+/* Phones: the dock comes up once the header, with its own Book button, has scrolled away (and not before that is known). */
+@media (max-width: 47.99rem) {
+  .dock:not([data-header="false"]) {
+    visibility: hidden;
+    transform: var(--away);
+    pointer-events: none;
+  }
+}
+
+.launcher {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.3rem;
+  padding: 0.25rem 1.1rem 0.25rem 0.25rem;
   border: 1px solid rgb(247 238 221 / 0.18);
   border-radius: 999px;
   background: var(--brown);
   color: var(--on-brown);
-  box-shadow: var(--shadow-lift);
   font-weight: 600;
   font-size: 0.975rem;
   transition:
     transform 220ms var(--ease-out),
-    opacity 220ms ease,
-    visibility 220ms,
     box-shadow 220ms ease;
-}
-
-/*
- * Hidden while the home hero is on screen (and until that has been checked),
- * and while the guest is typing in a form on the page, so it never covers a field.
- */
-:global(body:has([data-hides-launcher])) .launcher:not([data-hidden="false"]),
-:global(body:has(main :is(input, select, textarea):focus)) .launcher,
-.launcher[data-hidden="true"] {
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(0.75rem);
-  pointer-events: none;
-}
-
-.launcher:hover {
-  transform: translateY(-2px);
 }
 
 .launcher:focus-visible {
@@ -44,8 +75,8 @@
 
 .avatar {
   display: block;
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
   overflow: hidden;
   background: var(--brown-deep);
@@ -57,26 +88,78 @@
   height: 100%;
 }
 
-.label {
-  display: none;
-  padding-right: 1rem;
+@media (min-width: 48rem) {
+  .dock {
+    --away: translateY(0.75rem);
+    --away-opacity: 0;
+    left: auto;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .book {
+    display: none;
+  }
+
+  .launcher {
+    padding: 0.3rem;
+    box-shadow: var(--shadow-lift);
+  }
+
+  .launcher:hover {
+    transform: translateY(-2px);
+  }
+
+  .avatar {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  /*
+   * The name shows where the margin beside the page can hold it, so it never
+   * lies over the text; narrower, it opens on hover and keyboard focus.
+   */
+  .label {
+    display: none;
+    padding-right: 1rem;
+  }
 }
 
-@media (min-width: 48rem) {
+@media (min-width: 100rem) {
   .label {
     display: inline;
   }
 }
 
+@media (hover: hover) and (min-width: 48rem) {
+  .launcher:is(:hover, :focus-visible) .label {
+    display: inline;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
+  .dock {
+    box-shadow: 0 -6px 20px rgb(0 0 0 / 0.3);
+  }
+
   .launcher {
     background: #2a1d13;
     border-color: rgb(232 149 43 / 0.45);
   }
 }
 
+@media (prefers-color-scheme: dark) and (min-width: 48rem) {
+  .dock {
+    box-shadow: none;
+  }
+}
+
 @media print {
-  .launcher {
+  .dock {
     display: none;
   }
 }

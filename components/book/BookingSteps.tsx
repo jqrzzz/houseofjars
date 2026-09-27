@@ -21,6 +21,7 @@ import {
 import { MAX_GUESTS, MAX_MESSAGE, MAX_NAME, type BookingMode, type BookingProblem, type FieldIssue, type RoomType } from "@/lib/booking/types";
 import { formatDay, formatHouseTime, nightsBetween } from "@/lib/dates";
 import { pages } from "@/lib/site";
+import { AskShadowButton } from "../concierge/AskShadowButton";
 import { ContactDetails } from "../contact/ContactDetails";
 import { CopyButton } from "../contact/CopyButton";
 import buttons from "../ui/button.module.css";
@@ -898,7 +899,8 @@ export function StayStub({ stay, beds, price }: { stay: Stay | null; beds: strin
           ))}
         </ul>
         <p className={styles.stubText}>
-          Or <a href="#message">send the team a message</a>.
+          Or <a href="#message">send the team a message</a>, or{" "}
+          <AskShadowButton className={styles.linkButton}>ask Shadow</AskShadowButton>.
         </p>
       </div>
     </aside>

@@ -165,7 +165,8 @@ function Frame({
   children: ReactNode;
 }) {
   return (
-    <section ref={sectionRef} id="book-online" aria-labelledby={headingId} className={styles.section}>
+    // The floating Ask Shadow button steps aside for the form (the stub offers Shadow instead).
+    <section ref={sectionRef} id="book-online" aria-labelledby={headingId} className={styles.section} data-hides-launcher="">
       <div className="container">
         <div className={styles.ticket}>
           <div className={styles.main}>

@@ -251,6 +251,24 @@
   text-decoration-color: currentColor;
 }
 
+/* A button that reads as a link in running text. */
+.linkButton {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: var(--underline-offset);
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.linkButton:hover {
+  text-decoration-color: currentColor;
+}
+
 .notice {
   display: grid;
   gap: var(--space-xs);

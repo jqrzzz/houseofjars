@@ -6,7 +6,7 @@
   --text-soft: var(--deep-text-soft);
   --accent-text: var(--deep-text);
   --focus: var(--saffron-on-brown);
-  /* Room below the last line for the floating "Ask Shadow" button, so nothing ends up under it. */
+  /* Room below the last line for Shadow's button (a dock on phones), so nothing ends up under it. */
   padding-bottom: calc(var(--space-2xl) + 4.5rem + env(safe-area-inset-bottom));
 }
 

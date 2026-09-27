@@ -8,7 +8,7 @@ import styles from "./SiteHeader.module.css";
 export function SiteHeader() {
   return (
     // Named inline (a CSS module would scope the name): the header holds still while pages change beneath it.
-    <header className={styles.header} style={{ viewTransitionName: "site-header" }}>
+    <header className={styles.header} style={{ viewTransitionName: "site-header" }} data-site-header="">
       <div className={`container ${styles.inner}`}>
         <Wordmark />
         <nav aria-label="Main" className={styles.desktopNav}>
