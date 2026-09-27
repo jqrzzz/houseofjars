@@ -99,7 +99,7 @@ describe("with online booking (W3)", () => {
     expect(rules).toContain("Book these dates button");
     expect(rules).toContain("never say the beds are held or reserved");
     expect(rules).toContain("suggest other dates, Booking.com or Agoda, or leaving a message for the team with prepare_inquiry");
-    expect(rules).toContain("at most three tool calls");
+    expect(rules).toContain("a guest message allows at most 3 tool calls");
     expect(prompt.indexOf("# Checking free beds")).toBeLessThan(prompt.indexOf("# House knowledge"));
     expect(knowledge).toContain("You can look up free beds with check_availability");
   });

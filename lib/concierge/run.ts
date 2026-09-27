@@ -15,16 +15,11 @@ import { CHECK_AVAILABILITY, checkAvailabilityTool, type CheckAvailability } fro
 import { SpendLimitReached, weighUsage, worstCaseCost, type SpendBudget } from "./budget";
 import { mentionsMoney, priceLine } from "./guard";
 import type { HistoryMessage } from "./history";
+import { MAX_TOOL_CALLS } from "./limits";
 import { buildDateLine } from "./prompt";
 import type { ConciergeEvent } from "./protocol";
 import { PREPARE_INQUIRY, prepareInquiryTool, runPrepareInquiry } from "./tool";
 
-/**
- * Tool calls per guest message: enough to check a stay or two and prepare a
- * message for the team. A call beyond them is answered with a tool error that
- * Claude explains, and the reply ends there.
- */
-export const MAX_TOOL_CALLS = 3;
 /** Times a round is re-issued because its streamed tool input could not be parsed. */
 export const MAX_MALFORMED_RETRIES = 1;
 /**

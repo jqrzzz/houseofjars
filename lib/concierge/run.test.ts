@@ -10,13 +10,13 @@ import { availabilityChecker, checkAvailabilityTool, type CheckAvailability } fr
 import { createDailyBudget, SpendLimitReached, type SpendBudget } from "./budget";
 import { priceLine } from "./guard";
 import type { HistoryMessage } from "./history";
+import { MAX_TOOL_CALLS } from "./limits";
 import type { ConciergeEvent } from "./protocol";
 import {
   buildParams,
   classifyError,
   echoableContent,
   isMalformedStream,
-  MAX_TOOL_CALLS,
   runConcierge,
 } from "./run";
 import { createSigner } from "./signing";

@@ -127,7 +127,7 @@ The website has one key for Shadow, so its limits stay strictly inside Shadow's.
 | Website, lookups per client | **At most 20 in any 10 minutes**, cached answers included | `LOOKUP_LIMITS.perClient` |
 | Website, lookups per client that reach Shadow | **At most 8 in any 10 minutes**, so no one visitor can spend the instance's allowance on dates nobody else asks about | `LOOKUP_LIMITS.perClientUncached` |
 | Website, lookups that reach Shadow, per server instance | 20 at once, then one every 20 seconds: **at most 200 in any hour** | `LOOKUP_LIMITS.perInstance` |
-| Website, Shadow the concierge's lookups | At most 3 tool calls per guest message, on top of the lookup limits above, which they share with the booking form | `MAX_TOOL_CALLS` in `lib/concierge/run.ts` |
+| Website, Shadow the concierge's lookups | At most 3 tool calls per guest message, on top of the lookup limits above, which they share with the booking form | `MAX_TOOL_CALLS` in `lib/concierge/limits.ts` |
 
 - Lookups are counted the same whether they come from the booking form or from Shadow, the concierge (below): against the guest's own address, in one cache and one allowance per server instance.
 - Only valid requests count, so a guest fixing a typo is never locked out; a request the instance turns away (busy) costs the guest none of their own allowance.

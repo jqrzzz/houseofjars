@@ -5,6 +5,12 @@ export const MAX_TOTAL_CHARS = 12_000;
 export const MAX_REQUEST_BYTES = 64 * 1024;
 /** Guest messages one conversation may send; after that the chat points to the team. */
 export const MAX_CONVERSATION_TURNS = 20;
+/**
+ * Tool calls per guest message: enough to check a stay or two and prepare a
+ * message for the team. A call beyond them is answered with a tool error that
+ * Claude explains, and the reply ends there.
+ */
+export const MAX_TOOL_CALLS = 3;
 
 /**
  * A message as it goes back to the API: trimmed and within the per-message
