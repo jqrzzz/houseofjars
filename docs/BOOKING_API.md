@@ -9,7 +9,7 @@ Online booking on `/book` shows the free beds for a guest's dates and sends thei
 | `SHADOW_API_URL` and `SHADOW_INQUIRY_KEY` both set | Online booking is on. The key is the same property inbound key as for inquiries ([INQUIRY_API.md](INQUIRY_API.md)). |
 | Either missing | `/book` is the message form plus Booking.com and Agoda, as before; `/api/availability` and `/api/booking` answer `503 {"error":"not_configured"}`. |
 
-The pages that change (`/book`, the booking card on other pages, `/privacy`, `/llms.txt`, `/llms-full.txt`) are static, so they read the two variables **when the site is built**: set them, then redeploy. The API routes and Shadow, the concierge, read them on every request.
+The pages that change (`/book`, the booking card on other pages, `/privacy`, `/llms.txt`, `/llms-full.txt`) are static, so they read the two variables **when the site is built**: set them, then redeploy. The API routes read them on every request; Shadow, the concierge, reads the switch once per server instance, so his instructions and tools stay the same (his prompt cache depends on it).
 
 If Shadow Check-in itself answers `503 {"error":"not_configured"}` (booking not set up there yet), the booking ticket says online booking isn't open and points to Booking.com, Agoda and the message form, which stay on the page as alternatives.
 
@@ -104,6 +104,7 @@ Both live in `app/api/*/route.ts`, built from `lib/booking/handler.ts`, and answ
 - The website's own checks, before anything reaches Shadow or the cache: real dates, check-in from today in Vientiane, check-out after check-in, at most 365 nights, within two years, 1 to 20 guests. The house's own limits (nights, guests, how far ahead) are Shadow's to apply; the booking calendar keeps to the ones Shadow sends.
 - Each answer is cached for **60 seconds per query** on each server instance, and identical lookups under way share one call to Shadow. The cache's key is the checked query (dates and a whole number of guests), never the text of the URL: parameter order, repeated parameters (the first counts), extra ones and `guests=02` all find the same answer, and the query sent to Shadow is rebuilt from the same values. Availability, "not configured" and Shadow turning the stay down (`400`, for example over the house's limits) are kept; a failure is asked about again straight away. A booking, or a 409, clears every cached answer about its nights.
 - Answers: `200` Shadow's availability without `property`; `400 invalid_request` with issues; `429 rate_limited` (with `Retry-After`); `503 busy`; `503 not_configured`; `502 unavailable`.
+- The checks, cache and limits are one function, `findAvailability` (`lib/booking/handler.ts`), which Shadow, the concierge, calls too ([below](#shadow-the-concierge)).
 
 ### `POST /api/booking`
 
@@ -126,7 +127,9 @@ The website has one key for Shadow, so its limits stay strictly inside Shadow's.
 | Website, lookups per client | **At most 20 in any 10 minutes**, cached answers included | `LOOKUP_LIMITS.perClient` |
 | Website, lookups per client that reach Shadow | **At most 8 in any 10 minutes**, so no one visitor can spend the instance's allowance on dates nobody else asks about | `LOOKUP_LIMITS.perClientUncached` |
 | Website, lookups that reach Shadow, per server instance | 20 at once, then one every 20 seconds: **at most 200 in any hour** | `LOOKUP_LIMITS.perInstance` |
+| Website, Shadow the concierge's lookups | At most 3 tool calls per guest message, on top of the lookup limits above, which they share with the booking form | `MAX_TOOL_CALLS` in `lib/concierge/run.ts` |
 
+- Lookups are counted the same whether they come from the booking form or from Shadow, the concierge (below): against the guest's own address, in one cache and one allowance per server instance.
 - Only valid requests count, so a guest fixing a typo is never locked out; a request the instance turns away (busy) costs the guest none of their own allowance.
 - Each `429` carries `Retry-After`, and the page says how long to wait from it ("in about 20 minutes"), as something that has come from this connection, which others may share.
 - Inquiries have their own gate (see [INQUIRY_API.md](INQUIRY_API.md)): the contract gives booking requests their own per-key limit.
@@ -161,7 +164,13 @@ The browser's Back button moves between steps. A link such as `/book?check_in=20
 
 ## Shadow, the concierge
 
-With online booking on, Shadow's instructions point guests to `/book`, with their dates filled in when they have given them. He still sees no prices or beds himself: he never quotes a price or promises a bed, and a reply that starts quoting a price is replaced by a line pointing to the booking page, Booking.com and Agoda (`lib/concierge/guard.ts`).
+With online booking on, Shadow's instructions point guests to `/book`, and he can look up free beds himself with `check_availability` (`lib/concierge/availability.ts`). He is a second caller of the same lookup, inside the same limits, and he only reads:
+
+- **One path.** The tool's input is checked with zod (real `YYYY-MM-DD` dates, a whole number of guests from 1 to 20). The stay then goes through `findAvailability` (`lib/booking/handler.ts`), the function behind `GET /api/availability`: the website's own checks and window, the 60-second cache shared with the booking form, and the lookup limits above, counted against the guest's own address (the chat request's). There is no other way for Shadow to reach Shadow Check-in.
+- **No prices.** Claude reads each room type's name, kind, fewest free beds across the nights and whether it can be booked for that many guests, copied field by field from the answer, so a price never reaches it. When nothing can be booked it reads why, from the website's checks or Shadow Check-in's own counts and limits: `past`, `check_out_not_after_check_in`, `too_short`, `too_long`, `outside_window`, `too_many_guests`, `not_taken_online` (Shadow Check-in's `400` about the dates), `fully_booked` or `booking_closed` (its `503`).
+- **Limits and failures are answers.** `rate_limited` (with the minutes to wait), `busy` and `unavailable` come back as tool errors Claude relays, never as an error in the chat. A guest message allows at most 3 tool calls; a fourth is turned away with a `limit_reached` error Claude explains, and the reply ends there.
+- **The hand-off.** When something can be booked, the server builds a card from Shadow Check-in's own answer (never from Claude's words) and streams it to the chat window: the dates, the number of guests, the room types that can be booked with their free beds, and a **Book these dates** link to `/book?check_in=…&check_out=…&guests=…`, which opens the booking form at those beds without a reload.
+- **Never a promise.** Shadow says what is free and points to the button, in two to four sentences. Free now is not held: nothing is held until the guest sends a booking request. He never quotes a price, and a reply that starts quoting one is replaced by a line pointing to the booking page, Booking.com and Agoda (`lib/concierge/guard.ts`).
 
 ## Try it locally
 

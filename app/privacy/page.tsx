@@ -77,6 +77,12 @@ export default function PrivacyPage() {
             The questions you type are sent to our server and to Anthropic, which writes Shadow’s replies. The website
             does not save the conversation: it stays in your browser tab until you close it.
           </p>
+          {online ? (
+            <p>
+              If you ask Shadow about free beds, our server looks up your dates and the number of guests in the
+              house’s booking system, just as the booking form does. Nothing else goes with them, and nothing is booked.
+            </p>
+          ) : null}
           <p>
             If you ask Shadow to pass a message to the team, he shows you exactly what would be sent: the same kind of
             details as the booking form, plus a sentence or two summing up what you asked. Nothing is sent until you
