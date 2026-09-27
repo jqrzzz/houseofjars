@@ -29,7 +29,8 @@ export function BookingCard() {
   return (
     <Section space="m" labelledBy="booking-card-title" className={styles.section}>
       <div className="container">
-        <div className={styles.ticket}>
+        {/* A booking form of its own: Shadow's dock steps aside while it is at the bottom of the screen. */}
+        <div className={styles.ticket} data-hides-launcher="">
           <div className={styles.main}>
             <TextileBand pattern="lozenge" weave="view" />
             <form

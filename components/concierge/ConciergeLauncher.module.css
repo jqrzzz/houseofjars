@@ -29,7 +29,7 @@
 
 /*
  * Out of the way while something that offers Shadow itself, or asks for the
- * guest's attention (the booking form), reaches into the bottom of the screen
+ * guest's attention (a booking form), reaches into the bottom of the screen
  * (and until that has been checked); while the guest is typing in a form, so
  * it never covers a field or sits on the keyboard; and while the phone menu
  * is open.

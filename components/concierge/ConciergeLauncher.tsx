@@ -24,11 +24,11 @@ function loadPanel() {
  * the concierge, pre-filled with the attribute's text.
  *
  * On phones the dock waits until the site header (which has its own Book
- * button) has scrolled away. While an element marked `data-hides-launcher` (the home hero, the booking
- * form, every inline Ask Shadow button) reaches into the bottom of the
- * screen, the button steps aside. Elements that arrive later (the booking
- * form loads its own code) are picked up as they appear. CSS hides the
- * button until the first check, so it never flashes.
+ * button) has scrolled away. While an element marked `data-hides-launcher`
+ * (the home hero, the booking forms, every inline Ask Shadow button) reaches
+ * into the bottom of the screen, the button steps aside. Elements that arrive
+ * later (the booking form loads its own code) are picked up as they appear.
+ * CSS hides the button until the first check, so it never flashes.
  */
 export function ConciergeLauncher() {
   const [Panel, setPanel] = useState<ComponentType<ConciergePanelProps> | null>(null);
