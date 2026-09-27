@@ -146,8 +146,22 @@
     padding-top: clamp(1.25rem, 0.5rem + 1.5vw, 2.5rem);
   }
 
+  /* Room above the line for the ornament, and air between the two. */
   .greeting {
-    margin-top: 2.6rem;
+    margin-top: 4.6rem;
+  }
+
+  /* The ornament says the word large; the line under it gives its reading. The small Lao word stays for screen readers. */
+  .greeting .lao {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .greeting .dot {
+    display: none;
   }
 
   .copy {
@@ -162,15 +176,15 @@
   .ornament {
     display: block;
     position: absolute;
-    z-index: -1;
-    left: -0.05em;
-    bottom: 0.2em;
+    left: -0.04em;
+    bottom: calc(100% + 0.12em);
     font-family: var(--font-lao-stack);
-    font-size: 4rem;
+    font-size: 4.25rem;
     font-weight: 500;
     line-height: 1;
     letter-spacing: 0;
-    color: color-mix(in srgb, var(--stone) 50%, transparent);
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--stone-dark) 42%, transparent);
     user-select: none;
     pointer-events: none;
   }
@@ -401,6 +415,6 @@
   }
 
   .ornament {
-    color: color-mix(in srgb, var(--stone-dark) 28%, transparent);
+    color: color-mix(in srgb, var(--stone-dark) 34%, transparent);
   }
 }
