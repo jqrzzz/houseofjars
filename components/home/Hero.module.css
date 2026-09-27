@@ -300,27 +300,69 @@
   fill: var(--jar-3);
 }
 
-
-
-
-
-
-
-
-
-
 .rim {
   fill: none;
   stroke: url(#hero-rim);
   stroke-width: 7;
 }
 
-
 .top {
   fill: #fff;
   opacity: 0.34;
 }
 
+/* Age: rain streaks and a damp foot, the collar's shadow, lichen, a crack, a broken piece. */
+.stain {
+  stop-color: #2b1c10;
+  stop-opacity: 0.13;
+}
+
+.clean {
+  stop-color: #2b1c10;
+  stop-opacity: 0;
+}
+
+.collar {
+  fill: #140c06;
+  opacity: 0.24;
+}
+
+.mouth {
+  fill: #2a1a0e;
+  opacity: 0.6;
+}
+
+.ochre {
+  stroke: #c1913a;
+  stroke-width: 7;
+  opacity: 0.55;
+}
+
+.green {
+  stroke: #8f9a7a;
+  stroke-width: 3.2;
+  opacity: 0.5;
+}
+
+.crack {
+  fill: none;
+  stroke: #2b1c10;
+  stroke-width: 2.4;
+  opacity: 0.45;
+}
+
+.bite {
+  fill: #3a2a1e;
+  opacity: 0.85;
+}
+
+.biteEdge {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  opacity: 0.35;
+}
 
 
 /* The load sequence: the sun rises, the jars settle one by one, the band weaves in. */
@@ -412,6 +454,14 @@
 
   .top {
     opacity: 0.16;
+  }
+
+  .ochre {
+    opacity: 0.4;
+  }
+
+  .biteEdge {
+    opacity: 0.18;
   }
 
   .ornament {

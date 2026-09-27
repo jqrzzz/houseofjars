@@ -16,7 +16,7 @@ import {
   jarGeometry,
   jarTransform,
 } from "@/components/art/mekong-dawn";
-import { num, specks } from "@/components/art/stone-jar";
+import { specks } from "@/components/art/stone-jar";
 import styles from "./Hero.module.css";
 
 const tones = { 1: styles.tone1, 2: styles.tone2, 3: styles.tone3 } as const;
@@ -54,6 +54,13 @@ export function MekongDawn() {
         <linearGradient id="hero-rim" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" className={styles.rimStop} />
           <stop offset="0.7" className={styles.rimEnd} />
+        </linearGradient>
+        {/* Weathering: darkest under the collar, fading down the stone, dark again at the damp foot. */}
+        <linearGradient id="hero-stain" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" className={styles.stain} />
+          <stop offset=".6" className={styles.clean} />
+          <stop offset=".86" className={styles.clean} />
+          <stop offset="1" className={styles.stain} />
         </linearGradient>
         <pattern id="hero-grain" width="31" height="31" patternUnits="userSpaceOnUse">
           <path d={GRAIN} stroke="#2b1c10" strokeLinecap="round" opacity=".3" />
@@ -100,26 +107,31 @@ export function MekongDawn() {
             style={{ "--step": settleOrder.indexOf(jar) } as CSSProperties}
           >
             <g transform={jarTransform(jar)}>
-              <ellipse cx="0" cy="-1" rx={num(jar.spec.w * 0.62)} ry="7" fill="#3b2414" opacity=".22" />
+              <ellipse cx="0" cy="-1" rx={Math.round(jar.spec.w * 0.62)} ry="7" fill="#3b2414" opacity=".22" />
               <use href={href} className={tones[jar.tone]} />
               <g clipPath={`url(#hero-clip-${jar.id})`}>
-                <path d={jarShape.litPlanes} fill="#fff" opacity=".07" />
-                <path d={jarShape.darkPlanes} fill="#1a0f07" opacity=".07" />
-                <rect {...jarShape.box} fill="url(#hero-grain)" />
+                <use href={href} fill="url(#hero-grain)" />
                 <use href={href} fill="url(#hero-shade)" />
-                <path d={jarShape.under} fill="#140c06" opacity=".26" />
-                <path d={jarShape.streaks} fill="none" stroke="#2b1c10" strokeWidth="7" strokeLinecap="round" opacity=".05" />
+                <path d={jarShape.stains} fill="url(#hero-stain)" />
+                <path d={jarShape.collar} className={styles.collar} />
                 {jar.lichen ? (
-                  <g stroke="#8f9a7a" strokeLinecap="round" opacity=".45">
-                    <path d={jar.lichen.fine} strokeWidth="2.6" />
-                    <path d={jar.lichen.coarse} strokeWidth="6" />
+                  <g strokeLinecap="round">
+                    <path d={jar.lichen.ochre} className={styles.ochre} />
+                    <path d={jar.lichen.green} className={styles.green} />
                   </g>
                 ) : null}
+                {jarShape.crack ? <path d={jarShape.crack} className={styles.crack} /> : null}
                 <use href={href} className={styles.rim} />
               </g>
-              <path d={jarShape.ledge} fill="#fff" opacity=".1" />
               <path className={styles.top} d={jarShape.top} />
-              <path d={jarShape.mouth} fill="#2a1a0e" opacity=".5" />
+              <path className={styles.mouth} d={jarShape.mouth} />
+              {jarShape.bite ? (
+                <>
+                  <path className={styles.bite} d={jarShape.bite} />
+                  <path className={styles.biteEdge} d={jarShape.biteEdge} />
+                </>
+              ) : null}
+              <path className={styles.ground} d={jarShape.mound} />
             </g>
           </g>
         );

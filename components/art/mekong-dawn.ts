@@ -34,39 +34,86 @@ export interface PlacedJar {
   readonly lean: number;
   /** 1 (light stone) to 3 (dark). */
   readonly tone: 1 | 2 | 3;
-  /** Lichen in the jar's own space: fine specks and a few larger spots. */
-  readonly lichen?: { readonly fine: string; readonly coarse: string };
+  /** Lichen in the jar's own space: ochre crusts and grey-green specks. */
+  readonly lichen?: { readonly ochre: string; readonly green: string };
 }
 
-/** Back to front. The jars settle left to right. */
+/**
+ * Back to front. The jars settle left to right. Each is old in its own way:
+ * the small one leans and has lost a piece of its front, the big one and
+ * the one at the edge are cracked; all have sunk a little into the bank.
+ */
 export const JARS: readonly PlacedJar[] = [
   {
     id: "b",
-    spec: { w: 200, h: 180, foot: 0.78, belly: 0.46, neck: 0.8, lip: 0.88, lipH: 0.13, top: 0.08, skew: 0.05 },
-    x: 1012,
-    y: 738,
-    lean: -4,
+    spec: {
+      w: 212,
+      h: 166,
+      foot: 0.86,
+      belly: 0.38,
+      neck: 0.88,
+      lip: 0.96,
+      lipH: 0.16,
+      top: 0.11,
+      skew: 0.05,
+      seed: 3,
+      rough: 0.04,
+      bite: { at: 0.3, width: 0.5, depth: 0.24 },
+    },
+    x: 1018,
+    y: 742,
+    lean: -7,
     tone: 1,
     lichen: {
-      fine: lichen(7, -46, -48, 28, 10) + lichen(11, 28, -126, 15, 5),
-      coarse: lichen(13, -50, -44, 16, 4) + lichen(17, 26, -124, 8, 2),
+      ochre: lichen(7, -58, -110, 11, 12) + lichen(11, 50, -58, 7, 6),
+      green: lichen(13, -30, -46, 24, 8),
     },
   },
   {
     id: "c",
-    spec: { w: 160, h: 198, foot: 0.8, belly: 0.5, neck: 0.78, lip: 0.88, lipH: 0.1, top: 0.08, skew: -0.04 },
-    x: 1548,
+    spec: {
+      w: 170,
+      h: 204,
+      foot: 0.8,
+      belly: 0.46,
+      neck: 0.86,
+      lip: 0.92,
+      lipH: 0.12,
+      top: 0.09,
+      skew: -0.04,
+      seed: 5,
+      rough: 0.04,
+      crack: { at: -0.25, length: 0.42 },
+    },
+    x: 1544,
     y: 744,
-    lean: 5,
+    lean: 4.5,
     tone: 3,
   },
   {
     id: "a",
-    spec: { w: 240, h: 372, foot: 0.78, belly: 0.44, neck: 0.76, lip: 0.86, lipH: 0.075, top: 0.07, notch: 0.28, skew: 0.02 },
+    spec: {
+      w: 256,
+      h: 336,
+      foot: 0.84,
+      belly: 0.36,
+      neck: 0.86,
+      lip: 0.92,
+      lipH: 0.11,
+      top: 0.08,
+      skew: 0.03,
+      seed: 11,
+      rough: 0.045,
+      crack: { at: 0.34, length: 0.3 },
+    },
     x: 1216,
     y: 750,
-    lean: 1.5,
+    lean: 2.5,
     tone: 2,
+    lichen: {
+      ochre: lichen(23, -74, -262, 13, 13) + lichen(29, 72, -208, 7, 6),
+      green: lichen(31, -46, -96, 28, 9),
+    },
   },
 ];
 
@@ -75,7 +122,7 @@ export const jarGeometry = (jar: PlacedJar): JarGeometry => stoneJar(jar.spec);
 export const jarTransform = (jar: PlacedJar) => `translate(${num(jar.x)} ${num(jar.y)}) rotate(${num(jar.lean)})`;
 
 /** A fallen lid in the gap between the big jar and the small one. */
-export const LID = { x: 1396, y: 730, lean: -5, ...stoneLid(52, 9.5, 17) } as const;
+export const LID = { x: 1396, y: 732, lean: -4, ...stoneLid(52, 10, 16) } as const;
 
 export const SUN = { cx: 1398, cy: 596, r: 108 } as const;
 export const MOON = { cx: 1418, cy: 452, r: 36 } as const;
@@ -126,7 +173,7 @@ export const RIVER_BANDS = RIVER.slice(0, 3).map(
 export const GLINTS = (() => {
   const random = seeded(23);
   const ticks: string[] = [];
-  for (let x = -1500; x < SCENE.width; x += 95 + random() * 110) {
+  for (let x = -1000; x < SCENE.width; x += 95 + random() * 110) {
     const band = Math.floor(random() * 3);
     const y = RIVER[band]! + 8 + random() * 16;
     ticks.push(`M${num(x)} ${num(y)}h${num(10 + random() * 34)}`);
@@ -157,5 +204,5 @@ const tufts: readonly (readonly [number, number])[] = [
 ];
 export const TUFTS = tufts
   // Three blades fanning up from one root.
-  .map(([x, y]) => `M${x} ${y}q-3-5-8-7M${x} ${y}q-1-7 1-12M${x} ${y}q3-4 8-5`)
+  .map(([x, y]) => `M${x} ${y}q-3-5-8-7m8 7q-1-7 1-12m-1 12q3-4 8-5`)
   .join("");

@@ -14,22 +14,28 @@ const river = ["#f1dbbd", "#e7cdaa", "#ddbf98"] as const;
 function jarSvg(jar: (typeof JARS)[number]): string {
   const shape = jarGeometry(jar);
   const lichen = jar.lichen
-    ? `<g stroke="#8f9a7a" stroke-opacity=".45" stroke-linecap="round"><path d="${jar.lichen.fine}" stroke-width="2.6"/><path d="${jar.lichen.coarse}" stroke-width="6"/></g>`
+    ? `<path d="${jar.lichen.ochre}" stroke="#c1913a" stroke-opacity=".55" stroke-width="7" stroke-linecap="round"/>` +
+      `<path d="${jar.lichen.green}" stroke="#8f9a7a" stroke-opacity=".5" stroke-width="3.2" stroke-linecap="round"/>`
+    : "";
+  const crack = shape.crack ? `<path d="${shape.crack}" fill="none" stroke="#2b1c10" stroke-opacity=".45" stroke-width="2.4"/>` : "";
+  const bite = shape.bite
+    ? `<path d="${shape.bite}" fill="#3a2a1e" fill-opacity=".85"/><path d="${shape.biteEdge}" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>`
     : "";
   return (
     `<g transform="${jarTransform(jar)}">` +
     `<ellipse cx="0" cy="-1" rx="${num(jar.spec.w * 0.62)}" ry="7" fill="#3b2414" fill-opacity=".22"/>` +
     `<path d="${shape.body}" fill="${stone[jar.tone - 1]}"/>` +
     `<g clip-path="url(#clip-${jar.id})">` +
-    `<path d="${shape.litPlanes}" fill="#fff" fill-opacity=".07"/>` +
-    `<path d="${shape.darkPlanes}" fill="#1a0f07" fill-opacity=".07"/>` +
     `<path d="${shape.body}" fill="url(#shade)"/>` +
-    `<path d="${shape.under}" fill="#140c06" fill-opacity=".26"/>` +
+    `<path d="${shape.stains}" fill="url(#stain)"/>` +
+    `<path d="${shape.collar}" fill="#140c06" fill-opacity=".24"/>` +
     lichen +
+    crack +
     `</g>` +
-    `<path d="${shape.ledge}" fill="#fff" fill-opacity=".1"/>` +
-    `<path d="${shape.top}" fill="#fff" fill-opacity=".34"/>` +
-    `<path d="${shape.mouth}" fill="#2a1a0e" fill-opacity=".5"/>` +
+    `<path d="${shape.top}" fill="#fff" fill-opacity=".3"/>` +
+    `<path d="${shape.mouth}" fill="#2a1a0e" fill-opacity=".6"/>` +
+    bite +
+    `<path d="${shape.mound}" fill="#bf8a63"/>` +
     `</g>`
   );
 }
@@ -45,6 +51,7 @@ export function mekongDawnSvg(left: number): string {
     `<defs>` +
     `<linearGradient id="sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdb833"/><stop offset=".55" stop-color="#f7931e"/><stop offset="1" stop-color="#ff6b35"/></linearGradient>` +
     `<radialGradient id="glow"><stop offset="0" stop-color="#fdb833" stop-opacity=".4"/><stop offset="1" stop-color="#fdb833" stop-opacity="0"/></radialGradient>` +
+    `<linearGradient id="stain" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1c10" stop-opacity=".13"/><stop offset=".6" stop-color="#2b1c10" stop-opacity="0"/><stop offset=".86" stop-color="#2b1c10" stop-opacity="0"/><stop offset="1" stop-color="#2b1c10" stop-opacity=".13"/></linearGradient>` +
     `<linearGradient id="shade" x1="0" y1="0" x2="1" y2=".3"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#140c06" stop-opacity="0"/><stop offset="1" stop-color="#140c06" stop-opacity=".2"/></linearGradient>` +
     JARS.map((jar) => `<clipPath id="clip-${jar.id}"><path d="${jarGeometry(jar).body}"/></clipPath>`).join("") +
     `</defs>` +

@@ -13,18 +13,40 @@
 }
 
 .lit {
-  fill: #fff;
-  opacity: 0.08;
+  stop-color: #fff;
+  stop-opacity: 0.22;
 }
 
-.dark {
-  fill: #1a0f07;
-  opacity: 0.09;
+.none {
+  stop-color: #fff;
+  stop-opacity: 0;
+}
+
+.shaded {
+  stop-color: #140c06;
+  stop-opacity: 0.22;
+}
+
+.stain {
+  stop-color: #2b1c10;
+  stop-opacity: 0.14;
+}
+
+.clean {
+  stop-color: #2b1c10;
+  stop-opacity: 0;
 }
 
 .under {
   fill: #140c06;
   opacity: 0.22;
+}
+
+.crack {
+  fill: none;
+  stroke: #2b1c10;
+  stroke-width: 2.2;
+  opacity: 0.45;
 }
 
 .top {
