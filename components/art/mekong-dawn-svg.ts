@@ -14,8 +14,7 @@ const river = ["#f1dbbd", "#e7cdaa", "#ddbf98"] as const;
 function jarSvg(jar: (typeof JARS)[number]): string {
   const shape = jarGeometry(jar);
   const lichen = jar.lichen
-    ? `<path d="${jar.lichen.ochre}" stroke="#c1913a" stroke-opacity=".55" stroke-width="7" stroke-linecap="round"/>` +
-      `<path d="${jar.lichen.green}" stroke="#8f9a7a" stroke-opacity=".5" stroke-width="3.2" stroke-linecap="round"/>`
+    ? `<path d="${jar.lichen}" stroke="#c1913a" stroke-opacity=".55" stroke-width="7" stroke-linecap="round"/>`
     : "";
   const crack = shape.crack ? `<path d="${shape.crack}" fill="none" stroke="#2b1c10" stroke-opacity=".45" stroke-width="2.4"/>` : "";
   const bite = shape.bite
@@ -23,7 +22,6 @@ function jarSvg(jar: (typeof JARS)[number]): string {
     : "";
   return (
     `<g transform="${jarTransform(jar)}">` +
-    `<ellipse cx="0" cy="-1" rx="${num(jar.spec.w * 0.62)}" ry="7" fill="#3b2414" fill-opacity=".22"/>` +
     `<path d="${shape.body}" fill="${stone[jar.tone - 1]}"/>` +
     `<g clip-path="url(#clip-${jar.id})">` +
     `<path d="${shape.body}" fill="url(#shade)"/>` +

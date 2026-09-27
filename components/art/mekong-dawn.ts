@@ -34,8 +34,8 @@ export interface PlacedJar {
   readonly lean: number;
   /** 1 (light stone) to 3 (dark). */
   readonly tone: 1 | 2 | 3;
-  /** Lichen in the jar's own space: ochre crusts and grey-green specks. */
-  readonly lichen?: { readonly ochre: string; readonly green: string };
+  /** Ochre lichen crusts, in the jar's own space. */
+  readonly lichen?: string;
 }
 
 /**
@@ -64,10 +64,7 @@ export const JARS: readonly PlacedJar[] = [
     y: 742,
     lean: -7,
     tone: 1,
-    lichen: {
-      ochre: lichen(7, -58, -110, 11, 12) + lichen(11, 50, -58, 7, 6),
-      green: lichen(13, -30, -46, 24, 8),
-    },
+    lichen: lichen(7, -58, -110, 11, 12) + lichen(11, 50, -58, 7, 6),
   },
   {
     id: "c",
@@ -110,10 +107,7 @@ export const JARS: readonly PlacedJar[] = [
     y: 750,
     lean: 2.5,
     tone: 2,
-    lichen: {
-      ochre: lichen(23, -74, -262, 13, 13) + lichen(29, 72, -208, 7, 6),
-      green: lichen(31, -46, -96, 28, 9),
-    },
+    lichen: lichen(23, -74, -262, 13, 13) + lichen(29, 72, -208, 7, 6),
   },
 ];
 

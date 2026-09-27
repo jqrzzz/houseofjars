@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { ShadowFigure } from "../shadow/ShadowFigure";
 import buttons from "../ui/button.module.css";
-import { ArrowIcon } from "../ui/icons";
 import styles from "./ConciergeLauncher.module.css";
 import type { ConciergePanelProps } from "./ConciergePanel";
 
@@ -139,7 +138,6 @@ export function ConciergeLauncher() {
         {pathname === "/book" ? null : (
           <Link href="/book" className={`${buttons.button} ${buttons.primary} ${buttons.small} ${styles.book}`}>
             Book
-            <ArrowIcon />
           </Link>
         )}
       </div>

@@ -107,19 +107,13 @@ export function MekongDawn() {
             style={{ "--step": settleOrder.indexOf(jar) } as CSSProperties}
           >
             <g transform={jarTransform(jar)}>
-              <ellipse cx="0" cy="-1" rx={Math.round(jar.spec.w * 0.62)} ry="7" fill="#3b2414" opacity=".22" />
               <use href={href} className={tones[jar.tone]} />
               <g clipPath={`url(#hero-clip-${jar.id})`}>
                 <use href={href} fill="url(#hero-grain)" />
                 <use href={href} fill="url(#hero-shade)" />
                 <path d={jarShape.stains} fill="url(#hero-stain)" />
                 <path d={jarShape.collar} className={styles.collar} />
-                {jar.lichen ? (
-                  <g strokeLinecap="round">
-                    <path d={jar.lichen.ochre} className={styles.ochre} />
-                    <path d={jar.lichen.green} className={styles.green} />
-                  </g>
-                ) : null}
+                {jar.lichen ? <path d={jar.lichen} className={styles.lichen} /> : null}
                 {jarShape.crack ? <path d={jarShape.crack} className={styles.crack} /> : null}
                 <use href={href} className={styles.rim} />
               </g>

@@ -332,16 +332,11 @@
   opacity: 0.6;
 }
 
-.ochre {
+.lichen {
   stroke: #c1913a;
   stroke-width: 7;
+  stroke-linecap: round;
   opacity: 0.55;
-}
-
-.green {
-  stroke: #8f9a7a;
-  stroke-width: 3.2;
-  opacity: 0.5;
 }
 
 .crack {
@@ -456,7 +451,7 @@
     opacity: 0.16;
   }
 
-  .ochre {
+  .lichen {
     opacity: 0.4;
   }
 
