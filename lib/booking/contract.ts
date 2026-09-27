@@ -292,10 +292,19 @@ export function refusedIssues(body: unknown): FieldIssue[] {
   return issues.length > 0 ? issues : [{ field: "form", message: guestText.checkForm }];
 }
 
+/** Where Shadow's strict schema puts an issue about the body as a whole (a zod path of [], which it writes "body"). */
+const WHOLE_BODY: ReadonlySet<string> = new Set(["body", ""]);
+
 /**
- * Whether a 400 says nothing about the guest's booking itself: the body as a
- * whole was refused (for example keys Shadow doesn't know yet).
+ * Whether a 400 refuses only the body as a whole: what a Shadow Check-in from
+ * before the price protection answers to the quote keys it doesn't know
+ * (unrecognized keys, at the body's root). Only then is the request sent again
+ * without the quote. A bad quote is an issue on quoted_total or
+ * quoted_currency, and an issue on any other field is about the booking
+ * itself: dropping the quote fixes neither, so neither is ever resent.
  */
 export function refusedOnlyTheBody(body: unknown): boolean {
-  return placedIssues(body).length === 0;
+  const parsed = shadowIssuesSchema.safeParse(body);
+  const issues = parsed.success ? parsed.data.issues : [];
+  return issues.length > 0 && issues.every((issue) => WHOLE_BODY.has(issue.field));
 }

@@ -215,11 +215,26 @@ describe("Shadow's 400, in the guest's words", () => {
   });
 
   it("tells a refusal of the body as a whole (keys an older Shadow doesn't know) from one about the booking", () => {
-    // How Shadow Check-in's strict schema reports unknown keys today (lib/inquiries/contract.ts toIssues).
+    // How Shadow Check-in's strict schema reports unknown keys (lib/inquiries/contract.ts toIssues: a path of [] is "body").
     const unknownKeys = { error: "invalid_request", issues: [{ field: "body", message: 'Unrecognized keys: "quoted_total", "quoted_currency"' }] };
     expect(refusedOnlyTheBody(unknownKeys)).toBe(true);
-    expect(refusedOnlyTheBody({ issues: [{ field: "quoted_total", message: "Unknown key." }] })).toBe(true);
+    expect(refusedOnlyTheBody({ issues: [{ field: "", message: "Unrecognized key" }] })).toBe(true);
     expect(refusedOnlyTheBody({ issues: [{ field: "body", message: "?" }, { field: "guests", message: "too many" }] })).toBe(false);
+    expect(refusedOnlyTheBody({ issues: [{ field: "client_ref", message: "Must be a UUID." }] })).toBe(false);
+    // Nothing to go on is not a refusal of the body.
+    expect(refusedOnlyTheBody({ issues: [] })).toBe(false);
+    expect(refusedOnlyTheBody("not json")).toBe(false);
+  });
+
+  it("never takes Shadow's issue on the quote itself for a refusal of the body", () => {
+    // Shadow Check-in with the price protection reports a bad quote on its own field.
+    expect(refusedOnlyTheBody({ issues: [{ field: "quoted_total", message: "Must be 0 or more." }] })).toBe(false);
+    expect(refusedOnlyTheBody({ issues: [{ field: "quoted_currency", message: "Invalid option." }] })).toBe(false);
+    expect(refusedOnlyTheBody({ issues: [{ field: "body", message: "?" }, { field: "quoted_total", message: "?" }] })).toBe(false);
+    // The guest reads the general line: nothing in their booking to point at.
+    expect(refusedIssues({ issues: [{ field: "quoted_currency", message: "Invalid option." }] })).toEqual([
+      { field: "form", message: guestText.checkForm },
+    ]);
   });
 });
 

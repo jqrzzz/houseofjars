@@ -109,9 +109,11 @@ export async function lookUpAvailability(query: AvailabilityQuery, deps: ShadowC
  * The request carries the total the guest saw (quoted_total and
  * quoted_currency), so Shadow books nothing at a price the guest didn't see.
  * A Shadow Check-in from before that part of the contract refuses keys it
- * doesn't know: when its 400 is about the body as a whole, the same request
- * goes again without the quote (nothing was stored), and the confirmation
- * still says if the total differs from the one shown.
+ * doesn't know: when its 400 is about the body as a whole and nothing else,
+ * the same request goes again without the quote (nothing was stored), and the
+ * confirmation still says if the total differs from the one shown. A 400 on
+ * the quote itself never does: the request is never sent without its quote
+ * to a Shadow that checks quotes.
  */
 export async function sendBookingRequest(request: BookingRequest, deps: ShadowCallDeps): Promise<BookingResult> {
   const post = (body: BookingRequest) =>

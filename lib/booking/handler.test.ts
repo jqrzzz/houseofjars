@@ -38,11 +38,20 @@ beforeEach(() => {
 });
 
 /** Both routes, sharing a cache, as app/api/* wires them. */
-function site(overrides: { key?: string; apiUrl?: string; configured?: boolean; timeoutMs?: number } = {}) {
+function site(
+  overrides: { key?: string; apiUrl?: string; configured?: boolean; timeoutMs?: number; fetch?: typeof fetch } = {},
+) {
   const logs: string[] = [];
   const config = () =>
     overrides.configured === false ? null : { apiUrl: overrides.apiUrl ?? fake.url, key: overrides.key ?? fake.key };
-  const shared = { config, cache: createAvailabilityCache(clock), siteUrl, now: clock, log: (m: string) => logs.push(m) };
+  const shared = {
+    config,
+    cache: createAvailabilityCache(clock),
+    siteUrl,
+    now: clock,
+    log: (m: string) => logs.push(m),
+    fetch: overrides.fetch,
+  };
   return {
     logs,
     lookup: createAvailabilityHandler({ ...shared, limiters: createLookupLimiters(clock), timeoutMs: overrides.timeoutMs }),
@@ -611,6 +620,23 @@ describe("POST /api/booking", () => {
     const refused = await book(post({ ...booking, client_ref: "6c7d8e9f-0a1b-4c2d-9e3f-4a5b6c7d8e9f", guests: 7, quoted_total: 1, quoted_currency: "LAK" }));
     expect(refused.status).toBe(400);
     expect((await refused.json()).issues).toContainEqual({ field: "guests", message: guestText.guestsRefused });
+  });
+
+  it("never sends a request again without its quote when Shadow refuses the quote itself", async () => {
+    // A Shadow Check-in with the price protection reports a bad quote on its own field.
+    const sent: Record<string, unknown>[] = [];
+    const refusesTheQuote: typeof fetch = async (_url, init) => {
+      sent.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
+      const issues = [{ field: "quoted_total", message: "The total must be in whole kip." }];
+      return Response.json({ error: "invalid_request", issues }, { status: 400 });
+    };
+    const { book, logs } = site({ fetch: refusesTheQuote });
+    const response = await book(post({ ...booking, quoted_total: 380_000, quoted_currency: "LAK" }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "invalid_request", issues: [{ field: "form", message: guestText.checkForm }] });
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ quoted_total: 380_000, quoted_currency: "LAK" });
+    expect(logs.join("\n")).not.toContain("sent the request without it");
   });
 
   it("passes on a request Shadow accepts without holding its beds (F1W-01)", async () => {

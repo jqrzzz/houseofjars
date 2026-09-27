@@ -287,16 +287,17 @@ export async function startFakeShadow(
     const issues: Issue[] = [];
     const keys = Object.keys(body);
     const known: readonly string[] = state.quotes ? [...BOOKING_KEYS, ...QUOTE_KEYS] : BOOKING_KEYS;
-    for (const extra of keys.filter((k) => !known.includes(k))) {
-      issues.push({ field: extra, message: "Unknown key." });
+    // A strict body, as Shadow Check-in's schema reports it: one issue about the body as a whole.
+    const extras = keys.filter((k) => !known.includes(k));
+    if (extras.length > 0) {
+      issues.push({ field: "body", message: `Unrecognized keys: ${extras.map((k) => `"${k}"`).join(", ")}` });
     }
-    if (state.quotes) {
-      const [total, currency] = [body.quoted_total, body.quoted_currency];
-      const quoted = "quoted_total" in body || "quoted_currency" in body;
-      const whole =
-        (total === null && currency === null) ||
-        (typeof total === "number" && total >= 0 && (currency === "LAK" || currency === "USD"));
-      if (quoted && !whole) issues.push({ field: "quoted_total", message: "A total and its currency, or both null." });
+    // A bad quote is an issue on its own field. One missing from the pair counts as null (compared later).
+    if (state.quotes && "quoted_total" in body && !(body.quoted_total === null || (typeof body.quoted_total === "number" && body.quoted_total >= 0))) {
+      issues.push({ field: "quoted_total", message: "A total of 0 or more, or null." });
+    }
+    if (state.quotes && "quoted_currency" in body && ![null, "LAK", "USD"].includes(body.quoted_currency as string | null)) {
+      issues.push({ field: "quoted_currency", message: "LAK, USD or null." });
     }
     for (const missing of BOOKING_KEYS.filter((k) => !keys.includes(k))) {
       issues.push({ field: missing, message: "Missing (send null for an empty optional field)." });
@@ -343,7 +344,8 @@ export async function startFakeShadow(
     if (minFree < guests) return [409, { error: "unavailable" }];
     // The price protection: the total the guest saw must be the one booked, or nothing is.
     const [total, currency] = [price?.total ?? null, price?.currency ?? null];
-    if ("quoted_total" in body && (body.quoted_total !== total || body.quoted_currency !== currency)) {
+    const quoted = "quoted_total" in body || "quoted_currency" in body;
+    if (quoted && ((body.quoted_total ?? null) !== total || (body.quoted_currency ?? null) !== currency)) {
       return [409, { error: "price_changed", total, currency }];
     }
 
