@@ -1,6 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { fakeClaude, toolUse, type Turn } from "@/test/fake-claude";
+import { FAKE_ROOMS, startFakeShadow, type FakeShadow } from "@/test/fake-shadow";
+import { createAvailabilityCache } from "../booking/cache";
+import { createAvailabilityHandler, type AvailabilityDeps } from "../booking/handler";
+import { createLookupLimiters, LOOKUP_LIMITS } from "../booking/limits";
 import { createRateLimiter } from "../rate-limit";
 import { createDailyBudget } from "./budget";
 import { MAX_CONVERSATION_TURNS } from "./limits";
@@ -10,6 +14,8 @@ import type { StreamMessages } from "./run";
 import { createSigner } from "./signing";
 
 const signer = createSigner("sk-ant-test-key");
+const NOW = new Date("2026-09-26T03:00:00Z");
+const siteUrl = "https://thehouseofjars.com";
 
 const body = {
   session_id: "0b7a7a4e-3c2f-4d1e-9a58-6f2b8c1d9e10",
@@ -23,12 +29,37 @@ const post = (payload: unknown, headers: Record<string, string> = {}) =>
     body: JSON.stringify(payload),
   });
 
+// A stand-in for Shadow Check-in, for the lookups check_availability makes.
+let fake: FakeShadow;
+const clock = () => NOW.getTime();
+beforeAll(async () => {
+  fake = await startFakeShadow({ now: clock });
+});
+afterAll(async () => {
+  await fake.close();
+});
+beforeEach(() => {
+  fake.reset();
+});
+
+/** /api/availability's lookup as the site wires it (one cache and one set of limits per process). */
+function bookingPath(configured = true): AvailabilityDeps {
+  return {
+    config: () => (configured ? { apiUrl: fake.url, key: fake.key } : null),
+    cache: createAvailabilityCache(clock),
+    limiters: createLookupLimiters(clock),
+    now: clock,
+    log: () => {},
+  };
+}
+
 function handler(
   streamer: StreamMessages | null,
   capacity = 5,
   budget = createDailyBudget({ limit: 10_000_000 }),
   log: (message: string) => void = () => {},
   onlineBooking = false,
+  availability: AvailabilityDeps = bookingPath(onlineBooking),
 ) {
   return createConciergeHandler({
     onlineBooking: () => onlineBooking,
@@ -38,8 +69,9 @@ function handler(
     conversations: createRateLimiter({ capacity: MAX_CONVERSATION_TURNS, refillMs: 86_400_000 }),
     budget,
     model: () => "claude-opus-5",
-    siteUrl: "https://thehouseofjars.com",
-    now: () => new Date("2026-09-26T03:00:00Z"),
+    siteUrl,
+    availability,
+    now: () => NOW,
     log,
   });
 }
@@ -229,12 +261,87 @@ describe("POST /api/concierge", () => {
     const response = await handler(streamer, 5, undefined, () => {}, true)(post(body));
     const system = JSON.stringify(calls[0]!.system);
     expect(system).toContain("https://thehouseofjars.com/book?check_in=YYYY-MM-DD&check_out=YYYY-MM-DD&guests=N");
-    expect(system).toContain("Never quote a price or promise that a bed is free");
+    expect(system).toContain("You can't see prices. Never quote or estimate one");
+    expect(system).toContain("never promise a bed");
     const text = (await events(response))
       .flatMap((event) => (event.type === "text" ? [event.text] : event.type === "rewind" ? ["|"] : []))
       .join("");
     const shown = text.slice(text.lastIndexOf("|") + 1);
     expect(shown).toContain("The booking page (https://thehouseofjars.com/book) shows the free beds for your dates");
+    expect(shown).not.toContain("live availability");
     expect(shown).not.toMatch(/\$\s?\d/);
+  });
+});
+
+describe("free beds in the chat (check_availability)", () => {
+  const stay = { check_in: "2026-10-03", check_out: "2026-10-05", guests: 2 };
+  const asked = { ...body, messages: [{ role: "user", content: "Any beds from Saturday the 3rd, two nights, for two of us?" }] };
+  const turns = (): Turn[] => [
+    { blocks: [toolUse(stay, "check_availability")], stopReason: "tool_use" },
+    { text: ["Yes: beds are free for those two nights. Press Book these dates below."], stopReason: "end_turn" },
+  ];
+  const lookups = () => fake.calls.filter((call) => call.path.startsWith("/api/public/availability")).length;
+  const toolResult = (call: { messages: unknown[] }) =>
+    (call.messages.at(-1) as { content: { content: string; is_error?: boolean }[] }).content[0]!;
+
+  it("looks up the stay through /api/availability's own path and streams a card built from the answer", async () => {
+    const path = bookingPath();
+    const availability = createAvailabilityHandler({ ...path, siteUrl });
+    // The booking form asked about the same stay a moment ago: the concierge's lookup is answered from the same cache.
+    const form = new Request(`http://localhost/api/availability?${new URLSearchParams({ ...stay, guests: "2" })}`, {
+      headers: { "x-forwarded-for": "198.51.100.7", "sec-fetch-site": "same-origin" },
+    });
+    expect((await availability(form)).status).toBe(200);
+
+    const { streamer, calls } = fakeClaude(turns());
+    const received = await events(await handler(streamer, 5, undefined, () => {}, true, path)(post(asked)));
+    expect(received.find((event) => event.type === "availability")).toEqual({
+      type: "availability",
+      card: { ...stay, nights: 2, rooms: FAKE_ROOMS.map((room) => ({ name: room.name, kind: room.kind, free: room.beds })) },
+    });
+    expect(received.at(-1)).toEqual({
+      type: "done",
+      sig: signer.signReply(body.session_id, "Yes: beds are free for those two nights. Press Book these dates below."),
+    });
+    expect(lookups()).toBe(1);
+    expect(toolResult(calls[1]!).content).not.toMatch(/price|total|amount|currency|LAK|USD/i);
+  });
+
+  it("counts the lookup against the guest's own address, inside the booking form's limits", async () => {
+    const path = bookingPath();
+    const availability = createAvailabilityHandler({ ...path, siteUrl });
+    const lookup = (from: string) =>
+      availability(
+        new Request(`http://localhost/api/availability?${new URLSearchParams({ ...stay, guests: "2" })}`, {
+          headers: { "x-forwarded-for": from, "sec-fetch-site": "same-origin" },
+        }),
+      );
+    for (let i = 0; i < LOOKUP_LIMITS.perClient.limit; i++) expect((await lookup("203.0.113.9")).status).toBe(200);
+
+    // This guest has used up their lookups on the booking form: Shadow is told so, and says it.
+    const limited = fakeClaude(turns());
+    const received = await events(await handler(limited.streamer, 5, undefined, () => {}, true, path)(post(asked)));
+    expect(received.some((event) => event.type === "availability")).toBe(false);
+    expect(received.at(-1)).toMatchObject({ type: "done" });
+    expect(toolResult(limited.calls[1]!)).toMatchObject({ is_error: true });
+    expect(JSON.parse(toolResult(limited.calls[1]!).content)).toMatchObject({ error: "rate_limited" });
+
+    // Another guest, on another address, is not held back.
+    const other = fakeClaude(turns());
+    const theirs = await events(
+      await handler(other.streamer, 5, undefined, () => {}, true, path)(post(asked, { "x-forwarded-for": "192.0.2.44" })),
+    );
+    expect(theirs.some((event) => event.type === "availability")).toBe(true);
+  });
+
+  it("offers the tool only when the site takes bookings online", async () => {
+    const off = fakeClaude([{ text: ["Booking.com and Agoda show what is free."], stopReason: "end_turn" }]);
+    await (await handler(off.streamer)(post(asked))).text();
+    expect(off.calls[0]!.tools?.map((tool) => (tool as { name: string }).name)).toEqual(["prepare_inquiry"]);
+    expect(JSON.stringify(off.calls[0]!.system)).not.toContain("check_availability");
+
+    const on = fakeClaude([{ text: ["Which dates?"], stopReason: "end_turn" }]);
+    await (await handler(on.streamer, 5, undefined, () => {}, true)(post(asked))).text();
+    expect(on.calls[0]!.tools?.map((tool) => (tool as { name: string }).name)).toEqual(["prepare_inquiry", "check_availability"]);
   });
 });

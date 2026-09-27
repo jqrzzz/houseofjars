@@ -1,5 +1,8 @@
+import { MAX_GUESTS, MAX_STAY_NIGHTS, ROOM_KINDS } from "../booking/types";
+import { isIsoDate, nightsBetween } from "../dates";
 import type { InquiryDraft } from "../inquiry/schema";
-import type { ConciergeEvent } from "./protocol";
+import { pages } from "../site";
+import type { AvailabilityCard, ConciergeEvent } from "./protocol";
 import { historyText, MAX_TOTAL_CHARS, MAX_TURNS } from "./limits";
 
 /*
@@ -16,6 +19,8 @@ export interface ChatMessage {
   readonly sig?: string;
   /** The reply was cut off at the length limit (shown with an ellipsis). */
   readonly truncated?: boolean;
+  /** Free beds Shadow looked up for this reply, each shown as a card under it (never sent back to Claude). */
+  readonly cards?: readonly AvailabilityCard[];
 }
 
 /** A message Shadow prepared for the team, with the server's signature over it. */
@@ -129,6 +134,8 @@ function applyEvent(state: ChatState, event: ConciergeEvent): ChatState {
       return updateLast(state, (m) => ({ ...m, content: m.content.slice(0, event.keep) }));
     case "draft":
       return isDraft(event) ? { ...state, draft: { draft: event.draft, token: event.token } } : state;
+    case "availability":
+      return isAvailabilityCard(event.card) ? updateLast(state, (m) => ({ ...m, cards: withCard(m.cards, event.card) })) : state;
     case "notice":
       if (event.code === "refusal") return updateLast(state, (m) => ({ ...m, content: shadowLines.refusal, state: "failed" }));
       // Keep the text exactly as streamed (it is what the server signs); the ellipsis is only drawn.
@@ -180,17 +187,68 @@ export function restoreChat(raw: string | null): ChatState | null {
           typeof m.content === "string" &&
           (m.state === "final" || m.state === "failed"),
       )
-      .map((m) => ({
-        role: m.role,
-        content: m.content,
-        state: m.state,
-        ...(typeof m.sig === "string" ? { sig: m.sig } : {}),
-        ...(m.truncated === true ? { truncated: true } : {}),
-      }));
+      .map((m) => {
+        const cards = Array.isArray(m.cards) ? m.cards.filter(isAvailabilityCard) : [];
+        return {
+          role: m.role,
+          content: m.content,
+          state: m.state,
+          ...(typeof m.sig === "string" ? { sig: m.sig } : {}),
+          ...(m.truncated === true ? { truncated: true } : {}),
+          ...(cards.length > 0 ? { cards } : {}),
+        };
+      });
     return { sessionId: saved.sessionId, messages, draft: isDraft(saved.draft) ? saved.draft : null };
   } catch {
     return null;
   }
+}
+
+const sameStay = (a: AvailabilityCard, b: AvailabilityCard) =>
+  a.check_in === b.check_in && a.check_out === b.check_out && a.guests === b.guests;
+
+/** A newer look at the same stay replaces the older card. */
+function withCard(cards: readonly AvailabilityCard[] = [], card: AvailabilityCard): AvailabilityCard[] {
+  return [...cards.filter((shown) => !sameStay(shown, card)), card];
+}
+
+const wholeNumber = (value: unknown, min: number, max: number) =>
+  Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
+
+/**
+ * A card the window can show and link from: real dates in order, whole
+ * numbers, rooms with names. Checked on every event and on every saved chat
+ * (session storage can hold anything), since its link is built from it.
+ */
+export function isAvailabilityCard(value: unknown): value is AvailabilityCard {
+  if (typeof value !== "object" || value === null) return false;
+  const card = value as { [K in keyof AvailabilityCard]?: unknown };
+  const room = (item: unknown) => {
+    if (typeof item !== "object" || item === null) return false;
+    const { name, kind, free } = item as { name?: unknown; kind?: unknown; free?: unknown };
+    return (
+      typeof name === "string" &&
+      name.trim() !== "" &&
+      (kind === null || ROOM_KINDS.some((known) => known === kind)) &&
+      wholeNumber(free, 0, Number.MAX_SAFE_INTEGER)
+    );
+  };
+  return (
+    isIsoDate(card.check_in) &&
+    isIsoDate(card.check_out) &&
+    wholeNumber(card.nights, 1, MAX_STAY_NIGHTS) &&
+    card.nights === nightsBetween(card.check_in, card.check_out) &&
+    wholeNumber(card.guests, 1, MAX_GUESTS) &&
+    Array.isArray(card.rooms) &&
+    card.rooms.length > 0 &&
+    card.rooms.every(room)
+  );
+}
+
+/** The booking page with the card's stay filled in, as /book reads a link (lib/inquiry/prefill.ts). */
+export function bookingLinkFor(card: Pick<AvailabilityCard, "check_in" | "check_out" | "guests">): string {
+  const query = new URLSearchParams({ check_in: card.check_in, check_out: card.check_out, guests: String(card.guests) });
+  return `${pages.book.path}?${query}`;
 }
 
 /** Enough shape to show a draft; the server checks its signature before sending anything. */

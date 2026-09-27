@@ -1,9 +1,12 @@
+import { sharedAvailabilityCache } from "@/lib/booking/cache";
 import { onlineBookingConfigured } from "@/lib/booking/config";
+import { sharedLookupLimiters } from "@/lib/booking/limits";
 import { anthropicStreamer, conciergeModel } from "@/lib/concierge/anthropic";
 import { createDailyBudget, dailyTokenBudget } from "@/lib/concierge/budget";
 import { createConciergeHandler } from "@/lib/concierge/handler";
 import { MAX_CONVERSATION_TURNS } from "@/lib/concierge/limits";
 import { conciergeSigner } from "@/lib/concierge/signing";
+import { readShadowConfig } from "@/lib/inquiry/submit";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { siteUrl } from "@/lib/site";
 
@@ -26,4 +29,6 @@ export const POST = createConciergeHandler({
   model: () => conciergeModel(),
   siteUrl,
   onlineBooking: () => onlineBookingConfigured(),
+  // The very cache and lookup limits /api/availability uses (one per server process).
+  availability: { config: () => readShadowConfig(), cache: sharedAvailabilityCache(), limiters: sharedLookupLimiters() },
 });

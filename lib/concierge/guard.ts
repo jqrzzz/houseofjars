@@ -1,9 +1,10 @@
 import { identity } from "@/content/identity";
 
 /*
- * Shadow can't see prices, and the house knowledge contains none, so a money
- * amount in a reply was made up or talked into him. The reply is replaced by
- * this line as soon as one appears, before the guest can screenshot a price.
+ * Shadow can't see prices: the house knowledge contains none, and neither
+ * does what check_availability tells him, so a money amount in a reply was
+ * made up or talked into him. The reply is replaced by this line as soon as
+ * one appears, before the guest can screenshot a price.
  */
 
 /** An amount in words or digits: "90,000", "1.5", "90k", "ten", "three hundred thousand". */
@@ -32,10 +33,14 @@ export const priceLine =
   `Booking.com (${identity.links.booking.value}) and Agoda (${identity.links.agoda.value}) show live prices, ` +
   `or I can pass your question to the team.`;
 
-/** The same line when the site takes booking requests: the booking page first. */
+/**
+ * The same line when the site takes booking requests: the booking page
+ * first. Shadow can look up free beds then (check_availability), so the line
+ * only says he can't see prices.
+ */
 export function bookingPriceLine(bookingPage: string): string {
   return (
-    `I can’t see prices or live availability, so I can’t quote a price or promise a bed. ` +
+    `I can’t see prices, so I can’t quote one. ` +
     `The booking page (${bookingPage}) shows the free beds for your dates, with prices where the house has set them. ` +
     `Booking.com (${identity.links.booking.value}) and Agoda (${identity.links.agoda.value}) show live prices too, ` +
     `or I can pass your question to the team.`

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { inquiryPrefill } from "../inquiry/prefill";
 import {
+  bookingLinkFor,
   chatReducer,
   failureOf,
+  isAvailabilityCard,
   linkify,
   newChat,
   restoreChat,
@@ -11,7 +14,7 @@ import {
   type ChatState,
 } from "./chat";
 import { MAX_MESSAGE_CHARS, MAX_TOTAL_CHARS, MAX_TURNS } from "./limits";
-import { encodeEvent, parseEvents, type ConciergeEvent } from "./protocol";
+import { encodeEvent, parseEvents, type AvailabilityCard, type ConciergeEvent } from "./protocol";
 
 const start = () => chatReducer(newChat("s1"), { type: "send", text: "Is breakfast included?" });
 const apply = (state: ChatState, ...events: ConciergeEvent[]) =>
@@ -96,6 +99,95 @@ describe("chat window state", () => {
   it("ignores a malformed draft event", () => {
     const state = apply(start(), { type: "draft", token: "t" } as unknown as ConciergeEvent);
     expect(state.draft).toBeNull();
+  });
+});
+
+describe("free beds cards", () => {
+  const card: AvailabilityCard = {
+    check_in: "2026-10-03",
+    check_out: "2026-10-05",
+    nights: 2,
+    guests: 2,
+    rooms: [
+      { name: "Mixed dorm", kind: "mixed_dorm", free: 14 },
+      { name: "Sunset room", kind: null, free: 2 },
+    ],
+  };
+  const later = { ...card, check_in: "2026-10-10", check_out: "2026-10-12" };
+
+  it("shows each card under the reply it came with, a newer look at the same stay replacing the older", () => {
+    const fresher = { ...card, rooms: [{ name: "Mixed dorm", kind: "mixed_dorm" as const, free: 13 }] };
+    const state = apply(
+      start(),
+      { type: "availability", card },
+      { type: "availability", card: later },
+      { type: "text", text: "Beds are free: press Book these dates." },
+      { type: "availability", card: fresher },
+      { type: "done", sig: "s" },
+    );
+    expect(last(state)).toEqual({
+      role: "assistant",
+      content: "Beds are free: press Book these dates.",
+      state: "final",
+      sig: "s",
+      cards: [later, fresher],
+    });
+    // Only Shadow's words go back to Claude, never the cards.
+    expect(toApiMessages(state.messages)).toEqual([
+      { role: "user", content: "Is breakfast included?" },
+      { role: "assistant", content: "Beds are free: press Book these dates.", sig: "s" },
+    ]);
+  });
+
+  it("ignores a card it can't trust to link from", () => {
+    for (const bad of [
+      { ...card, check_in: "2026-02-30" },
+      { ...card, check_out: card.check_in, nights: 0 },
+      { ...card, nights: 3 },
+      { ...card, guests: 0 },
+      { ...card, guests: 2.5 },
+      { ...card, rooms: [] },
+      { ...card, rooms: [{ name: " ", kind: null, free: 1 }] },
+      { ...card, rooms: [{ name: "Dorm", kind: "suite", free: 1 }] },
+      { ...card, rooms: [{ name: "Dorm", kind: null, free: -1 }] },
+      { ...card, check_in: "javascript:alert(1)" },
+      null,
+    ]) {
+      expect(isAvailabilityCard(bad), JSON.stringify(bad)).toBe(false);
+      expect(last(apply(start(), { type: "availability", card: bad } as unknown as ConciergeEvent)).cards).toBeUndefined();
+    }
+    expect(isAvailabilityCard(card)).toBe(true);
+  });
+
+  it("links to /book with the stay filled in, as the booking page reads it", () => {
+    const link = bookingLinkFor(card);
+    expect(link).toBe("/book?check_in=2026-10-03&check_out=2026-10-05&guests=2");
+    expect(inquiryPrefill(link.slice(link.indexOf("?")), Date.parse("2026-09-26T05:00:00Z"))).toEqual({
+      check_in: "2026-10-03",
+      check_out: "2026-10-05",
+      guests: 2,
+    });
+  });
+
+  it("comes back with a saved conversation, without anything forged", () => {
+    const saved = JSON.stringify({
+      sessionId: "s1",
+      messages: [
+        { role: "user", content: "Beds on the 3rd?", state: "final" },
+        { role: "assistant", content: "Yes.", state: "final", sig: "abc", cards: [card, { ...card, guests: "2" }, "x"] },
+        { role: "assistant", content: "Hmm.", state: "final", cards: "nope" },
+      ],
+      draft: null,
+    });
+    expect(restoreChat(saved)?.messages).toEqual([
+      { role: "user", content: "Beds on the 3rd?", state: "final" },
+      { role: "assistant", content: "Yes.", state: "final", sig: "abc", cards: [card] },
+      { role: "assistant", content: "Hmm.", state: "final" },
+    ]);
+  });
+
+  it("travels as one NDJSON event", () => {
+    expect(parseEvents(encodeEvent({ type: "availability", card })).events).toEqual([{ type: "availability", card }]);
   });
 });
 

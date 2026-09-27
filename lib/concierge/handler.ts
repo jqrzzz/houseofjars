@@ -1,5 +1,7 @@
+import type { AvailabilityDeps } from "../booking/handler";
 import { json, readJsonBody, rejectCrossSite } from "../http";
 import { clientKey, type RateLimitDecision } from "../rate-limit";
+import { availabilityChecker } from "./availability";
 import { worstCaseCost, type SpendBudget } from "./budget";
 import { trustedHistory } from "./history";
 import { bookingPriceLine } from "./guard";
@@ -24,8 +26,10 @@ export interface ConciergeHandlerDeps {
   readonly budget: SpendBudget;
   readonly model: () => string;
   readonly siteUrl: string;
-  /** Whether the site takes booking requests on /book (Shadow then points guests there). */
+  /** Whether the site takes booking requests on /book: Shadow then points guests there and can check free beds. */
   readonly onlineBooking?: () => boolean;
+  /** /api/availability's own lookup (its cache and limits), which check_availability goes through. */
+  readonly availability: AvailabilityDeps;
   readonly now?: () => Date;
   readonly log?: (message: string) => void;
 }
@@ -34,6 +38,7 @@ export interface ConciergeHandlerDeps {
 export function createConciergeHandler(deps: ConciergeHandlerDeps) {
   let systemPrompt: string | null = null;
   let priceLine: string | undefined;
+  let onlineBooking = false;
   const log = deps.log ?? ((message: string) => console.error(message));
 
   return async function handleConcierge(request: Request): Promise<Response> {
@@ -53,13 +58,15 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
     const sessionId = parsed.data.session_id;
 
     // Rate-limit only requests that would reach Claude.
-    const decision = deps.limiter.take(clientKey(request.headers));
+    const client = clientKey(request.headers);
+    const decision = deps.limiter.take(client);
     if (!decision.allowed) {
       return json({ error: "rate_limited" }, 429, { "retry-after": String(decision.retryAfterSeconds) });
     }
 
+    // Read once, like the static pages: the prompt, the price line and the tools always agree.
     if (systemPrompt === null) {
-      const onlineBooking = deps.onlineBooking?.() ?? false;
+      onlineBooking = deps.onlineBooking?.() ?? false;
       systemPrompt = buildSystemPrompt(deps.siteUrl, { onlineBooking });
       priceLine = onlineBooking ? bookingPriceLine(bookingPageLinks(deps.siteUrl).page) : undefined;
     }
@@ -67,9 +74,11 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
     const model = deps.model();
     const now = deps.now?.() ?? new Date();
     const history = trustedHistory(parsed.data, signer);
+    // Free beds through the booking form's own lookup, counted against this guest's address.
+    const checkAvailability = onlineBooking ? availabilityChecker(deps.availability, client) : undefined;
 
     // Answer plainly now if today's budget can't cover even the first call.
-    if (deps.budget.remaining() < worstCaseCost(buildParams({ model, systemPrompt: prompt, now }, history))) {
+    if (deps.budget.remaining() < worstCaseCost(buildParams({ model, systemPrompt: prompt, now, checkAvailability }, history))) {
       return json({ error: "resting" }, 503, { "retry-after": String(deps.budget.secondsUntilReset()) });
     }
     const turn = deps.conversations.take(sessionId);
@@ -96,6 +105,7 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
             model,
             systemPrompt: prompt,
             priceLine,
+            checkAvailability,
             now,
             signal: request.signal,
           });

@@ -6,10 +6,12 @@ import type {
   BetaMessageParam,
   BetaMessageStreamParams,
   BetaRawMessageStreamEvent,
+  BetaTool,
   BetaToolResultBlockParam,
   BetaToolUseBlock,
 } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import type { InquiryDraft } from "../inquiry/schema";
+import { CHECK_AVAILABILITY, checkAvailabilityTool, type CheckAvailability } from "./availability";
 import { SpendLimitReached, weighUsage, worstCaseCost, type SpendBudget } from "./budget";
 import { mentionsMoney, priceLine } from "./guard";
 import type { HistoryMessage } from "./history";
@@ -17,8 +19,12 @@ import { buildDateLine } from "./prompt";
 import type { ConciergeEvent } from "./protocol";
 import { PREPARE_INQUIRY, prepareInquiryTool, runPrepareInquiry } from "./tool";
 
-/** Tool rounds per request: enough to prepare a draft, and correct it once if it was invalid. */
-export const MAX_TOOL_ROUNDS = 2;
+/**
+ * Tool calls per guest message: enough to check a stay or two and prepare a
+ * message for the team. A call beyond them is answered with a tool error that
+ * Claude explains, and the reply ends there.
+ */
+export const MAX_TOOL_CALLS = 3;
 /** Times a round is re-issued because its streamed tool input could not be parsed. */
 export const MAX_MALFORMED_RETRIES = 1;
 /**
@@ -29,6 +35,10 @@ export const MAX_MALFORMED_RETRIES = 1;
  */
 export const MAX_TOKENS = 2048;
 export const DEFAULT_MODEL = "claude-opus-5";
+
+/** The tools, always in this order: check_availability only when the site takes bookings online. */
+const TOOLS: readonly BetaTool[] = [prepareInquiryTool];
+const TOOLS_WITH_AVAILABILITY: readonly BetaTool[] = [prepareInquiryTool, checkAvailabilityTool];
 
 /** The slice of the SDK's BetaMessageStream the loop needs (lets tests inject a fake). */
 export interface MessageStreamLike extends AsyncIterable<BetaRawMessageStreamEvent> {
@@ -54,12 +64,17 @@ export interface RunConciergeOptions {
   readonly systemPrompt: string;
   /** What replaces a reply that starts quoting a price (default: guard.ts's priceLine). */
   readonly priceLine?: string;
+  /**
+   * Free beds for check_availability, through the booking form's own lookup.
+   * Claude is offered the tool only when this is set (the site takes bookings online).
+   */
+  readonly checkAvailability?: CheckAvailability;
   readonly now: Date;
   readonly signal?: AbortSignal;
 }
 
 export function buildParams(
-  options: Pick<RunConciergeOptions, "model" | "systemPrompt" | "now">,
+  options: Pick<RunConciergeOptions, "model" | "systemPrompt" | "now" | "checkAvailability">,
   messages: BetaMessageParam[],
 ): BetaMessageStreamParams {
   return {
@@ -73,11 +88,12 @@ export function buildParams(
     // Short factual answers from a fixed knowledge base: low effort keeps
     // replies fast; the server enforces the rules that matter (only the guest can send a message).
     output_config: { effort: "low" },
+    // Tools and the stable prompt form the cached prefix; today's date follows the breakpoint.
     system: [
       { type: "text", text: options.systemPrompt, cache_control: { type: "ephemeral" } },
       { type: "text", text: buildDateLine(options.now) },
     ],
-    tools: [prepareInquiryTool],
+    tools: [...(options.checkAvailability ? TOOLS_WITH_AVAILABILITY : TOOLS)],
     tool_choice: { type: "auto", disable_parallel_tool_use: true },
     messages,
   };
@@ -107,12 +123,34 @@ export function isMalformedStream(error: unknown): boolean {
   return error instanceof Anthropic.AnthropicError && !(error instanceof Anthropic.APIError);
 }
 
+/** The answer to one tool call. Guest-supplied input only ever flows into a draft or a lookup, never into what a tool does. */
+async function runTool(block: BetaToolUseBlock, options: RunConciergeOptions): Promise<BetaToolResultBlockParam> {
+  const result = (content: string, isError: boolean): BetaToolResultBlockParam => ({
+    type: "tool_result",
+    tool_use_id: block.id,
+    content,
+    ...(isError ? { is_error: true } : {}),
+  });
+  if (block.name === PREPARE_INQUIRY) {
+    const outcome = runPrepareInquiry(block.input, options.signDraft);
+    if (outcome.draft) options.emit({ type: "draft", ...outcome.draft });
+    return result(outcome.content, outcome.isError);
+  }
+  if (block.name === CHECK_AVAILABILITY && options.checkAvailability) {
+    const outcome = await options.checkAvailability(block.input);
+    // The card comes from the lookup itself, so Claude's words can never put other dates on it.
+    if (outcome.card) options.emit({ type: "availability", card: outcome.card });
+    return result(outcome.content, outcome.isError);
+  }
+  return result("unknown_tool", true);
+}
+
 /**
- * One concierge turn: stream Claude's reply to the client, run prepare_inquiry
- * when asked (at most MAX_TOOL_ROUNDS times), and stop cleanly on refusal or
- * truncation. Resolves with the reply the guest was shown, which the caller
- * signs ("" when there is nothing to keep, as after a refusal). Throws the
- * SDK's typed errors; the caller maps them.
+ * One concierge turn: stream Claude's reply to the client, run its tools (at
+ * most MAX_TOOL_CALLS calls for this guest message), and stop cleanly on
+ * refusal or truncation. Resolves with the reply the guest was shown, which
+ * the caller signs ("" when there is nothing to keep, as after a refusal).
+ * Throws the SDK's typed errors; the caller maps them.
  */
 export async function runConcierge(options: RunConciergeOptions): Promise<string> {
   const { emit } = options;
@@ -124,7 +162,8 @@ export async function runConcierge(options: RunConciergeOptions): Promise<string
     reply += text;
   };
 
-  for (let round = 0, retries = 0; ; ) {
+  // `calls`: tool calls this guest message has asked for, those turned away over the limit included.
+  for (let calls = 0, retries = 0; ; ) {
     const keep = reply.length;
     const params = buildParams(options, messages);
     const reservation = options.budget.reserve(worstCaseCost(params));
@@ -181,26 +220,25 @@ export async function runConcierge(options: RunConciergeOptions): Promise<string
 
     const content = echoableContent(message.content);
     const toolUses = content.filter((block): block is BetaToolUseBlock => block.type === "tool_use");
-    if (message.stop_reason !== "tool_use" || toolUses.length === 0 || round >= MAX_TOOL_ROUNDS) return reply;
+    // Once a call over the limit has been turned away (and Claude has had its turn to explain), the reply ends.
+    if (message.stop_reason !== "tool_use" || toolUses.length === 0 || calls > MAX_TOOL_CALLS) return reply;
 
     messages.push({ role: "assistant", content });
     const results: BetaToolResultBlockParam[] = [];
     for (const block of toolUses) {
-      if (block.name !== PREPARE_INQUIRY) {
-        results.push({ type: "tool_result", tool_use_id: block.id, is_error: true, content: "unknown_tool" });
-        continue;
-      }
-      const outcome = runPrepareInquiry(block.input, options.signDraft);
-      if (outcome.draft) emit({ type: "draft", ...outcome.draft });
-      results.push({
-        type: "tool_result",
-        tool_use_id: block.id,
-        content: outcome.content,
-        ...(outcome.isError ? { is_error: true } : {}),
-      });
+      calls++;
+      results.push(
+        calls > MAX_TOOL_CALLS
+          ? {
+              type: "tool_result",
+              tool_use_id: block.id,
+              is_error: true,
+              content: `limit_reached: the ${MAX_TOOL_CALLS} tool calls allowed for one guest message are used up, so this call was not run.`,
+            }
+          : await runTool(block, options),
+      );
     }
     messages.push({ role: "user", content: results });
-    round++;
   }
 }
 

@@ -1,7 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { BetaContentBlock, BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeClaude, toolUse, type Turn } from "@/test/fake-claude";
+import { FAKE_ROOMS, startFakeShadow, type FakeShadow } from "@/test/fake-shadow";
+import { createAvailabilityCache } from "../booking/cache";
+import { createLookupLimiters } from "../booking/limits";
+import { addDays } from "../dates";
+import { availabilityChecker, checkAvailabilityTool, type CheckAvailability } from "./availability";
 import { createDailyBudget, SpendLimitReached, type SpendBudget } from "./budget";
 import { priceLine } from "./guard";
 import type { HistoryMessage } from "./history";
@@ -11,7 +16,7 @@ import {
   classifyError,
   echoableContent,
   isMalformedStream,
-  MAX_TOOL_ROUNDS,
+  MAX_TOOL_CALLS,
   runConcierge,
 } from "./run";
 import { createSigner } from "./signing";
@@ -22,10 +27,39 @@ const messages: HistoryMessage[] = [
   { role: "user", content: "Please ask the team about a bed on 3 October. I'm Mai, mai@example.com." },
 ];
 const inquiry = { name: "Mai", email: "mai@example.com", message: "A bed on 3 October?" };
+const NOW = new Date("2026-09-26T03:00:00Z");
 
 const signer = createSigner("sk-ant-test-key");
 
-async function run(turns: Turn[], budget: SpendBudget = createDailyBudget({ limit: 10_000_000 })) {
+// A stand-in for Shadow Check-in behind the booking form's own lookup, as the site wires it.
+let fake: FakeShadow;
+const clock = () => NOW.getTime();
+beforeAll(async () => {
+  fake = await startFakeShadow({ now: clock });
+});
+afterAll(async () => {
+  await fake.close();
+});
+beforeEach(() => {
+  fake.reset();
+});
+
+function freeBeds(): CheckAvailability {
+  const path = {
+    config: () => ({ apiUrl: fake.url, key: fake.key }),
+    cache: createAvailabilityCache(clock),
+    limiters: createLookupLimiters(clock),
+    now: clock,
+    log: () => {},
+  };
+  return availabilityChecker(path, "203.0.113.9");
+}
+
+async function run(
+  turns: Turn[],
+  budget: SpendBudget = createDailyBudget({ limit: 10_000_000 }),
+  checkAvailability?: CheckAvailability,
+) {
   const { streamer, calls } = fakeClaude(turns);
   const events: ConciergeEvent[] = [];
   const signDraft = vi.fn((draft: Parameters<typeof signer.signDraft>[1]) => signer.signDraft(sessionId, draft));
@@ -37,12 +71,24 @@ async function run(turns: Turn[], budget: SpendBudget = createDailyBudget({ limi
     emit: (event) => events.push(event),
     model: "claude-opus-5",
     systemPrompt: "SYSTEM",
-    now: new Date("2026-09-26T03:00:00Z"),
+    checkAvailability,
+    now: NOW,
   });
   return { promise, events, calls, signDraft };
 }
 
 const drafts = (events: ConciergeEvent[]) => events.filter((event) => event.type === "draft");
+const cards = (events: ConciergeEvent[]) => events.flatMap((event) => (event.type === "availability" ? [event.card] : []));
+const toolNames = (params: { tools?: unknown[] }) => (params.tools ?? []).map((tool) => (tool as { name: string }).name);
+
+/** The tool results sent back to Claude in a call. */
+function toolResults(messagesSent: BetaMessageParam[]) {
+  return messagesSent.at(-1)!.content as { type: string; tool_use_id: string; content: string; is_error?: boolean }[];
+}
+
+const lookUp = (input: object, id = "toolu_1") => toolUse(input, "check_availability", id);
+const stay = { check_in: "2026-10-03", check_out: "2026-10-05", guests: 2 };
+const shadowLookups = () => fake.calls.filter((call) => call.path.startsWith("/api/public/availability")).length;
 
 const text = (events: ConciergeEvent[]) =>
   events.flatMap((event) => (event.type === "text" ? [event.text] : [])).join("");
@@ -70,6 +116,19 @@ describe("request parameters", () => {
       { type: "text", text: "SYSTEM", cache_control: { type: "ephemeral" } },
       { type: "text", text: "Today's date in Vientiane is Saturday, 2026-09-26." },
     ]);
+  });
+
+  it("offers check_availability only when the site takes bookings online", () => {
+    expect(toolNames(params)).toEqual(["prepare_inquiry"]);
+    const online = buildParams({ model: "claude-opus-5", systemPrompt: "SYSTEM", now: NOW, checkAvailability: freeBeds() }, []);
+    expect(online.tools).toEqual([prepareInquiryTool, checkAvailabilityTool]);
+  });
+
+  it("keeps the cached prefix (tools, then the stable prompt) the same from day to day", () => {
+    const on = (now: Date) => buildParams({ model: "claude-opus-5", systemPrompt: "SYSTEM", now, checkAvailability: freeBeds() }, []);
+    const [today, tomorrow] = [on(NOW), on(new Date("2026-09-27T03:00:00Z"))];
+    expect(JSON.stringify([tomorrow.tools, tomorrow.system?.[0]])).toBe(JSON.stringify([today.tools, today.system?.[0]]));
+    expect(tomorrow.system?.[1]).toEqual({ type: "text", text: "Today's date in Vientiane is Sunday, 2026-09-27." });
   });
 });
 
@@ -102,12 +161,15 @@ describe("the concierge loop", () => {
     expect(result.content).toMatch(/^draft_ready: .*Nothing has been sent/);
   });
 
-  it(`stops after ${MAX_TOOL_ROUNDS} tool rounds`, async () => {
+  it(`runs at most ${MAX_TOOL_CALLS} tool calls per guest message, turns the next away, and then stops`, async () => {
     const again: Turn = { blocks: [toolUse(inquiry)], stopReason: "tool_use" };
-    const { promise, events, calls } = await run([again, again, again, again]);
+    const { promise, events, calls } = await run([again, again, again, again, again, again]);
     await promise;
-    expect(drafts(events)).toHaveLength(MAX_TOOL_ROUNDS);
-    expect(calls).toHaveLength(MAX_TOOL_ROUNDS + 1);
+    expect(drafts(events)).toHaveLength(MAX_TOOL_CALLS);
+    // One more call to explain the refusal; a tool call in that one ends the reply.
+    expect(calls).toHaveLength(MAX_TOOL_CALLS + 2);
+    const [refusal] = toolResults(calls[MAX_TOOL_CALLS + 1]!.messages);
+    expect(refusal).toMatchObject({ is_error: true, content: expect.stringMatching(/^limit_reached: the 3 tool calls/) });
   });
 
   it("replaces a reply as soon as it quotes a price, and stops generating (R4-04)", async () => {
@@ -189,6 +251,97 @@ describe("the concierge loop", () => {
     const api = await run([{ stopReason: "end_turn", error: overloaded }]);
     await expect(api.promise).rejects.toBe(overloaded);
     expect(api.calls).toHaveLength(1);
+  });
+});
+
+describe("checking free beds (check_availability)", () => {
+  it("looks the stay up through the booking path and shows a card built from Shadow Check-in's answer, not Claude's words", async () => {
+    const { promise, events, calls } = await run(
+      [
+        { text: ["Let me look."], blocks: [lookUp(stay)], stopReason: "tool_use" },
+        // Claude gets the dates wrong in its words: the card still shows the stay that was looked up.
+        { text: ["Beds are free from the 4th to the 6th: press Book these dates below."], stopReason: "end_turn" },
+      ],
+      undefined,
+      freeBeds(),
+    );
+    await promise;
+
+    expect(cards(events)).toEqual([
+      {
+        ...stay,
+        nights: 2,
+        rooms: FAKE_ROOMS.map((room) => ({ name: room.name, kind: room.kind, free: room.beds })),
+      },
+    ]);
+    // The card reaches the window before the reply that points to it.
+    expect(events.findIndex((event) => event.type === "availability")).toBeLessThan(
+      events.findIndex((event) => event.type === "text" && event.text.startsWith("Beds")),
+    );
+    expect(shadowLookups()).toBe(1);
+
+    const [result] = toolResults(calls[1]!.messages);
+    expect(result).toMatchObject({ type: "tool_result", tool_use_id: "toolu_1" });
+    expect(result!.is_error).toBeUndefined();
+    expect(JSON.parse(result!.content)).toMatchObject({ ...stay, bookable: true, booking_card_shown: true });
+    // The fake Shadow Check-in prices two of its rooms; none of it reaches Claude.
+    expect(result!.content).not.toMatch(/price|total|amount|currency|LAK|USD/i);
+  });
+
+  it(`allows ${MAX_TOOL_CALLS} lookups per guest message and answers a fourth with a tool error Claude explains`, async () => {
+    const nights = (i: number) => ({ check_in: addDays(stay.check_in, i * 7), check_out: addDays(stay.check_out, i * 7), guests: 2 });
+    const turns: Turn[] = [0, 1, 2, 3].map((i) => ({ blocks: [lookUp(nights(i), `toolu_${i}`)], stopReason: "tool_use" }));
+    const { promise, events, calls } = await run(
+      [...turns, { text: ["I checked three stays; which one shall we book?"], stopReason: "end_turn" }],
+      undefined,
+      freeBeds(),
+    );
+    expect(await promise).toBe("I checked three stays; which one shall we book?");
+
+    expect(shadowLookups()).toBe(MAX_TOOL_CALLS);
+    expect(cards(events).map((card) => card.check_in)).toEqual([0, 1, 2].map((i) => nights(i).check_in));
+    expect(toolResults(calls[4]!.messages)).toEqual([
+      {
+        type: "tool_result",
+        tool_use_id: "toolu_3",
+        is_error: true,
+        content: "limit_reached: the 3 tool calls allowed for one guest message are used up, so this call was not run.",
+      },
+    ]);
+    expect(calls).toHaveLength(5);
+  });
+
+  it("relays Shadow Check-in's limits and failures as tool results, never as an exception", async () => {
+    for (const [mode, expected] of [
+      ["rate_limited", { error: "busy" }],
+      ["not_configured", { reason: "booking_closed" }],
+    ] as const) {
+      fake.reset();
+      fake.state.mode = mode;
+      const { promise, events, calls } = await run(
+        [
+          { blocks: [lookUp(stay)], stopReason: "tool_use" },
+          { text: ["I can't see the free beds just now."], stopReason: "end_turn" },
+        ],
+        undefined,
+        freeBeds(),
+      );
+      expect(await promise, mode).toBe("I can't see the free beds just now.");
+      expect(cards(events)).toEqual([]);
+      expect(JSON.parse(toolResults(calls[1]!.messages)[0]!.content), mode).toMatchObject(expected);
+    }
+  });
+
+  it("offers no check_availability when the site doesn't take bookings online, and runs none", async () => {
+    const { promise, events, calls } = await run([
+      { blocks: [lookUp(stay)], stopReason: "tool_use" },
+      { text: ["The booking sites show what is free."], stopReason: "end_turn" },
+    ]);
+    await promise;
+    expect(toolNames(calls[0]!)).toEqual(["prepare_inquiry"]);
+    expect(toolResults(calls[1]!.messages)[0]).toMatchObject({ is_error: true, content: "unknown_tool" });
+    expect(cards(events)).toEqual([]);
+    expect(fake.calls).toHaveLength(0);
   });
 });
 

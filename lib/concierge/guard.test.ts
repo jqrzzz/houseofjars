@@ -66,4 +66,12 @@ describe("the price line with online booking", () => {
     expect(line).toContain(identity.links.agoda.value);
     expect(mentionsMoney(line)).toBe(false);
   });
+
+  it("no longer says Shadow can't see free beds: he can check them then", () => {
+    const line = bookingPriceLine("https://thehouseofjars.com/book");
+    expect(line.startsWith("I can’t see prices, so I can’t quote one.")).toBe(true);
+    expect(line).not.toContain("availability");
+    // Without online booking he still can't.
+    expect(priceLine).toContain("I can’t see prices or live availability");
+  });
 });

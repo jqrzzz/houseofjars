@@ -10,7 +10,7 @@ import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, sta
 import { pages } from "../site";
 
 export interface KnowledgeOptions {
-  /** The site takes booking requests on /book (lib/booking/config.ts). */
+  /** The site takes booking requests on /book (lib/booking/config.ts), and Shadow has check_availability. */
   readonly onlineBooking?: boolean;
 }
 
@@ -110,7 +110,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
       bullet(
         options.onlineBooking
           ? [
-              "You cannot see prices or availability yourself, so never promise a bed: only the booking page can say what is free.",
+              "You can look up free beds with check_availability, but you cannot see prices, and you never promise a bed: free now is not held for the guest, and nothing is held until they send a booking request on the booking page.",
               `Book on this website: ${book.page} shows the free beds for any dates and, where the house has set them, the price. The guest books there directly with the house: the page says whether the booking is confirmed straight away or once the team has checked it (they reply by email or WhatsApp), and the guest pays at the house. With the guest's dates and party filled in: ${book.withDates}`,
               `Live prices are also on Booking.com (${identity.links.booking.value}) and Agoda (${identity.links.agoda.value}).`,
               "There is no online payment on this website.",

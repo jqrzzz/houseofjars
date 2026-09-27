@@ -1,4 +1,19 @@
+import type { RoomKind } from "../booking/types";
 import type { InquiryDraft } from "../inquiry/schema";
+
+/**
+ * Free beds for one stay, built by the server from Shadow Check-in's own
+ * answer to check_availability (never from Claude's words), with no prices:
+ * the chat window shows it with a Book these dates link to /book.
+ */
+export interface AvailabilityCard {
+  readonly check_in: string;
+  readonly check_out: string;
+  readonly nights: number;
+  readonly guests: number;
+  /** The room types that can be booked for the stay, with the fewest free beds on any of its nights. */
+  readonly rooms: readonly { readonly name: string; readonly kind: RoomKind | null; readonly free: number }[];
+}
 
 /**
  * The streaming protocol between /api/concierge and the chat window:
@@ -14,6 +29,8 @@ export type ConciergeEvent =
    * only the guest's Send delivers it, with `token` (the server's signature).
    */
   | { type: "draft"; draft: InquiryDraft; token: string }
+  /** Shadow checked a stay and beds are free: the window shows the card under his reply. */
+  | { type: "availability"; card: AvailabilityCard }
   /** The reply was withheld (refusal) or cut short (length). */
   | { type: "notice"; code: "refusal" | "truncated" }
   /** Something went wrong mid-stream; "resting": today's budget is spent. */
@@ -42,6 +59,7 @@ const EVENT_TYPES = new Set([
   "text",
   "rewind",
   "draft",
+  "availability",
   "notice",
   "error",
   "done",
