@@ -700,7 +700,7 @@ export function ReviewStep({
   const action = mode === "instant" ? "Book now" : "Send booking request";
   const newTotal = priceChange ? quoteText(priceChange.now) : null;
 
-  // The new price takes focus, so the guest hears it before anything else.
+  // The new price takes focus, so the guest hears it before anything else (once per change: the flow keeps the object).
   useEffect(() => {
     if (priceChange) noticeRef.current?.focus();
   }, [priceChange]);

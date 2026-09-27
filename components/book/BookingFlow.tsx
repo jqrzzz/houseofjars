@@ -663,7 +663,7 @@ function Flow({ house }: { house: HouseNotes }) {
             mode={mode}
             holdHours={terms?.holdHours ?? null}
             replyBy={replyBy}
-            priceChange={change ? { was: change.was, now: change.now } : null}
+            priceChange={change}
             sending={sending.status === "sending"}
             sentAs={
               saved && lastRequest.current?.signature === requestSignature(bookingBody("", shown.stay, room.id, details, quote))
