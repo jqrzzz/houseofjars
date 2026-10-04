@@ -1,5 +1,5 @@
 /** Canonical origin of the site, without a trailing slash. */
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://thehouseofjars.com").replace(/\/+$/, "");
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.houseofjars.la").replace(/\/+$/, "");
 
 export interface PageInfo {
   readonly path: string;
