@@ -489,9 +489,9 @@ const trainTickets: Guide = {
         {
           title: "Or let the team book",
           body: [
-            `${services.bookingHelp.value}. Tell them the date and the train, at the desk or `,
-            { text: "on WhatsApp", href: whatsappUrl() },
-            ".",
+            `${services.bookingHelp.value}. `,
+            { text: "Send them your trip", href: "/trips?kind=train" },
+            ", or ask at the desk.",
           ],
         },
         {
@@ -620,7 +620,7 @@ const gettingAroundTown: Guide = {
           { text: "how to buy tickets", href: "/guides/laos-china-railway-tickets" },
           ".",
         ],
-        [`${services.bookingHelp.value}: ask at the desk.`],
+        [`${services.bookingHelp.value}: `, { text: "send them your trip", href: "/trips?kind=bus" }, "."],
       ],
     },
     lastChecked("Bus routes, fares and the apps change, so check before you set out."),
@@ -718,7 +718,7 @@ const oneDay: Guide = {
       paragraphs: [
         [`${sights.buddhaPark.value}, travel guides say.`],
         [`${sights.museumMoved.value}, the Laotian Times reported.`],
-        [`Rather go with a guide? ${services.bookingHelp.value}.`],
+        [`Rather go with a guide? ${services.bookingHelp.value}: `, { text: "ask them", href: "/trips?kind=tour" }, "."],
       ],
     },
     lastChecked("Opening hours and entry fees differ between sources and change, so they are not on this page: check at the gate, or ask the team."),

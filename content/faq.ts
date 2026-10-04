@@ -207,7 +207,7 @@ export const faq: readonly FaqGroup[] = [
       {
         id: "book-for-me",
         question: "Can the house book tickets or tours for me?",
-        answer: [`Yes. ${services.bookingHelp.value}. Ask at the desk, or `, { text: "message the team", href: "/book#contact" }, "."],
+        answer: [`Yes. ${services.bookingHelp.value}. Ask at the desk, or `, { text: "send them your trip", href: "/trips" }, "."],
       },
       {
         id: "getting-around",

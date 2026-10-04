@@ -84,7 +84,8 @@ export default function VientianePage() {
           </p>
           <p>
             Further: <Link href="/guides/laos-china-railway-tickets">train tickets</Link> to Vang Vieng, Luang Prabang
-            and China, and <Link href="/guides/vientiane-to-thailand">crossing to Thailand</Link>.
+            and China, and <Link href="/guides/vientiane-to-thailand">crossing to Thailand</Link>. Or let the team{" "}
+            <Link href="/trips">book your trains, buses and tours</Link>.
           </p>
         </Prose>
         <PhotoFrame caption="The Laos–China Railway" drawing="train" />

@@ -1,0 +1,149 @@
+/* What to book as three cards, then where, when and how many, the message, and the two ways to send it. */
+.request {
+  display: grid;
+  gap: var(--space-l);
+}
+
+.kinds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.kind {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: var(--space-s) var(--space-xs);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-m, var(--radius-s));
+  background: var(--page);
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  font-weight: 650;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.kind input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.kindIcon {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.kind:hover {
+  border-color: var(--jar-orange);
+}
+
+.kind:has(input:checked) {
+  border-color: var(--jar-orange);
+  background: color-mix(in srgb, var(--page), var(--jar-orange) 12%);
+  color: var(--text);
+}
+
+.kind:has(input:checked) .kindIcon {
+  color: var(--jar-orange);
+}
+
+.kind:has(input:focus-visible) {
+  outline: 2px solid var(--jar-orange);
+  outline-offset: 2px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--space-s);
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+}
+
+.field input,
+.field select {
+  min-height: 2.9rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-s);
+  background: var(--page);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.preview {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: var(--space-s) var(--space-m);
+  border-left: 3px solid var(--jar-orange);
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--page), var(--text) 4%);
+}
+
+.preview figcaption {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+}
+
+.preview blockquote {
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+}
+
+.note {
+  margin-top: calc(var(--space-xs) - var(--space-l));
+  max-width: 32rem;
+  font-size: var(--step--1);
+  color: var(--text-soft);
+}
+
+@media (min-width: 40rem) {
+  .fields {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr);
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+
+  .fields .wide:last-child {
+    grid-column: 1 / -1;
+  }
+}
