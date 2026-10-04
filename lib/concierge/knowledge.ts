@@ -134,8 +134,16 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
         .join("\n\n"),
     ],
     [
-      "Guides on this website (link one when it answers the question)",
-      bullet(guideList.map((guide) => `${guide.question} ${url(guidePath(guide))}`)),
+      "Guides on this website (link one when it answers the question; say who says so the way the guide does)",
+      guideList
+        .map((guide) =>
+          [
+            `### ${guide.question} ${url(guidePath(guide))} (last reviewed ${guide.reviewed})`,
+            inlineToTextWithUrls(guide.answer, siteUrl),
+            bullet(guide.glance.rows.map((row) => `${row.term}: ${row.value}${row.note ? `. ${row.note}` : ""}`)),
+          ].join("\n"),
+        )
+        .join("\n\n"),
     ],
     [
       "Not published yet (say you don't know and offer to ask the team)",

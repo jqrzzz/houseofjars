@@ -14,7 +14,7 @@ export default function GuidesPage() {
         eyebrow="Guides"
         morph="guides"
         title="Guides for your stay"
-        lede="Short, plain answers to what guests ask before they arrive: the way from the airport, the Lao immigration form, what’s nearby and how quiet the house is."
+        lede="Plain answers to what guests ask, so you can plan your days yourself: the way from the airport, the Lao immigration form, train tickets, getting around, a day in Vientiane, crossing to Thailand, what’s nearby and how quiet the house is."
       />
       <GuideCards />
       <BookingCard />

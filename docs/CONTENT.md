@@ -9,6 +9,7 @@ Everything the site says about the house comes from a few TypeScript files in `c
 | `content/identity.ts` | Name, address, phone and WhatsApp, email, booking and social links, the story behind the name and the mark. The site names no owner: the house speaks as a brand |
 | `content/stay.ts` | Check-in and check-out times, quiet hours, beds and dorms, bathrooms, breakfast, staff, amenities, atmosphere, house rules |
 | `content/area.ts` | Neighbourhood and walking distances, map position, airport transport, the Lao Digital Immigration Form, the Plain of Jars |
+| `content/travel.ts` | Facts for the travel guides: Laos–China Railway tickets, getting around Vientiane, a day in the city, crossing to Thailand. From official pages, news reports and travel guides, with the date they were checked; no prices, fares or disputed opening hours |
 | `content/reviews.ts` | Ratings on other sites (with the date they were read), what guests praise, honest notes |
 | `content/faq.ts` | The questions and answers on /faq (answers are built from the facts above) |
 | `content/privacy.ts` | Statements in the privacy notice the house must decide, such as how long messages are kept |
@@ -28,7 +29,7 @@ checkIn: fact("14:00", sources.booking, { note: "Check-in from this time." }),
 
 - `value` is what the site shows.
 - `source` says where it came from, so anyone can check it.
-- `confirmed` is `false` until the house (its owner or team) has confirmed it. Add `confirmed: true` to the options once they have:
+- `confirmed` is `false` until the house (its team) has confirmed it. Add `confirmed: true` to the options once they have:
 
   ```ts
   checkIn: fact("14:00", sources.booking, { confirmed: true }),
@@ -38,7 +39,9 @@ checkIn: fact("14:00", sources.booking, { note: "Check-in from this time." }),
 
 Until a fact is confirmed, its source decides how the site may say it (`content/certainty.ts`, and [SEO.md](SEO.md) for why):
 
-- from the house's own listings (Booking.com, Agoda, Google, Tripadvisor, Hostelz, Facebook) or an official source: stated plainly, and included in the structured data search engines read;
+- from the house's own listings (Booking.com, Agoda, Google, Tripadvisor, Hostelz, Facebook) or an official source (a government body, or a company or place about itself, such as the railway's app or COPE's website): stated plainly, and included in the structured data search engines read;
+- from news reports: said as reported ("…, the Laotian Times reported"), never in the structured data;
+- from travel guides, booking sites or reference works such as Wikipedia: said as theirs ("…, travel guides say"), never in the structured data;
 - from guest reviews: said as guests say it ("Guests say…"), never in the structured data;
 - seen in one source only, general practice in Laos, or an assumption: hedged, and never in the structured data.
 

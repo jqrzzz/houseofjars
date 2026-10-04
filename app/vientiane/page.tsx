@@ -76,6 +76,20 @@ export default function VientianePage() {
         </Prose>
       </Block>
 
+      <Block id="travelling-on" title="Around Vientiane and beyond" aside="Plan your days yourself.">
+        <Prose>
+          <p>
+            <Link href="/guides/getting-around-vientiane">Getting around Vientiane</Link>: taxi apps, tuk-tuks, the BRT
+            buses and the bus stations. <Link href="/guides/one-day-in-vientiane">A day in Vientiane</Link>, step by step.
+          </p>
+          <p>
+            Further: <Link href="/guides/laos-china-railway-tickets">train tickets</Link> to Vang Vieng, Luang Prabang
+            and China, and <Link href="/guides/vientiane-to-thailand">crossing to Thailand</Link>.
+          </p>
+        </Prose>
+        <PhotoFrame caption="The Laos–China Railway" drawing="train" />
+      </Block>
+
       <ReadNext paths={["/guides/from-wattay-airport", "/guides/lao-digital-immigration-form", "/guides/whats-nearby"]} />
       <BookingCard />
       <PageJsonLd path={pages.vientiane.path} />

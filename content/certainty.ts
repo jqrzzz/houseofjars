@@ -9,8 +9,9 @@ import { sourceKinds, type SourceKind } from "./sources";
  * - Firm: confirmed by the house, from its own public listings, or from an
  *   official body. Stated plainly on the pages, and the only facts that go
  *   into structured data (JSON-LD), which has no way to say "guests say".
- * - Not firm: what guest reviews say, something seen in one source only,
- *   general practice in Laos, or an assumption. Said with its source ("guests
+ * - Not firm: news reports, travel guides, what guest reviews say, something
+ *   seen in one source only, general practice in Laos, or an assumption. Said
+ *   with its source ("news reports say…", "travel guides say…", "guests
  *   say…", "in Laos, guesthouses…", "the name nods to…"), labelled in
  *   llms-full.txt, and never put into structured data. Tests enforce all three.
  */
@@ -36,6 +37,10 @@ export function firm<T>(fact: Fact<T> | null | undefined): T | undefined {
 /** How the site credits a fact it can't state plainly; null for firm facts. */
 export function creditFor(fact: Fact<unknown>): string | null {
   switch (standingOf(fact)) {
+    case "press":
+      return "as reported in the news";
+    case "travel-guide":
+      return "from travel guides, to be checked before you go";
     case "guests":
       return "from guest reviews";
     case "one-source":
@@ -56,6 +61,8 @@ export function creditFor(fact: Fact<unknown>): string | null {
  * reader can tell who says so. Checked against the guides by their tests.
  */
 export const creditCues: Readonly<Record<Exclude<Standing, "confirmed" | "listing" | "official">, RegExp>> = {
+  press: /\breport(?:s|ed)?\b/i,
+  "travel-guide": /\btravel (?:guides?|sites?)\b/i,
   guests: /\bguests?\b|\breviews?\b/i,
   "one-source": /\bone (?:source|listing|review)\b|\bto be confirmed\b/i,
   practice: /\bin Laos\b/i,

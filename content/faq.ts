@@ -3,6 +3,7 @@ import { identity } from "./identity";
 import type { Inline } from "./inline";
 import { atmosphere, bathrooms, beds, breakfast, policies, staff, times } from "./stay";
 import { joinList, lowerFirst } from "./text";
+import { gettingAround, railway, sights, toThailand } from "./travel";
 
 export interface FaqEntry {
   readonly id: string;
@@ -17,7 +18,7 @@ export interface FaqGroup {
   readonly entries: readonly FaqEntry[];
 }
 
-const { mekong, museum, nightMarket, airport } = location.nearby;
+const { mekong, nightMarket, airport } = location.nearby;
 
 export const faq: readonly FaqGroup[] = [
   {
@@ -179,8 +180,49 @@ export const faq: readonly FaqGroup[] = [
         id: "nearby",
         question: "What is nearby?",
         answer: [
-          `The house is in ${location.neighbourhood.value}. The ${mekong.value.place} is ${lowerFirst(mekong.value.distance)}, the ${museum.value.place} is ${lowerFirst(museum.value.distance)}, and the ${lowerFirst(nightMarket.value.place)} is ${lowerFirst(nightMarket.value.distance)}. `,
+          `The house is in ${location.neighbourhood.value}. The ${mekong.value.place} is ${lowerFirst(mekong.value.distance)}, and guests say the ${lowerFirst(nightMarket.value.place)} is ${lowerFirst(nightMarket.value.distance)}. `,
           { text: "What’s nearby", href: "/guides/whats-nearby" },
+          ".",
+        ],
+      },
+    ],
+  },
+  {
+    title: "Travelling on",
+    entries: [
+      {
+        id: "train-tickets",
+        question: "How do I buy train tickets to Vang Vieng or Luang Prabang?",
+        answer: [
+          `Yourself, in ${railway.app.value.name}, the Laos–China Railway’s own app. Travel sites report that ${lowerFirst(railway.onSale.value.rule)}, so book early. `,
+          { text: "How to buy Laos–China Railway tickets", href: "/guides/laos-china-railway-tickets" },
+          ".",
+        ],
+      },
+      {
+        id: "getting-around",
+        question: "How do I get around Vientiane?",
+        answer: [
+          `Walk around the centre. For longer rides, book a taxi or tuk-tuk in ${gettingAround.loca.value.name}, or ${lowerFirst(gettingAround.tukTuks.value)}, as is usual in Laos. `,
+          { text: "Getting around Vientiane", href: "/guides/getting-around-vientiane" },
+          ".",
+        ],
+      },
+      {
+        id: "one-day",
+        question: "What can I do with a day in Vientiane?",
+        answer: [
+          `Temples in the morning, the ${sights.cope.value.name} at midday (${lowerFirst(sights.cope.value.entry)}), Patuxai and Pha That Luang in the afternoon, and sunset by the Mekong. `,
+          { text: "A day in Vientiane, step by step", href: "/guides/one-day-in-vientiane" },
+          ".",
+        ],
+      },
+      {
+        id: "thailand",
+        question: "How do I get to Thailand from Vientiane?",
+        answer: [
+          `Cross the ${toThailand.bridge.value.name} to Nong Khai: the Lao checkpoint is open daily from ${toThailand.bridge.value.hours}. Fill in the Lao Digital Immigration Form for leaving, and check Thailand’s entry rules first: they changed on ${toThailand.thaiRules.value.changed}. `,
+          { text: "Crossing to Thailand", href: "/guides/vientiane-to-thailand" },
           ".",
         ],
       },

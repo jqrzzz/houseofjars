@@ -282,6 +282,10 @@ export default function HomePage() {
                 <span>What’s nearby</span>
                 <ArrowIcon />
               </Link>
+              <Link href="/guides/one-day-in-vientiane" className={buttons.textLink}>
+                <span>A day in Vientiane</span>
+                <ArrowIcon />
+              </Link>
             </div>
           </div>
           <Ledger rows={distances} variant="places" />

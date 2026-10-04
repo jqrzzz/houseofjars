@@ -82,8 +82,8 @@ export const pages = {
     nav: "Guides",
     title: "Guides for your stay",
     description:
-      "Short answers for your trip to House of Jars in Vientiane: from Wattay Airport to the house, the Lao immigration form, what’s nearby and a quiet stay.",
-    teaser: "The airport, the immigration form, what’s nearby and a quiet stay.",
+      "Plain answers for your stay at House of Jars in Vientiane: the airport, the Lao immigration form, train tickets, getting around, a day out and Thailand.",
+    teaser: "The airport, the immigration form, train tickets, getting around, a day in the city and crossing to Thailand.",
   },
   privacy: {
     path: "/privacy",

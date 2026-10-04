@@ -4,6 +4,7 @@ import { guides, type Guide } from "@/content/guides";
 import { identity } from "@/content/identity";
 import { amenities, beds, breakfast, building, staff, times } from "@/content/stay";
 import { lowerFirst } from "@/content/text";
+import { toThailand } from "@/content/travel";
 import { onlineBookingConfigured } from "./booking/config";
 import { breadcrumbTrail, metaTitle, type SitePage } from "./pages";
 import { absoluteUrl, siteUrl } from "./site";
@@ -156,7 +157,7 @@ function hostelNode(): JsonLdNode | undefined {
 
 /** What a guide is about, besides the house. */
 function guideSubjects(guide: Guide): { about?: JsonLdNode[]; mentions?: JsonLdNode[] } {
-  const { airport, mekong, museum } = location.nearby;
+  const { airport, mekong } = location.nearby;
   if (guide === guides.fromTheAirport) {
     const place = firm(airport)?.place;
     return place ? { about: [{ "@type": "Airport", name: place }] } : {};
@@ -167,13 +168,11 @@ function guideSubjects(guide: Guide): { about?: JsonLdNode[]; mentions?: JsonLdN
   }
   if (guide === guides.nearby) {
     const river = firm(mekong)?.place;
-    const museumName = firm(museum)?.place;
-    return {
-      mentions: [
-        ...(river ? [{ "@type": "Place", name: river }] : []),
-        ...(museumName ? [{ "@type": "Museum", name: museumName }] : []),
-      ],
-    };
+    return river ? { mentions: [{ "@type": "Place", name: river }] } : {};
+  }
+  if (guide === guides.toThailand) {
+    const bridge = firm(toThailand.bridge)?.name;
+    return bridge ? { about: [{ "@type": "Place", name: bridge }] } : {};
   }
   return {};
 }
