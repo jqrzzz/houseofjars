@@ -47,6 +47,18 @@ describe("price guard", () => {
     }
   });
 
+  it("lets the house's own fees through, but only in a sentence about them", () => {
+    expect(mentionsMoney("Yes: 100,000 kip for your padlock and towel, refunded at check-out.")).toBe(false);
+    expect(mentionsMoney("The deposit is LAK 100,000, and a second towel is 15,000 kip.")).toBe(false);
+    expect(mentionsMoney("The deposit is 100000 kip.")).toBe(false);
+    // The same amount anywhere else is a price Shadow can't see.
+    expect(mentionsMoney("A bed costs 100,000 kip a night.")).toBe(true);
+    expect(mentionsMoney("The deposit is 100,000 kip. A bed is 15,000 kip.")).toBe(true);
+    // And never a different amount dressed up as the deposit.
+    expect(mentionsMoney("The deposit is 1,100,000 kip.")).toBe(true);
+    expect(mentionsMoney("The deposit is 200,000 kip.")).toBe(true);
+  });
+
   it("never fires on the house knowledge, which quotes no prices", () => {
     expect(mentionsMoney(buildSystemPrompt("https://thehouseofjars.com"))).toBe(false);
     expect(mentionsMoney(buildSystemPrompt("https://thehouseofjars.com", { onlineBooking: true }))).toBe(false);

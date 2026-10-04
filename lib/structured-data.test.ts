@@ -139,13 +139,14 @@ describe("the hostel", () => {
 });
 
 describe("what the guides are about", () => {
-  it("names the airport, the immigration form and the places nearby", () => {
+  it("names the airport, the immigration form, the places nearby and the border bridge", () => {
     const about = (path: string) => nodeOfType(graphOf(path), "WebPage")[0]!;
     expect(about("/guides/from-wattay-airport").about).toContainEqual({ "@type": "Airport", name: "Wattay International Airport" });
     expect(about("/guides/lao-digital-immigration-form").about).toContainEqual(
       expect.objectContaining({ "@type": "GovernmentService", url: "https://immigration.gov.la/en/registration/arrival/arrival-info" }),
     );
-    expect(about("/guides/whats-nearby").mentions).toContainEqual({ "@type": "Museum", name: "Lao National Museum" });
+    expect(about("/guides/whats-nearby").mentions).toEqual([{ "@type": "Place", name: "Mekong riverside" }]);
+    expect(about("/guides/vientiane-to-thailand").about).toContainEqual({ "@type": "Place", name: "First Thai–Lao Friendship Bridge" });
     expect(about("/guides/quiet-hostel-vientiane")).toMatchObject({ lastReviewed: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
   });
 });

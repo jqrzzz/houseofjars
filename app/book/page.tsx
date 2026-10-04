@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { ExternalIcon } from "@/components/ui/icons";
 import { PageJsonLd } from "@/components/PageJsonLd";
 import { addressLines, identity, whatsappUrl } from "@/content/identity";
-import { rules, times } from "@/content/stay";
+import { policies, rules, times } from "@/content/stay";
 import { lowerFirst } from "@/content/text";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pageMetadata } from "@/lib/metadata";
@@ -48,7 +48,7 @@ export default function BookPage() {
             eyebrow="Book"
             morph="book"
             title="Book a bed"
-            lede="Choose your dates to see the free beds, and book directly with the house. There is nothing to pay online: you pay when you arrive."
+            lede={`Choose your dates to see the free beds, and book directly with the house. There is nothing to pay online: you pay when you arrive. ${policies.directPrice.value}`}
           />
           <OnlineBooking house={house} />
           <Block id="message" title="Send the team a message" aside="For dates, questions or anything you need before you arrive.">
@@ -61,7 +61,7 @@ export default function BookPage() {
             eyebrow="Book"
             morph="book"
             title="Book direct"
-            lede="Send your dates to the team on WhatsApp or by email, and book with the house itself. Someone is on site day and night."
+            lede={`${policies.directPrice.value} Send your dates to the team on WhatsApp or by email, and book with the house itself.`}
           />
           {/* Every "message the team" link lands here: the guest's dates, written out for their own WhatsApp or mail app. */}
           <Block id="message" title="Send your dates" aside="The team replies on WhatsApp or by email with what is free.">

@@ -34,7 +34,7 @@
   max-width: 10.84em; /* about 17ch of Figtree bold, in em so it holds while the font loads */
 }
 
-.owner {
+.team {
   color: var(--deep-text-soft);
 }
 

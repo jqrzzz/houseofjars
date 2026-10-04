@@ -1,12 +1,5 @@
-import { fact, type Fact } from "./fact";
+import { fact } from "./fact";
 import { sources } from "./sources";
-
-export interface Portrait {
-  /** A file in public/, e.g. "/photos/nang.jpg". */
-  readonly src: string;
-  /** What the photograph shows, for people who can't see it. */
-  readonly alt: string;
-}
 
 export const identity = {
   name: fact("House of Jars", sources.booking, {
@@ -41,22 +34,17 @@ export const identity = {
     facebook: fact("https://www.facebook.com/p/House-of-Jars-Laos-61553402555538/", sources.facebook),
   },
 
-  owner: {
-    name: fact("Nang", sources.booking, { note: "Owner-operator." }),
-    /**
-     * Nang's own words, if she chooses to add them. The site shows nothing
-     * here until she writes it: never write a note or quote on her behalf.
-     */
-    note: null as Fact<string> | null,
-    /** A portrait for the home page, only if Nang wishes. Until then the frame shows an open door. */
-    portrait: null as Fact<Portrait> | null,
-  },
+  /*
+   * No owner on the site: the house speaks as a brand, by the owner's wish
+   * (4 October 2026). Never name or picture the owner, here or in Shadow's
+   * answers.
+   */
 
   /** Why the house is called House of Jars. */
   nameStory: fact(
     "The name nods to the Plain of Jars, the fields of ancient stone jars in the north of Laos.",
     sources.assumption,
-    { note: "Assumed from the name. Nang to confirm, or tell us the real story." },
+    { note: "Assumed from the name. The house to confirm, or tell us the real story." },
   ),
   markStory: fact("The arch in our mark is the house itself: the front of the building, drawn simply.", sources.team, {
     confirmed: true,

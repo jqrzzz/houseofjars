@@ -50,7 +50,8 @@
   color: var(--text-soft);
 }
 
-.owner {
+/* Why to book direct, under the lede. */
+.direct {
   margin-top: var(--space-s);
   font-size: var(--step-1);
   font-weight: var(--display-weight);

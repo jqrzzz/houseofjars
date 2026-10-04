@@ -57,7 +57,8 @@ const arrival: Step[] = [
     title: "Your pod",
     body: (
       <p>
-        Check-in is from {times.checkIn.value}. Early check-in: {lowerFirst(times.earlyCheckIn.value)}. Your pod has{" "}
+        Check-in is from {times.checkIn.value} until {times.checkInUntil.value}. Early check-in:{" "}
+        {lowerFirst(times.earlyCheckIn.value)}. Your pod has{" "}
         {joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`))}.{" "}
         <Link href={pages.house.path}>More about the house</Link>.
       </p>

@@ -8,6 +8,10 @@ import type { HouseIconName } from "./house-icons";
  */
 const byWords: readonly [RegExp, HouseIconName][] = [
   [/smok/i, "no-smoking"],
+  [/front door/i, "front-door"],
+  [/padlock/i, "valuables"],
+  [/\bpets?\b/i, "no-pets"],
+  [/drugs|weapons/i, "prohibited"],
   [/outside guests/i, "no-outside-guests"],
   [/eat and drink|food/i, "no-food-in-dorms"],
   [/shoes/i, "shoes-off"],
@@ -15,7 +19,7 @@ const byWords: readonly [RegExp, HouseIconName][] = [
   [/pack your bag|luggage/i, "luggage"],
   [/motorbike|bicycle/i, "motorbike"],
   [/check-out|leaving before/i, "check-out-time"],
-  [/check-in|reception|front desk/i, "check-in"],
+  [/check-in|arriving|reception|front desk/i, "check-in"],
   [/air-condition/i, "air-conditioning"],
   [/wi-?fi/i, "wifi"],
   [/breakfast/i, "breakfast"],

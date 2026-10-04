@@ -3,6 +3,7 @@ import { identity } from "./identity";
 import { privacy } from "./privacy";
 import { honestNotes, praise, ratings } from "./reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, staff, times } from "./stay";
+import { travel } from "./travel";
 
 /** Every fact the site publishes, in one tree (walked by content:check). */
 export const content = {
@@ -24,6 +25,7 @@ export const content = {
   praise,
   honestNotes,
   privacy,
+  travel,
 } as const;
 
 /** Date the published facts were last reviewed against public listings. */

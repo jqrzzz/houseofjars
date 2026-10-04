@@ -16,7 +16,7 @@ From `photos/` in this repository:
 
 ## The prompt
 
-> Create a design system for **House of Jars**, a calm, clean pod hostel in Ban Anou, central Vientiane, Laos, owned and run by Nang. Guests sleep in wooden pod beds with curtains, there is a café on the ground floor, breakfast is included, and the house is decorated with clay jars, warm wood, terracotta tiles and lamplight. Our guests are mostly Western travellers, with a growing number of Chinese visitors. The goal is the feel of a boutique hotel at a hostel price: everything clear at a glance, nothing confusing, few steps.
+> Create a design system for **House of Jars**, a calm, clean pod hostel in Ban Anou, central Vientiane, Laos. Guests sleep in wooden pod beds with curtains, there is a café on the ground floor, breakfast is included, and the house is decorated with clay jars, warm wood, terracotta tiles and lamplight. Our guests are mostly Western travellers, with a growing number of Chinese visitors. The goal is the feel of a boutique hotel at a hostel price: everything clear at a glance, nothing confusing, few steps.
 >
 > **Refine what we have; don't reinvent it.** The attached logo, business card, signs and menus are our proven base: the arch logo, our orange (about #E46C44), near-black text, white boards and a clean geometric sans-serif. Keep that look and make it more consistent, polished and complete.
 >
@@ -46,5 +46,5 @@ From `photos/` in this repository:
 ## Before printing anything
 
 - **Typos on today's signs:** "take of your shoes" on the stair strips, and "withold" on the dormitory rules board.
-- **Payment wording:** the room-rate card and the café menu say different things about cash and cards. Nang should confirm what is accepted, and where, before the new menu and rate card are printed.
-- **Prices:** Nang should confirm current prices too.
+- **Payment wording:** the room-rate card and the café menu say different things about cash and cards. The house should confirm what is accepted, and where, before the new menu and rate card are printed.
+- **Prices:** The house should confirm current prices too.

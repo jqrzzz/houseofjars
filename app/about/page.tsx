@@ -10,7 +10,7 @@ import { ReadNext } from "@/components/guide/ReadNext";
 import { location, plainOfJars } from "@/content/area";
 import { identity } from "@/content/identity";
 import { photos } from "@/content/photos";
-import { building, staff } from "@/content/stay";
+import { atmosphere, building, staff } from "@/content/stay";
 import { countWord, joinList, lowerFirst } from "@/content/text";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
@@ -19,9 +19,6 @@ import styles from "./about.module.css";
 export const metadata = pageMetadata(pages.about);
 
 export default function AboutPage() {
-  const owner = identity.owner.name.value;
-  const note = identity.owner.note;
-
   return (
     <>
       <PageHeader
@@ -32,22 +29,17 @@ export default function AboutPage() {
         art={<Drawing name="plain" priority />}
       />
 
-      <Block id="owner" title={`Owned and run by ${owner}`}>
+      <Block id="house" title="Made for rest">
         <Prose>
+          <p>{atmosphere.summary.value}</p>
           <p>
-            {owner} owns and runs the house, with a team on site day and night. Guests write about the care that goes
-            into it: how clean it is, the comfortable beds, the breakfast and the quick replies.
+            Guests write about the care that goes into the house: how clean it is, the comfortable beds, the breakfast
+            and the quick replies. Its own team runs the house, on site day and night.
           </p>
-          {note ? (
-            <blockquote className={styles.note}>
-              <p>{note.value}</p>
-              <footer>{owner}</footer>
-            </blockquote>
-          ) : null}
         </Prose>
         <PhotoFrame
-          caption={photos.entrance.caption}
-          photo={photos.entrance}
+          caption={photos.wallOfJars.caption}
+          photo={photos.wallOfJars}
           drawing="door"
           shape="arch"
           aspect="2 / 3"

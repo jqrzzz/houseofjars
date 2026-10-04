@@ -11,6 +11,10 @@ export interface GuideArt {
 const art: Readonly<Record<string, GuideArt>> = {
   "from-wattay-airport": { header: "tuktuk" },
   "lao-digital-immigration-form": { header: "luggage" },
+  "laos-china-railway-tickets": { header: "train" },
+  "getting-around-vientiane": { header: "bus" },
+  "one-day-in-vientiane": { header: "arch" },
+  "vientiane-to-thailand": { header: "bridge" },
   "whats-nearby": { header: "riverside", sections: { "further-afield": "plain" } },
   "quiet-hostel-vientiane": { header: "pod", sections: { "good-to-know": "luggage" } },
 };

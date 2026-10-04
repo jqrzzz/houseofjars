@@ -36,8 +36,42 @@ export const openQuestions: readonly OpenQuestion[] = [
     ask: "The layout of the house: which floor the dorms, the bathrooms and the front desk are on, and the building's shape. The drawing on /the-house (components/house/HouseCutaway.tsx) guesses and says it is an illustration, not a floor plan; with the real layout it can be made accurate.",
     guestTopic: "which floor the dorms, bathrooms and front desk are on",
   },
-  { ask: "Nang's own note for the About page, only if she would like to write one (identity.owner.note).", guestTopic: null },
-  { ask: "A portrait of Nang for the home page, only if she would like one (identity.owner.portrait).", guestTopic: null },
+  {
+    ask: "Laundry: does the house wash guests' clothes (how, how fast, what it costs), and where is the nearest laundry?",
+    guestTopic: "laundry",
+  },
+  {
+    ask: "Where the team likes to eat nearby: a few local places, what to order there, roughly what it costs and when they are open (for Shadow and a food guide).",
+    guestTopic: "local places to eat that the team recommends",
+  },
+  {
+    ask: "The night market: which days and hours, and whether guests mean the riverside night market or a food market next door.",
+    guestTopic: "the night market's days and hours",
+  },
+  {
+    ask: "The nearest BRT bus stop to the house, the fare, and whether the airport shuttle bus still runs (the guides leave them out until checked).",
+    guestTopic: "the nearest BRT stop, bus fares and the airport shuttle bus",
+  },
+  {
+    ask: "Whether the team helps guests buy train tickets or book buses, minivans or tours, and on what terms.",
+    guestTopic: "whether the team can buy train tickets or book buses and tours",
+  },
+  {
+    ask: "How to get from the house to the Laos–China Railway station and to the Friendship Bridge, and roughly what each ride costs.",
+    guestTopic: "what a ride to the railway station or the Friendship Bridge costs",
+  },
+  {
+    ask: "Today's entry fees and opening hours at Wat Si Saket, Haw Phra Kaew, Patuxai, Pha That Luang, COPE and the Lao National Museum (sources online disagree, so the guides leave them out).",
+    guestTopic: "entry fees and opening hours of the temples and museums",
+  },
+  {
+    ask: "Where guests can buy a SIM card, change money and find a cash machine near the house.",
+    guestTopic: "SIM cards, changing money and cash machines nearby",
+  },
+  {
+    ask: "Bicycle or scooter rental near the house: where, and on what terms.",
+    guestTopic: "renting a bicycle or scooter",
+  },
   { ask: "A link to the Hostelz ranking page.", guestTopic: null },
   { ask: "The real story behind the name House of Jars (identity.nameStory).", guestTopic: null },
 ];

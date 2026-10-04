@@ -5,7 +5,7 @@
  */
 export interface Fact<T> {
   readonly value: T;
-  /** True once Nang or the team has confirmed the fact. */
+  /** True once the house (its owner or team) has confirmed the fact. */
   readonly confirmed: boolean;
   /** Where the fact came from, so a reviewer can check it. */
   readonly source: string;

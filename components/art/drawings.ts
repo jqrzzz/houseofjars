@@ -14,6 +14,10 @@ export const drawings = {
   house: { src: "/art/house.svg", width: 616, height: 356 },
   tuktuk: { src: "/art/tuktuk.svg", width: 440, height: 226 },
   riverside: { src: "/art/riverside.svg", width: 480, height: 360 },
+  train: { src: "/art/train.svg", width: 480, height: 360 },
+  bus: { src: "/art/bus.svg", width: 480, height: 360 },
+  arch: { src: "/art/arch.svg", width: 480, height: 360 },
+  bridge: { src: "/art/bridge.svg", width: 480, height: 360 },
 } as const;
 
 export type DrawingName = keyof typeof drawings;

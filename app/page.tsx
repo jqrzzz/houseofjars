@@ -17,6 +17,7 @@ import { ArrowIcon, ExternalIcon } from "@/components/ui/icons";
 import { PageJsonLd } from "@/components/PageJsonLd";
 import { location } from "@/content/area";
 import { identity } from "@/content/identity";
+import { photos } from "@/content/photos";
 import { praise, ratings } from "@/content/reviews";
 import { bathrooms, beds, breakfast, staff, times } from "@/content/stay";
 import { formatDate, joinList, lowerFirst } from "@/content/text";
@@ -51,7 +52,11 @@ const rooms: { drawing: DrawingName; title: string; text: string }[] = [
 const standards: LedgerRow[] = [
   {
     term: "Check-in",
-    value: <>From {times.checkIn.value}</>,
+    value: (
+      <>
+        {times.checkIn.value} to {times.checkInUntil.value}
+      </>
+    ),
     note: `Early check-in: ${lowerFirst(times.earlyCheckIn.value)}.`,
   },
   { term: "Check-out", value: <>Until {times.checkOut.value}</>, note: "Luggage storage if you leave later in the day." },
@@ -83,7 +88,6 @@ const questions = [
 ];
 
 export default function HomePage() {
-  const ownerNote = identity.owner.note;
 
   return (
     <>
@@ -193,32 +197,26 @@ export default function HomePage() {
         </div>
       </Section>
 
-      <Section tone="cream" labelledBy="owner-title">
-        <div className={`container ${styles.owner}`}>
+      <Section tone="cream" labelledBy="team-title">
+        <div className={`container ${styles.team}`}>
           <PhotoFrame
-            caption={`${identity.owner.name.value}, who owns and runs the house`}
-            photo={identity.owner.portrait?.value}
+            caption={photos.entrance.caption}
+            photo={photos.entrance}
             drawing="door"
             shape="arch"
             aspect="4 / 5"
             sizes="(min-width: 60rem) 18rem, 12rem"
-            className={styles.ownerFrame}
+            className={styles.teamFrame}
           />
-          <div className={styles.ownerWords}>
-            <Mark className={styles.ownerMark} />
-            <h2 id="owner-title" className={styles.heading}>
-              Owned and run by {identity.owner.name.value}.
+          <div className={styles.teamWords}>
+            <Mark className={styles.teamMark} />
+            <h2 id="team-title" className={styles.heading}>
+              A team on site, day and night.
             </h2>
-            <p className={styles.ownerText}>
-              A team is on site day and night and speaks {joinList(staff.languages.value)}. Guests often mention how
-              friendly and helpful they are, and how quickly they reply.
+            <p className={styles.teamText}>
+              The team speaks {joinList(staff.languages.value)}. Guests often mention how friendly and helpful they are,
+              and how quickly they reply.
             </p>
-            {ownerNote ? (
-              <blockquote className={styles.ownerNote}>
-                <p>{ownerNote.value}</p>
-                <footer>{identity.owner.name.value}</footer>
-              </blockquote>
-            ) : null}
             <Link href={pages.about.path} className={buttons.textLink}>
               <span>About the house</span>
               <ArrowIcon />
@@ -282,6 +280,10 @@ export default function HomePage() {
               </Link>
               <Link href="/guides/whats-nearby" className={buttons.textLink}>
                 <span>What’s nearby</span>
+                <ArrowIcon />
+              </Link>
+              <Link href="/guides/one-day-in-vientiane" className={buttons.textLink}>
+                <span>A day in Vientiane</span>
                 <ArrowIcon />
               </Link>
             </div>

@@ -3,9 +3,9 @@ import { PhotoFrame } from "@/components/PhotoFrame";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import buttons from "@/components/ui/button.module.css";
 import { ArrowIcon } from "@/components/ui/icons";
-import { identity } from "@/content/identity";
 import { photos } from "@/content/photos";
 import { ratings } from "@/content/reviews";
+import { policies } from "@/content/stay";
 import { bookingLabel } from "@/lib/booking/config";
 import styles from "./Hero.module.css";
 
@@ -31,7 +31,7 @@ export function Hero() {
             Curtained pod beds, strong air-conditioning, breakfast in our café downstairs, and a team that looks after
             every detail, day and night.
           </p>
-          <p className={styles.owner}>Owned and run by {identity.owner.name.value}.</p>
+          <p className={styles.direct}>{policies.directPriceShort.value}</p>
           <div className={styles.actions}>
             <Link href="/book" className={`${buttons.button} ${buttons.primary}`}>
               {bookingLabel()}

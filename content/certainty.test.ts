@@ -7,6 +7,7 @@ import { fact, type Fact } from "./fact";
 import { identity } from "./identity";
 import { sources } from "./sources";
 import { bathrooms, times } from "./stay";
+import { railway, sights, toThailand } from "./travel";
 
 describe("how firmly a fact may be stated", () => {
   it("knows the kind of every source the site uses, so no fact is judged by accident", () => {
@@ -39,12 +40,23 @@ describe("how firmly a fact may be stated", () => {
     }
   });
 
+  it("states official travel sources plainly, and credits news reports and travel guides", () => {
+    expect([toThailand.bridge, railway.app, sights.cope].map(standingOf)).toEqual(["official", "official", "official"]);
+    expect([sights.museumMoved, railway.station].map(standingOf)).toEqual(["press", "travel-guide"]);
+    for (const reported of [sights.museumMoved, railway.station]) {
+      expect(isFirm(reported)).toBe(false);
+      expect(firm(reported)).toBeUndefined();
+    }
+    expect(creditFor(sights.museumMoved)).toBe("as reported in the news");
+    expect(creditFor(railway.station)).toBe("from travel guides, to be checked before you go");
+  });
+
   it("treats a fact from an unknown source as unconfirmed until the house confirms it", () => {
-    const told = fact("22:00–07:00", "Nang, by WhatsApp");
+    const told = fact("22:00–07:00", "A WhatsApp message");
     expect(standingOf(told)).toBe("unknown");
     expect(isFirm(told)).toBe(false);
     expect(creditFor(told)).toBe("not yet confirmed");
-    expect(isFirm(fact("22:00–07:00", "Nang, by WhatsApp", { confirmed: true }))).toBe(true);
+    expect(isFirm(fact("22:00–07:00", "A WhatsApp message", { confirmed: true }))).toBe(true);
     expect(firm(null)).toBeUndefined();
   });
 });

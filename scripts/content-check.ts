@@ -1,7 +1,7 @@
 /**
  * Lists every fact on the site that the house has not confirmed yet, and
  * what the site leaves out until the house tells us. A review list for
- * Nang, not a gate: it exits 0 unless run with --strict (e.g. at launch).
+ * the house, not a gate: it exits 0 unless run with --strict (e.g. at launch).
  *
  *   npm run content:check
  *   npm run content:check -- --strict

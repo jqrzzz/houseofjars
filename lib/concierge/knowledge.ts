@@ -37,7 +37,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
       "The house",
       bullet([
         `Name: ${identity.name.value} (full name: ${identity.fullName.value}).`,
-        `Owned and run by ${identity.owner.name.value}, with a team on site day and night. Don't describe Nang beyond this.`,
+        `Run by its own team, on site day and night. The house speaks as a brand: if asked who owns it, say the team runs it and offer to pass the question on; never name or describe an owner.`,
         `Address: ${formatAddress()}.`,
         `Neighbourhood: ${location.neighbourhood.value}.`,
         `${building.floors.value} floors. ${building.cafe.value}.`,
@@ -71,10 +71,11 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
     [
       "Times",
       bullet([
-        `Check-in from ${times.checkIn.value}.`,
+        `Check-in from ${times.checkIn.value} until ${times.checkInUntil.value}; arriving later, message the team before travelling.`,
         `Check-out until ${times.checkOut.value}.`,
         `Early check-in: ${times.earlyCheckIn.value.toLowerCase()}.`,
         ...(times.quietHours ? [`Quiet hours: ${times.quietHours.value}.`] : []),
+        `The front door is locked ${times.frontDoorLocked.value.from}–${times.frontDoorLocked.value.until}: knock on the glass door and the night staff open it.`,
       ]),
     ],
     [
@@ -133,8 +134,16 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
         .join("\n\n"),
     ],
     [
-      "Guides on this website (link one when it answers the question)",
-      bullet(guideList.map((guide) => `${guide.question} ${url(guidePath(guide))}`)),
+      "Guides on this website (link one when it answers the question; say who says so the way the guide does)",
+      guideList
+        .map((guide) =>
+          [
+            `### ${guide.question} ${url(guidePath(guide))} (last reviewed ${guide.reviewed})`,
+            inlineToTextWithUrls(guide.answer, siteUrl),
+            bullet(guide.glance.rows.map((row) => `${row.term}: ${row.value}${row.note ? `. ${row.note}` : ""}`)),
+          ].join("\n"),
+        )
+        .join("\n\n"),
     ],
     [
       "Not published yet (say you don't know and offer to ask the team)",

@@ -12,7 +12,14 @@ describe("icons for rules and amenities", () => {
     expect(icon("No smoking")).toBe("no-smoking");
     expect(icon("No outside guests")).toBe("no-outside-guests");
     expect(icon("Eat and drink")).toBe("no-food-in-dorms");
-    expect(icon("Please take off your shoes")).toBe("shoes-off");
+    expect(icon("No outside food")).toBe("no-food-in-dorms");
+    expect(icon("No strong-smelling food")).toBe("no-food-in-dorms");
+    expect(icon("No shoes upstairs")).toBe("shoes-off");
+    expect(icon("No pets")).toBe("no-pets");
+    expect(icon("No drugs")).toBe("prohibited");
+    expect(icon("The front door is locked")).toBe("front-door");
+    expect(icon("A deposit of")).toBe("valuables");
+    expect(icon("Arriving after")).toBe("check-in");
     expect(icon("Keep your voice down")).toBe("quiet-hours");
     expect(icon("Leaving very early")).toBe("luggage");
     expect(icon("Check-in from")).toBe("check-in");

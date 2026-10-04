@@ -1,10 +1,14 @@
 import { identity } from "@/content/identity";
+import { policies } from "@/content/stay";
 
 /*
  * Shadow can't see prices: the house knowledge contains none, and neither
  * does what check_availability tells him, so a money amount in a reply was
  * made up or talked into him. The reply is replaced by this line as soon as
- * one appears, before the guest can screenshot a price.
+ * one appears, before the guest can screenshot a price. The one exception is
+ * the fees on the house's own rules board (the deposit for the padlock and
+ * towel, a second towel), and only in a sentence about them: anywhere else
+ * the same amount is still a price he can't see.
  */
 
 /** An amount in words or digits: "90,000", "1.5", "90k", "ten", "three hundred thousand". */
@@ -24,8 +28,28 @@ const MONEY = new RegExp(
   "i",
 );
 
+/** The house's own fees, with the words that must share a sentence with them. */
+const HOUSE_FEES = [
+  { amount: policies.deposit.value.amount, about: /deposit|padlock|towel/i },
+  { amount: policies.secondTowel.value, about: /towel/i },
+] as const;
+
+/** "100,000 kip" as it may be written: 100,000 / 100.000 / 100 000 / 100000, kip or LAK after, LAK or ₭ before. */
+function feePattern(amount: string): RegExp {
+  const number = amount.replace(/\D/g, "").replace(/(\d)(?=(\d{3})+$)/g, String.raw`$1[,.\s]?`);
+  return new RegExp(String.raw`(?:₭|\bLAK)\s?${number}(?![\d,.]*\d)|(?<![\d,.])${number}\s?(?:lao\s+)?(?:kip|lak)\b`, "gi");
+}
+
+/** The text with the house's own fees taken out where a sentence is about them. */
+export function withoutHouseFees(text: string): string {
+  return text
+    .split(/(?<=[.!?])\s+|\n/)
+    .map((sentence) => HOUSE_FEES.reduce((rest, fee) => (fee.about.test(sentence) ? rest.replace(feePattern(fee.amount), " ") : rest), sentence))
+    .join("\n");
+}
+
 export function mentionsMoney(text: string): boolean {
-  return MONEY.test(text);
+  return MONEY.test(withoutHouseFees(text));
 }
 
 export const priceLine =

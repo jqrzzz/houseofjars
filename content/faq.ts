@@ -1,8 +1,9 @@
 import { airportTransport, immigration, location } from "./area";
 import { identity } from "./identity";
 import type { Inline } from "./inline";
-import { atmosphere, bathrooms, beds, breakfast, staff, times } from "./stay";
+import { atmosphere, bathrooms, beds, breakfast, policies, staff, times } from "./stay";
 import { joinList, lowerFirst } from "./text";
+import { gettingAround, railway, sights, toThailand } from "./travel";
 
 export interface FaqEntry {
   readonly id: string;
@@ -17,7 +18,7 @@ export interface FaqGroup {
   readonly entries: readonly FaqEntry[];
 }
 
-const { mekong, museum, nightMarket, airport } = location.nearby;
+const { mekong, nightMarket, airport } = location.nearby;
 
 export const faq: readonly FaqGroup[] = [
   {
@@ -27,7 +28,21 @@ export const faq: readonly FaqGroup[] = [
         id: "check-in-times",
         question: "What time is check-in and check-out?",
         answer: [
-          `Check-in is from ${times.checkIn.value} and check-out is until ${times.checkOut.value}. Early check-in is possible when a bed is free, so tell us your arrival time.`,
+          `Check-in is from ${times.checkIn.value} until ${times.checkInUntil.value}, and check-out is until ${times.checkOut.value}. Early check-in is possible when a bed is free, so tell us your arrival time. Arriving after ${times.checkInUntil.value}? Message the team before you travel.`,
+        ],
+      },
+      {
+        id: "late-at-night",
+        question: "What if I come back late at night?",
+        answer: [
+          `The front door is locked from ${times.frontDoorLocked.value.from} until ${times.frontDoorLocked.value.until}. Knock on the glass door and the night staff will let you in.`,
+        ],
+      },
+      {
+        id: "deposit",
+        question: "Is there a deposit?",
+        answer: [
+          `Yes: ${policies.deposit.value.amount} for ${policies.deposit.value.covers}, refunded at reception when you return them at check-out. A second towel is ${policies.secondTowel.value}, not refunded.`,
         ],
       },
       {
@@ -125,14 +140,14 @@ export const faq: readonly FaqGroup[] = [
         id: "prices",
         question: "How much is a bed?",
         answer: [
-          "Prices change with the dates and the season, so we don’t list them here. Send the team your dates from the ",
+          `Prices change with the dates and the season, so we don’t list them here. ${policies.directPrice.value} Send the team your dates from the `,
           { text: "booking page", href: "/book" },
           " and ask, or see live prices on Booking.com and Agoda.",
         ],
         online: [
           "Prices change with the dates and the season. The ",
           { text: "booking page", href: "/book" },
-          " shows the free beds for your dates, with the price wherever the house has set one; Booking.com and Agoda show live prices too.",
+          ` shows the free beds for your dates, with the price wherever the house has set one; Booking.com and Agoda show live prices too. ${policies.directPrice.value}`,
         ],
       },
       {
@@ -141,12 +156,19 @@ export const faq: readonly FaqGroup[] = [
         answer: [
           "Book direct with the house: choose your dates on the ",
           { text: "booking page", href: "/book" },
-          " and send them to the team on WhatsApp or by email, and they will reply with what is free. You can also book on Booking.com or Agoda.",
+          ` and send them to the team on WhatsApp or by email, and they will reply with what is free. ${policies.directPrice.value} You can also book on Booking.com or Agoda.`,
         ],
         online: [
           "Choose your dates on the ",
           { text: "booking page", href: "/book" },
-          " and book directly with the house: there is nothing to pay online, and you pay when you arrive. You can also book on Booking.com or Agoda, or send the team a message from the same page.",
+          ` and book directly with the house: there is nothing to pay online, and you pay when you arrive. ${policies.directPrice.value} You can also book on Booking.com or Agoda, or send the team a message from the same page.`,
+        ],
+      },
+      {
+        id: "cancel",
+        question: "Can I cancel?",
+        answer: [
+          "If you cancel your stay after paying, there is no refund. If you booked on Booking.com or Agoda, check the cancellation terms in your booking there.",
         ],
       },
     ],
@@ -158,8 +180,49 @@ export const faq: readonly FaqGroup[] = [
         id: "nearby",
         question: "What is nearby?",
         answer: [
-          `The house is in ${location.neighbourhood.value}. The ${mekong.value.place} is ${lowerFirst(mekong.value.distance)}, the ${museum.value.place} is ${lowerFirst(museum.value.distance)}, and the ${lowerFirst(nightMarket.value.place)} is ${lowerFirst(nightMarket.value.distance)}. `,
+          `The house is in ${location.neighbourhood.value}. The ${mekong.value.place} is ${lowerFirst(mekong.value.distance)}, and guests say the ${lowerFirst(nightMarket.value.place)} is ${lowerFirst(nightMarket.value.distance)}. `,
           { text: "What’s nearby", href: "/guides/whats-nearby" },
+          ".",
+        ],
+      },
+    ],
+  },
+  {
+    title: "Travelling on",
+    entries: [
+      {
+        id: "train-tickets",
+        question: "How do I buy train tickets to Vang Vieng or Luang Prabang?",
+        answer: [
+          `Yourself, in ${railway.app.value.name}, the Laos–China Railway’s own app. Travel sites report that ${lowerFirst(railway.onSale.value.rule)}, so book early. `,
+          { text: "How to buy Laos–China Railway tickets", href: "/guides/laos-china-railway-tickets" },
+          ".",
+        ],
+      },
+      {
+        id: "getting-around",
+        question: "How do I get around Vientiane?",
+        answer: [
+          `Walk around the centre. For longer rides, book a taxi or tuk-tuk in ${gettingAround.loca.value.name}, or ${lowerFirst(gettingAround.tukTuks.value)}, as is usual in Laos. `,
+          { text: "Getting around Vientiane", href: "/guides/getting-around-vientiane" },
+          ".",
+        ],
+      },
+      {
+        id: "one-day",
+        question: "What can I do with a day in Vientiane?",
+        answer: [
+          `Temples in the morning, the ${sights.cope.value.name} at midday (${lowerFirst(sights.cope.value.entry)}), Patuxai and Pha That Luang in the afternoon, and sunset by the Mekong. `,
+          { text: "A day in Vientiane, step by step", href: "/guides/one-day-in-vientiane" },
+          ".",
+        ],
+      },
+      {
+        id: "thailand",
+        question: "How do I get to Thailand from Vientiane?",
+        answer: [
+          `Cross the ${toThailand.bridge.value.name} to Nong Khai: the Lao checkpoint is open daily from ${toThailand.bridge.value.hours}. Fill in the Lao Digital Immigration Form for leaving, and check Thailand’s entry rules first: they changed on ${toThailand.thaiRules.value.changed}. `,
+          { text: "Crossing to Thailand", href: "/guides/vientiane-to-thailand" },
           ".",
         ],
       },
@@ -169,11 +232,9 @@ export const faq: readonly FaqGroup[] = [
     title: "About us",
     entries: [
       {
-        id: "owner",
+        id: "team",
         question: "Who runs the house?",
-        answer: [
-          `${identity.name.value} is owned and run by ${identity.owner.name.value}, with a team on site day and night.`,
-        ],
+        answer: [`${identity.name.value} is run by its own team, on site day and night and speaking ${joinList(staff.languages.value)}.`],
       },
       {
         id: "shadow",
