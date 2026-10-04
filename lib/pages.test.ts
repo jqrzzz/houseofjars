@@ -61,7 +61,7 @@ describe("/book, with and without online booking (F1W-07)", () => {
   it("is named for what it does in each build", () => {
     expect(metaTitle(bookPage(true))).toBe("Book a bed · House of Jars Hostel, Vientiane");
     expect(bookPage(true).description).not.toMatch(/Live prices and free beds on Booking\.com/);
-    expect(metaTitle(bookPage(false))).toBe("Prices, booking and contact · House of Jars Hostel, Vientiane");
+    expect(metaTitle(bookPage(false))).toBe("Book direct · House of Jars Hostel, Vientiane");
     const online = sitePages(true).find((page) => page.path === "/book")!;
     expect(online.title).toBe("Book a bed");
     expect(online.updated > CONTENT_UPDATED).toBe(true);

@@ -125,9 +125,9 @@ export const faq: readonly FaqGroup[] = [
         id: "prices",
         question: "How much is a bed?",
         answer: [
-          "Prices change with the dates and the season, so we don’t list them here. You can see live prices on Booking.com and Agoda, or ",
-          { text: "ask us directly", href: "/book" },
-          ".",
+          "Prices change with the dates and the season, so we don’t list them here. Send the team your dates from the ",
+          { text: "booking page", href: "/book" },
+          " and ask, or see live prices on Booking.com and Agoda.",
         ],
         online: [
           "Prices change with the dates and the season. The ",
@@ -139,9 +139,9 @@ export const faq: readonly FaqGroup[] = [
         id: "how-to-book",
         question: "How do I book?",
         answer: [
-          "Book on Booking.com or Agoda, or send us a message from the ",
+          "Book direct with the house: choose your dates on the ",
           { text: "booking page", href: "/book" },
-          " and the team will reply by email or WhatsApp.",
+          " and send them to the team on WhatsApp or by email, and they will reply with what is free. You can also book on Booking.com or Agoda.",
         ],
         online: [
           "Choose your dates on the ",

@@ -12,6 +12,6 @@ describe("online booking switch", () => {
 
   it("names links to /book after the page they open", () => {
     expect(bookingLabel(shadow)).toBe("Book a bed");
-    expect(bookingLabel({})).toBe("Prices and booking");
+    expect(bookingLabel({})).toBe("Book direct");
   });
 });

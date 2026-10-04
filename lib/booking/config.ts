@@ -13,5 +13,5 @@ export function onlineBookingConfigured(env: Readonly<Record<string, string | un
 
 /** What links to /book say: its own title, which follows the same switch. */
 export function bookingLabel(env: Readonly<Record<string, string | undefined>> = process.env): string {
-  return onlineBookingConfigured(env) ? "Book a bed" : "Prices and booking";
+  return onlineBookingConfigured(env) ? "Book a bed" : "Book direct";
 }

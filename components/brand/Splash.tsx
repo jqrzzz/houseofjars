@@ -1,13 +1,15 @@
 import { identity } from "@/content/identity";
 import { MARK_PARTS, MARK_VIEWBOX } from "./mark-shape";
 import styles from "./Splash.module.css";
+import { WovenBand } from "./WovenBand";
 
 const [leftPillar, topBlock, middleBlock, bottomBlock, rightPillar] = MARK_PARTS;
 
 /**
  * The first page of a visit opens on the house's mark: the two pillars rise,
- * the three blocks between them settle in, the name appears, and the page is
- * revealed as the screen lifts like a curtain, about 1.6 seconds in all.
+ * the three blocks between them settle in, the name appears, and the screen
+ * rises like the house's curtains, woven hem and all, to reveal the page:
+ * about 1.7 seconds in all.
  *
  * Shown only when the boot script (lib/theme.ts) marks <html class="splash">:
  * once per visit, never with reduced motion, never without JavaScript. It is
@@ -29,6 +31,9 @@ export function Splash() {
         <p className={styles.greeting} lang="lo">
           ສະບາຍດີ
         </p>
+      </div>
+      <div className={styles.hem}>
+        <WovenBand pattern="diamond" />
       </div>
     </div>
   );

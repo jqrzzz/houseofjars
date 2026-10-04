@@ -78,6 +78,9 @@
   --night-raised: #2c1e13;
   --stone: #cdbfaa; /* the stone jars in the drawings */
   --stone-dark: #8c7b66;
+  --curtain: #2b1b10; /* the pod curtains' dark weave */
+  --curtain-night: #160d07; /* the curtains with the lamps out: a shade under the Evening page */
+  --thread-gold: #e9c46a; /* the curtains' gold thread */
 
   /* Roles */
   --page: var(--rice);
@@ -120,6 +123,10 @@
   --open-jar-stone: var(--jar-2);
   --open-jar-top: var(--jar-1);
   --open-jar-hollow: #24160c;
+  /* The woven bands (components/brand/WovenBand): the curtains' ground, gold thread and orange hearts. */
+  --weave-ground: var(--curtain);
+  --weave-thread: var(--thread-gold);
+  --weave-heart: var(--jar-orange);
 
   /* Type */
   --font-brand-stack: var(--font-brand), var(--font-lao), "Figtree Arial", "Figtree Roboto", system-ui, sans-serif;
@@ -204,6 +211,7 @@
     --open-jar-stone: #7e7160;
     --open-jar-top: #938573;
     --open-jar-hollow: #0c0805;
+    --weave-ground: var(--curtain-night);
   }
 }
 
@@ -243,6 +251,7 @@
   --open-jar-stone: #7e7160;
   --open-jar-top: #938573;
   --open-jar-hollow: #0c0805;
+  --weave-ground: var(--curtain-night);
 }
 
 :root[data-theme="light"] {

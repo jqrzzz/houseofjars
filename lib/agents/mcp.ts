@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { availabilityChecker } from "../concierge/availability";
 import { identity, whatsappUrl } from "@/content/identity";
+import { directLinks } from "../booking/direct";
 import type { AvailabilityDeps } from "../booking/handler";
 import { MAX_GUESTS } from "../booking/types";
 import { json, readJsonBody, rejectCrossSite } from "../http";
+import { nightsBetween } from "../dates";
 import { buildLlmsFullTxt } from "../llms";
 import { clientKey } from "../rate-limit";
 import { pages } from "../site";
@@ -90,8 +92,9 @@ function tools(online: boolean) {
       description: online
         ? "A link to the House of Jars booking page with the dates and number of guests filled in: the traveller sees the " +
           "free beds and prices there and sends the booking request themselves. Nothing is booked or paid until the team confirms."
-        : "Where the traveller can book these dates: the house's own website doesn't take bookings yet, so this gives the " +
-          "Booking.com and Agoda pages (live prices and free beds) and the team's WhatsApp, with a message ready to send.",
+        : "How the traveller books these dates directly with the house: its website doesn't take bookings online yet, so " +
+          "this gives the booking page with the stay filled in and the team's WhatsApp and email, each with the request " +
+          "written out ready to send; the team replies with what is free. Booking.com and Agoda come last, as alternatives.",
       inputSchema: stayInput,
       annotations: readOnly,
     },
@@ -120,16 +123,23 @@ export function bookingLink(siteUrl: string, stay: Stay): string {
   return `${new URL(pages.book.path, `${siteUrl}/`)}?${query}`;
 }
 
-/** Without online booking: the booking sites, and WhatsApp with the stay written out for the traveller to send. */
-function elsewhere(stay: Stay): string {
-  const nights = (Date.parse(stay.check_out) - Date.parse(stay.check_in)) / 86_400_000;
-  const words = `Hello! Do you have ${stay.guests === 1 ? "a bed" : `${stay.guests} beds`} from ${stay.check_in} to ${stay.check_out} (${nights} ${nights === 1 ? "night" : "nights"})?`;
+/**
+ * Without online booking: booking direct first (the booking page with the
+ * stay filled in, and WhatsApp and email with it written out, as the page
+ * writes it: lib/booking/direct.ts), then the booking sites.
+ */
+function direct(siteUrl: string, stay: Stay): string {
+  const links = directLinks(
+    { checkIn: stay.check_in, nights: nightsBetween(stay.check_in, stay.check_out), guests: stay.guests },
+    { whatsapp: whatsappUrl(), email: identity.contact.email.value },
+  );
   return [
-    "The house's website doesn't take bookings yet. The traveller can book here:",
-    `- Booking.com (live prices and free beds): ${identity.links.booking.value}`,
-    `- Agoda (live prices and free beds): ${identity.links.agoda.value}`,
-    `- WhatsApp the team, with this message ready to send: ${whatsappUrl()}?text=${encodeURIComponent(words)}`,
-    `- Email: ${identity.contact.email.value}`,
+    "Book direct with the house. Its website doesn't take bookings online yet: the traveller sends these dates to the team, who reply with what is free. Nothing is booked until the team confirms.",
+    `- The booking page with this stay filled in, to send on WhatsApp or by email: ${bookingLink(siteUrl, stay)}#message`,
+    `- WhatsApp, with the request ready to send: ${links.whatsapp}`,
+    `- Email, with the request ready to send: ${links.email}`,
+    `- Also on Booking.com (live prices and free beds): ${identity.links.booking.value}`,
+    `- Also on Agoda (live prices and free beds): ${identity.links.agoda.value}`,
   ].join("\n");
 }
 
@@ -141,7 +151,7 @@ async function callTool(name: string, args: unknown, client: string, deps: McpDe
     case "booking_link": {
       const stay = staySchema.safeParse(args ?? {});
       if (!stay.success) return text(`Invalid stay: ${stay.error.issues.map((issue) => issue.message).join("; ")}`, true);
-      if (!online) return text(elsewhere(stay.data));
+      if (!online) return text(direct(deps.siteUrl, stay.data));
       return text(
         `${bookingLink(deps.siteUrl, stay.data)}\n\nThe traveller opens it to see free beds and prices and sends the booking request themselves; the team confirms it.`,
       );
@@ -172,7 +182,8 @@ async function answer(message: z.output<typeof messageSchema>, client: string, d
         instructions:
           `${identity.fullName.value}: a calm dorm hostel in central Vientiane, Laos. Read house_information for the facts. ` +
           "Assistants can look things up and give the traveller a booking link, but can't book: the traveller sends the " +
-          "request on the website and the team confirms it. Never quote a price that isn't on the house's own pages or booking sites.",
+          "request themselves (on the website, or on WhatsApp or by email) and the team confirms it. Booking direct with the " +
+          "house comes first. Never quote a price that isn't on the house's own pages or booking sites.",
       });
     }
     case "ping":

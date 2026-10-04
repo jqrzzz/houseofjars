@@ -29,15 +29,21 @@
 
 /*
  * The photograph settles inside its frame as it scrolls into view (from a
- * touch closer to its own size), and leans in a little under the pointer.
- * Only the scale moves; the frame and the words stay put.
+ * touch closer), then drifts a little slower than the page, like a view
+ * through a window, and leans in a little under the pointer. Only the
+ * photograph moves, never past its frame's edges (it stays scaled up by
+ * more than it drifts); the frame and the words stay put.
  */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .image {
-      animation: photo-settle linear both;
+      animation:
+        photo-settle linear both,
+        photo-drift linear both;
       animation-timeline: view();
-      animation-range: entry 0% cover 45%;
+      animation-range:
+        entry 0% cover 45%,
+        cover 0% cover 100%;
     }
   }
 
@@ -50,10 +56,20 @@
 
 @keyframes photo-settle {
   from {
-    transform: scale(1.1);
+    transform: scale(1.18);
   }
   to {
-    transform: none;
+    transform: scale(1.08);
+  }
+}
+
+/* 3% either way, inside the 4% the settled scale leaves at each edge. */
+@keyframes photo-drift {
+  from {
+    translate: 0 -3%;
+  }
+  to {
+    translate: 0 3%;
   }
 }
 

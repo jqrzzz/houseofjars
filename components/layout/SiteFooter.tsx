@@ -3,6 +3,7 @@ import { addressLines, identity, whatsappUrl } from "@/content/identity";
 import { bookingLabel } from "@/lib/booking/config";
 import { pages, primaryNav, teamSignInUrl } from "@/lib/site";
 import { Wordmark } from "../brand/Wordmark";
+import { WovenBand } from "../brand/WovenBand";
 import { ShareButton } from "../ui/ShareButton";
 import { ThemeChoices } from "./ThemeSwitch";
 import styles from "./SiteFooter.module.css";
@@ -19,6 +20,7 @@ export function SiteFooter() {
   const signIn = teamSignInUrl();
   return (
     <footer className={styles.footer}>
+      <WovenBand pattern="hooks" weave />
       <div className={`container ${styles.grid}`}>
         <div className={styles.brand}>
           <Wordmark tone="deep" />

@@ -34,9 +34,11 @@ describe("llms.txt", () => {
   it("links every page and guide, the full file and how to reach the team, all absolute", () => {
     for (const page of allPages) expect(short).toContain(`(${new URL(page.path, `${site}/`)})`);
     expect(short).toContain(`${site}/llms-full.txt`);
-    // Without online booking there is no form to fill in: the team's WhatsApp instead (the form needs Shadow Check-in).
-    expect(short).toContain(`[Message the team](${site}/book#message): on WhatsApp (https://wa.me/`);
-    expect(short).not.toContain(bookingLinkTemplate(site));
+    // Without online booking, booking direct: the guest's dates written out for WhatsApp or email, which a /book link fills in.
+    expect(short).toContain(`[Book direct](${site}/book#message): the guest sends their dates to the team on WhatsApp (https://wa.me/`);
+    expect(short).toContain(bookingLinkTemplate(site));
+    // The booking sites come after the house's own way to book.
+    expect(short.indexOf("[Book direct]")).toBeLessThan(short.indexOf("[Booking.com]"));
     expect(short).not.toMatch(/\]\(\//);
     expect(short).not.toMatch(/undefined|\[object Object\]/);
   });
@@ -57,7 +59,7 @@ describe("llms-full.txt", () => {
   });
 
   it("explains how to book, and that the site takes no payment", () => {
-    expect(full).toContain("[Message the team]");
+    expect(full).toContain("[Book direct]");
     expect(full).toContain(identity.links.booking.value);
     expect(full).toContain(identity.links.agoda.value);
     expect(full).toContain("There is no payment on this website.");
@@ -111,7 +113,7 @@ describe("with online booking (W3)", () => {
 
   it("lists /book as the page to book on, and answers the booking questions that way (F1W-07)", () => {
     expect(shortOnline).toContain(`[Book a bed · House of Jars Hostel, Vientiane](${site}/book): See the free beds for your dates`);
-    expect(short).toContain(`[Prices, booking and contact · House of Jars Hostel, Vientiane](${site}/book)`);
+    expect(short).toContain(`[Book direct · House of Jars Hostel, Vientiane](${site}/book)`);
     expect(fullOnline).toMatch(/\*\*How do I book\?\*\*\nChoose your dates on the booking page/);
     expect(fullOnline).not.toContain("so we don’t list them here");
     expect(full).toContain("so we don’t list them here");
