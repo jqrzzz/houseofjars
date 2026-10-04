@@ -2,12 +2,36 @@ import { fact, type Fact } from "./fact";
 import { sources } from "./sources";
 
 export const times = {
-  checkIn: fact("14:00", sources.booking, { note: "Check-in from this time." }),
-  checkOut: fact("11:30", sources.booking, { note: "Check-out until this time. The room rate sign says check-out is from 08:00 to 11:30." }),
+  checkIn: fact("14:00", sources.booking, { note: 'Check-in from this time. House rules board: "Check-in: From 2 PM until 9 PM."' }),
+  checkInUntil: fact("21:00", sources.signs, { note: 'House rules board: "Check-in: From 2 PM until 9 PM."' }),
+  checkOut: fact("11:30", sources.booking, {
+    note: 'Check-out until this time. The room rate sign and the house rules board: "Check-out: From 8 AM until 11.30 AM."',
+  }),
   earlyCheckIn: fact("Possible, subject to availability", sources.booking),
   quietHours: fact("21:00–07:00", sources.signs, {
     note: 'Dormitory rules board: "Keep your voice down at all times. From 9 PM until 7 AM, do not make a noise."',
   }) as Fact<string> | null,
+  frontDoorLocked: fact({ from: "23:30", until: "07:00" }, sources.signs, {
+    note: 'House rules board: "Front door is locked from 11.30 PM until 7 AM. If you return late, please knock on the glass door, to wake up the night staff and they will open the door."',
+  }),
+} as const;
+
+/** What a stay costs beyond the bed, and what happens to a payment (the house rules board). */
+export const policies = {
+  deposit: fact({ amount: "100,000 kip", covers: "your padlock and towel" }, sources.signs, {
+    note: 'House rules board: "Deposit: 100,000 KIP for Padlock and Towel. To be returned at reception at check-out to get refunded."',
+  }),
+  secondTowel: fact("15,000 kip", sources.signs, { note: 'House rules board: "Pay additional 15,000 KIP for a 2nd towel (not refunded)."' }),
+  refunds: fact("No refund once a stay is paid", sources.signs, {
+    note: 'House rules board, under Check-in: "If you decide to cancel your stay after payment, you do not get a refund."',
+  }),
+  /** Why to book direct. No figures until the house publishes its prices. */
+  directPrice: fact("Booking direct costs less than on the booking sites, because there are no platform fees.", sources.team, {
+    confirmed: true,
+    note: "The house's answer on 4 October 2026: book direct for a lower price; prices to be published later.",
+  }),
+  /** The same, short, for the hero. */
+  directPriceShort: fact("Book direct and pay less: no booking-site fees.", sources.team, { confirmed: true }),
 } as const;
 
 export const building = {
@@ -51,7 +75,9 @@ export const breakfast = {
   items: fact(["Two fried eggs", "Salad", "Baguette", "Fruit", "Coffee or tea"] as const, sources.signs, {
     note: 'Breakfast menu for staying guests: "2 Fried Eggs, Salad, Baguette, Fruit. Hot Americano or Hot Espresso or Hot Lipton Tea." Other drinks cost extra (prices on the menu, not published here).',
   }),
-  hours: fact("08:00–10:30", sources.signs, { note: 'Room rate sign and menus: "Breakfast is served from 8 AM to 10:30 AM."' }),
+  hours: fact("08:00–10:30", sources.signs, {
+    note: 'Room rate sign and menus: "Breakfast is served from 8 AM to 10:30 AM." House rules board: "Breakfast: From 8 AM until 10.30 AM."',
+  }),
 } as const;
 
 export const staff = {
@@ -89,24 +115,46 @@ export interface HouseRule {
   readonly why: string;
 }
 
+const door = times.frontDoorLocked.value;
+
 export const rules = {
   house: [
     fact<HouseRule>(
       { rule: "No smoking anywhere in the house.", why: "Clean air in every dorm, and beds that smell fresh." },
       sources.booking,
+      { note: "The house rules board lists smoking as not allowed too." },
     ),
     fact<HouseRule>(
-      { rule: "No outside guests: each pod is for one registered guest.", why: "Everyone sleeps among people the house knows." },
+      {
+        rule: "No outside guests upstairs: the dorm floors are for registered guests, one to a pod.",
+        why: "Everyone sleeps among people the house knows.",
+      },
       sources.signs,
+      { note: 'House rules board: "Un-registered guests on 2nd & 3rd floor" are not allowed (the dorm floors, counted from the ground floor as the 1st).' },
+    ),
+    fact<HouseRule>(
+      { rule: "No outside food or drink in the house.", why: "So the house stays clean and fresh." },
+      sources.signs,
+      { note: 'House rules board: "Consuming outside food and drinks inside the hostel" is not allowed.' },
     ),
     fact<HouseRule>(
       { rule: "Eat and drink in the café on the ground floor, not in the dorms.", why: "Clean dorms, with no crumbs or smells." },
       sources.signs,
     ),
     fact<HouseRule>(
-      { rule: "Please take off your shoes.", why: "Clean floors, as in most Lao homes." },
+      { rule: "No strong-smelling food, such as durian or kimchi.", why: "A smell carries through a whole shared house." },
       sources.signs,
-      { note: "The signs on the stairs and the dorm doors ask for it." },
+    ),
+    fact<HouseRule>(
+      { rule: "No shoes upstairs, on the dorm floors.", why: "Clean floors, as in most Lao homes." },
+      sources.signs,
+      { note: 'House rules board: "Shoes on 2nd & 3rd floor" are not allowed. The signs on the stairs and the dorm doors ask for it too.' },
+    ),
+    fact<HouseRule>({ rule: "No pets.", why: "The house is shared, and the dorms are for sleeping." }, sources.signs),
+    fact<HouseRule>(
+      { rule: "No drugs, weapons, flammable items or chemicals.", why: "For everyone's safety." },
+      sources.signs,
+      { note: 'House rules board: "Prohibited drugs, weapons, flammable items & chemicals" are not allowed.' },
     ),
     fact<HouseRule>(
       { rule: "No hen or stag parties.", why: "The house is built for rest, not for parties." },
@@ -120,15 +168,23 @@ export const rules = {
       { rule: "Keep your voice down at all times.", why: "Most guests come here to sleep well." },
       sources.signs,
     ),
+    fact<HouseRule>(
+      {
+        rule: `The front door is locked from ${door.from} until ${door.until}. Back late? Knock on the glass door and the night staff will let you in.`,
+        why: "The house stays locked while guests sleep, and someone is always there to open it.",
+      },
+      sources.signs,
+    ),
   ],
   stay: [
     fact<HouseRule>(
-      { rule: "Check-in from 14:00.", why: "Time to clean every bed and make it up fresh." },
-      sources.booking,
+      { rule: `Check-in from ${times.checkIn.value} until ${times.checkInUntil.value}.`, why: "Time to clean every bed and make it up fresh." },
+      sources.signs,
     ),
     fact<HouseRule>(
-      { rule: "Check-out from 08:00 until 11:30.", why: "So beds are ready for the guests arriving that afternoon." },
+      { rule: `Arriving after ${times.checkInUntil.value}? Message the team before you travel.`, why: "So the team knows when to expect you." },
       sources.signs,
+      { note: "The board's check-in hours end at 21:00; it says nothing about later arrivals, so the site asks guests to message ahead." },
     ),
     fact<HouseRule>(
       {
@@ -143,8 +199,24 @@ export const rules = {
       { note: "Please confirm this matches how the house registers guests." },
     ),
     fact<HouseRule>(
+      {
+        rule: `A deposit of ${policies.deposit.value.amount} for ${policies.deposit.value.covers}, refunded at reception when you return them at check-out.`,
+        why: `Both are lent to you for your stay. A second towel is ${policies.secondTowel.value}, not refunded.`,
+      },
+      sources.signs,
+    ),
+    fact<HouseRule>(
+      { rule: "Check-out from 08:00 until 11:30.", why: "So beds are ready for the guests arriving that afternoon." },
+      sources.signs,
+    ),
+    fact<HouseRule>(
       { rule: "Leaving before 08:00? Tell the team beforehand, so they can return your deposit.", why: "Check-out at the desk starts at 08:00." },
       sources.signs,
+    ),
+    fact<HouseRule>(
+      { rule: "If you cancel your stay after paying, there is no refund.", why: "Your bed is kept for you from the moment you pay." },
+      sources.signs,
+      { note: policies.refunds.note },
     ),
     fact<HouseRule>(
       { rule: "Coming by motorbike or bicycle? Tell reception.", why: "Overnight parking outside is not allowed." },

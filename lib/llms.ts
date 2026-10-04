@@ -7,7 +7,7 @@ import { formatAddress, identity, whatsappUrl } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
 import { openQuestions } from "@/content/open-questions";
 import { honestNotes, praise, ratings } from "@/content/reviews";
-import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, staff, times } from "@/content/stay";
+import { amenities, atmosphere, bathrooms, beds, breakfast, building, policies, rules, staff, times } from "@/content/stay";
 import { joinList, lowerFirst } from "@/content/text";
 import { collectFacts, factsMentionedIn } from "./content-audit";
 import { metaTitle, sitePages } from "./pages";
@@ -59,7 +59,7 @@ function availabilityText(url: (path: string) => string, onlineBooking: boolean 
 }
 
 function summary(): string {
-  return `> A dorm hostel of curtained pod beds in ${location.neighbourhood.value}, ${identity.address.country.value}. Breakfast is included, there is ${lowerFirst(building.cafe.value)}, and staff are ${lowerFirst(staff.hours.value.summary)}. Owned and run by ${identity.owner.name.value}.`;
+  return `> A dorm hostel of curtained pod beds in ${location.neighbourhood.value}, ${identity.address.country.value}. Breakfast is included, there is ${lowerFirst(building.cafe.value)}, and staff are ${lowerFirst(staff.hours.value.summary)}.`;
 }
 
 function keyFacts(): string[] {
@@ -68,7 +68,10 @@ function keyFacts(): string[] {
     `Address: ${formatAddress()}`,
     `WhatsApp or phone: ${phone.value.display}`,
     `Email: ${email.value}`,
-    `Check-in from ${times.checkIn.value}; check-out until ${times.checkOut.value}; early check-in ${lowerFirst(times.earlyCheckIn.value)}`,
+    `Check-in from ${times.checkIn.value} until ${times.checkInUntil.value}; check-out until ${times.checkOut.value}; early check-in ${lowerFirst(times.earlyCheckIn.value)}`,
+    `Front door locked ${times.frontDoorLocked.value.from}–${times.frontDoorLocked.value.until}: knock on the glass door and the night staff open it`,
+    `Deposit: ${policies.deposit.value.amount} for ${policies.deposit.value.covers}, refunded at check-out; no refund once a stay is paid`,
+    `Booking direct: ${lowerFirst(policies.directPrice.value)}`,
     `Beds: ${beds.style.value}`,
     `Every bed has ${joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`))}`,
     `Breakfast included, in the café on the ground floor`,
@@ -86,7 +89,7 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
       : []),
     onlineBooking
       ? `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. There is no payment on this website.`
-      : `- [Book direct](${url(`${pages.book.path}#message`)}): the guest sends their dates to the team on WhatsApp (${whatsappUrl()}) or by email, and the team replies with what is free; nothing is booked until the team confirms. ${bookingLinkTemplate(siteUrl)} opens the page with the dates and number of guests filled in, written out ready to send. There is no payment on this website.`,
+      : `- [Book direct](${url(`${pages.book.path}#message`)}): the guest sends their dates to the team on WhatsApp (${whatsappUrl()}) or by email, and the team replies with what is free; nothing is booked until the team confirms. ${policies.directPrice.value} ${bookingLinkTemplate(siteUrl)} opens the page with the dates and number of guests filled in, written out ready to send. There is no payment on this website.`,
     `- [Booking.com](${identity.links.booking.value}): also on Booking.com, with live prices and free beds`,
     `- [Agoda](${identity.links.agoda.value}): also on Agoda, with live prices and free beds`,
   ];
@@ -183,7 +186,7 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
     "## The house",
     ...bullets([
       `Name: ${identity.name.value} (full name: ${identity.fullName.value})`,
-      `Owned and run by ${identity.owner.name.value}, with a team on site day and night`,
+      `Run by its own team, on site day and night`,
       `Address: ${formatAddress()}`,
       `Neighbourhood: ${location.neighbourhood.value}`,
       `${building.floors.value} floors; ${lowerFirst(building.cafe.value)}`,
@@ -219,8 +222,9 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
     "",
     "## Times",
     ...bullets([
-      `Check-in from ${times.checkIn.value}`,
+      `Check-in from ${times.checkIn.value} until ${times.checkInUntil.value}`,
       `Check-out until ${times.checkOut.value}`,
+      `Front door locked ${times.frontDoorLocked.value.from}–${times.frontDoorLocked.value.until}: knock on the glass door and the night staff open it`,
       `Early check-in: ${lowerFirst(times.earlyCheckIn.value)}`,
       ...(times.quietHours ? [`Quiet hours: ${times.quietHours.value}`] : []),
     ]),

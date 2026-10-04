@@ -25,7 +25,7 @@ export function SiteFooter() {
         <div className={styles.brand}>
           <Wordmark tone="deep" />
           <p className={styles.tagline}>A calm house in the heart of Vientiane.</p>
-          <p className={styles.owner}>Owned and run by {identity.owner.name.value}.</p>
+          <p className={styles.team}>A team on site, day and night.</p>
           <ShareButton path="/" label="Share House of Jars" className={styles.share} />
           <ThemeChoices className={styles.theme} />
         </div>

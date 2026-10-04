@@ -40,11 +40,11 @@ describe("how firmly a fact may be stated", () => {
   });
 
   it("treats a fact from an unknown source as unconfirmed until the house confirms it", () => {
-    const told = fact("22:00–07:00", "Nang, by WhatsApp");
+    const told = fact("22:00–07:00", "The owner, by WhatsApp");
     expect(standingOf(told)).toBe("unknown");
     expect(isFirm(told)).toBe(false);
     expect(creditFor(told)).toBe("not yet confirmed");
-    expect(isFirm(fact("22:00–07:00", "Nang, by WhatsApp", { confirmed: true }))).toBe(true);
+    expect(isFirm(fact("22:00–07:00", "The owner, by WhatsApp", { confirmed: true }))).toBe(true);
     expect(firm(null)).toBeUndefined();
   });
 });

@@ -27,7 +27,7 @@ export const pages = {
     title: "Calm, clean pod hostel in central Vientiane",
     fullTitle: "House of Jars · Calm, clean pod hostel in central Vientiane",
     description:
-      "A calm, very clean dorm hostel in Ban Anou, central Vientiane: curtained pod beds, breakfast in the café and a team on site 24 hours. Owned and run by Nang.",
+      "A calm, very clean dorm hostel in Ban Anou, central Vientiane: curtained pod beds, breakfast in the café and a team on site 24 hours.",
   },
   house: {
     path: "/the-house",
@@ -66,15 +66,15 @@ export const pages = {
     nav: "About",
     title: "About the house",
     description:
-      "House of Jars is a calm dorm hostel in Ban Anou, Vientiane, owned and run by Nang. Why it is called House of Jars, and the team behind it.",
-    teaser: "Owned and run by Nang, and why it is called House of Jars.",
+      "House of Jars is a calm dorm hostel in Ban Anou, Vientiane: what it is made for, why it is called House of Jars, its mark and its team.",
+    teaser: "What the house is made for, and why it is called House of Jars.",
   },
   book: {
     path: "/book",
     nav: "Book",
     title: "Book direct",
     description:
-      "Book a bed directly with House of Jars: send your dates to the team on WhatsApp (+856 20 23 978 946) or by email. Also on Booking.com and Agoda.",
+      "Book direct with House of Jars, for less than on the booking sites: send your dates on WhatsApp (+856 20 23 978 946) or by email.",
     teaser: "Your dates to the team on WhatsApp or by email, written out for you.",
   },
   guides: {

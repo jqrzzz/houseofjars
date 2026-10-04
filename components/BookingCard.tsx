@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { identity, whatsappUrl } from "@/content/identity";
 import { photos } from "@/content/photos";
+import { policies } from "@/content/stay";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pages } from "@/lib/site";
 import { DirectRequest } from "./book/DirectRequest";
@@ -52,7 +53,7 @@ export function BookingCard() {
                 </h2>
                 <p className={styles.text}>
                   See which beds are free on your dates and book directly with the house. Nothing to pay online: you pay when
-                  you arrive.
+                  you arrive. {policies.directPrice.value}
                 </p>
                 <div className={styles.fields}>
                   <label className={`${styles.field} ${styles.date}`}>
@@ -87,7 +88,7 @@ export function BookingCard() {
                   Book direct with the house.
                 </h2>
                 <p className={styles.text}>
-                  Choose your dates and send them to the team on WhatsApp or by email. Someone is on site day and night.
+                  {policies.directPrice.value} Choose your dates and send them to the team on WhatsApp or by email.
                 </p>
                 <DirectRequest whatsapp={whatsappUrl()} email={identity.contact.email.value} />
               </div>

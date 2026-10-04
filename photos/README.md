@@ -44,6 +44,7 @@ The house's own photos and brand files, taken by the House of Jars team in Laos 
 | `dormitory-h-door.jpg` | Door sign for dormitory H: no shoes, no food, quiet | 1200 × 1600 | | WhatsApp Image 2026-10-04 at 1.32.59 PM.jpeg |
 | `dormitory-j-door.jpg` | Door sign for dormitory J, the same rules | 1200 × 1600 | | WhatsApp Image 2026-10-04 at 1.32.27 PM (1).jpeg |
 | `dormitory-rules-board.jpg` | The full dormitory rules board | 1200 × 1600 | Typo to fix when reprinted: "withold" (withhold) | WhatsApp Image 2026-10-04 at 1.32.28 PM.jpeg |
+| `house-rules-board.jpg` | The orange House Rules board (check-in and check-out times, the deposit, breakfast, what is not allowed, the front door at night) | 1200 × 1600 | When reprinted: the second "Not allowed" heading is about the front door at night; the refund rule sits under "Check-in"; "Un-registered" (unregistered), "chemicals,Smoking" and "7 AM.If" need spaces; "11.30" and "10.30" use a full stop for the time | Sent in the chat, 2026-10-04 |
 | `bathroom-rules-orange.jpg` | Bathroom rules with the no-smoking symbol | 1200 × 1600 | | WhatsApp Image 2026-10-04 at 1.32.26 PM.jpeg |
 | `bathroom-rules-white.jpg` | Bathroom rules, white board | 1600 × 1200 | Same subject as the orange one, different words | WhatsApp Image 2026-10-04 at 1.32.27 PM (2).jpeg |
 | `womens-bathroom-door.jpg` | Women's bathroom door sign | 1200 × 1600 | | WhatsApp Image 2026-10-04 at 1.32.58 PM (1).jpeg |

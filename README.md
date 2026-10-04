@@ -1,6 +1,6 @@
 # House of Jars
 
-The website of House of Jars Hostel, a calm dorm hostel in Ban Anou, central Vientiane, owned and run by Nang. It lives at [www.houseofjars.la](https://www.houseofjars.la).
+The website of House of Jars Hostel, a calm dorm hostel in Ban Anou, central Vientiane. It lives at [www.houseofjars.la](https://www.houseofjars.la).
 
 Every page is static HTML. Small APIs sit behind it: **Shadow**, the house's AI concierge (Claude); the **message form**, which forwards messages to Shadow Check-in, the system the house uses to run the front desk; and **online booking**, which shows free beds and sends booking requests to Shadow Check-in for the team to confirm (the guest pays at the house).
 

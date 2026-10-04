@@ -87,7 +87,7 @@ export async function renderOgImage(page: PageInfo, options: { eyebrow?: string 
               {title}
             </div>
             <div style={{ fontSize: 24, fontWeight: 500, marginTop: 24, color: color.soft }}>
-              {`Owned and run by ${identity.owner.name.value} · ${identity.address.village.value}, Vientiane`}
+              {`${identity.address.village.value}, Vientiane · A team on site day and night`}
             </div>
           </div>
         </div>

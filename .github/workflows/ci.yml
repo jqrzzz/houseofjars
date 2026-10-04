@@ -28,7 +28,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      # Lists the facts Nang has not confirmed yet. A review list, not a gate.
+      # Lists the facts the house has not confirmed yet. A review list, not a gate.
       - name: Content check
         run: npm run content:check
         continue-on-error: true

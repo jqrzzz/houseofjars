@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { availabilityChecker } from "../concierge/availability";
 import { identity, whatsappUrl } from "@/content/identity";
+import { policies } from "@/content/stay";
 import { directLinks } from "../booking/direct";
 import type { AvailabilityDeps } from "../booking/handler";
 import { MAX_GUESTS } from "../booking/types";
@@ -134,7 +135,7 @@ function direct(siteUrl: string, stay: Stay): string {
     { whatsapp: whatsappUrl(), email: identity.contact.email.value },
   );
   return [
-    "Book direct with the house. Its website doesn't take bookings online yet: the traveller sends these dates to the team, who reply with what is free. Nothing is booked until the team confirms.",
+    `Book direct with the house. ${policies.directPrice.value} Its website doesn't take bookings online yet: the traveller sends these dates to the team, who reply with what is free. Nothing is booked until the team confirms.`,
     `- The booking page with this stay filled in, to send on WhatsApp or by email: ${bookingLink(siteUrl, stay)}#message`,
     `- WhatsApp, with the request ready to send: ${links.whatsapp}`,
     `- Email, with the request ready to send: ${links.email}`,
@@ -183,7 +184,8 @@ async function answer(message: z.output<typeof messageSchema>, client: string, d
           `${identity.fullName.value}: a calm dorm hostel in central Vientiane, Laos. Read house_information for the facts. ` +
           "Assistants can look things up and give the traveller a booking link, but can't book: the traveller sends the " +
           "request themselves (on the website, or on WhatsApp or by email) and the team confirms it. Booking direct with the " +
-          "house comes first. Never quote a price that isn't on the house's own pages or booking sites.",
+          `house comes first: ${policies.directPrice.value.charAt(0).toLowerCase()}${policies.directPrice.value.slice(1)} ` +
+          "Never quote a price that isn't on the house's own pages or booking sites.",
       });
     }
     case "ping":

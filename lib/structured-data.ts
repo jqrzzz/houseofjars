@@ -78,13 +78,11 @@ function hostelDescription(): string | undefined {
   const style = firm(beds.style);
   const cafe = firm(building.cafe);
   const hours = firm(staff.hours);
-  const owner = firm(identity.owner.name);
   const sentences = [
     neighbourhood && country ? `A dorm hostel in ${neighbourhood}, ${country}.` : undefined,
     style ? `${style}.` : undefined,
     firm(breakfast.included) && cafe ? `Breakfast included; ${lowerFirst(cafe)}.` : undefined,
     hours ? `Staff ${lowerFirst(hours.summary)}.` : undefined,
-    owner ? `Owned and run by ${owner}.` : undefined,
   ].filter((sentence): sentence is string => Boolean(sentence));
   return sentences.length > 0 ? sentences.join(" ") : undefined;
 }

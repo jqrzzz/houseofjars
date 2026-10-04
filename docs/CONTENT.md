@@ -6,7 +6,7 @@ Everything the site says about the house comes from a few TypeScript files in `c
 
 | File | What is in it |
 | --- | --- |
-| `content/identity.ts` | Name, address, phone and WhatsApp, email, booking and social links, Nang, the story behind the name |
+| `content/identity.ts` | Name, address, phone and WhatsApp, email, booking and social links, the story behind the name and the mark. The site names no owner: the house speaks as a brand |
 | `content/stay.ts` | Check-in and check-out times, quiet hours, beds and dorms, bathrooms, breakfast, staff, amenities, atmosphere, house rules |
 | `content/area.ts` | Neighbourhood and walking distances, map position, airport transport, the Lao Digital Immigration Form, the Plain of Jars |
 | `content/reviews.ts` | Ratings on other sites (with the date they were read), what guests praise, honest notes |
@@ -28,7 +28,7 @@ checkIn: fact("14:00", sources.booking, { note: "Check-in from this time." }),
 
 - `value` is what the site shows.
 - `source` says where it came from, so anyone can check it.
-- `confirmed` is `false` until Nang or the team has confirmed it. Add `confirmed: true` to the options once they have:
+- `confirmed` is `false` until the house (its owner or team) has confirmed it. Add `confirmed: true` to the options once they have:
 
   ```ts
   checkIn: fact("14:00", sources.booking, { confirmed: true }),
@@ -54,11 +54,10 @@ It prints each unconfirmed fact with its value, source and note, then the open q
 
 ## Common changes
 
-- **A fact is wrong.** Change `value`, set the `source` to where the correct version came from (for example `"Nang, October 2026"`), and set `confirmed: true`.
-- **Quiet hours.** In `content/stay.ts`, replace `quietHours: null` with, for example, `quietHours: fact("22:00–07:00", "Nang", { confirmed: true })`. The rules page, the home page and Shadow pick it up.
-- **The map position.** In `content/area.ts`, set `geo` to `fact({ latitude: 17.96, longitude: 102.61 }, "Nang", { confirmed: true })` with the front door's real coordinates. The structured data then includes it. Don't guess.
-- **Nang's own words.** Only if she wants to: in `content/identity.ts`, set `owner.note` to `fact("Her words, as she wrote them.", "Nang", { confirmed: true })`. They appear on the home and About pages. Never write one for her.
-- **The story behind the name.** `identity.nameStory` is a guess ("the name nods to the Plain of Jars…"). Replace it with the real story when Nang tells it.
+- **A fact is wrong.** Change `value`, set the `source` to where the correct version came from (for example `"The house, October 2026"`), and set `confirmed: true`.
+- **Quiet hours.** In `content/stay.ts`, replace `quietHours: null` with, for example, `quietHours: fact("22:00–07:00", "The house", { confirmed: true })`. The rules page, the home page and Shadow pick it up.
+- **The map position.** In `content/area.ts`, set `geo` to `fact({ latitude: 17.96, longitude: 102.61 }, "The house", { confirmed: true })` with the front door's real coordinates. The structured data then includes it. Don't guess.
+- **The story behind the name.** `identity.nameStory` is a guess ("the name nods to the Plain of Jars…"). Replace it with the real story when the house tells it.
 - **A new rating.** Add an entry to `ratings` in `content/reviews.ts` with the platform, score, what it is out of, a link and the date you read it. Never add quotes from reviews unless the guest has agreed.
 - **Dorms.** `beds.dorms` is a list that follows "The dorms include …", for example `["a mixed dorm", "a 14-bed dorm"]`. When the house tells us about a female-only dorm or private rooms, add them here and remove the matching line from `content/open-questions.ts`.
 - **An open question is answered.** Add the fact where it belongs and delete the question from `content/open-questions.ts`. Questions with a `guestTopic` are the ones Shadow tells guests he doesn't know yet.
@@ -76,7 +75,7 @@ The site is designed to look finished without photographs: drawings from `public
 />
 ```
 
-The frames waiting for photos are the bathroom, the café and the luggage storage on /the-house, the front of the house on /about, and (only if Nang wishes) her portrait on the home page, which comes from `identity.owner.portrait` in `content/identity.ts`. The numbered pod drawing and the house in section on /the-house are diagrams, not stand-ins, so they stay; when the real layout of the house is known, make the drawing match it (see `content/open-questions.ts`).
+The frames waiting for photos are the bathroom, the café and the luggage storage on /the-house. The site shows no portrait of the owner: the house speaks as a brand. The numbered pod drawing and the house in section on /the-house are diagrams, not stand-ins, so they stay; when the real layout of the house is known, make the drawing match it (see `content/open-questions.ts`).
 
 `next/image` serves them as AVIF or WebP at the right size. Use photos the house owns; never copy them from booking sites.
 

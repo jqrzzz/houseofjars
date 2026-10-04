@@ -36,8 +36,6 @@ export const openQuestions: readonly OpenQuestion[] = [
     ask: "The layout of the house: which floor the dorms, the bathrooms and the front desk are on, and the building's shape. The drawing on /the-house (components/house/HouseCutaway.tsx) guesses and says it is an illustration, not a floor plan; with the real layout it can be made accurate.",
     guestTopic: "which floor the dorms, bathrooms and front desk are on",
   },
-  { ask: "Nang's own note for the About page, only if she would like to write one (identity.owner.note).", guestTopic: null },
-  { ask: "A portrait of Nang for the home page, only if she would like one (identity.owner.portrait).", guestTopic: null },
   { ask: "A link to the Hostelz ranking page.", guestTopic: null },
   { ask: "The real story behind the name House of Jars (identity.nameStory).", guestTopic: null },
 ];

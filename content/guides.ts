@@ -85,9 +85,18 @@ const { ldif, registration } = immigration;
 const { phone } = identity.contact;
 const luggage = amenity("Luggage storage");
 const airConditioning = amenity("Air conditioning");
-const [noSmoking, calmNights, noParties] = rules.house;
-const earlyCheckIn = rules.stay[2]!;
-const passport = rules.stay[3]!;
+/** A house rule by its opening words (never by its place in the list, which grows as the signs are read). */
+function rule(list: readonly Fact<{ rule: string }>[], start: string) {
+  const found = list.find((item) => item.value.rule.startsWith(start));
+  if (!found) throw new Error(`No rule starting "${start}" in content/stay.ts`);
+  return found;
+}
+
+const noSmoking = rule(rules.house, "No smoking");
+const calmNights = rule(rules.house, "Keep your voice down");
+const noParties = rule(rules.house, "No hen or stag parties");
+const earlyCheckIn = rule(rules.stay, "Early check-in");
+const passport = rule(rules.stay, "Bring your passport");
 const address = Object.values(identity.address);
 const podHas = joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`));
 
@@ -112,7 +121,7 @@ const fromTheAirport: Guide = {
       { term: "Reception", value: staff.hours.value.summary },
       {
         term: "Check-in",
-        value: `From ${times.checkIn.value}`,
+        value: `${times.checkIn.value} to ${times.checkInUntil.value}`,
         note: `Early check-in: ${lowerFirst(times.earlyCheckIn.value)}.`,
       },
       { term: "WhatsApp", value: phone.value.display, href: whatsappUrl() },
@@ -143,7 +152,7 @@ const fromTheAirport: Guide = {
         {
           title: "At the house",
           body: [
-            `The team is ${lowerFirst(staff.hours.value.summary)}, so someone is at the desk whenever you arrive. Check-in is from ${times.checkIn.value}. ${earlyCheckIn.value.rule} Until then there is ${lowerFirst(luggage.value.name)} for your bags. ${registration.value}`,
+            `The team is ${lowerFirst(staff.hours.value.summary)}, so someone is at the desk whenever you arrive. Check-in is from ${times.checkIn.value} until ${times.checkInUntil.value}; arriving later, message the team before you travel. ${earlyCheckIn.value.rule} Until then there is ${lowerFirst(luggage.value.name)} for your bags. ${registration.value}`,
           ],
         },
       ],
@@ -163,6 +172,7 @@ const fromTheAirport: Guide = {
     phone,
     staff.hours,
     times.checkIn,
+    times.checkInUntil,
     times.earlyCheckIn,
     earlyCheckIn,
     luggage,
@@ -312,7 +322,7 @@ const quietStay: Guide = {
   fullTitle: `A quiet, clean hostel in Vientiane · ${identity.name.value}`,
   description: `Guests describe ${identity.name.value} as calm, quiet and very clean: curtained pod beds, no hen or stag parties, no smoking and a team on site 24 hours.`,
   question: `Is ${identity.name.value} a quiet hostel?`,
-  answer: [`${atmosphere.summary.value} ${noParties!.value.rule} ${noSmoking!.value.rule}`],
+  answer: [`${atmosphere.summary.value} ${noParties.value.rule} ${noSmoking.value.rule}`],
   glance: {
     variant: "standards",
     rows: [
@@ -357,9 +367,9 @@ const quietStay: Guide = {
   facts: [
     identity.name,
     atmosphere.summary,
-    noSmoking!,
-    calmNights!,
-    noParties!,
+    noSmoking,
+    calmNights,
+    noParties,
     beds.perBed,
     ...(times.quietHours ? [times.quietHours] : []),
     staff.hours,
