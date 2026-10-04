@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import {
   choosingCheckOut,
   dayBlock,
@@ -18,14 +18,13 @@ import { addMonths, formatMonth, monthOf, weekdayName } from "@/lib/dates";
 import { ChevronIcon } from "../ui/icons";
 import styles from "./DateRangePicker.module.css";
 
-/** Two months side by side from this width; one on phones. */
-const WIDE = "(min-width: 60rem)";
-
-function subscribe(onChange: () => void) {
-  const query = window.matchMedia(WIDE);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-}
+/**
+ * Two months side by side when the space the calendar is given holds them
+ * (two months of 7 x 2.75rem and the 3rem between them); one otherwise. It is
+ * the space that counts, not the screen: beside the booking stub, a laptop
+ * screen can have less room than a tablet.
+ */
+const TWO_MONTHS_REM = 41.5;
 
 const WEEKDAYS = Array.from({ length: 7 }, (_, index) => weekdayName(index));
 
@@ -49,8 +48,18 @@ export function DateRangePicker({
   onChange: (range: DateRange) => void;
   labelledBy: string;
 }) {
-  const wide = useSyncExternalStore(subscribe, () => window.matchMedia(WIDE).matches, () => false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const [wide, setWide] = useState(false);
   const count = wide ? 2 : 1;
+
+  useEffect(() => {
+    const space = pickerRef.current?.parentElement;
+    if (!space || typeof ResizeObserver === "undefined") return;
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const observer = new ResizeObserver(([entry]) => setWide((entry?.contentRect.width ?? 0) >= TWO_MONTHS_REM * rem));
+    observer.observe(space);
+    return () => observer.disconnect();
+  }, []);
   const id = useId();
   const [focusDay, setFocusDay] = useState<string | null>(null);
   const [view, setView] = useState<string | null>(null);
@@ -103,7 +112,7 @@ export function DateRangePicker({
   const canTurnOn = Boolean(rules && start && addMonths(start, count - 1) < monthOf(rules.last));
 
   return (
-    <div className={styles.picker}>
+    <div ref={pickerRef} className={styles.picker}>
       <div className={styles.turns}>
         <button
           type="button"

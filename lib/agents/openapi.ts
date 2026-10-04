@@ -29,7 +29,7 @@ export function openApiDocument(siteUrl: string, onlineBooking: boolean) {
           summary: "Free beds for one stay",
           description: onlineBooking
             ? "Which room types have beds free on every night of the stay, live from the house's booking system, with prices where the house has set them. Reads only: nothing is held."
-            : "Online booking isn't open yet: this answers 503 not_configured. Use Booking.com or Agoda, or the booking page's message form.",
+            : "Online booking isn't open yet: this answers 503 not_configured. Use Booking.com or Agoda, or message the team on WhatsApp or by email.",
           parameters: [
             { name: "check_in", ...date("Arrival date, YYYY-MM-DD.") },
             { name: "check_out", ...date("Departure date, YYYY-MM-DD, after check_in.") },

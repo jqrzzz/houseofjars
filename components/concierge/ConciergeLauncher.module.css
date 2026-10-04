@@ -72,7 +72,12 @@
 }
 
 .launcher:focus-visible {
-  outline-color: var(--jar-orange);
+  outline-color: var(--focus);
+}
+
+/* While the chat window is open, the button would only show faintly through its glass. */
+:global(html:has(dialog[open])) .dock {
+  visibility: hidden;
 }
 
 .avatar {

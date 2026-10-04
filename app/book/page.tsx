@@ -32,8 +32,9 @@ const house: HouseNotes = {
 
 /**
  * /book. With Shadow Check-in's address and key set when the site is built,
- * the page opens with online booking; without them it is the message form
- * and the booking sites, as before.
+ * the page opens with online booking and has the message form. Without them
+ * neither form could send anything (both go through Shadow Check-in), so the
+ * page offers the booking sites and the team's WhatsApp, phone and email.
  */
 export default function BookPage() {
   const online = onlineBookingConfigured();
@@ -60,7 +61,7 @@ export default function BookPage() {
 
       <Block
         id="online"
-        title={online ? "Or book on Booking.com or Agoda" : "Book online"}
+        title={online ? "Or book on Booking.com or Agoda" : "Book on Booking.com or Agoda"}
         aside="Both open in a new tab. There is no payment on this website."
       >
         <ul role="list" className={styles.platforms}>
@@ -77,11 +78,19 @@ export default function BookPage() {
         </ul>
       </Block>
 
-      <Block id="message" title="Send the team a message" aside="For dates, questions or anything you need before you arrive.">
-        <InquiryForm labelledBy="message-title" />
-      </Block>
+      {online ? (
+        <Block id="message" title="Send the team a message" aside="For dates, questions or anything you need before you arrive.">
+          <InquiryForm labelledBy="message-title" />
+        </Block>
+      ) : null}
 
-      <Block id="contact" title="Contact the team" tone="cream">
+      {/* Without online booking this is where every "message the team" link lands: the ways that always work. */}
+      <Block
+        id={online ? "contact" : "message"}
+        title={online ? "Contact the team" : "Message the team"}
+        aside={online ? undefined : "Send your dates on WhatsApp or by email. The team is on site day and night."}
+        tone="cream"
+      >
         <ContactDetails />
         <Prose>
           <p className={styles.addressLabel}>Address</p>

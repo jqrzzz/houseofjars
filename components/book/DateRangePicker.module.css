@@ -2,10 +2,13 @@
  * The calendar: round day marks, the chosen check-in and check-out in
  * orange, the nights between on a soft band. Every day is a 44px target.
  */
+/* As wide as its months, so the month buttons sit at the end of the last month. */
 .picker {
   position: relative;
   display: grid;
   gap: var(--space-s);
+  width: max-content;
+  max-width: 100%;
   min-width: 0;
 }
 

@@ -51,7 +51,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
         `Email: ${email.value}`,
         options.onlineBooking
           ? `Booking page, with the free beds, booking requests and a message form: ${book.page}`
-          : `Booking page with a message form: ${url(pages.book.path)}`,
+          : `Booking page, with links to Booking.com and Agoda and the team's contact details: ${url(pages.book.path)}`,
         `Staff: ${staff.hours.value.summary}. Reception speaks ${joinList(staff.languages.value)}. ${staff.replies.value}.`,
       ]),
     ],

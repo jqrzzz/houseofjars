@@ -293,11 +293,13 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
           value={draft.text}
           onChange={(event) => setDraft((current) => ({ ...current, text: event.target.value }))}
           onKeyDown={onKeyDown}
-          placeholder="Ask a question…"
+          // Once Shadow has said he can't answer, the box stops inviting questions (it keeps focus, so read-only).
+          readOnly={closed !== null}
+          placeholder={closed ? "Shadow can't answer just now: the team's contacts are above." : "Ask a question…"}
           enterKeyHint="send"
           autoComplete="off"
         />
-        <button type="submit" className={styles.send} disabled={!draft.text.trim() || pending} aria-label="Send">
+        <button type="submit" className={styles.send} disabled={!draft.text.trim() || pending || closed !== null} aria-label="Send">
           <SendIcon />
         </button>
       </form>

@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page/PageHeader";
 import { PageJsonLd } from "@/components/PageJsonLd";
 import { ReadNext } from "@/components/guide/ReadNext";
 import { faqFor } from "@/content/faq";
+import { noBreakHyphens } from "@/content/no-break";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
@@ -40,7 +41,7 @@ export default function FaqPage() {
           <dl className={styles.list}>
             {group.entries.map((entry) => (
               <div key={entry.id} id={entry.id} className={styles.entry}>
-                <dt className={styles.question}>{entry.question}</dt>
+                <dt className={styles.question}>{noBreakHyphens(entry.question)}</dt>
                 <dd className={styles.answer}>
                   <InlineText parts={entry.answer} />
                 </dd>

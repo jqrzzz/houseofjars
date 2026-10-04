@@ -88,7 +88,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   padding: 0.35rem 0.8rem;
   border-radius: var(--radius-s);
   color: var(--deep-text-soft);

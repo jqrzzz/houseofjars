@@ -29,7 +29,7 @@ export default function AboutPage() {
         morph="about"
         title="About the house"
         lede={`${identity.name.value} is a calm dorm hostel in ${location.neighbourhood.value}: ${countWord(building.floors.value).toLowerCase()} floors of pod beds, with a café downstairs.`}
-        art={<Drawing name="plain" />}
+        art={<Drawing name="plain" priority />}
       />
 
       <Block id="owner" title={`Owned and run by ${owner}`}>

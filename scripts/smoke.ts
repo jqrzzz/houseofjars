@@ -20,9 +20,9 @@
  * sitemap, robots.txt, llms.txt, llms-full.txt, the logo and the IndexNow key
  * file, the security headers, and that the API routes refuse cross-site
  * posts. Then it opens Shadow's window, checks that a /book link fills in the
- * dates and guests, and tries the booking form. Without API keys Shadow and
- * the form must fall back to the team's contact details, and /book must offer
- * only the booking sites and the message form. Against the fake Shadow
+ * dates and guests, and tries the booking form. Without API keys Shadow must
+ * fall back to the team's contact details, and /book must offer only the
+ * booking sites and those contact details (no form: nothing could send it). Against the fake Shadow
  * Check-in it walks online booking on a phone and a desktop (dates by
  * keyboard, beds, details, review, confirmation), then beds taken while
  * booking (409), a price that changes while booking (409 price_changed, then
@@ -195,13 +195,24 @@ function checkJsonLd(label: string, scripts: string[], url: string) {
   check(soft.length === 0, `${label}: JSON-LD states facts that aren't firm: ${soft.join(", ")}`);
 }
 
-/** A /book link fills in the message form, as llms.txt tells assistants; the form is named for them. */
-async function bookingLink(browser: Browser) {
+/**
+ * A /book link fills in the message form, as llms.txt tells assistants; the form is named for them. Without
+ * online booking there is no form, and the link lands on the team's contact details.
+ */
+async function bookingLink(browser: Browser, mode: BookingMode) {
   const { context, page, errors } = await open(browser, viewports[0], "light");
   const { earliest } = dateWindow();
   const day = (offset: number) => new Date(Date.parse(`${earliest}T00:00:00Z`) + offset * 86_400_000).toISOString().slice(0, 10);
   const [checkIn, checkOut] = [day(10), day(13)];
   await page.goto(`${base}/book?check_in=${checkIn}&check_out=${checkOut}&guests=2#message`, { waitUntil: "networkidle" });
+  if (mode === "off") {
+    const contact = page.locator("#message");
+    check(await contact.getByRole("heading", { name: "Message the team" }).isVisible(), "booking link: no Message the team section");
+    check(await contact.getByText("Open WhatsApp").isVisible(), "booking link: no WhatsApp link at #message");
+    check(errors.length === 0, `booking link: console errors: ${errors.join(" | ")}`);
+    await context.close();
+    return;
+  }
   const form = page.getByRole("form", { name: "Send the team a message" });
   await form.getByLabel("Check-in").waitFor();
   await page.waitForFunction(() => (document.querySelector<HTMLInputElement>('input[name="guests"]')?.value ?? "") !== "");
@@ -337,15 +348,14 @@ async function conciergeCard(browser: Browser, viewport: Viewport, scheme: Schem
   await context.close();
 }
 
-/** The message form: sent to the fake Shadow Check-in, or its fallback without one; never sent to a real one. */
+/** The message form: sent to the fake Shadow Check-in; never sent to a real one, and not there without one. */
 async function bookingForm(browser: Browser, viewport: Viewport, mode: BookingMode, fake: FakeShadow | null) {
-  const { context, page, errors } = await open(browser, viewport, "light");
   const label = `message form (${viewport.name})`;
-  if (mode === "live") {
-    console.log(`${label}: Shadow Check-in is configured, so the form is not submitted.`);
-    await context.close();
+  if (mode !== "fake") {
+    console.log(`${label}: ${mode === "live" ? "Shadow Check-in is configured, so the form is not submitted" : "no form without Shadow Check-in"}.`);
     return;
   }
+  const { context, page, errors } = await open(browser, viewport, "light");
 
   await page.goto(`${base}/book`, { waitUntil: "networkidle" });
   const form = page.getByRole("form", { name: "Send the team a message" });
@@ -356,18 +366,9 @@ async function bookingForm(browser: Browser, viewport: Viewport, mode: BookingMo
   check((await form.getByRole("link", { name: /privacy notice/ }).getAttribute("target")) === "_blank", `${label}: the privacy notice link leaves the form`);
   const sent = fake?.inquiries.size ?? 0;
   await form.getByRole("button", { name: "Send message" }).click();
-  if (mode === "fake") {
-    await page.getByText("Your message is with the team").waitFor();
-    check(fake?.inquiries.size === sent + 1, `${label}: the fake Shadow Check-in received ${(fake?.inquiries.size ?? 0) - sent} inquiries, expected 1`);
-  } else {
-    const problem = page.getByRole("alert").filter({ hasText: "contact the team directly" });
-    await problem.waitFor({ state: "visible" });
-    check(await problem.getByText("Open WhatsApp").isVisible(), `${label}: no contact details after a failed send`);
-    await problem.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: `${outDir}/book-form-unavailable-${viewport.width}.png` });
-  }
-  const unexpected = errors.filter((error) => !(mode === "off" && error.includes("503")));
-  check(unexpected.length === 0, `${label}: console errors: ${unexpected.join(" | ")}`);
+  await page.getByText("Your message is with the team").waitFor();
+  check(fake?.inquiries.size === sent + 1, `${label}: the fake Shadow Check-in received ${(fake?.inquiries.size ?? 0) - sent} inquiries, expected 1`);
+  check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
   await context.close();
 }
 
@@ -407,13 +408,27 @@ async function bookingPages(browser: Browser, mode: BookingMode) {
   for (const site of ["Booking.com", "Agoda"]) {
     check(await page.locator("#online").getByRole("link", { name: new RegExp(`^${site}`) }).isVisible(), `/book: no ${site} link`);
   }
-  check(await page.getByRole("form", { name: "Send the team a message" }).isVisible(), "/book: no message form");
+  const messageForm = await page.getByRole("form", { name: "Send the team a message" }).count();
+  if (mode === "off") {
+    check(messageForm === 0, "/book without Shadow Check-in: a message form that could never send");
+    check(await page.locator("#message").getByText("Open WhatsApp").isVisible(), "/book without Shadow Check-in: no WhatsApp at #message");
+  } else {
+    check(messageForm === 1, "/book: no message form");
+  }
 
   await page.goto(`${base}/`, { waitUntil: "networkidle" });
-  const card = page.locator('form[aria-labelledby="booking-card-title"]');
-  const [action, button] = [await card.getAttribute("action"), (await card.getByRole("button").textContent())?.trim()];
-  const expected = mode === "off" ? ["/book#message", "Ask the team"] : ["/book", "See free beds"];
-  check(action === expected[0] && button === expected[1], `booking card: "${button}" to ${action}, expected "${expected[1]}" to ${expected[0]}`);
+  if (mode === "off") {
+    const whatsapp = page.getByRole("link", { name: /^Message on WhatsApp/ });
+    check((await whatsapp.getAttribute("href"))?.startsWith("https://wa.me/") ?? false, "booking card: no WhatsApp link");
+    check(
+      (await page.getByRole("link", { name: "Phone or email" }).getAttribute("href")) === "/book#message",
+      "booking card: no link to the team's contact details",
+    );
+  } else {
+    const card = page.locator('form[aria-labelledby="booking-card-title"]');
+    const [action, button] = [await card.getAttribute("action"), (await card.getByRole("button").textContent())?.trim()];
+    check(action === "/book" && button === "See free beds", `booking card: "${button}" to ${action}, expected "See free beds" to /book`);
+  }
   check(errors.length === 0, `booking pages: console errors: ${errors.join(" | ")}`);
   await context.close();
 }
@@ -616,6 +631,8 @@ async function bookingPriceChange(browser: Browser, fake: FakeShadow) {
  * the message form below has them too (F1W-04).
  */
 async function bookingSoftNavigation(browser: Browser, mode: BookingMode, fake: FakeShadow | null) {
+  // Without online booking /book has no form to fill in.
+  if (mode === "off") return;
   const { context, page, errors } = await open(browser, viewports[0], "light");
   const label = "dated link without a reload";
   const flow = page.locator("#book-online");
@@ -642,7 +659,6 @@ async function bookingSoftNavigation(browser: Browser, mode: BookingMode, fake: 
       await message.getByLabel("Guests").inputValue(),
     ].join();
     check(dates === [checkIn, checkOut, "2"].join(), `${label} (${where}): the message form shows ${dates}`);
-    if (mode === "off") continue;
     await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
     const stay = await stayShown();
     check(shows(stay, checkIn, checkOut), `${label} (${where}): the booking form shows "${stay.slice(0, 80)}", expected ${checkIn} to ${checkOut}`);
@@ -652,21 +668,19 @@ async function bookingSoftNavigation(browser: Browser, mode: BookingMode, fake: 
       await flow.getByRole("radio", { name: FAKE_ROOMS[0]!.name }).waitFor();
     }
   }
-  if (mode !== "off") {
-    await flow.screenshot({ path: `${outDir}/booking-soft-link-390-light.png` });
-    // Back: the second link's dates one step back, then the first link's beds again.
-    await page.goBack();
-    await flow.getByRole("heading", { name: "When would you like to stay?" }).waitFor();
-    await page.goBack();
-    await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
-    const [checkIn, nights] = links[0];
-    await page.waitForFunction(
-      (day) => document.querySelector("#book-online aside")?.textContent?.includes(day) ?? false,
-      formatDay(checkIn),
-    );
-    const stay = await stayShown();
-    check(shows(stay, checkIn, addDays(checkIn, nights)), `${label}: Back to the first link shows "${stay.slice(0, 80)}"`);
-  }
+  await flow.screenshot({ path: `${outDir}/booking-soft-link-390-light.png` });
+  // Back: the second link's dates one step back, then the first link's beds again.
+  await page.goBack();
+  await flow.getByRole("heading", { name: "When would you like to stay?" }).waitFor();
+  await page.goBack();
+  await flow.getByRole("heading", { name: "Choose your beds" }).waitFor();
+  const [checkIn, nights] = links[0];
+  await page.waitForFunction(
+    (day) => document.querySelector("#book-online aside")?.textContent?.includes(day) ?? false,
+    formatDay(checkIn),
+  );
+  const stay = await stayShown();
+  check(shows(stay, checkIn, addDays(checkIn, nights)), `${label}: Back to the first link shows "${stay.slice(0, 80)}"`);
   check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
   await context.close();
 }
@@ -784,7 +798,7 @@ async function main() {
     const mode = await bookingMode(context, fake);
     console.log(
       {
-        off: "Online booking: off (no Shadow Check-in), checking the message form's fallback.",
+        off: "Online booking: off (no Shadow Check-in), checking the booking sites and the team's contact details.",
         fake: `Online booking: on, against the fake Shadow Check-in at ${fake?.url}.`,
         live: "Online booking: on, against a real Shadow Check-in, so nothing is booked or sent.",
       }[mode],
@@ -797,7 +811,7 @@ async function main() {
       }
     }
     await skipLink(browser);
-    await bookingLink(browser);
+    await bookingLink(browser, mode);
     await concierge(browser, viewports[0], "light");
     await concierge(browser, viewports[1], "dark");
     await bookingPages(browser, mode);

@@ -158,10 +158,12 @@
   line-height: 1.25;
 }
 
+/* The same line height as a chosen date, so the boxes don't grow under the finger when a date is picked. */
 .pickValue[data-empty] {
   color: var(--text-soft);
   font-family: var(--font-body-stack);
   font-size: 1rem;
+  line-height: calc(var(--step-1) * 1.25);
 }
 
 .stepper {
@@ -357,6 +359,11 @@
 .room[data-unavailable] .roomText,
 .room[data-unavailable] .roomPrice {
   color: var(--text-soft);
+}
+
+/* The card shows the focus ring (.room:has(:focus-visible)); the radio's own would make two. */
+.roomRadio:focus-visible {
+  outline: none;
 }
 
 .roomRadio {
@@ -608,9 +615,6 @@
   margin: 0;
 }
 
-.reviewChange .textButton {
-  min-height: 2.25rem;
-}
 
 @media (min-width: 40rem) {
   .reviewRow {
@@ -772,12 +776,20 @@
   font-weight: 600;
 }
 
+/* The booking sites in the stub: wide screens only, where the stub stands beside the steps. Below, the page's own
+   "Or book on Booking.com or Agoda" comes straight after, so the stub doesn't repeat it. */
 .stubOther {
-  display: grid;
+  display: none;
   gap: var(--space-xs);
   margin-top: var(--space-s);
   padding-top: var(--space-m);
   border-top: 1px solid var(--rule);
+}
+
+@media (min-width: 64rem) {
+  .stubOther {
+    display: grid;
+  }
 }
 
 .stubLinks {
@@ -790,7 +802,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding-block: 0.35rem;
+  min-height: 2.75rem;
   font-weight: 600;
 }
 

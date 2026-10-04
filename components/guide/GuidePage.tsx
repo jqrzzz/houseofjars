@@ -45,7 +45,7 @@ export function GuidePage({ guide }: { guide: Guide }) {
             Last reviewed <time dateTime={guide.reviewed}>{formatDate(guide.reviewed)}</time>
           </>
         }
-        art={<Drawing name={art.header} />}
+        art={<Drawing name={art.header} priority />}
       />
       <Glance guide={guide} />
       {guide.sections.map((section) => (

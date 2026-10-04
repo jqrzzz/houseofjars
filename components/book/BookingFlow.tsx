@@ -178,6 +178,7 @@ function Arriving() {
           range={NO_DATES}
           onRange={() => {}}
           guests={1}
+          askedGuests={null}
           maxGuests={null}
           onGuests={() => {}}
           issues={[]}
@@ -231,6 +232,8 @@ function Flow({ house }: { house: HouseNotes }) {
   const [step, setStep] = useState<Step>(arrival.saved ? "done" : arrivedStay ? "rooms" : "dates");
   const [range, setRange] = useState<DateRange>(arrival.range);
   const [guests, setGuests] = useState(arrival.guests);
+  // A group bigger than online booking takes, as the guest asked: kept to say what changed (DatesStep).
+  const [askedGuests, setAskedGuests] = useState<number | null>(null);
   const [dateIssues, setDateIssues] = useState<readonly FieldIssue[]>([]);
   const [lookup, setLookup] = useState<Search>(arrivedStay ? { status: "loading", stay: arrivedStay } : { status: "idle" });
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -275,7 +278,11 @@ function Flow({ house }: { house: HouseNotes }) {
   function applyTerms(next: Terms) {
     setTerms(next);
     setRange((current) => fitRange(current, rulesFor(todayNow.current, next.limits)));
-    if (next.limits) setGuests((current) => Math.min(current, next.limits!.max_guests));
+    if (next.limits) {
+      const max = next.limits.max_guests;
+      if (guests > max) setAskedGuests(guests);
+      setGuests((current) => Math.min(current, max));
+    }
   }
 
   /** The free beds for a stay. `known`: the terms so far (null when the calendar still needs them). */
@@ -354,6 +361,7 @@ function Flow({ house }: { house: HouseNotes }) {
     const party = Math.min(link.guests, terms?.limits?.max_guests ?? link.guests);
     setRange(range);
     setGuests(party);
+    setAskedGuests(party < link.guests ? link.guests : null);
     setDateIssues([]);
     setTaken(false);
     setSending({ status: "idle" });
@@ -582,7 +590,12 @@ function Flow({ house }: { house: HouseNotes }) {
   const headingId = `${id}-step`;
   const booked = step === "done" && saved ? saved : null;
   const stub = booked ? (
-    <StayStub stay={booked.stay} beds={booked.roomName} price={quoteText(booked.confirmation) ?? "Confirmed by the team"} />
+    <StayStub
+      stay={booked.stay}
+      beds={booked.roomName}
+      price={quoteText(booked.confirmation) ?? "Confirmed by the team"}
+      booked
+    />
   ) : (
     <StayStub
       stay={shown?.stay ?? stay}
@@ -621,9 +634,11 @@ function Flow({ house }: { house: HouseNotes }) {
               setDateIssues([]);
             }}
             guests={guests}
+            askedGuests={askedGuests}
             maxGuests={terms?.limits?.max_guests ?? null}
             onGuests={(next) => {
               setGuests(next);
+              setAskedGuests(null);
               setDateIssues([]);
             }}
             issues={dateIssues}

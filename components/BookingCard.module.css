@@ -120,6 +120,12 @@
   justify-self: start;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+}
+
 /* The stub, torn along a dashed line. */
 .stub {
   position: relative;
@@ -167,7 +173,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding-block: 0.35rem;
+  min-height: 2.75rem;
   font-weight: 600;
   text-decoration: none;
 }

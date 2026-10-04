@@ -86,7 +86,9 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
       : []),
     `- [Booking.com](${identity.links.booking.value}): live prices and free beds`,
     `- [Agoda](${identity.links.agoda.value}): live prices and free beds`,
-    `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. There is no payment on this website.`,
+    onlineBooking
+      ? `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. There is no payment on this website.`
+      : `- [Message the team](${url(`${pages.book.path}#message`)}): on WhatsApp (${whatsappUrl()}), by phone or by email. A message does not book a bed. There is no payment on this website.`,
   ];
 }
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { availabilityChecker } from "../concierge/availability";
-import { identity } from "@/content/identity";
+import { identity, whatsappUrl } from "@/content/identity";
 import type { AvailabilityDeps } from "../booking/handler";
 import { MAX_GUESTS } from "../booking/types";
 import { json, readJsonBody, rejectCrossSite } from "../http";
@@ -90,9 +90,8 @@ function tools(online: boolean) {
       description: online
         ? "A link to the House of Jars booking page with the dates and number of guests filled in: the traveller sees the " +
           "free beds and prices there and sends the booking request themselves. Nothing is booked or paid until the team confirms."
-        : "A link to the House of Jars booking page with the dates and number of guests filled in on the message form: the " +
-          "traveller writes and sends the request themselves, and the team replies by email or WhatsApp. Live prices are on " +
-          "Booking.com and Agoda.",
+        : "Where the traveller can book these dates: the house's own website doesn't take bookings yet, so this gives the " +
+          "Booking.com and Agoda pages (live prices and free beds) and the team's WhatsApp, with a message ready to send.",
       inputSchema: stayInput,
       annotations: readOnly,
     },
@@ -113,10 +112,25 @@ const failure = (id: Id | null, code: number, message: string, status = 200) =>
   json({ jsonrpc: "2.0", id, error: { code, message } }, status);
 const text = (value: string, isError = false) => ({ content: [{ type: "text", text: value }], isError });
 
-/** The booking page with a stay filled in: free beds when booking is online, otherwise the message form. */
-export function bookingLink(siteUrl: string, stay: { check_in: string; check_out: string; guests: number }, online: boolean): string {
+type Stay = { check_in: string; check_out: string; guests: number };
+
+/** The booking page at the free beds for a stay. */
+export function bookingLink(siteUrl: string, stay: Stay): string {
   const query = new URLSearchParams({ check_in: stay.check_in, check_out: stay.check_out, guests: String(stay.guests) });
-  return `${new URL(pages.book.path, `${siteUrl}/`)}?${query}${online ? "" : "#message"}`;
+  return `${new URL(pages.book.path, `${siteUrl}/`)}?${query}`;
+}
+
+/** Without online booking: the booking sites, and WhatsApp with the stay written out for the traveller to send. */
+function elsewhere(stay: Stay): string {
+  const nights = (Date.parse(stay.check_out) - Date.parse(stay.check_in)) / 86_400_000;
+  const words = `Hello! Do you have ${stay.guests === 1 ? "a bed" : `${stay.guests} beds`} from ${stay.check_in} to ${stay.check_out} (${nights} ${nights === 1 ? "night" : "nights"})?`;
+  return [
+    "The house's website doesn't take bookings yet. The traveller can book here:",
+    `- Booking.com (live prices and free beds): ${identity.links.booking.value}`,
+    `- Agoda (live prices and free beds): ${identity.links.agoda.value}`,
+    `- WhatsApp the team, with this message ready to send: ${whatsappUrl()}?text=${encodeURIComponent(words)}`,
+    `- Email: ${identity.contact.email.value}`,
+  ].join("\n");
 }
 
 async function callTool(name: string, args: unknown, client: string, deps: McpDeps) {
@@ -127,17 +141,17 @@ async function callTool(name: string, args: unknown, client: string, deps: McpDe
     case "booking_link": {
       const stay = staySchema.safeParse(args ?? {});
       if (!stay.success) return text(`Invalid stay: ${stay.error.issues.map((issue) => issue.message).join("; ")}`, true);
-      const note = online
-        ? "The traveller opens it to see free beds and prices and sends the booking request themselves; the team confirms it."
-        : "The traveller opens it, writes the message and sends it themselves; the team replies by email or WhatsApp.";
-      return text(`${bookingLink(deps.siteUrl, stay.data, online)}\n\n${note}`);
+      if (!online) return text(elsewhere(stay.data));
+      return text(
+        `${bookingLink(deps.siteUrl, stay.data)}\n\nThe traveller opens it to see free beds and prices and sends the booking request themselves; the team confirms it.`,
+      );
     }
     case "check_availability": {
       if (!online) return text("Online booking isn't open: use booking_link, or Booking.com and Agoda for live availability.", true);
       const outcome = await availabilityChecker(deps.availability, client)(args ?? {});
       if (outcome.isError) return text(outcome.content, true);
       const stay = staySchema.safeParse(args);
-      const link = stay.success ? bookingLink(deps.siteUrl, stay.data, true) : null;
+      const link = stay.success ? bookingLink(deps.siteUrl, stay.data) : null;
       return text(link ? `${outcome.content}\n\nBooking page with this stay filled in: ${link}` : outcome.content);
     }
     default:

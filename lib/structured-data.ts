@@ -90,19 +90,20 @@ function hostelDescription(): string | undefined {
 }
 
 /**
- * How an assistant can start a booking for a guest: the booking page with the
- * dates and guests filled in (free beds when online booking is on, otherwise
- * the message form). The guest still sends the request; nothing is booked or
- * paid from the link alone.
+ * How an assistant can start a booking for a guest, when the site takes them:
+ * the booking page at the free beds for the dates and guests. The guest still
+ * sends the request; nothing is booked or paid from the link alone. Without
+ * online booking the site has no booking to start, so there is no action.
  */
-function reserveAction(): JsonLdNode {
+function reserveAction(): JsonLdNode | undefined {
+  if (!onlineBookingConfigured()) return undefined;
   const book = absoluteUrl("/book");
   const query = "check_in={check_in}&check_out={check_out}&guests={guests}";
   return {
     "@type": "ReserveAction",
     target: {
       "@type": "EntryPoint",
-      urlTemplate: onlineBookingConfigured() ? `${book}?${query}` : `${book}?${query}#message`,
+      urlTemplate: `${book}?${query}`,
       inLanguage: "en",
       actionPlatform: ["https://schema.org/DesktopWebPlatform", "https://schema.org/MobileWebPlatform"],
     },

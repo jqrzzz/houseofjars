@@ -73,7 +73,7 @@ describe("inquiry form validation", () => {
   });
 
   it("keeps guests to a whole number from 1 to 20", () => {
-    expect(issues({ ...form, guests: 0 })).toEqual([{ field: "guests", message: "At least one guest." }]);
+    expect(issues({ ...form, guests: 0 })).toEqual([{ field: "guests", message: "Please choose at least one guest." }]);
     expect(issues({ ...form, guests: 21 })).toEqual([{ field: "guests", message: "For more than 20 guests, write to us." }]);
     expect(issues({ ...form, guests: 2.5 })).toEqual([{ field: "guests", message: "Please enter a whole number of guests." }]);
     expect(issues({ ...form, guests: 3 })).toEqual([]);
@@ -81,7 +81,7 @@ describe("inquiry form validation", () => {
 
   it("requires the privacy consent", () => {
     expect(issues({ ...form, consent: false })).toEqual([
-      { field: "consent", message: "Please agree to the privacy notice so we can reply." },
+      { field: "consent", message: "Please agree to the privacy notice so the team can reply." },
     ]);
   });
 

@@ -82,13 +82,19 @@ describe("the MCP server for AI assistants", () => {
     expect(toolText(reply.result)).toContain("Check-in from 14:00");
   });
 
-  it("gives a booking link with the stay filled in: the message form, or the free beds when booking is online", async () => {
+  it("gives the booking page at the free beds when booking is online, otherwise the booking sites and WhatsApp", async () => {
     const stay = { check_in: "2026-10-10", check_out: "2026-10-12", guests: 2 };
-    const offline = await rpc(await handler()(call("tools/call", { name: "booking_link", arguments: stay })));
-    expect(toolText(offline.result)).toContain(`${siteUrl}/book?check_in=2026-10-10&check_out=2026-10-12&guests=2#message`);
     const online = await rpc(await handler({ online: true })(call("tools/call", { name: "booking_link", arguments: stay })));
     expect(toolText(online.result).split("\n")[0]).toBe(`${siteUrl}/book?check_in=2026-10-10&check_out=2026-10-12&guests=2`);
-    expect(bookingLink(siteUrl, stay, false)).toMatch(/#message$/);
+    expect(bookingLink(siteUrl, stay)).toBe(`${siteUrl}/book?check_in=2026-10-10&check_out=2026-10-12&guests=2`);
+
+    const offline = toolText((await rpc(await handler()(call("tools/call", { name: "booking_link", arguments: stay })))).result);
+    expect(offline).toContain("doesn't take bookings yet");
+    expect(offline).toContain("booking.com");
+    expect(offline).toContain("agoda");
+    expect(offline).toMatch(/https:\/\/wa\.me\/\d+\?text=/);
+    expect(decodeURIComponent(offline)).toContain("2 beds from 2026-10-10 to 2026-10-12 (2 nights)");
+    expect(offline).not.toContain("/book?");
   });
 
   it("refuses a stay that makes no sense, as a tool error the assistant can read", async () => {

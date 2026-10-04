@@ -93,7 +93,8 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="container">
-        <div className={styles.base}>
+        {/* Its links run to the right edge: Shadow's floating button steps aside while they are in view. */}
+        <div className={styles.base} data-hides-launcher="">
           <p>
             © {new Date().getFullYear()} {identity.fullName.value}
           </p>
