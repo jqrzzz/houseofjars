@@ -149,3 +149,16 @@ describe("what the guides are about", () => {
     expect(about("/guides/quiet-hostel-vientiane")).toMatchObject({ lastReviewed: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
   });
 });
+
+describe("what an assistant can do for a guest", () => {
+  it("offers a booking action that opens the booking page with the dates and guests filled in", () => {
+    const [hostel] = nodeOfType(graphOf("/"), "Hostel");
+    const action = hostel!.potentialAction as Node;
+    expect(action["@type"]).toBe("ReserveAction");
+    const target = action.target as Node;
+    expect(target["@type"]).toBe("EntryPoint");
+    expect(target.urlTemplate).toMatch(
+      new RegExp(`^${absoluteUrl("/book").replace(/[.?]/g, "\\$&")}\\?check_in=\\{check_in\\}&check_out=\\{check_out\\}&guests=\\{guests\\}`),
+    );
+  });
+});

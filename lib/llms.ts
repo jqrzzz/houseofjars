@@ -91,6 +91,14 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
 }
 
 /** /llms.txt: what the house is, the key facts, and every page. */
+/** Where an assistant acting for a traveller can connect: the MCP server, and the API description. */
+export function agentLines(url: (path: string) => string, onlineBooking: boolean | undefined): string[] {
+  return [
+    `- MCP server (Streamable HTTP, read-only, no sign-in): ${url("/api/mcp")}. Tools: house_information${onlineBooking ? ", check_availability (free beds, no prices)" : ""} and booking_link (the booking page with the stay filled in). Assistants can't book, hold a bed or send a message: the traveller sends the request on the website and the team confirms it.`,
+    `- API description (OpenAPI): ${url("/openapi.json")}`,
+  ];
+}
+
 export function buildLlmsTxt(siteUrl: string, options: LlmsOptions = {}): string {
   const url = (path: string) => new URL(path, `${siteUrl}/`).toString();
   const mainPages = sitePages(Boolean(options.onlineBooking)).filter((page) => !page.guide && page.path !== pages.privacy.path);
@@ -111,6 +119,9 @@ export function buildLlmsTxt(siteUrl: string, options: LlmsOptions = {}): string
     "",
     "## Book",
     ...bookingLines(siteUrl, url, options.onlineBooking),
+    "",
+    "## For AI assistants and booking agents",
+    ...agentLines(url, options.onlineBooking),
     "",
     "## Optional",
     `- [Everything in one file](${url("/llms-full.txt")}): facts with their sources, house rules, questions and answers, guides and how to book`,

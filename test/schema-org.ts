@@ -28,8 +28,13 @@ export const vocabulary: Readonly<Record<string, TypeDef>> = {
       image: ["ImageObject", "URL"],
       sameAs: ["URL"],
       mainEntityOfPage: ["CreativeWork", "URL"],
+      potentialAction: ["Action"],
     },
   },
+  Action: { parents: ["Thing"], properties: { target: ["EntryPoint", "URL"], result: ["Thing"] } },
+  OrganizeAction: { parents: ["Action"] },
+  PlanAction: { parents: ["OrganizeAction"] },
+  ReserveAction: { parents: ["PlanAction"] },
   CreativeWork: {
     parents: ["Thing"],
     properties: {
@@ -88,6 +93,18 @@ export const vocabulary: Readonly<Record<string, TypeDef>> = {
   PropertyValue: { parents: ["StructuredValue"], properties: { value: ["Boolean", "Number", "StructuredValue", "Text"] } },
   LocationFeatureSpecification: { parents: ["PropertyValue"] },
   Language: { parents: ["Intangible"] },
+  EntryPoint: {
+    parents: ["Intangible"],
+    properties: {
+      urlTemplate: ["Text"],
+      actionPlatform: ["DigitalPlatformEnumeration", "Text", "URL"],
+      inLanguage: ["Language", "Text"],
+      contentType: ["Text"],
+      httpMethod: ["Text"],
+    },
+  },
+  Reservation: { parents: ["Intangible"] },
+  LodgingReservation: { parents: ["Reservation"] },
   Service: { parents: ["Intangible"], properties: { provider: ["Organization", "Person"], serviceType: ["Text"] } },
   GovernmentService: { parents: ["Service"] },
   Enumeration: { parents: ["Intangible"] },

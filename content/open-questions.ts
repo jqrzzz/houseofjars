@@ -40,5 +40,4 @@ export const openQuestions: readonly OpenQuestion[] = [
   { ask: "A portrait of Nang for the home page, only if she would like one (identity.owner.portrait).", guestTopic: null },
   { ask: "A link to the Hostelz ranking page.", guestTopic: null },
   { ask: "The real story behind the name House of Jars (identity.nameStory).", guestTopic: null },
-  { ask: "What the arch logo stands for, so the About page can tell its story.", guestTopic: null },
 ];

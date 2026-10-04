@@ -49,3 +49,7 @@
     color: var(--stone-dark);
   }
 }
+
+.text .share {
+  margin-top: var(--space-s);
+}

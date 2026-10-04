@@ -60,6 +60,7 @@ export default function AboutPage() {
         <Prose>
           <p>{identity.nameStory.value}</p>
           <p>{plainOfJars.summary.value}</p>
+          <p>{identity.markStory.value}</p>
         </Prose>
       </Block>
 

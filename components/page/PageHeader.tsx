@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Eyebrow } from "../ui/Section";
+import { ShareButton } from "../ui/ShareButton";
 import styles from "./PageHeader.module.css";
 
 type PageHeaderProps = {
@@ -29,6 +30,7 @@ export function PageHeader({ eyebrow, morph, trail, title, lede, art, meta }: Pa
           <h1 className={styles.title}>{title}</h1>
           <p className={styles.lede}>{lede}</p>
           {meta ? <p className={styles.meta}>{meta}</p> : null}
+          <ShareButton className={styles.share} />
         </div>
         {art ? (
           <div className={styles.art} aria-hidden="true">

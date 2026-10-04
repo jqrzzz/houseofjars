@@ -1,0 +1,37 @@
+/* A quiet text button: the icon, the word, an underline on hover. */
+.share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.share svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+}
+
+.share span:first-of-type {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: var(--underline-offset);
+  text-decoration-color: transparent;
+  transition: text-decoration-color 160ms ease;
+}
+
+.share:hover {
+  color: var(--text);
+}
+
+.share:hover span:first-of-type {
+  text-decoration-color: currentColor;
+}

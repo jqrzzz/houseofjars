@@ -123,3 +123,13 @@
 .theme {
   margin-top: var(--space-l);
 }
+
+/* On the teak band: the share button takes the band's soft text. */
+.brand .share {
+  margin-top: var(--space-s);
+  color: var(--deep-text-soft);
+}
+
+.brand .share:hover {
+  color: var(--deep-text);
+}
