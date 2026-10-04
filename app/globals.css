@@ -105,6 +105,21 @@
   /* Almost no shadow: depth comes from material. */
   --shadow-soft: 0 1px 0 rgb(23 23 19 / 0.06), 0 10px 24px -14px rgb(23 23 19 / 0.32);
   --shadow-lift: 0 1px 0 rgb(23 23 19 / 0.08), 0 18px 40px -16px rgb(23 23 19 / 0.4);
+  /* Glass: frosted rice over the photos and the page (backdrop-filter), with a hairline edge and a faint shine. */
+  --glass: rgb(251 246 238 / 0.7);
+  --glass-panel: rgb(255 255 255 / 0.72);
+  --glass-edge: rgb(255 255 255 / 0.55);
+  --glass-shine: rgb(255 255 255 / 0.35);
+  --glass-blur: saturate(1.6) blur(18px);
+  /* Component tones that change with the theme. */
+  --lantern: transparent; /* lamplight on the booking card in Evening */
+  --niche-ink: var(--teak-deep);
+  --launcher-bg: var(--teak-deep);
+  --launcher-edge: rgb(251 246 238 / 0.18);
+  --dock-shadow: 0 -6px 20px rgb(23 23 19 / 0.06);
+  --open-jar-stone: var(--jar-2);
+  --open-jar-top: var(--jar-1);
+  --open-jar-hollow: #24160c;
 
   /* Type */
   --font-brand-stack: var(--font-brand), var(--font-lao), "Figtree Arial", "Figtree Roboto", system-ui, sans-serif;
@@ -147,9 +162,14 @@
   --underline-offset: 0.22em;
 }
 
+/*
+ * Evening: the house at night. The same tokens in two places, kept identical
+ * by app/theme.test.ts: when the device prefers dark and the guest hasn't
+ * chosen Day, and when the guest has chosen Evening (data-theme, lib/theme.ts).
+ */
 @media (prefers-color-scheme: dark) {
-  /* Evening: the house at night. */
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --page: var(--night);
     --surface: var(--night-raised);
     --text: var(--rice);
@@ -172,7 +192,61 @@
     --danger: #ff8a7a;
     --shadow-soft: 0 1px 0 rgb(0 0 0 / 0.4), 0 10px 24px -12px rgb(0 0 0 / 0.7);
     --shadow-lift: 0 1px 0 rgb(0 0 0 / 0.45), 0 18px 40px -14px rgb(0 0 0 / 0.75);
+    --glass: rgb(32 21 12 / 0.62);
+    --glass-panel: rgb(44 30 19 / 0.7);
+    --glass-edge: rgb(251 246 238 / 0.1);
+    --glass-shine: rgb(251 246 238 / 0.05);
+    --lantern: rgb(231 110 67 / 0.09);
+    --niche-ink: var(--text-soft);
+    --launcher-bg: var(--night-raised);
+    --launcher-edge: rgb(231 110 67 / 0.45);
+    --dock-shadow: 0 -6px 20px rgb(0 0 0 / 0.3);
+    --open-jar-stone: #7e7160;
+    --open-jar-top: #938573;
+    --open-jar-hollow: #0c0805;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: var(--night);
+  --surface: var(--night-raised);
+  --text: var(--rice);
+  --text-soft: #c9b8a6; /* 8.4:1 on night-raised */
+  --accent-text: var(--jar-orange); /* 5.7:1 on night, 5.2:1 on night-raised */
+  --rule: rgb(251 246 238 / 0.13);
+  --rule-strong: rgb(251 246 238 / 0.28);
+  --field-border: #a08b77;
+  --deep: var(--teak-deep);
+  --deep-text: var(--rice);
+  --deep-text-soft: var(--on-teak-soft);
+  --deep-accent: var(--lamplight);
+  --deep-rule: rgb(251 246 238 / 0.16);
+  --jar-1: #8c7b66;
+  --jar-2: #74644f;
+  --jar-3: #5e503f;
+  --placeholder: var(--night-raised);
+  --placeholder-ink: #c9b8a6;
+  --focus: var(--lamplight);
+  --danger: #ff8a7a;
+  --shadow-soft: 0 1px 0 rgb(0 0 0 / 0.4), 0 10px 24px -12px rgb(0 0 0 / 0.7);
+  --shadow-lift: 0 1px 0 rgb(0 0 0 / 0.45), 0 18px 40px -14px rgb(0 0 0 / 0.75);
+  --glass: rgb(32 21 12 / 0.62);
+  --glass-panel: rgb(44 30 19 / 0.7);
+  --glass-edge: rgb(251 246 238 / 0.1);
+  --glass-shine: rgb(251 246 238 / 0.05);
+  --lantern: rgb(231 110 67 / 0.09);
+  --niche-ink: var(--text-soft);
+  --launcher-bg: var(--night-raised);
+  --launcher-edge: rgb(231 110 67 / 0.45);
+  --dock-shadow: 0 -6px 20px rgb(0 0 0 / 0.3);
+  --open-jar-stone: #7e7160;
+  --open-jar-top: #938573;
+  --open-jar-hollow: #0c0805;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 /* Reset */
@@ -186,6 +260,13 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-padding-top: var(--space-xl);
+}
+
+/* Wider screens keep the glass header in view: anchors land below it. */
+@media (min-width: 48rem) {
+  html {
+    scroll-padding-top: calc(4.5rem + var(--space-xl));
+  }
 }
 
 /*
@@ -408,10 +489,66 @@ strong {
   animation: none;
 }
 
+/* Switching Day and Evening: the whole page, header included, cross-fades (theme-store.ts). */
+:root[data-theme-fade]::view-transition-group(*) {
+  animation-duration: 450ms;
+}
+
+:root[data-theme-fade]::view-transition-old(site-header) {
+  display: block;
+  animation: revert;
+}
+
+:root[data-theme-fade]::view-transition-new(site-header) {
+  animation: revert;
+}
+
 /* With reduced motion nothing moves: things only fade. */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*) {
     animation-name: none !important;
+  }
+}
+
+/*
+ * Glass: a frosted pane over a photograph or the page, with a hairline edge
+ * and a faint shine along the top. Without backdrop-filter the pane is solid.
+ */
+.glass {
+  background: var(--glass-panel);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-shine),
+    var(--shadow-soft);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--surface);
+  }
+}
+
+/*
+ * Settling into place: an element marked data-reveal rises a little as it
+ * scrolls into view. Scroll-driven, so no script waits on it, and only the
+ * position moves: everything is visible at rest, in screenshots and to
+ * readers who never scroll. Off with reduced motion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    [data-reveal] {
+      animation: settle-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+  }
+}
+
+@keyframes settle-in {
+  from {
+    transform: translateY(2.25rem);
   }
 }
 

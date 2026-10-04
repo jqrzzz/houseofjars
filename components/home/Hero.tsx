@@ -5,10 +5,12 @@ import buttons from "@/components/ui/button.module.css";
 import { ArrowIcon } from "@/components/ui/icons";
 import { identity } from "@/content/identity";
 import { photos } from "@/content/photos";
+import { ratings } from "@/content/reviews";
 import { bookingLabel } from "@/lib/booking/config";
 import styles from "./Hero.module.css";
 
 export function Hero() {
+  const [booking] = ratings;
   return (
     <section className={styles.hero} aria-labelledby="hero-title" data-hides-launcher="">
       <div className={`container ${styles.grid}`}>
@@ -39,16 +41,27 @@ export function Hero() {
           </div>
         </div>
 
-        <PhotoFrame
-          className={styles.photo}
-          caption={photos.dormCorridor.caption}
-          photo={photos.dormCorridor}
-          drawing="pod"
-          shape="arch"
-          aspect="2 / 3"
-          sizes="(min-width: 60rem) 26rem, 80vw"
-          priority
-        />
+        <div className={styles.photoWrap}>
+          <PhotoFrame
+            caption={photos.dormCorridor.caption}
+            photo={photos.dormCorridor}
+            drawing="pod"
+            shape="arch"
+            aspect="2 / 3"
+            sizes="(min-width: 60rem) 26rem, 80vw"
+            priority
+          />
+          {/* The guests' score, on a pane of glass over the photograph. */}
+          <p className={`glass ${styles.score}`}>
+            <span className={styles.scoreValue}>
+              {booking.value.score}
+              {booking.value.outOf ? <span className={styles.outOf}>/{booking.value.outOf}</span> : null}
+            </span>
+            <span className={styles.scoreText}>
+              {booking.value.platform}, {booking.value.context}
+            </span>
+          </p>
+        </div>
       </div>
     </section>
   );

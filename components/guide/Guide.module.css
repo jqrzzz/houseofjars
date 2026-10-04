@@ -55,11 +55,16 @@
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-m);
   background: var(--surface);
-  transition: border-color 180ms ease;
+  transition:
+    border-color 180ms ease,
+    box-shadow 320ms var(--ease-out),
+    translate 320ms var(--ease-out);
 }
 
 .card:hover {
   border-color: var(--accent-text);
+  box-shadow: var(--shadow-soft);
+  translate: 0 -3px;
 }
 
 .kind {

@@ -3,6 +3,7 @@ import { Wordmark } from "../brand/Wordmark";
 import buttons from "../ui/button.module.css";
 import { MobileMenu } from "./MobileMenu";
 import { NavLinks } from "./NavLinks";
+import { ThemeToggle } from "./ThemeSwitch";
 import styles from "./SiteHeader.module.css";
 
 export function SiteHeader() {
@@ -15,6 +16,7 @@ export function SiteHeader() {
           <NavLinks className={styles.links} linkClassName={styles.link} />
         </nav>
         <div className={styles.actions}>
+          <ThemeToggle />
           <Link href="/book" className={`${buttons.button} ${buttons.primary} ${buttons.small}`}>
             Book
           </Link>

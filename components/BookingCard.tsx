@@ -1,4 +1,6 @@
+import Image from "next/image";
 import { identity } from "@/content/identity";
+import { photos } from "@/content/photos";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pages } from "@/lib/site";
 import styles from "./BookingCard.module.css";
@@ -27,9 +29,11 @@ export function BookingCard() {
   const online = onlineBookingConfigured();
   return (
     <Section space="m" labelledBy="booking-card-title" className={styles.section}>
+      {/* The dorm in lamplight, blurred behind the glass ticket. Decorative. */}
+      <Image src={photos.dormFan.src} alt="" fill sizes="(min-width: 60rem) 50vw, 80vw" className={styles.backdrop} />
       <div className="container">
         {/* A booking form of its own: Shadow's dock steps aside while it is at the bottom of the screen. */}
-        <div className={styles.ticket} data-hides-launcher="">
+        <div className={styles.ticket} data-hides-launcher="" data-reveal="">
           <div className={styles.main}>
             <form
               className={styles.form}

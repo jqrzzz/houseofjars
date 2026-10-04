@@ -5,6 +5,25 @@
  */
 .section {
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* The photograph behind the glass: blurred to light and colour, faded into the page at top and bottom. */
+.backdrop {
+  z-index: -2;
+  object-fit: cover;
+  filter: blur(26px) saturate(1.2);
+  transform: scale(1.2);
+  opacity: 0.5;
+}
+
+.section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(var(--page), transparent 30%, transparent 70%, var(--page));
 }
 
 .ticket {
@@ -22,7 +41,17 @@
 .main,
 .stub {
   --bite: transparent var(--notch), #000 calc(var(--notch) + 0.5px);
-  background: var(--surface);
+  background: var(--glass-panel);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: inset 0 1px 0 var(--glass-shine);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .main,
+  .stub {
+    background: var(--surface);
+  }
 }
 
 .main {
@@ -203,13 +232,11 @@
   }
 }
 
-/* Vientiane night: a little lantern light on the card. */
-@media (prefers-color-scheme: dark) {
-  .main {
-    background:
-      radial-gradient(120% 90% at 0% 0%, rgb(231 110 67 / 0.09), transparent 55%),
-      var(--surface);
-  }
+/* Vientiane night: a little lantern light on the card (none by Day). */
+.main {
+  background:
+    radial-gradient(120% 90% at 0% 0%, var(--lantern), transparent 55%),
+    var(--glass-panel);
 }
 
 @media print {

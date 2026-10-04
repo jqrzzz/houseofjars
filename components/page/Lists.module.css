@@ -6,9 +6,72 @@
 
 .rule {
   display: grid;
-  gap: 0.25rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-m);
+  row-gap: 0.25rem;
   padding-block: var(--space-m);
   border-bottom: 1px solid var(--rule);
+}
+
+.rule .plate {
+  grid-row: span 2;
+}
+
+.rule > p {
+  grid-column: 2;
+}
+
+/* An orange plate with an ink icon: the house's sign plates, small. */
+.plate {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-s);
+  background: var(--jar-orange);
+  color: var(--ink);
+}
+
+.plate svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.plate .plateMark {
+  width: 0.8rem;
+  height: 1.2rem;
+}
+
+/* Amenities: icon and words side by side, two columns on wider screens. */
+.iconList {
+  display: grid;
+  gap: var(--space-s) var(--space-l);
+  margin: 0;
+  padding: 0;
+}
+
+.iconItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  font-size: 1.0625rem;
+}
+
+.iconItem .plate {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+}
+
+.iconItem .plate svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+@media (min-width: 40rem) {
+  .iconList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .ruleText {

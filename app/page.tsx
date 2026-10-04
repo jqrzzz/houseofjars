@@ -112,7 +112,7 @@ export default function HomePage() {
           </div>
           <ul role="list" className={styles.rooms}>
             {rooms.map(({ drawing, title, text }) => (
-              <li key={title} className={styles.room}>
+              <li key={title} className={styles.room} data-reveal="">
                 <div className={styles.niche}>
                   <Drawing name={drawing} className={styles.drawing} sizes="(min-width: 48rem) 20rem, 6rem" />
                 </div>

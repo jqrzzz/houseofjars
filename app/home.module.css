@@ -154,7 +154,7 @@
   -webkit-clip-path: url(#arch-frame);
   clip-path: url(#arch-frame);
   background: var(--surface);
-  color: var(--teak-deep);
+  color: var(--niche-ink);
 }
 
 .drawing {
@@ -186,12 +186,6 @@
     aspect-ratio: 6 / 5;
     padding: 20% 9% 8%;
     margin-bottom: var(--space-l);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .niche {
-    color: var(--text-soft);
   }
 }
 

@@ -119,3 +119,7 @@
     grid-column: auto;
   }
 }
+
+.theme {
+  margin-top: var(--space-l);
+}

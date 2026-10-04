@@ -5,6 +5,44 @@
   background: var(--page);
 }
 
+/*
+ * Wider screens: the header stays at the top as frosted glass, and takes a
+ * soft shadow as the page scrolls under it. Phones keep it in the page: the
+ * Ask Shadow dock, with its own Book button, takes over once it scrolls away.
+ */
+@media (min-width: 48rem) {
+  .header {
+    position: sticky;
+    top: 0;
+    background: var(--glass);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .header {
+      animation: header-lift linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 6rem;
+    }
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header {
+    background: var(--page);
+  }
+}
+
+@keyframes header-lift {
+  from {
+    box-shadow: 0 0 0 transparent;
+  }
+  to {
+    box-shadow: var(--shadow-soft);
+  }
+}
+
 .inner {
   display: flex;
   align-items: center;
@@ -108,7 +146,9 @@
   left: 0;
   right: 0;
   top: 100%;
-  background: var(--page);
+  background: var(--glass-panel);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--rule);
   box-shadow: var(--shadow-soft);
   padding: var(--space-s) var(--gutter) var(--space-xl);

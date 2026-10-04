@@ -13,6 +13,9 @@ export const MARK_PATH =
 
 export const MARK_VIEWBOX = "0 0 600 900";
 
+/** The mark's five blocks, in drawing order: left pillar, the centre's top, middle and bottom blocks, right pillar. */
+export const MARK_PARTS: readonly string[] = MARK_PATH.match(/M[^M]+/g) ?? [];
+
 /**
  * The mark's outline (the arch over its pillars) in a unit box, for framing a
  * photograph like a doorway (clipPathUnits="objectBoundingBox").

@@ -1,19 +1,47 @@
 import type { ReactNode } from "react";
+import { Mark } from "../brand/Mark";
+import { HouseIcon } from "../ui/HouseIcon";
+import { signIcon } from "../ui/sign-icons";
 import styles from "./Lists.module.css";
 
 /** House rules: the rule, then the reason for it. */
 export function RuleList({ rules }: { rules: readonly { readonly rule: string; readonly why: string }[] }) {
   return (
     <ul role="list" className={styles.rules}>
-      {rules.map(({ rule, why }) => (
-        <li key={rule} className={styles.rule}>
-          <p className={styles.ruleText}>{rule}</p>
-          <p className={styles.why}>
-            <span className="visually-hidden">Why: </span>
-            {why}
-          </p>
-        </li>
-      ))}
+      {rules.map(({ rule, why }) => {
+        const icon = signIcon(rule);
+        return (
+          <li key={rule} className={styles.rule}>
+            <span className={styles.plate} aria-hidden="true">
+              {icon ? <HouseIcon name={icon} /> : <Mark className={styles.plateMark} />}
+            </span>
+            <p className={styles.ruleText}>{rule}</p>
+            <p className={styles.why}>
+              <span className="visually-hidden">Why: </span>
+              {why}
+            </p>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** Short items, each on an orange plate with its icon, as on the house's signs (amenities). */
+export function IconList({ items }: { items: readonly string[] }) {
+  return (
+    <ul role="list" className={styles.iconList}>
+      {items.map((item) => {
+        const icon = signIcon(item);
+        return (
+          <li key={item} className={styles.iconItem}>
+            <span className={styles.plate} aria-hidden="true">
+              {icon ? <HouseIcon name={icon} /> : <Mark className={styles.plateMark} />}
+            </span>
+            {item}
+          </li>
+        );
+      })}
     </ul>
   );
 }

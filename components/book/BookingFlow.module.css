@@ -839,13 +839,11 @@
   }
 }
 
-/* Vientiane night: a little lantern light on the ticket. */
-@media (prefers-color-scheme: dark) {
-  .main {
-    background:
-      radial-gradient(120% 60% at 0% 0%, rgb(231 110 67 / 0.08), transparent 55%),
-      var(--surface);
-  }
+/* Vientiane night: a little lantern light on the ticket (none by Day). */
+.main {
+  background:
+    radial-gradient(120% 60% at 0% 0%, var(--lantern), transparent 55%),
+    var(--surface);
 }
 
 @media print {

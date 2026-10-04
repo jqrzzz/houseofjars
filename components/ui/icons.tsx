@@ -119,3 +119,39 @@ export function ChevronIcon({ className, left = false }: IconProps & { left?: bo
     </svg>
   );
 }
+
+/** Day: the light theme. */
+export function SunIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={iconClass(className)}>
+      <path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm8,24a64,64,0,1,0,64,64A64.07,64.07,0,0,0,128,64ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z" />
+    </svg>
+  );
+}
+
+/** Evening: the dark theme. */
+export function MoonIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={iconClass(className)}>
+      <path d="M235.54,150.21a104.84,104.84,0,0,1-37,52.91A104,104,0,0,1,32,120,103.09,103.09,0,0,1,52.88,57.48a104.84,104.84,0,0,1,52.91-37,8,8,0,0,1,10,10,88.08,88.08,0,0,0,109.8,109.8,8,8,0,0,1,10,10Z" />
+    </svg>
+  );
+}
+
+/** Auto: the theme follows the device. */
+export function AutoIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={iconClass(className)}>
+      <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM40,128a88.1,88.1,0,0,1,88-88V216A88.1,88.1,0,0,1,40,128Z" />
+    </svg>
+  );
+}
+
+/** Share this page. */
+export function ShareIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={iconClass(className)}>
+      <path d="M212,200a36,36,0,1,1-69.85-12.25l-53-34.05a36,36,0,1,1,0-51.4l53-34a36.09,36.09,0,1,1,8.67,13.45l-53,34.05a36,36,0,0,1,0,24.5l53,34.05A36,36,0,0,1,212,200Z" />
+    </svg>
+  );
+}

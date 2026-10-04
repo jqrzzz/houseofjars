@@ -10,7 +10,7 @@ export function GuideCards() {
     <div className="container">
       <ul role="list" className={styles.guides}>
       {guideList.map((guide) => (
-        <li key={guide.slug} className={styles.guide}>
+        <li key={guide.slug} className={styles.guide} data-reveal="">
           <div className={styles.niche}>
             <Drawing
               name={guideArt(guide.slug).header}

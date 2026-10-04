@@ -5,6 +5,7 @@ import { HouseCutaway } from "@/components/house/HouseCutaway";
 import { PodDiagram } from "@/components/house/PodDiagram";
 import { photos } from "@/content/photos";
 import { Block, Prose, TickList } from "@/components/page/Block";
+import { IconList } from "@/components/page/Lists";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageJsonLd } from "@/components/PageJsonLd";
 import { ReadNext } from "@/components/guide/ReadNext";
@@ -70,7 +71,7 @@ export default function TheHousePage() {
           </h2>
           <ul role="list" className={styles.gallery}>
             {lookInside.map((photo) => (
-              <li key={photo.src}>
+              <li key={photo.src} data-reveal="">
                 <PhotoFrame
                   caption={photo.caption}
                   photo={photo}
@@ -120,7 +121,7 @@ export default function TheHousePage() {
       ) : null}
 
       <Block id="comfort" title="Comfort and convenience">
-        <TickList columns items={amenities.map((amenity) => amenity.value.name)} />
+        <IconList items={amenities.map((amenity) => amenity.value.name)} />
         <PhotoFrame
           caption={photos.locker.caption}
           photo={photos.locker}

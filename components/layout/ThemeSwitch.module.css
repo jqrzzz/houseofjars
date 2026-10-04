@@ -1,0 +1,129 @@
+/* The header switch: a square button like the menu button, showing the theme it switches to. */
+.toggle {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.toggle:hover {
+  border-color: var(--text-soft);
+  background: var(--surface);
+}
+
+.toggle svg {
+  grid-area: 1 / 1;
+  width: 1.15rem;
+  height: 1.15rem;
+  transition:
+    transform 420ms var(--ease-out),
+    opacity 240ms ease;
+}
+
+/* Day shows the moon (switch to Evening); Evening shows the sun. The other turns away. */
+.sun {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+}
+
+:global(:root[data-theme="dark"]) .sun {
+  opacity: 1;
+  transform: none;
+}
+
+:global(:root[data-theme="dark"]) .moon {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .sun {
+    opacity: 1;
+    transform: none;
+  }
+
+  :global(:root:not([data-theme="light"])) .moon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.6);
+  }
+}
+
+/* The footer choice: three plates in a row on the teak band. */
+.choices {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.legend {
+  margin-bottom: var(--space-s);
+  padding: 0;
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--deep-accent);
+}
+
+.options {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--deep-rule);
+  border-radius: var(--radius-m);
+}
+
+.option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--radius-s);
+  color: var(--deep-text-soft);
+  font-size: var(--step--1);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.option:hover {
+  color: var(--deep-text);
+}
+
+/* The radio itself stays for keyboards and screen readers, laid over its plate. */
+.radio {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.option:has(.radio:checked) {
+  background: var(--deep-text);
+  color: var(--teak-deep);
+}
+
+.option:has(.radio:focus-visible) {
+  outline: 2px solid var(--deep-accent);
+  outline-offset: 2px;
+}
+
+.optionIcon {
+  width: 1rem;
+  height: 1rem;
+}
