@@ -35,12 +35,12 @@ const choices: { value: ThemeChoice; label: string; Icon: typeof SunIcon }[] = [
   { value: "dark", label: "Evening", Icon: MoonIcon },
 ];
 
-/** The footer's three-way choice: Auto (follow the device), Day or Evening. */
-export function ThemeChoices({ className }: { className?: string }) {
+/** The three-way choice: Auto (follow the device), Day or Evening. On the footer's teak band, or on the page (the phone menu). */
+export function ThemeChoices({ className, tone = "deep" }: { className?: string; tone?: "deep" | "page" }) {
   const choice = useThemeChoice();
   const name = useId();
   return (
-    <fieldset className={[styles.choices, className].filter(Boolean).join(" ")}>
+    <fieldset className={[styles.choices, tone === "page" ? styles.onPage : null, className].filter(Boolean).join(" ")}>
       <legend className={styles.legend}>Theme</legend>
       <div className={styles.options}>
         {choices.map(({ value, label, Icon }) => (

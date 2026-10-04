@@ -127,3 +127,29 @@
   width: 1rem;
   height: 1rem;
 }
+
+/* On the page itself (the phone menu): the page's colours instead of the teak band's. */
+.onPage .legend {
+  color: var(--accent-text);
+}
+
+.onPage .options {
+  border-color: var(--rule-strong);
+}
+
+.onPage .option {
+  color: var(--text-soft);
+}
+
+.onPage .option:hover {
+  color: var(--text);
+}
+
+.onPage .option:has(.radio:checked) {
+  background: var(--text);
+  color: var(--page);
+}
+
+.onPage .option:has(.radio:focus-visible) {
+  outline-color: var(--focus);
+}
