@@ -37,10 +37,6 @@ export const openQuestions: readonly OpenQuestion[] = [
     guestTopic: "which floor the dorms, bathrooms and front desk are on",
   },
   {
-    ask: "Laundry: does the house wash guests' clothes (how, how fast, what it costs), and where is the nearest laundry?",
-    guestTopic: "laundry",
-  },
-  {
     ask: "Where the team likes to eat nearby: a few local places, what to order there, roughly what it costs and when they are open (for Shadow and a food guide).",
     guestTopic: "local places to eat that the team recommends",
   },
@@ -51,10 +47,6 @@ export const openQuestions: readonly OpenQuestion[] = [
   {
     ask: "The nearest BRT bus stop to the house, the fare, and whether the airport shuttle bus still runs (the guides leave them out until checked).",
     guestTopic: "the nearest BRT stop, bus fares and the airport shuttle bus",
-  },
-  {
-    ask: "Whether the team helps guests buy train tickets or book buses, minivans or tours, and on what terms.",
-    guestTopic: "whether the team can buy train tickets or book buses and tours",
   },
   {
     ask: "How to get from the house to the Laos–China Railway station and to the Friendship Bridge, and roughly what each ride costs.",

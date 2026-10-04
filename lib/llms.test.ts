@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withoutHouseFees } from "./concierge/guard";
+import { withoutPublishedAmounts } from "./concierge/guard";
 import { content } from "@/content";
 import { creditFor, isFirm } from "@/content/certainty";
 import { faq } from "@/content/faq";
@@ -66,9 +66,10 @@ describe("llms-full.txt", () => {
     expect(full).toContain("There is no payment on this website.");
   });
 
-  it("publishes no prices: only the house's own fees from its rules board, where it talks about them", () => {
+  it("publishes no prices: only the house's own fees and the laundries' starting price, where it talks about them", () => {
     expect(full).toContain("100,000 kip for your padlock and towel");
-    expect(withoutHouseFees(full)).not.toMatch(/\b(?:LAK|USD|kip)\b|[$₭€£]\s?\d/i);
+    expect(full).toContain("from about 100,000 kip a load");
+    expect(withoutPublishedAmounts(full)).not.toMatch(/\b(?:LAK|USD|kip)\b|[$₭€£]\s?\d/i);
   });
 
   it("never leaves a relative link or a placeholder", () => {
@@ -122,7 +123,7 @@ describe("with online booking (W3)", () => {
   });
 
   it("still publishes no prices, and names no fact it can't stand behind", () => {
-    expect(withoutHouseFees(fullOnline)).not.toMatch(/\b(?:LAK|USD|kip)\b|[$₭€£]\s?\d/i);
+    expect(withoutPublishedAmounts(fullOnline)).not.toMatch(/\b(?:LAK|USD|kip)\b|[$₭€£]\s?\d/i);
     expect(uncredited(fullOnline)).toEqual([]);
   });
 

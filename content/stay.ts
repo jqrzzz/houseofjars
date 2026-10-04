@@ -34,6 +34,26 @@ export const policies = {
   directPriceShort: fact("Book direct and pay less: no booking-site fees.", sources.team, { confirmed: true }),
 } as const;
 
+/** What the team does for guests beyond the bed, and what the house leaves to the neighbours. */
+export const services = {
+  laundry: fact(
+    {
+      summary:
+        "The house doesn’t do laundry, but several laundries within a 5-minute walk wash, dry and fold the same day, with detergent and softener included",
+      price: "from about 100,000 kip a load",
+    },
+    sources.team,
+    {
+      confirmed: true,
+      note: 'The team, 4 October 2026: "We don\'t do laundry but within a 5 min walk there are several same day wash and dry options starting at about 100k kip per load. With detergent and softener included plus folding. Prices vary."',
+    },
+  ),
+  bookingHelp: fact("The team books train tickets, buses and tours for guests, usually for less than the prices online", sources.team, {
+    confirmed: true,
+    note: 'The team, 4 October 2026, asked whether they help book train tickets, buses or tours: "Yes we help book direct and it\'s cheaper with us than internet pricing."',
+  }),
+} as const;
+
 export const building = {
   floors: fact(2, sources.booking),
   cafe: fact("A café on the ground floor", sources.booking),

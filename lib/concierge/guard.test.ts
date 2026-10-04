@@ -59,6 +59,13 @@ describe("price guard", () => {
     expect(mentionsMoney("The deposit is 200,000 kip.")).toBe(true);
   });
 
+  it("lets the laundries' starting price through, but only in a sentence about laundry", () => {
+    expect(mentionsMoney("Laundries nearby wash, dry and fold the same day, from about 100,000 kip a load.")).toBe(false);
+    expect(mentionsMoney("A bed is 100,000 kip a night.")).toBe(true);
+    expect(mentionsMoney("Laundry is next door. A bed is 100,000 kip.")).toBe(true);
+    expect(mentionsMoney("A load of washing is 200,000 kip.")).toBe(true);
+  });
+
   it("never fires on the house knowledge, which quotes no prices", () => {
     expect(mentionsMoney(buildSystemPrompt("https://thehouseofjars.com"))).toBe(false);
     expect(mentionsMoney(buildSystemPrompt("https://thehouseofjars.com", { onlineBooking: true }))).toBe(false);

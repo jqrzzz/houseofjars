@@ -1,7 +1,7 @@
 import { airportTransport, immigration, location } from "./area";
 import { identity } from "./identity";
 import type { Inline } from "./inline";
-import { atmosphere, bathrooms, beds, breakfast, policies, staff, times } from "./stay";
+import { atmosphere, bathrooms, beds, breakfast, policies, services, staff, times } from "./stay";
 import { joinList, lowerFirst } from "./text";
 import { gettingAround, railway, sights, toThailand } from "./travel";
 
@@ -185,6 +185,11 @@ export const faq: readonly FaqGroup[] = [
           ".",
         ],
       },
+      {
+        id: "laundry",
+        question: "Can I get my clothes washed?",
+        answer: [`${services.laundry.value.summary}, ${services.laundry.value.price} (prices vary).`],
+      },
     ],
   },
   {
@@ -194,10 +199,15 @@ export const faq: readonly FaqGroup[] = [
         id: "train-tickets",
         question: "How do I buy train tickets to Vang Vieng or Luang Prabang?",
         answer: [
-          `Yourself, in ${railway.app.value.name}, the Laos–China Railway’s own app. Travel sites report that ${lowerFirst(railway.onSale.value.rule)}, so book early. `,
+          `Yourself, in ${railway.app.value.name}, the Laos–China Railway’s own app, or through the team, who book train tickets for guests. Travel sites report that ${lowerFirst(railway.onSale.value.rule)}, so book early. `,
           { text: "How to buy Laos–China Railway tickets", href: "/guides/laos-china-railway-tickets" },
           ".",
         ],
+      },
+      {
+        id: "book-for-me",
+        question: "Can the house book tickets or tours for me?",
+        answer: [`Yes. ${services.bookingHelp.value}. Ask at the desk, or `, { text: "message the team", href: "/book#contact" }, "."],
       },
       {
         id: "getting-around",
