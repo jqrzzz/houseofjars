@@ -5,7 +5,8 @@ import { immigration, plainOfJars } from "./area";
 import { creditFor, firm, isFirm, standingOf } from "./certainty";
 import { fact, type Fact } from "./fact";
 import { identity } from "./identity";
-import { bathrooms, rules, times } from "./stay";
+import { sources } from "./sources";
+import { bathrooms, times } from "./stay";
 
 describe("how firmly a fact may be stated", () => {
   it("knows the kind of every source the site uses, so no fact is judged by accident", () => {
@@ -23,13 +24,14 @@ describe("how firmly a fact may be stated", () => {
   });
 
   it("credits what guests say, one source, general practice and assumptions instead", () => {
-    expect([bathrooms.cleaning, rules.house[3]!, immigration.registration, identity.nameStory].map(standingOf)).toEqual([
+    const seenOnce = fact("Shoes off indoors.", sources.oneReview);
+    expect([bathrooms.cleaning, seenOnce, immigration.registration, identity.nameStory].map(standingOf)).toEqual([
       "guests",
       "one-source",
       "practice",
       "assumption",
     ]);
-    const soft: Fact<unknown>[] = [bathrooms.cleaning, rules.house[3]!, immigration.registration, identity.nameStory];
+    const soft: Fact<unknown>[] = [bathrooms.cleaning, seenOnce, immigration.registration, identity.nameStory];
     for (const found of soft) {
       expect(isFirm(found)).toBe(false);
       expect(firm(found)).toBeUndefined();

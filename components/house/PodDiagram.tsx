@@ -2,7 +2,7 @@ import { Drawing } from "@/components/art/Drawing";
 import styles from "./PodDiagram.module.css";
 
 /**
- * Where the drawing's saffron dots are, in percent, in the order of
+ * Where the drawing's orange dots are, in percent, in the order of
  * beds.perBed: the curtain, the reading light, the socket, the locker.
  */
 const dots = [

@@ -1,13 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { ViewTransition, type ReactNode } from "react";
-import { JarMarkSymbol } from "@/components/brand/JarMark";
+import { MarkSymbol } from "@/components/brand/Mark";
+import { Splash } from "@/components/brand/Splash";
 import { ConciergeLauncher } from "@/components/concierge/ConciergeLauncher";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { identity } from "@/content/identity";
 import { pages, siteUrl } from "@/lib/site";
+import { bootScript, themeColor } from "@/lib/theme";
 import { siteVerification } from "@/lib/verification";
-import { bodyFont, displayFont, laoFont } from "./fonts";
+import { brandFont, laoFont } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,16 +23,21 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbf6ee" },
-    { media: "(prefers-color-scheme: dark)", color: "#140e09" },
+    { media: "(prefers-color-scheme: light)", color: themeColor.light },
+    { media: "(prefers-color-scheme: dark)", color: themeColor.dark },
   ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-GB" className={`${displayFont.variable} ${bodyFont.variable} ${laoFont.variable}`}>
+    // The boot script may set data-theme and the splash class before React hydrates, so <html> accepts what it finds.
+    <html lang="en-GB" className={`${brandFont.variable} ${laoFont.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: bootScript }} />
+      </head>
       <body>
-        <JarMarkSymbol />
+        <MarkSymbol />
+        <Splash />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

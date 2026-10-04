@@ -3,8 +3,8 @@ import styles from "./ShadowFigure.module.css";
 
 /*
  * Shadow, the house's AI concierge, drawn flat in the site's own language:
- * a cream ghost in a brown vest with two saffron buttons, a saffron bow tie,
- * a caramel bellhop cap with a saffron band and knob, and his brown
+ * a cream ghost in a brown vest with two orange buttons, an orange bow tie,
+ * a caramel bellhop cap with an orange band and knob, and his brown
  * clipboard. Faithful to the 3D mascot, which stays as the feature image of
  * the home page's "Ask Shadow" section.
  *

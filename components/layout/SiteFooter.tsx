@@ -2,8 +2,9 @@ import Link from "next/link";
 import { addressLines, identity, whatsappUrl } from "@/content/identity";
 import { bookingLabel } from "@/lib/booking/config";
 import { pages, primaryNav, teamSignInUrl } from "@/lib/site";
-import { TextileBand } from "../brand/TextileBand";
 import { Wordmark } from "../brand/Wordmark";
+import { ShareButton } from "../ui/ShareButton";
+import { ThemeChoices } from "./ThemeSwitch";
 import styles from "./SiteFooter.module.css";
 
 const elsewhere = [
@@ -18,12 +19,13 @@ export function SiteFooter() {
   const signIn = teamSignInUrl();
   return (
     <footer className={styles.footer}>
-      <TextileBand pattern="hooks" weave="view" />
       <div className={`container ${styles.grid}`}>
         <div className={styles.brand}>
           <Wordmark tone="deep" />
           <p className={styles.tagline}>A calm house in the heart of Vientiane.</p>
           <p className={styles.owner}>Owned and run by {identity.owner.name.value}.</p>
+          <ShareButton path="/" label="Share House of Jars" className={styles.share} />
+          <ThemeChoices className={styles.theme} />
         </div>
 
         <div className={`${styles.column} ${styles.wide}`}>
@@ -91,7 +93,8 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="container">
-        <div className={styles.base}>
+        {/* Its links run to the right edge: Shadow's floating button steps aside while they are in view. */}
+        <div className={styles.base} data-hides-launcher="">
           <p>
             © {new Date().getFullYear()} {identity.fullName.value}
           </p>

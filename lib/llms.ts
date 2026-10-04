@@ -86,11 +86,21 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
       : []),
     `- [Booking.com](${identity.links.booking.value}): live prices and free beds`,
     `- [Agoda](${identity.links.agoda.value}): live prices and free beds`,
-    `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. There is no payment on this website.`,
+    onlineBooking
+      ? `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. There is no payment on this website.`
+      : `- [Message the team](${url(`${pages.book.path}#message`)}): on WhatsApp (${whatsappUrl()}), by phone or by email. A message does not book a bed. There is no payment on this website.`,
   ];
 }
 
 /** /llms.txt: what the house is, the key facts, and every page. */
+/** Where an assistant acting for a traveller can connect: the MCP server, and the API description. */
+export function agentLines(url: (path: string) => string, onlineBooking: boolean | undefined): string[] {
+  return [
+    `- MCP server (Streamable HTTP, read-only, no sign-in): ${url("/api/mcp")}. Tools: house_information${onlineBooking ? ", check_availability (free beds, no prices)" : ""} and booking_link (the booking page with the stay filled in). Assistants can't book, hold a bed or send a message: the traveller sends the request on the website and the team confirms it.`,
+    `- API description (OpenAPI): ${url("/openapi.json")}`,
+  ];
+}
+
 export function buildLlmsTxt(siteUrl: string, options: LlmsOptions = {}): string {
   const url = (path: string) => new URL(path, `${siteUrl}/`).toString();
   const mainPages = sitePages(Boolean(options.onlineBooking)).filter((page) => !page.guide && page.path !== pages.privacy.path);
@@ -111,6 +121,9 @@ export function buildLlmsTxt(siteUrl: string, options: LlmsOptions = {}): string
     "",
     "## Book",
     ...bookingLines(siteUrl, url, options.onlineBooking),
+    "",
+    "## For AI assistants and booking agents",
+    ...agentLines(url, options.onlineBooking),
     "",
     "## Optional",
     `- [Everything in one file](${url("/llms-full.txt")}): facts with their sources, house rules, questions and answers, guides and how to book`,
@@ -199,6 +212,8 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
       `Bathroom cleaning: ${bathrooms.cleaning.value}`,
       `Breakfast: included, in the café on the ground floor`,
       `Breakfast has: ${joinList(breakfast.items.value.map((item) => item.toLowerCase()))}`,
+      `Breakfast is served: ${breakfast.hours.value}`,
+      `Coffee and tea in the café: ${building.cafeDrinks.value}`,
       ...amenities.map((amenity) => `Amenity: ${amenity.value.name}`),
     ]),
     "",

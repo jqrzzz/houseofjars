@@ -149,3 +149,36 @@ describe("what the guides are about", () => {
     expect(about("/guides/quiet-hostel-vientiane")).toMatchObject({ lastReviewed: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
   });
 });
+
+describe("what an assistant can do for a guest", () => {
+  const withOnlineBooking = <T,>(run: () => T): T => {
+    const saved = { url: process.env.SHADOW_API_URL, key: process.env.SHADOW_INQUIRY_KEY };
+    process.env.SHADOW_API_URL = "https://shadow.example";
+    process.env.SHADOW_INQUIRY_KEY = "sck_test";
+    try {
+      return run();
+    } finally {
+      if (saved.url === undefined) delete process.env.SHADOW_API_URL;
+      else process.env.SHADOW_API_URL = saved.url;
+      if (saved.key === undefined) delete process.env.SHADOW_INQUIRY_KEY;
+      else process.env.SHADOW_INQUIRY_KEY = saved.key;
+    }
+  };
+
+  it("offers no booking action while the site takes no bookings", () => {
+    const [hostel] = nodeOfType(graphOf("/"), "Hostel");
+    expect(hostel!.potentialAction).toBeUndefined();
+  });
+
+  it("offers a booking action that opens the booking page with the dates and guests filled in", () => {
+    const [hostel] = withOnlineBooking(() => nodeOfType(graphOf("/"), "Hostel"));
+    expect(validateJsonLd(withOnlineBooking(() => pageJsonLd(findPage("/"))))).toEqual([]);
+    const action = hostel!.potentialAction as Node;
+    expect(action["@type"]).toBe("ReserveAction");
+    const target = action.target as Node;
+    expect(target["@type"]).toBe("EntryPoint");
+    expect(target.urlTemplate).toMatch(
+      new RegExp(`^${absoluteUrl("/book").replace(/[.?]/g, "\\$&")}\\?check_in=\\{check_in\\}&check_out=\\{check_out\\}&guests=\\{guests\\}`),
+    );
+  });
+});

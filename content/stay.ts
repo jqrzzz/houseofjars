@@ -3,15 +3,19 @@ import { sources } from "./sources";
 
 export const times = {
   checkIn: fact("14:00", sources.booking, { note: "Check-in from this time." }),
-  checkOut: fact("11:30", sources.booking, { note: "Check-out until this time." }),
+  checkOut: fact("11:30", sources.booking, { note: "Check-out until this time. The room rate sign says check-out is from 08:00 to 11:30." }),
   earlyCheckIn: fact("Possible, subject to availability", sources.booking),
-  /** Quiet hours are not published anywhere yet. Set them here, e.g. "22:00–07:00". */
-  quietHours: null as Fact<string> | null,
+  quietHours: fact("21:00–07:00", sources.signs, {
+    note: 'Dormitory rules board: "Keep your voice down at all times. From 9 PM until 7 AM, do not make a noise."',
+  }) as Fact<string> | null,
 } as const;
 
 export const building = {
   floors: fact(2, sources.booking),
   cafe: fact("A café on the ground floor", sources.booking),
+  cafeDrinks: fact("08:00–19:00", sources.signs, {
+    note: 'Café menu: "Coffee & Tea is served from 8.00 AM till 7.00 PM." Breakfast menu: guests are welcome to relax or work in the café after breakfast hours.',
+  }),
 } as const;
 
 export const beds = {
@@ -44,7 +48,10 @@ export const bathrooms = {
 
 export const breakfast = {
   included: fact(true, sources.booking),
-  items: fact(["Eggs", "Bread", "Sausage", "Fruit", "Tea or coffee"] as const, sources.reviews),
+  items: fact(["Two fried eggs", "Salad", "Baguette", "Fruit", "Coffee or tea"] as const, sources.signs, {
+    note: 'Breakfast menu for staying guests: "2 Fried Eggs, Salad, Baguette, Fruit. Hot Americano or Hot Espresso or Hot Lipton Tea." Other drinks cost extra (prices on the menu, not published here).',
+  }),
+  hours: fact("08:00–10:30", sources.signs, { note: 'Room rate sign and menus: "Breakfast is served from 8 AM to 10:30 AM."' }),
 } as const;
 
 export const staff = {
@@ -89,18 +96,29 @@ export const rules = {
       sources.booking,
     ),
     fact<HouseRule>(
-      { rule: "Keep nights calm and quiet.", why: "Most guests come here to sleep well." },
-      sources.reviews,
-      { note: "Reviews describe a calm house. No quiet hours are published yet." },
+      { rule: "No outside guests: each pod is for one registered guest.", why: "Everyone sleeps among people the house knows." },
+      sources.signs,
+    ),
+    fact<HouseRule>(
+      { rule: "Eat and drink in the café on the ground floor, not in the dorms.", why: "Clean dorms, with no crumbs or smells." },
+      sources.signs,
+    ),
+    fact<HouseRule>(
+      { rule: "Please take off your shoes.", why: "Clean floors, as in most Lao homes." },
+      sources.signs,
+      { note: "The signs on the stairs and the dorm doors ask for it." },
     ),
     fact<HouseRule>(
       { rule: "No hen or stag parties.", why: "The house is built for rest, not for parties." },
       sources.booking,
     ),
     fact<HouseRule>(
-      { rule: "Shoes off indoors.", why: "Clean floors, as in most Lao homes." },
-      sources.oneReview,
-      { note: "Seen in one source only. Please confirm." },
+      { rule: "Leaving very early? Pack your bag on the ground floor.", why: "So the dorm can sleep on." },
+      sources.signs,
+    ),
+    fact<HouseRule>(
+      { rule: "Keep your voice down at all times.", why: "Most guests come here to sleep well." },
+      sources.signs,
     ),
   ],
   stay: [
@@ -109,8 +127,8 @@ export const rules = {
       sources.booking,
     ),
     fact<HouseRule>(
-      { rule: "Check-out until 11:30.", why: "So beds are ready for the guests arriving that afternoon." },
-      sources.booking,
+      { rule: "Check-out from 08:00 until 11:30.", why: "So beds are ready for the guests arriving that afternoon." },
+      sources.signs,
     ),
     fact<HouseRule>(
       {
@@ -123,6 +141,14 @@ export const rules = {
       { rule: "Bring your passport to check-in.", why: "Guesthouses in Laos register foreign guests with the local authorities." },
       sources.laoLaw,
       { note: "Please confirm this matches how the house registers guests." },
+    ),
+    fact<HouseRule>(
+      { rule: "Leaving before 08:00? Tell the team beforehand, so they can return your deposit.", why: "Check-out at the desk starts at 08:00." },
+      sources.signs,
+    ),
+    fact<HouseRule>(
+      { rule: "Coming by motorbike or bicycle? Tell reception.", why: "Overnight parking outside is not allowed." },
+      sources.signs,
     ),
   ],
 } as const;

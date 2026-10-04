@@ -6,6 +6,8 @@ import styles from "./PhotoFrame.module.css";
 export interface Photo {
   readonly src: StaticImageData | string;
   readonly alt: string;
+  /** Which part of the photograph stays in view when the frame crops it (CSS object-position). */
+  readonly focus?: string;
 }
 
 interface PhotoFrameProps {
@@ -20,6 +22,8 @@ interface PhotoFrameProps {
   aspect?: string;
   /** next/image sizes hint. */
   sizes?: string;
+  /** Load first: the photograph is the page's largest image above the fold. */
+  priority?: boolean;
   className?: string;
 }
 
@@ -31,6 +35,7 @@ export function PhotoFrame({
   shape = "rect",
   aspect = "4 / 3",
   sizes = "(min-width: 60rem) 40vw, 100vw",
+  priority = false,
   className,
 }: PhotoFrameProps) {
   const figureClass = [styles.figure, className].filter(Boolean).join(" ");
@@ -50,7 +55,15 @@ export function PhotoFrame({
   return (
     <figure className={figureClass}>
       <div className={frameClass} style={{ aspectRatio: aspect }}>
-        <Image src={photo.src} alt={photo.alt} fill sizes={sizes} className={styles.image} />
+        <Image
+          src={photo.src}
+          alt={photo.alt}
+          fill
+          sizes={sizes}
+          priority={priority}
+          className={styles.image}
+          style={photo.focus ? { objectPosition: photo.focus } : undefined}
+        />
       </div>
       <figcaption className={styles.caption}>{caption}</figcaption>
     </figure>

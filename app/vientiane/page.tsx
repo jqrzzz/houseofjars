@@ -30,7 +30,7 @@ export default function VientianePage() {
         morph="vientiane"
         title="Getting here and around Vientiane"
         lede={`The house is in ${location.neighbourhood.value}: ${lowerFirst(airport.value.distance)} from the airport and a few minutes’ walk from the Mekong.`}
-        art={<Drawing name="tuktuk" />}
+        art={<Drawing name="tuktuk" priority />}
       />
 
       <Block id="airport" title="From the airport">

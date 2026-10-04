@@ -4,6 +4,7 @@ import { guides, type Guide } from "@/content/guides";
 import { identity } from "@/content/identity";
 import { amenities, beds, breakfast, building, staff, times } from "@/content/stay";
 import { lowerFirst } from "@/content/text";
+import { onlineBookingConfigured } from "./booking/config";
 import { breadcrumbTrail, metaTitle, type SitePage } from "./pages";
 import { absoluteUrl, siteUrl } from "./site";
 
@@ -88,6 +89,28 @@ function hostelDescription(): string | undefined {
   return sentences.length > 0 ? sentences.join(" ") : undefined;
 }
 
+/**
+ * How an assistant can start a booking for a guest, when the site takes them:
+ * the booking page at the free beds for the dates and guests. The guest still
+ * sends the request; nothing is booked or paid from the link alone. Without
+ * online booking the site has no booking to start, so there is no action.
+ */
+function reserveAction(): JsonLdNode | undefined {
+  if (!onlineBookingConfigured()) return undefined;
+  const book = absoluteUrl("/book");
+  const query = "check_in={check_in}&check_out={check_out}&guests={guests}";
+  return {
+    "@type": "ReserveAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${book}?${query}`,
+      inLanguage: "en",
+      actionPlatform: ["https://schema.org/DesktopWebPlatform", "https://schema.org/MobileWebPlatform"],
+    },
+    result: { "@type": "LodgingReservation", name: "A booking request to the house" },
+  };
+}
+
 function hostelNode(): JsonLdNode | undefined {
   const name = firm(identity.fullName);
   if (!name) return undefined;
@@ -121,6 +144,7 @@ function hostelNode(): JsonLdNode | undefined {
     availableLanguage: spoken,
     knowsLanguage: spoken,
     amenityFeature: amenities.flatMap((amenity) => (isFirm(amenity) ? [feature(amenity.value.schemaName)] : [])),
+    potentialAction: reserveAction(),
     containsPlace: firm(beds.roomTypes)?.map((roomType) =>
       compact({
         "@type": "Room",

@@ -43,7 +43,7 @@
 
 .title {
   font-size: var(--step-3);
-  max-width: 12.04em; /* 20ch in Young Serif, in em so it holds while the font loads */
+  max-width: 12.04em; /* about 19ch of Figtree bold, in em so it holds while the font loads */
 }
 
 .title:focus {
@@ -56,7 +56,7 @@
   min-width: 0;
 }
 
-/* Steps: numbered marks, the current one in saffron, done ones ticked. */
+/* Steps: numbered marks, the current one in orange, done ones ticked. */
 .steps ol {
   display: flex;
   flex-wrap: wrap;
@@ -78,7 +78,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border: 1px solid var(--rule-strong);
-  border-radius: 50%;
+  border-radius: var(--radius-s);
   font-size: var(--step--2);
   font-weight: 650;
   font-variant-numeric: tabular-nums lining-nums;
@@ -96,8 +96,8 @@
 }
 
 .steps li[data-state="current"] .stepMark {
-  border-color: var(--saffron);
-  background: var(--saffron);
+  border-color: var(--jar-orange);
+  background: var(--jar-orange);
   color: var(--ink);
 }
 
@@ -147,21 +147,23 @@
 .pickLabel {
   font-size: var(--step--2);
   font-weight: 650;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--text-soft);
 }
 
 .pickValue {
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-1);
   line-height: 1.25;
 }
 
+/* The same line height as a chosen date, so the boxes don't grow under the finger when a date is picked. */
 .pickValue[data-empty] {
   color: var(--text-soft);
   font-family: var(--font-body-stack);
   font-size: 1rem;
+  line-height: calc(var(--step-1) * 1.25);
 }
 
 .stepper {
@@ -177,7 +179,7 @@
   width: 2.75rem;
   height: 2.75rem;
   border: 1px solid var(--field-border);
-  border-radius: 50%;
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--text);
 }
@@ -274,7 +276,7 @@
   gap: var(--space-xs);
   padding: var(--space-m) var(--space-l);
   border: 1px solid var(--rule-strong);
-  border-left: 4px solid var(--saffron);
+  border-left: 4px solid var(--jar-orange);
   border-radius: var(--radius-s);
   background: var(--page);
 }
@@ -297,6 +299,7 @@
 
 .tripDates {
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-1);
 }
 
@@ -338,8 +341,8 @@
 }
 
 .room[data-chosen] {
-  border-color: var(--saffron);
-  box-shadow: 0 0 0 1px var(--saffron);
+  border-color: var(--jar-orange);
+  box-shadow: 0 0 0 1px var(--jar-orange);
 }
 
 .room:has(:focus-visible) {
@@ -358,12 +361,17 @@
   color: var(--text-soft);
 }
 
+/* The card shows the focus ring (.room:has(:focus-visible)); the radio's own would make two. */
+.roomRadio:focus-visible {
+  outline: none;
+}
+
 .roomRadio {
   grid-area: radio;
   width: 1.3rem;
   height: 1.3rem;
   margin: 0.3rem 0 0;
-  accent-color: var(--saffron);
+  accent-color: var(--jar-orange);
 }
 
 .roomMain {
@@ -375,6 +383,7 @@
 
 .roomName {
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-2);
   line-height: 1.15;
 }
@@ -387,8 +396,7 @@
 .roomKind {
   font-size: var(--step--2);
   font-weight: 650;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--accent-text);
 }
 
@@ -437,6 +445,7 @@
   display: block;
   color: var(--text);
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-1);
 }
 
@@ -552,16 +561,16 @@
   min-height: 2.75rem;
   padding: 0.5rem 1.05rem;
   border: 1px solid var(--field-border);
-  border-radius: 999px;
+  border-radius: var(--radius-s);
   background: var(--page);
   font-size: var(--step--1);
   font-weight: 600;
 }
 
-/* Chosen in saffron, like a chosen day, room or step (ink on saffron is 7:1). */
+/* Chosen in orange, like a chosen day, room or step (ink on jar orange is 5.7:1). */
 .chip input:checked + span {
-  border-color: var(--saffron);
-  background: var(--saffron);
+  border-color: var(--jar-orange);
+  background: var(--jar-orange);
   color: var(--ink);
 }
 
@@ -606,9 +615,6 @@
   margin: 0;
 }
 
-.reviewChange .textButton {
-  min-height: 2.25rem;
-}
 
 @media (min-width: 40rem) {
   .reviewRow {
@@ -658,6 +664,7 @@
 
 .referenceCode {
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-4);
   line-height: 1;
   letter-spacing: 0.06em;
@@ -730,8 +737,7 @@
 .stubTitle {
   font-size: var(--step--2);
   font-weight: 650;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--accent-text);
 }
 
@@ -770,12 +776,20 @@
   font-weight: 600;
 }
 
+/* The booking sites in the stub: wide screens only, where the stub stands beside the steps. Below, the page's own
+   "Or book on Booking.com or Agoda" comes straight after, so the stub doesn't repeat it. */
 .stubOther {
-  display: grid;
+  display: none;
   gap: var(--space-xs);
   margin-top: var(--space-s);
   padding-top: var(--space-m);
   border-top: 1px solid var(--rule);
+}
+
+@media (min-width: 64rem) {
+  .stubOther {
+    display: grid;
+  }
 }
 
 .stubLinks {
@@ -788,7 +802,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding-block: 0.35rem;
+  min-height: 2.75rem;
   font-weight: 600;
 }
 
@@ -837,13 +851,11 @@
   }
 }
 
-/* Vientiane night: a little lantern light on the ticket. */
-@media (prefers-color-scheme: dark) {
-  .main {
-    background:
-      radial-gradient(120% 60% at 0% 0%, rgb(232 149 43 / 0.08), transparent 55%),
-      var(--surface);
-  }
+/* Vientiane night: a little lantern light on the ticket (none by Day). */
+.main {
+  background:
+    radial-gradient(120% 60% at 0% 0%, var(--lantern), transparent 55%),
+    var(--surface);
 }
 
 @media print {

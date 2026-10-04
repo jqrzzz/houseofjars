@@ -55,18 +55,22 @@
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-m);
   background: var(--surface);
-  transition: border-color 180ms ease;
+  transition:
+    border-color 180ms ease,
+    box-shadow 320ms var(--ease-out),
+    translate 320ms var(--ease-out);
 }
 
 .card:hover {
   border-color: var(--accent-text);
+  box-shadow: var(--shadow-soft);
+  translate: 0 -3px;
 }
 
 .kind {
   font-size: var(--step--2);
   font-weight: 650;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--accent-text);
 }
 
@@ -145,8 +149,7 @@
   font-size: var(--step--2);
   font-weight: 650;
   line-height: 1.6;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .sourceList {
@@ -192,13 +195,14 @@
   place-items: center;
   aspect-ratio: 4 / 5;
   padding: 30% 6% 10%;
-  border-radius: 999px 999px var(--radius-s) var(--radius-s);
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
   background: var(--surface);
   transition: background-color 180ms ease;
 }
 
 .guide:hover .niche {
-  background: color-mix(in srgb, var(--surface), var(--saffron) 12%);
+  background: color-mix(in srgb, var(--surface), var(--jar-orange) 12%);
 }
 
 .nicheDrawing {

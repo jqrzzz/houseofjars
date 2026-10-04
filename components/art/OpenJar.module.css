@@ -9,7 +9,7 @@
 }
 
 .stone {
-  fill: var(--jar-2);
+  fill: var(--open-jar-stone);
 }
 
 .lit {
@@ -50,11 +50,11 @@
 }
 
 .top {
-  fill: var(--jar-1);
+  fill: var(--open-jar-top);
 }
 
 .hollow {
-  fill: #24160c;
+  fill: var(--open-jar-hollow);
 }
 
 .wall {
@@ -62,16 +62,3 @@
   opacity: 0.55;
 }
 
-@media (prefers-color-scheme: dark) {
-  .stone {
-    fill: #7e7160;
-  }
-
-  .top {
-    fill: #938573;
-  }
-
-  .hollow {
-    fill: #0c0805;
-  }
-}

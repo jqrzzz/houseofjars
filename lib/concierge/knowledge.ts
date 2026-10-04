@@ -51,7 +51,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
         `Email: ${email.value}`,
         options.onlineBooking
           ? `Booking page, with the free beds, booking requests and a message form: ${book.page}`
-          : `Booking page with a message form: ${url(pages.book.path)}`,
+          : `Booking page, with links to Booking.com and Agoda and the team's contact details: ${url(pages.book.path)}`,
         `Staff: ${staff.hours.value.summary}. Reception speaks ${joinList(staff.languages.value)}. ${staff.replies.value}.`,
       ]),
     ],
@@ -63,7 +63,8 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
       "Bathrooms, breakfast and amenities",
       bullet([
         `Shared bathrooms with hot showers, ${bathrooms.cleaning.value.toLowerCase()}.`,
-        `Breakfast is included, in the café on the ground floor: ${joinList(breakfast.items.value.map((i) => i.toLowerCase()))}.`,
+        `Breakfast is included, served ${breakfast.hours.value} in the café on the ground floor: ${joinList(breakfast.items.value.map((i) => i.toLowerCase()))}. Other drinks with breakfast cost extra.`,
+        `Coffee and tea are served in the café ${building.cafeDrinks.value}; after breakfast, guests are welcome to relax or work there.`,
         `Amenities: ${amenities.map((a) => a.value.name).join("; ")}.`,
       ]),
     ],

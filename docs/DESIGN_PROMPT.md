@@ -1,5 +1,7 @@
 # The design system: a prompt for Claude Design
 
+> **Update, 4 October 2026:** the design system was built in this project instead of in Claude Design: see `brand/README.md`. This prompt stays for reference, or for exploring a second direction in Claude Design.
+
 Paste the prompt below into Claude Design and attach the files listed under "Attach". It asks for a design system built on what House of Jars already has (the arch logo, the orange, the signs), not a new brand. When it is done, bring the result back here and Claude applies it to the website, the menus and the signs.
 
 ## Attach

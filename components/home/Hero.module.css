@@ -1,35 +1,12 @@
+/* The hero: the headline beside a real photograph of the dorms, framed in the house's arch. */
 .hero {
-  /* The landscape's colours (see the dark variant below). */
-  --sky-low: #f6e2c4;
-  --bank: #b5b8ae;
-  --river-1: #f1dbbd;
-  --river-2: #e7cdaa;
-  --river-3: #ddbf98;
-  --glint: rgb(255 252 244 / 0.9);
-  --sun-glint: #fdb833;
-  --ground: #bf8a63;
-  --tuft: #8f9a7a;
-  --glow: #fdb833;
-  --glow-opacity: 0.4;
-  --rim: #fff0d2;
-  --rim-opacity: 0.4;
-  --stone-light: 0.26;
-  --stone-shade: 0.2;
-  /* Phones: the jars span the width. Tablets: capped. */
-  --scene-height: min(108.6vw, 570px);
-  position: relative;
-}
-
-.inner {
-  position: relative;
-  overflow: hidden;
-  padding-top: clamp(2rem, 1rem + 3.2vw, 3.25rem);
-  background: linear-gradient(to bottom, var(--page) 8%, var(--sky-low));
+  padding-block: clamp(2rem, 1rem + 3.2vw, 4rem) var(--space-3xl);
 }
 
 .grid {
-  position: relative;
-  z-index: 1;
+  display: grid;
+  gap: var(--space-2xl);
+  align-items: end;
 }
 
 .copy {
@@ -37,26 +14,20 @@
 }
 
 .greeting {
-  position: relative;
-  isolation: isolate;
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
   margin-bottom: var(--space-l);
   color: var(--accent-text);
   font-size: var(--step--1);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 650;
+  letter-spacing: 0.02em;
 }
 
-/* The word keeps Noto Serif Lao's width while the font loads, so nothing beside it moves when it swaps in. */
 .lao {
-  display: inline-block;
-  inline-size: 3.45em;
-  white-space: nowrap;
   font-family: var(--font-lao-stack);
   font-size: 1.15em;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0;
 }
 
@@ -64,16 +35,11 @@
   color: var(--text-soft);
 }
 
-/* On wide screens the greeting is set large behind its own line, as an ornament. */
-.ornament {
-  display: none;
-}
-
 .title {
-  font-size: clamp(2.5rem, 1.1rem + 5.2vw, 6.5rem);
-  line-height: 1.02;
-  letter-spacing: -0.015em;
-  max-width: 7.83em; /* 13ch in Young Serif, in em so the lines hold while the font loads */
+  font-size: clamp(2.5rem, 1.2rem + 5vw, 5.5rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  max-width: 7.6em; /* about 13 characters a line, in em so the lines hold while the font loads */
 }
 
 .lede {
@@ -86,8 +52,8 @@
 
 .owner {
   margin-top: var(--space-s);
-  font-family: var(--font-display-stack);
   font-size: var(--step-1);
+  font-weight: var(--display-weight);
   color: var(--text);
 }
 
@@ -95,371 +61,124 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-s);
-  margin-top: var(--space-l);
+  margin-top: var(--space-xl);
 }
 
-/* The landscape. The frame shows the lower part of the scene on phones, and fills the hero behind the words on wide screens. */
-.sceneFrame {
+/* Phones: the arch under the words, not quite full width, so the page still reads as a page. */
+.photoWrap {
   position: relative;
-  overflow: hidden;
-  height: calc(var(--scene-height) * 0.6);
-  margin-top: var(--space-l);
+  width: min(100%, 22rem);
+  justify-self: center;
 }
 
-.scene {
+/* The score: a small pane of glass over the foot of the arch, above the caption. */
+.score {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: auto;
-  max-width: none;
-  height: var(--scene-height);
-  aspect-ratio: 1600 / 760;
-  overflow: visible;
+  left: -0.75rem;
+  bottom: 3.25rem;
+  display: grid;
+  gap: 0.1rem;
+  max-width: 13rem;
+  margin: 0;
+  padding: 0.7rem 1rem 0.75rem;
+  border-radius: var(--radius-s);
+  color: var(--text);
 }
 
-.band {
-  position: relative;
+.scoreValue {
+  font-size: var(--step-3);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.outOf {
+  font-size: 0.5em;
+  font-weight: 600;
+  color: var(--text-soft);
+  letter-spacing: 0;
+}
+
+.scoreText {
+  font-size: var(--step--2);
+  line-height: 1.35;
+  color: var(--text-soft);
+}
+
+/*
+ * Arriving: the words and the photograph drift up into place, one after
+ * another. They start barely faded, never hidden, so the headline is on screen
+ * from the first frame. After the logo splash, they wait for the curtain.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .copy > *,
+  .score {
+    animation: hero-rise 900ms var(--ease-out) both;
+  }
+
+  .copy > :nth-child(2) {
+    animation-delay: 70ms;
+  }
+
+  .copy > :nth-child(3) {
+    animation-delay: 140ms;
+  }
+
+  .copy > :nth-child(4) {
+    animation-delay: 200ms;
+  }
+
+  .copy > :nth-child(5) {
+    animation-delay: 260ms;
+  }
+
+  .photoWrap {
+    animation: hero-photo 1200ms var(--ease-out) 80ms both;
+  }
+
+  .score {
+    animation-delay: 520ms;
+  }
+
+  :global(html.splash) .copy > *,
+  :global(html.splash) .photoWrap,
+  :global(html.splash) .score {
+    animation-delay: 1150ms;
+  }
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0.35;
+    transform: translateY(1.1rem);
+  }
+}
+
+@keyframes hero-photo {
+  from {
+    opacity: 0.35;
+    transform: translateY(1rem) scale(0.975);
+  }
 }
 
 @media (min-width: 60rem) {
-  .hero {
-    --scene-height: clamp(30rem, 52vw, 48rem);
+  .grid {
+    grid-template-columns: minmax(0, 1fr) 24rem;
+    gap: var(--space-3xl);
   }
 
-  .sceneFrame {
-    position: absolute;
-    inset: 0;
-    height: auto;
-    margin: 0;
+  .photoWrap {
+    width: 100%;
   }
 
-  /* Room below the words for the river and the bank. */
-  .copy {
-    padding-bottom: calc(var(--scene-height) * 0.221 + 2.25rem);
-  }
-
-  .title {
-    line-height: 0.95;
-  }
-
-  .inner {
-    padding-top: clamp(1.25rem, 0.5rem + 1.5vw, 2.5rem);
-  }
-
-  /* Room above the line for the ornament, and air between the two. */
-  .greeting {
-    margin-top: 4.6rem;
-  }
-
-  /* The ornament says the word large; the line under it gives its reading. The small Lao word stays for screen readers. */
-  .greeting .lao {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
-  .greeting .dot {
-    display: none;
-  }
-
-  .copy {
-    max-width: 43rem;
-  }
-
-  .lede {
-    max-width: 42rem;
-    font-size: var(--step-1);
-  }
-
-  .ornament {
-    display: block;
-    position: absolute;
-    left: -0.04em;
-    bottom: calc(100% + 0.12em);
-    font-family: var(--font-lao-stack);
-    font-size: 4.25rem;
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: 0;
-    white-space: nowrap;
-    color: color-mix(in srgb, var(--stone-dark) 42%, transparent);
-    user-select: none;
-    pointer-events: none;
+  .score {
+    left: -2.25rem;
+    bottom: 4.5rem;
   }
 }
 
-/* The scene's parts */
-.glowStop {
-  stop-color: var(--glow);
-  stop-opacity: var(--glow-opacity);
-}
-
-.glowEnd {
-  stop-color: var(--glow);
-  stop-opacity: 0;
-}
-
-.lightStop {
-  stop-opacity: var(--stone-light);
-}
-
-.shadeStop {
-  stop-opacity: var(--stone-shade);
-}
-
-.rimStop {
-  stop-color: var(--rim);
-  stop-opacity: var(--rim-opacity);
-}
-
-.rimEnd {
-  stop-color: var(--rim);
-  stop-opacity: 0;
-}
-
-.night,
-.lights {
-  display: none;
-}
-
-.moon {
-  fill: #f4e8d0;
-}
-
-.stars {
-  stroke: #f7eedd;
-  stroke-linecap: round;
-  opacity: 0.8;
-}
-
-.bank {
-  fill: var(--bank);
-}
-
-.lights {
-  stroke: var(--saffron);
-  stroke-width: 3.2;
-  stroke-linecap: round;
-  opacity: 0.8;
-}
-
-.river1 {
-  fill: var(--river-1);
-}
-
-.river2 {
-  fill: var(--river-2);
-}
-
-.river3 {
-  fill: var(--river-3);
-}
-
-.shimmer {
-  fill: none;
-  stroke-width: 1;
-  stroke-linecap: round;
-  stroke-dasharray: 9 3 2 3;
-  vector-effect: non-scaling-stroke;
-}
-
-.glint {
-  stroke: var(--glint);
-}
-
-/* The sun's own reflection is solid; only the loose glints drift. */
-.sunGlint {
-  stroke: var(--sun-glint);
-  stroke-width: 2;
-  stroke-dasharray: none;
-  animation: none !important;
-}
-
-.ground {
-  fill: var(--ground);
-}
-
-.tufts {
-  fill: none;
-  stroke: var(--tuft);
-  stroke-width: 2.4;
-  stroke-linecap: round;
-}
-
-.tone1 {
-  fill: var(--jar-1);
-}
-
-.tone2 {
-  fill: var(--jar-2);
-}
-
-.tone3 {
-  fill: var(--jar-3);
-}
-
-.rim {
-  fill: none;
-  stroke: url(#hero-rim);
-  stroke-width: 7;
-}
-
-.top {
-  fill: #fff;
-  opacity: 0.34;
-}
-
-/* Age: rain streaks and a damp foot, the collar's shadow, lichen, a crack, a broken piece. */
-.stain {
-  stop-color: #2b1c10;
-  stop-opacity: 0.13;
-}
-
-.clean {
-  stop-color: #2b1c10;
-  stop-opacity: 0;
-}
-
-.collar {
-  fill: #140c06;
-  opacity: 0.24;
-}
-
-.mouth {
-  fill: #2a1a0e;
-  opacity: 0.6;
-}
-
-.lichen {
-  stroke: #c1913a;
-  stroke-width: 7;
-  stroke-linecap: round;
-  opacity: 0.55;
-}
-
-.crack {
-  fill: none;
-  stroke: #2b1c10;
-  stroke-width: 2.4;
-  opacity: 0.45;
-}
-
-.bite {
-  fill: #3a2a1e;
-  opacity: 0.85;
-}
-
-.biteEdge {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 3;
-  stroke-linejoin: round;
-  opacity: 0.35;
-}
-
-
-/* The load sequence: the sun rises, the jars settle one by one, the band weaves in. */
-@media (prefers-reduced-motion: no-preference) {
-  .sun {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: sunrise 900ms var(--ease-out) both;
-  }
-
-  .settle {
-    transform-box: fill-box;
-    transform-origin: 50% 100%;
-    animation: settle 620ms var(--ease-out) both;
-    animation-delay: calc(220ms + var(--step) * 90ms);
-  }
-
-  .shimmer {
-    animation: drift 4s ease-in-out infinite alternate;
-  }
-}
-
-@keyframes sunrise {
-  from {
-    transform: translateY(16px);
-    opacity: 0;
-  }
-}
-
-@keyframes settle {
-  from {
-    transform: translateY(-12px) rotate(1.8deg);
-    opacity: 0;
-  }
-
-  55% {
-    transform: translateY(1px) rotate(-1deg);
-    opacity: 1;
-  }
-
-  80% {
-    transform: rotate(0.4deg);
-  }
-
-  to {
-    transform: none;
-    opacity: 1;
-  }
-}
-
-@keyframes drift {
-  to {
-    stroke-dashoffset: -6;
-  }
-}
-
-/* Vientiane night: a cream moon, a few stars, lights on the far bank, lantern light on the stone. */
-@media (prefers-color-scheme: dark) {
-  .hero {
-    --sky-low: #2a1d14;
-    --bank: #2e2721;
-    --river-1: #251b14;
-    --river-2: #211812;
-    --river-3: #1c150f;
-    --glint: rgb(232 149 43 / 0.6);
-    --sun-glint: rgb(247 238 221 / 0.5);
-    --ground: #33241a;
-    --tuft: #58604c;
-    --glow: #f7eedd;
-    --glow-opacity: 0.1;
-    --rim: var(--saffron);
-    --rim-opacity: 0.32;
-    --stone-light: 0.1;
-    --stone-shade: 0.34;
-    --jar-1: #938573;
-    --jar-2: #7e7160;
-    --jar-3: #6a5e50;
-  }
-
-  .glow,
-  .sun {
-    display: none;
-  }
-
-  .night,
-  .lights {
-    display: inline;
-  }
-
-  .top {
-    opacity: 0.16;
-  }
-
-  .lichen {
-    opacity: 0.4;
-  }
-
-  .biteEdge {
-    opacity: 0.18;
-  }
-
-  .ornament {
-    color: color-mix(in srgb, var(--stone-dark) 34%, transparent);
+@media (min-width: 75rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr) 27rem;
   }
 }

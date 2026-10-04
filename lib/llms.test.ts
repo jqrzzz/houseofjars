@@ -28,13 +28,15 @@ function uncredited(text: string): string[] {
 describe("llms.txt", () => {
   it("follows the llms.txt layout: a title, a summary, then sections of links", () => {
     expect(short.startsWith(`# ${identity.fullName.value}\n\n> `)).toBe(true);
-    expect([...short.matchAll(/^## (.+)$/gm)].map((match) => match[1])).toEqual(["Pages", "Guides", "Book", "Optional"]);
+    expect([...short.matchAll(/^## (.+)$/gm)].map((match) => match[1])).toEqual(["Pages", "Guides", "Book", "For AI assistants and booking agents", "Optional"]);
   });
 
-  it("links every page and guide, the full file and the booking link, all absolute", () => {
+  it("links every page and guide, the full file and how to reach the team, all absolute", () => {
     for (const page of allPages) expect(short).toContain(`(${new URL(page.path, `${site}/`)})`);
     expect(short).toContain(`${site}/llms-full.txt`);
-    expect(short).toContain(bookingLinkTemplate(site));
+    // Without online booking there is no form to fill in: the team's WhatsApp instead (the form needs Shadow Check-in).
+    expect(short).toContain(`[Message the team](${site}/book#message): on WhatsApp (https://wa.me/`);
+    expect(short).not.toContain(bookingLinkTemplate(site));
     expect(short).not.toMatch(/\]\(\//);
     expect(short).not.toMatch(/undefined|\[object Object\]/);
   });
@@ -55,7 +57,7 @@ describe("llms-full.txt", () => {
   });
 
   it("explains how to book, and that the site takes no payment", () => {
-    expect(full).toContain(bookingLinkTemplate(site));
+    expect(full).toContain("[Message the team]");
     expect(full).toContain(identity.links.booking.value);
     expect(full).toContain(identity.links.agoda.value);
     expect(full).toContain("There is no payment on this website.");
@@ -123,5 +125,18 @@ describe("with online booking (W3)", () => {
   it("is unchanged without online booking", () => {
     expect(short).not.toContain("Book online");
     expect(buildLlmsTxt(site, { onlineBooking: false })).toBe(short);
+  });
+});
+
+describe("the door for AI assistants", () => {
+  const site = "https://thehouseofjars.com";
+
+  it("names the MCP server and the API description, and offers free beds only with online booking", () => {
+    const offline = buildLlmsTxt(site);
+    const online = buildLlmsTxt(site, { onlineBooking: true });
+    expect(offline).toContain(`MCP server (Streamable HTTP, read-only, no sign-in): ${site}/api/mcp`);
+    expect(offline).toContain(`${site}/openapi.json`);
+    expect(offline).not.toContain("check_availability");
+    expect(online).toContain("check_availability (free beds, no prices)");
   });
 });

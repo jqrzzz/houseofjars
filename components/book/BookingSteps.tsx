@@ -28,6 +28,7 @@ import {
   type Quote,
   type RoomType,
 } from "@/lib/booking/types";
+import { guestText } from "@/lib/booking/text";
 import { formatDay, formatHouseTime, nightsBetween } from "@/lib/dates";
 import { pages } from "@/lib/site";
 import { AskShadowButton } from "../concierge/AskShadowButton";
@@ -36,6 +37,7 @@ import { CopyButton } from "../contact/CopyButton";
 import buttons from "../ui/button.module.css";
 import { ArrowIcon, CheckIcon, ExternalIcon, MinusIcon, PlusIcon } from "../ui/icons";
 import { Stamp } from "../ui/Stamp";
+import { focusField } from "./focus-field";
 import styles from "./BookingFlow.module.css";
 import { DateRangePicker } from "./DateRangePicker";
 import form from "./InquiryForm.module.css";
@@ -106,6 +108,7 @@ export function DatesStep({
   range,
   onRange,
   guests,
+  askedGuests,
   maxGuests,
   onGuests,
   issues,
@@ -120,6 +123,8 @@ export function DatesStep({
   range: DateRange;
   onRange: (range: DateRange) => void;
   guests: number;
+  /** More guests than online booking takes, as the guest asked (a link from the booking card): the count was brought down. */
+  askedGuests: number | null;
   maxGuests: number | null;
   onGuests: (guests: number) => void;
   issues: readonly FieldIssue[];
@@ -130,7 +135,11 @@ export function DatesStep({
   const [tried, setTried] = useState(false);
   const chosen = Boolean(range.checkIn && range.checkOut);
   const limit = maxGuests ?? MAX_GUESTS;
-  const messages = [...new Set(issues.map((issue) => issue.message))];
+  const tooMany = askedGuests !== null && maxGuests !== null && askedGuests > maxGuests;
+  // The line below says it about the group, with what changed; the refusal would only say it again.
+  const messages = [...new Set(issues.map((issue) => issue.message))].filter(
+    (message) => !(tooMany && message === guestText.guestsRefused),
+  );
   const hint = !range.checkIn
     ? "Choose your check-in date."
     : !range.checkOut
@@ -192,7 +201,12 @@ export function DatesStep({
             Online booking is open until Wednesday 29 September 2027, for stays of up to 30 nights.
           </p>
         )}
-        {maxGuests && guests >= maxGuests ? (
+        {tooMany ? (
+          <p>
+            You asked for {plural(askedGuests, "guest")}. Online booking takes up to {plural(maxGuests, "guest")}, so
+            this booking is for {maxGuests}. For the whole group, <a href="#message">send the team a message</a>.
+          </p>
+        ) : maxGuests && guests >= maxGuests ? (
           <p>
             Online booking takes up to {plural(maxGuests, "guest")}. For a bigger group,{" "}
             <a href="#message">send the team a message</a>.
@@ -514,7 +528,9 @@ export function DetailsStep({
           <ul>
             {errorList.map((field) => (
               <li key={field}>
-                <a href={`#${fieldId(field)}`}>{errors[field]}</a>
+                <a href={`#${fieldId(field)}`} onClick={(event) => focusField(event, fieldId(field))}>
+                  {errors[field]}
+                </a>
               </li>
             ))}
           </ul>
@@ -880,7 +896,7 @@ export function Confirmation({
           {!pending
             ? "Your beds are booked. Keep your reference: it is how the team finds your booking."
             : until
-              ? `The team checks your request and confirms it ${saved.replyBy}, by ${until} (Vientiane time). Your beds are held for you until then.`
+              ? `The team checks your request and confirms it ${saved.replyBy} before ${until} (Vientiane time). Your beds are held for you until then.`
               : // Shadow took the request without holding beds for it (its hold limits): nothing is promised yet.
                 `The team will confirm availability and your booking ${saved.replyBy}. Your beds aren’t held for you until then.`}
         </li>
@@ -908,7 +924,18 @@ export function Confirmation({
 }
 
 /** The summary beside the steps, and the other ways to book. `beds` and `price` once a room is chosen. */
-export function StayStub({ stay, beds, price }: { stay: Stay | null; beds: string | null; price: string | null }) {
+export function StayStub({
+  stay,
+  beds,
+  price,
+  booked = false,
+}: {
+  stay: Stay | null;
+  beds: string | null;
+  price: string | null;
+  /** The booking is made: the booking sites would only invite a second one. */
+  booked?: boolean;
+}) {
   return (
     <aside className={styles.stub} aria-label="Your stay">
       <p className={styles.stubTitle}>Your stay</p>
@@ -945,24 +972,26 @@ export function StayStub({ stay, beds, price }: { stay: Stay | null; beds: strin
         <p className={styles.stubText}>Choose your dates to see the free beds.</p>
       )}
       <p className={styles.stubPay}>Nothing to pay online: you pay at the house.</p>
-      <div className={styles.stubOther}>
-        <p className={styles.stubTitle}>Or book on</p>
-        <ul role="list" className={styles.stubLinks}>
-          {platforms.map((platform) => (
-            <li key={platform.name}>
-              <a href={platform.href} target="_blank" rel="noopener noreferrer">
-                <span>{platform.name}</span>
-                <ExternalIcon />
-                <span className="visually-hidden"> (opens in a new tab)</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-        <p className={styles.stubText}>
-          Or <a href="#message">send the team a message</a>, or{" "}
-          <AskShadowButton className={styles.linkButton}>ask Shadow</AskShadowButton>.
-        </p>
-      </div>
+      {booked ? null : (
+        <div className={styles.stubOther}>
+          <p className={styles.stubTitle}>Or book on</p>
+          <ul role="list" className={styles.stubLinks}>
+            {platforms.map((platform) => (
+              <li key={platform.name}>
+                <a href={platform.href} target="_blank" rel="noopener noreferrer">
+                  <span>{platform.name}</span>
+                  <ExternalIcon />
+                  <span className="visually-hidden"> (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className={styles.stubText}>
+            Or <a href="#message">send the team a message</a>, or{" "}
+            <AskShadowButton className={styles.linkButton}>ask Shadow</AskShadowButton>.
+          </p>
+        </div>
+      )}
     </aside>
   );
 }
@@ -1000,14 +1029,15 @@ export function Problem({
   return (
     <div role="alert" className={form.problem}>
       <p>{PROBLEM_TEXT[action][key](waitText(retryAfterSeconds))}</p>
-      {onRetry ? (
+      {/* Too many tries says when to try again; a button to try now would contradict it. */}
+      {onRetry && key !== "rate_limited" ? (
         <p>
           <button type="button" className={styles.textButton} onClick={onRetry}>
             Try again
           </button>
         </p>
       ) : null}
-      {key === "rate_limited" && action === "check" ? null : <ContactDetails compact />}
+      <ContactDetails compact />
     </div>
   );
 }

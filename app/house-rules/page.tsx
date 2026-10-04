@@ -73,7 +73,7 @@ export default function HouseRulesPage() {
         morph="house-rules"
         title="A few rules keep the house calm."
         lede="Each one comes with the reason behind it. Most are about sleep: this is a house for resting, not for parties."
-        art={<Drawing name="door" />}
+        art={<Drawing name="door" priority />}
       />
 
       <Block id="in-the-house" title="In the house">

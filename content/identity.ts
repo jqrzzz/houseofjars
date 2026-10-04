@@ -54,10 +54,13 @@ export const identity = {
 
   /** Why the house is called House of Jars. */
   nameStory: fact(
-    "The name nods to the Plain of Jars, the fields of ancient stone jars in Xieng Khouang province.",
+    "The name nods to the Plain of Jars, the fields of ancient stone jars in the north of Laos.",
     sources.assumption,
     { note: "Assumed from the name. Nang to confirm, or tell us the real story." },
   ),
+  markStory: fact("The arch in our mark is the house itself: the front of the building, drawn simply.", sources.team, {
+    confirmed: true,
+  }),
 } as const;
 
 /** One-line postal address, e.g. for footers and structured data. */

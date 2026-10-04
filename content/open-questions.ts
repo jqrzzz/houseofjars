@@ -22,15 +22,16 @@ export const openQuestions: readonly OpenQuestion[] = [
     ask: "Other places guests often walk to from the house, with walking times (for the guide to what is nearby).",
     guestTopic: "walking times to places the website doesn't list",
   },
-  { ask: "Quiet hours, if the house has set times (times.quietHours).", guestTopic: "set quiet hours" },
   {
     ask: "Whether there is a female-only dorm, and which other dorm sizes exist.",
     guestTopic: "whether there is a female-only dorm, and dorm sizes other than the 14-bed dorm",
   },
   { ask: "Whether there are private rooms.", guestTopic: "private rooms" },
-  { ask: "Breakfast serving times.", guestTopic: "breakfast serving times" },
   { ask: "Late check-out: possible or not, and on what terms.", guestTopic: "late check-out" },
-  { ask: "Photos of the house: pods, bathrooms, café, the front of the house (the drawings in the photo frames are standing in).", guestTopic: null },
+  {
+    ask: "Photos of the bathrooms and showers, the café and breakfast, and the outside in daylight (the dorms, pods, stairs and front of the house have photos; drawings stand in for the rest).",
+    guestTopic: null,
+  },
   {
     ask: "The layout of the house: which floor the dorms, the bathrooms and the front desk are on, and the building's shape. The drawing on /the-house (components/house/HouseCutaway.tsx) guesses and says it is an illustration, not a floor plan; with the real layout it can be made accurate.",
     guestTopic: "which floor the dorms, bathrooms and front desk are on",

@@ -3,7 +3,9 @@ import { BookingCard } from "@/components/BookingCard";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { HouseCutaway } from "@/components/house/HouseCutaway";
 import { PodDiagram } from "@/components/house/PodDiagram";
+import { photos } from "@/content/photos";
 import { Block, Prose, TickList } from "@/components/page/Block";
+import { IconList } from "@/components/page/Lists";
 import { PageHeader } from "@/components/page/PageHeader";
 import { PageJsonLd } from "@/components/PageJsonLd";
 import { ReadNext } from "@/components/guide/ReadNext";
@@ -16,6 +18,16 @@ import { pages } from "@/lib/site";
 import styles from "./the-house.module.css";
 
 export const metadata = pageMetadata(pages.house);
+
+/** The dorms, then the stairs: the house's own photographs. */
+const lookInside = [
+  photos.dormFan,
+  photos.podCurtain,
+  photos.podLadder,
+  photos.wallOfJars,
+  photos.stairsJar,
+  photos.lamp,
+];
 
 export default function TheHousePage() {
   return (
@@ -52,6 +64,27 @@ export default function TheHousePage() {
         <PodDiagram />
       </Block>
 
+      <section id="look-inside" aria-labelledby="look-inside-title">
+        <div className={`container ${styles.section}`}>
+          <h2 id="look-inside-title" className={styles.sectionTitle}>
+            A look inside
+          </h2>
+          <ul role="list" className={styles.gallery}>
+            {lookInside.map((photo) => (
+              <li key={photo.src} data-reveal="">
+                <PhotoFrame
+                  caption={photo.caption}
+                  photo={photo}
+                  drawing="pod"
+                  aspect="4 / 5"
+                  sizes="(min-width: 60rem) 22rem, (min-width: 40rem) 45vw, 90vw"
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <section id="section" aria-labelledby="section-title">
         <div className={`container ${styles.section}`}>
           <h2 id="section-title" className={styles.sectionTitle}>
@@ -75,8 +108,12 @@ export default function TheHousePage() {
         <Block id="breakfast" title="Café and breakfast">
           <Prose>
             <p>
-              The café is on the ground floor, and breakfast is included:{" "}
+              The café is on the ground floor, and breakfast is included, served {breakfast.hours.value}:{" "}
               {joinList(breakfast.items.value.map((item) => item.toLowerCase()))}.
+            </p>
+            <p>
+              After breakfast, the café is yours to relax or work in, with coffee and tea served{" "}
+              {building.cafeDrinks.value}.
             </p>
           </Prose>
           <PhotoFrame caption="Breakfast in the café downstairs" drawing="cafe" />
@@ -84,8 +121,15 @@ export default function TheHousePage() {
       ) : null}
 
       <Block id="comfort" title="Comfort and convenience">
-        <TickList columns items={amenities.map((amenity) => amenity.value.name)} />
-        <PhotoFrame caption="Luggage storage" drawing="luggage" />
+        <IconList items={amenities.map((amenity) => amenity.value.name)} />
+        <PhotoFrame
+          caption={photos.locker.caption}
+          photo={photos.locker}
+          drawing="luggage"
+          aspect="4 / 5"
+          sizes="(min-width: 60rem) 24rem, 90vw"
+          className={styles.locker}
+        />
       </Block>
 
       <Block id="who" title="Who the house suits">

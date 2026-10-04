@@ -12,7 +12,7 @@ export interface LedgerRow {
 /**
  * The house's standards and distances, set like a register: the label, dot
  * leaders, the figure (lining, tabular numerals), and a short note. With
- * `ticks`, each row is ticked off in saffron, drawn as it scrolls into view
+ * `ticks`, each row is ticked off in orange, drawn as it scrolls into view
  * where the browser can.
  */
 export function Ledger({

@@ -29,12 +29,12 @@
 
 .button,
 .band {
-  fill: #e8952b;
+  fill: #e76e43;
 }
 
 .bowtie {
-  fill: #e8952b;
-  stroke: #9a5608;
+  fill: #e76e43;
+  stroke: #bf4a1b;
   stroke-width: 1;
   stroke-linejoin: round;
   transform-box: fill-box;
@@ -48,7 +48,7 @@
 }
 
 .knot {
-  fill: #cf7d1c;
+  fill: #cc5a32;
 }
 
 .dome {

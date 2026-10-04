@@ -36,7 +36,7 @@ export function Prose({ children }: { children: ReactNode }) {
 }
 
 /**
- * A plain list with a small saffron jar for each item; `columns` sets short
+ * A plain list with the house's mark, small and orange, for each item; `columns` sets short
  * items side by side on wide screens, `numbered` counts them (to match a
  * numbered drawing).
  */

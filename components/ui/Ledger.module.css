@@ -16,8 +16,7 @@
 .term {
   font-size: var(--step--2);
   font-weight: 650;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--text-soft);
 }
 
@@ -28,6 +27,7 @@
   align-items: baseline;
   gap: 0.5rem;
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-1);
   line-height: 1.3;
   text-align: right;
@@ -59,7 +59,7 @@
 .places .term {
   font-family: var(--font-display-stack);
   font-size: var(--step-1);
-  font-weight: 400;
+  font-weight: var(--display-weight);
   letter-spacing: 0;
   text-transform: none;
   color: var(--text);
@@ -75,7 +75,7 @@
 
 /*
  * Standards: ruled paper on the brown field, with a double margin rule in
- * saffron where each row is ticked off.
+ * orange where each row is ticked off.
  */
 .standards {
   padding: var(--space-2xs) var(--space-l) var(--space-2xs) 3.25rem;
@@ -85,12 +85,12 @@
     linear-gradient(
       to right,
       transparent 2.3rem,
-      rgb(232 149 43 / 0.4) 2.3rem 2.38rem,
+      rgb(231 110 67 / 0.4) 2.3rem 2.38rem,
       transparent 2.38rem 2.52rem,
-      rgb(232 149 43 / 0.4) 2.52rem 2.6rem,
+      rgb(231 110 67 / 0.4) 2.52rem 2.6rem,
       transparent 2.6rem
     ),
-    rgb(247 238 221 / 0.04);
+    rgb(251 246 238 / 0.04);
 }
 
 .standards .row:last-child {
@@ -104,7 +104,7 @@
   width: 1.3rem;
   height: 1.3rem;
   fill: none;
-  stroke: var(--deep-accent, var(--saffron));
+  stroke: var(--deep-accent, var(--jar-orange));
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -142,7 +142,7 @@
   right: 0;
   top: calc(100% + 0.2rem);
   width: 3.3rem;
-  color: var(--deep-accent, var(--saffron));
+  color: var(--deep-accent, var(--jar-orange));
   opacity: 0.85;
   rotate: -14deg;
   pointer-events: none;

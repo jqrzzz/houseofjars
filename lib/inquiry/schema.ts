@@ -37,7 +37,7 @@ const formFields = {
     z
       .number("Please enter a number of guests.")
       .int("Please enter a whole number of guests.")
-      .min(1, "At least one guest.")
+      .min(1, "Please choose at least one guest.")
       .max(20, "For more than 20 guests, write to us."),
   ),
   bed_preference: optional(z.string().trim().max(80, "Please keep this under 80 characters.")),
@@ -100,7 +100,7 @@ export const inquiryFormSchema = z
   .strictObject({
     client_ref: z.uuid(),
     ...formFields,
-    consent: z.literal(true, "Please agree to the privacy notice so we can reply."),
+    consent: z.literal(true, "Please agree to the privacy notice so the team can reply."),
   })
   .superRefine(checkContactAndDates);
 

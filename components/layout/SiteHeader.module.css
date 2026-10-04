@@ -5,12 +5,56 @@
   background: var(--page);
 }
 
+/*
+ * Wider screens: the header stays at the top as frosted glass, and takes a
+ * soft shadow as the page scrolls under it. Phones keep it in the page: the
+ * Ask Shadow dock, with its own Book button, takes over once it scrolls away.
+ */
+@media (min-width: 48rem) {
+  .header {
+    position: sticky;
+    top: 0;
+    background: var(--glass);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .header {
+      animation: header-lift linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 6rem;
+    }
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .header {
+    background: var(--page);
+  }
+}
+
+@keyframes header-lift {
+  from {
+    box-shadow: 0 0 0 transparent;
+  }
+  to {
+    box-shadow: var(--shadow-soft);
+  }
+}
+
 .inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-l);
+  gap: var(--space-s);
   min-height: 4.5rem;
+}
+
+@media (min-width: 30rem) {
+  .inner {
+    gap: var(--space-l);
+  }
 }
 
 .desktopNav {
@@ -59,7 +103,7 @@
 }
 
 .link[aria-current="page"]::after {
-  background: var(--saffron);
+  background: var(--jar-orange);
   height: 2px;
 }
 
@@ -73,12 +117,27 @@
   position: static;
 }
 
+/* Small phones have room for the wordmark, Book and the menu only: the theme choice is in the menu there. */
+.actions .themeToggle {
+  display: none;
+}
+
+@media (min-width: 30rem) {
+  .actions .themeToggle {
+    display: grid;
+  }
+}
+
+.mobileTheme {
+  margin-top: var(--space-l);
+}
+
 .menuButton {
   display: grid;
   place-items: center;
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: 999px;
+  border-radius: var(--radius-s);
   border: 1px solid var(--rule-strong);
   list-style: none;
   cursor: pointer;
@@ -108,6 +167,7 @@
   left: 0;
   right: 0;
   top: 100%;
+  /* Solid, not glass: the header's view-transition name makes it a backdrop root, so a blur here couldn't reach the page. */
   background: var(--page);
   border-bottom: 1px solid var(--rule);
   box-shadow: var(--shadow-soft);
@@ -124,6 +184,7 @@
   padding: var(--space-m) 0;
   border-bottom: 1px solid var(--rule);
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-2);
   color: var(--text);
   text-decoration: none;

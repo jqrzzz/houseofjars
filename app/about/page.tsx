@@ -9,6 +9,7 @@ import { PageJsonLd } from "@/components/PageJsonLd";
 import { ReadNext } from "@/components/guide/ReadNext";
 import { location, plainOfJars } from "@/content/area";
 import { identity } from "@/content/identity";
+import { photos } from "@/content/photos";
 import { building, staff } from "@/content/stay";
 import { countWord, joinList, lowerFirst } from "@/content/text";
 import { pageMetadata } from "@/lib/metadata";
@@ -28,7 +29,7 @@ export default function AboutPage() {
         morph="about"
         title="About the house"
         lede={`${identity.name.value} is a calm dorm hostel in ${location.neighbourhood.value}: ${countWord(building.floors.value).toLowerCase()} floors of pod beds, with a café downstairs.`}
-        art={<Drawing name="plain" />}
+        art={<Drawing name="plain" priority />}
       />
 
       <Block id="owner" title={`Owned and run by ${owner}`}>
@@ -44,17 +45,22 @@ export default function AboutPage() {
             </blockquote>
           ) : null}
         </Prose>
-        <PhotoFrame caption="The front of the house" drawing="door" shape="arch" aspect="4 / 5" className={styles.door} />
+        <PhotoFrame
+          caption={photos.entrance.caption}
+          photo={photos.entrance}
+          drawing="door"
+          shape="arch"
+          aspect="2 / 3"
+          sizes="(min-width: 60rem) 17rem, 70vw"
+          className={styles.door}
+        />
       </Block>
 
       <Block id="name" title="Why House of Jars" tone="cream">
         <Prose>
           <p>{identity.nameStory.value}</p>
           <p>{plainOfJars.summary.value}</p>
-          <p>
-            Our mark is drawn after those jars: squat and heavy, its thick rim carved from the same stone, with one
-            carved line.
-          </p>
+          <p>{identity.markStory.value}</p>
         </Prose>
       </Block>
 

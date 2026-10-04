@@ -5,22 +5,24 @@
   color: var(--text);
   text-decoration: none;
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: 1.3125rem;
   line-height: 1;
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
+/* The arch, 2:3, a little taller than the name's capitals. */
 .mark {
-  width: 1.7rem;
-  height: 1.7rem;
-  color: var(--saffron);
+  width: 1.2rem;
+  height: 1.8rem;
+  color: var(--jar-orange);
   flex: none;
   transition: transform 300ms var(--ease-out);
 }
 
 .wordmark:hover .mark {
-  transform: translateY(-2px) rotate(-3deg);
+  transform: translateY(-2px);
 }
 
 .name {

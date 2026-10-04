@@ -1,182 +1,133 @@
-/* House of Jars design tokens and base styles.
-   Colours are Shadow's: saffron bow tie, vest brown, ghost cream. */
+/* House of Jars design tokens and base styles: the house's own brand
+   (brand/README.md and brand/tokens.json): jar orange from the logo, teak and
+   lamplight from the house, Figtree for every word. */
 
 /*
- * Stand-ins while the web fonts load: each platform's own fonts, resized to
- * set this site's text at Young Serif's and Hanken Grotesk's widths, on their
- * line metrics, so nothing reflows when the fonts swap in (CLS 0). Metric
- * twins share a face: Gelasio is Georgia's, Tinos and Liberation Serif are
- * Times New Roman's, Arimo and Liberation Sans are Arial's. Noto Serif and
- * Roboto are Android's.
+ * Stand-ins while Figtree loads: each platform's own sans, resized to set this
+ * site's text at Figtree's widths, on its line metrics, so nothing reflows
+ * when the font swaps in (CLS 0). Arimo and Liberation Sans are Arial's metric
+ * twins; Roboto is Android's.
  *
  * size-adjust is fitted to the site's own text, measured in Chromium with
- * kerning (the web font's total width over the stand-in's, weighted by type
- * size). The overrides are the web font's: Young Serif ascent 1046, descent
- * 366; Hanken Grotesk 1000 and 303 (per 1000 units, no line gap), each
- * divided by size-adjust. Bold stand-ins are fitted to Hanken at 600 to 650.
- * Young Serif's figures are narrow for its letters, so each serif stand-in
- * sets its figures (0-9) at their own size.
+ * kerning (Figtree's total width over the stand-in's): running text at 400,
+ * headings at 700. The overrides are Figtree's: ascent 950, descent 250 (per
+ * 1000 units, no line gap), each divided by size-adjust. Bold stand-ins cover
+ * 550 to 900.
  */
 @font-face {
-  font-family: "Young Serif Georgia";
-  src: local("Georgia"), local("Gelasio"), local("Gelasio Regular"), local("Gelasio-Regular");
-  size-adjust: 112.43%;
-  ascent-override: 93.04%;
-  descent-override: 32.55%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Young Serif Georgia";
-  src: local("Georgia"), local("Gelasio"), local("Gelasio Regular"), local("Gelasio-Regular");
-  unicode-range: U+0030-0039;
-  size-adjust: 100.93%;
-  ascent-override: 103.64%;
-  descent-override: 36.26%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Young Serif Times";
-  src:
-    local("Times New Roman"), local("TimesNewRomanPSMT"), local("Tinos"), local("Tinos Regular"),
-    local("Tinos-Regular"), local("Liberation Serif"), local("LiberationSerif");
-  size-adjust: 123.24%;
-  ascent-override: 84.88%;
-  descent-override: 29.7%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Young Serif Times";
-  src:
-    local("Times New Roman"), local("TimesNewRomanPSMT"), local("Tinos"), local("Tinos Regular"),
-    local("Tinos-Regular"), local("Liberation Serif"), local("LiberationSerif");
-  unicode-range: U+0030-0039;
-  size-adjust: 110.58%;
-  ascent-override: 94.59%;
-  descent-override: 33.1%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Young Serif Noto";
-  src: local("Noto Serif"), local("Noto Serif Regular"), local("NotoSerif"), local("NotoSerif-Regular");
-  size-adjust: 104.72%;
-  ascent-override: 99.89%;
-  descent-override: 34.95%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Young Serif Noto";
-  src: local("Noto Serif"), local("Noto Serif Regular"), local("NotoSerif"), local("NotoSerif-Regular");
-  unicode-range: U+0030-0039;
-  size-adjust: 98.91%;
-  ascent-override: 105.75%;
-  descent-override: 37%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Hanken Arial";
+  font-family: "Figtree Arial";
   src:
     local("Arial"), local("ArialMT"), local("Arimo"), local("Arimo Regular"), local("Arimo-Regular"),
     local("Liberation Sans"), local("LiberationSans");
   font-weight: 100 549;
-  size-adjust: 100.29%;
-  ascent-override: 99.71%;
-  descent-override: 30.21%;
+  size-adjust: 99.89%;
+  ascent-override: 95.1%;
+  descent-override: 25.03%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "Hanken Arial";
+  font-family: "Figtree Arial";
   src:
     local("Arial Bold"), local("Arial-BoldMT"), local("Arimo Bold"), local("Arimo-Bold"),
     local("Liberation Sans Bold"), local("LiberationSans-Bold");
   font-weight: 550 900;
-  size-adjust: 94.46%;
-  ascent-override: 105.86%;
-  descent-override: 32.08%;
+  size-adjust: 95.79%;
+  ascent-override: 99.18%;
+  descent-override: 26.1%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "Hanken Roboto";
+  font-family: "Figtree Roboto";
   src: local("Roboto"), local("Roboto Regular"), local("Roboto-Regular");
   font-weight: 100 549;
-  size-adjust: 100.73%;
-  ascent-override: 99.28%;
-  descent-override: 30.08%;
+  size-adjust: 100.95%;
+  ascent-override: 94.11%;
+  descent-override: 24.76%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "Hanken Roboto";
+  font-family: "Figtree Roboto";
   src: local("Roboto Bold"), local("Roboto-Bold");
   font-weight: 550 900;
-  size-adjust: 99.8%;
-  ascent-override: 100.2%;
-  descent-override: 30.36%;
+  size-adjust: 102.51%;
+  ascent-override: 92.67%;
+  descent-override: 24.39%;
   line-gap-override: 0%;
 }
 
 :root {
   color-scheme: light dark;
 
-  /* Palette (light) */
-  --paper: #fbf6ee;
-  --cream: #f7eedd;
-  --ink: #231710;
+  /* Palette: the house's own colours (brand/tokens.json) */
+  --jar-orange: #e76e43; /* the logo's orange: fills; ink on it 5.7:1, white only at 24px+ or bold 19px+ (3.1:1) */
+  --brand-text: #bf4a1b; /* jar orange darkened for text: 4.6:1 on rice, 5:1 on white */
+  --teak: #95623b; /* the pods' wood, from the locker doors */
+  --teak-deep: #6f4d35; /* the dorms' wood in lamplight: the deep bands */
+  --teak-night: #5b3f2b; /* teak-deep a shade darker: pressed and header states */
+  --lamplight: #eed079; /* the alabaster lamps: accents on teak (5:1) and in Evening */
+  --rice: #fbf6ee; /* the page */
+  --white: #ffffff; /* boards and cards */
+  --ink: #171713; /* the signs' black */
   --ink-soft: #6b5645;
-  --saffron: #e8952b;
-  --saffron-text: #9a5608; /* 5.3:1 on paper, 4.9:1 on cream */
-  --brown: #5b3a22;
-  --brown-deep: #4a2f1b;
-  --on-brown: #f7eedd;
-  --on-brown-soft: #d9cbb5;
-  --saffron-on-brown: #f2a948;
-  --stone: #cdbfaa;
+  --on-teak: var(--rice); /* 7:1 on teak-deep */
+  --on-teak-soft: #e7d6c2; /* 5.3:1 on teak-deep */
+  --night: #20150c; /* a jar in shadow: the Evening page */
+  --night-raised: #2c1e13;
+  --stone: #cdbfaa; /* the stone jars in the drawings */
   --stone-dark: #8c7b66;
-  --night: #140e09;
 
   /* Roles */
-  --page: var(--paper);
-  --surface: var(--cream);
+  --page: var(--rice);
+  --surface: var(--white);
   --text: var(--ink);
   --text-soft: var(--ink-soft);
-  --accent-text: var(--saffron-text);
-  --rule: rgb(35 23 16 / 0.14);
-  --rule-strong: rgb(35 23 16 / 0.3);
+  --accent-text: var(--brand-text);
+  --rule: rgb(23 23 19 / 0.12);
+  --rule-strong: rgb(23 23 19 / 0.28);
   /* Outlines of form fields: 3:1 or more on every surface in both themes (WCAG 1.4.11):
-     3.8:1 on paper, 3.55:1 on cream, 4.69:1 on night, 4.37:1 on the dark surface. */
-  --field-border: var(--stone-dark);
-  --deep: var(--brown);
-  --deep-text: var(--on-brown);
-  --deep-text-soft: var(--on-brown-soft);
-  --deep-accent: var(--saffron-on-brown);
-  --deep-rule: rgb(247 238 221 / 0.18);
+     6.9:1 on white, 6.4:1 on rice; Evening 5.5:1 on night, 5:1 on night-raised. */
+  --field-border: var(--ink-soft);
+  --deep: var(--teak-deep);
+  --deep-text: var(--on-teak);
+  --deep-text-soft: var(--on-teak-soft);
+  --deep-accent: var(--lamplight);
+  --deep-rule: rgb(251 246 238 / 0.2);
   --jar-1: #cdbfaa;
   --jar-2: #b7a68e;
   --jar-3: #9d8b73;
-  --placeholder: #e4d8c5;
+  --placeholder: #efe6da;
   --placeholder-ink: #5f4c3c;
-  --focus: var(--saffron-text);
-  --danger: #a33a1c; /* 6.1:1 on paper */
-  --shadow-soft: 0 1px 2px rgb(35 23 16 / 0.06), 0 8px 24px rgb(35 23 16 / 0.08);
-  --shadow-lift: 0 2px 4px rgb(35 23 16 / 0.08), 0 18px 48px rgb(35 23 16 / 0.16);
-
-  /* Shadow's sunrise, used once: the dawn glow on the hero horizon */
-  --dawn-1: #ff6b35;
-  --dawn-2: #f7931e;
-  --dawn-3: #fdb833;
+  --focus: var(--ink);
+  --danger: #b42318; /* 6.6:1 on white */
+  /* Almost no shadow: depth comes from material. */
+  --shadow-soft: 0 1px 0 rgb(23 23 19 / 0.06), 0 10px 24px -14px rgb(23 23 19 / 0.32);
+  --shadow-lift: 0 1px 0 rgb(23 23 19 / 0.08), 0 18px 40px -16px rgb(23 23 19 / 0.4);
+  /* Glass: frosted rice over the photos and the page (backdrop-filter), with a hairline edge and a faint shine. */
+  --glass: rgb(251 246 238 / 0.7);
+  --glass-panel: rgb(255 255 255 / 0.72);
+  --glass-edge: rgb(255 255 255 / 0.55);
+  --glass-shine: rgb(255 255 255 / 0.35);
+  --glass-blur: saturate(1.6) blur(18px);
+  /* Component tones that change with the theme. */
+  --lantern: transparent; /* lamplight on the booking card in Evening */
+  --niche-ink: var(--teak-deep);
+  --launcher-bg: var(--teak-deep);
+  --launcher-edge: rgb(251 246 238 / 0.18);
+  --dock-shadow: 0 -6px 20px rgb(23 23 19 / 0.06);
+  --open-jar-stone: var(--jar-2);
+  --open-jar-top: var(--jar-1);
+  --open-jar-hollow: #24160c;
 
   /* Type */
-  --font-display-stack:
-    var(--font-display), "Young Serif Georgia", "Young Serif Times", "Young Serif Noto", Georgia, serif;
-  --font-body-stack: var(--font-body), "Hanken Arial", "Hanken Roboto", system-ui, sans-serif;
-  --font-lao-stack: var(--font-lao), serif;
+  --font-brand-stack: var(--font-brand), var(--font-lao), "Figtree Arial", "Figtree Roboto", system-ui, sans-serif;
+  /* Headlines and running text share the one family; headlines take the weight. */
+  --font-display-stack: var(--font-brand-stack);
+  --font-body-stack: var(--font-brand-stack);
+  --font-lao-stack: var(--font-lao), var(--font-brand-stack);
+  --display-weight: 650;
 
   --step--2: 0.75rem;
   --step--1: 0.875rem;
@@ -202,38 +153,100 @@
   --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.75rem);
   --max-width: 76rem;
   --measure: 65ch;
-  --radius-s: 6px;
-  --radius-m: 12px;
-  --radius-l: 20px;
+  /* Square, like the house's boards: plates and buttons 2px, fields 4px, cards none. */
+  --radius-s: 2px;
+  --radius-m: 4px;
+  --radius-l: 0;
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   /* One underline offset for every link. */
   --underline-offset: 0.22em;
 }
 
+/*
+ * Evening: the house at night. The same tokens in two places, kept identical
+ * by app/theme.test.ts: when the device prefers dark and the guest hasn't
+ * chosen Day, and when the guest has chosen Evening (data-theme, lib/theme.ts).
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --page: var(--night);
-    --surface: #1e1610;
-    --text: #f7eedd;
-    --text-soft: #c9b89f;
-    --accent-text: var(--saffron);
-    --rule: rgb(247 238 221 / 0.13);
-    --rule-strong: rgb(247 238 221 / 0.28);
-    --deep: #2a1d13;
-    --deep-text: #f7eedd;
-    --deep-text-soft: #d2c2a9;
-    --deep-accent: var(--saffron-on-brown);
-    --deep-rule: rgb(247 238 221 / 0.14);
+    --surface: var(--night-raised);
+    --text: var(--rice);
+    --text-soft: #c9b8a6; /* 8.4:1 on night-raised */
+    --accent-text: var(--jar-orange); /* 5.7:1 on night, 5.2:1 on night-raised */
+    --rule: rgb(251 246 238 / 0.13);
+    --rule-strong: rgb(251 246 238 / 0.28);
+    --field-border: #a08b77;
+    --deep: var(--teak-deep);
+    --deep-text: var(--rice);
+    --deep-text-soft: var(--on-teak-soft);
+    --deep-accent: var(--lamplight);
+    --deep-rule: rgb(251 246 238 / 0.16);
     --jar-1: #8c7b66;
     --jar-2: #74644f;
     --jar-3: #5e503f;
-    --placeholder: #261c14;
-    --placeholder-ink: #c9b89f;
-    --focus: var(--saffron);
-    --danger: #f08a6b;
-    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
-    --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 18px 48px rgb(0 0 0 / 0.5);
+    --placeholder: var(--night-raised);
+    --placeholder-ink: #c9b8a6;
+    --focus: var(--lamplight);
+    --danger: #ff8a7a;
+    --shadow-soft: 0 1px 0 rgb(0 0 0 / 0.4), 0 10px 24px -12px rgb(0 0 0 / 0.7);
+    --shadow-lift: 0 1px 0 rgb(0 0 0 / 0.45), 0 18px 40px -14px rgb(0 0 0 / 0.75);
+    --glass: rgb(32 21 12 / 0.62);
+    --glass-panel: rgb(44 30 19 / 0.7);
+    --glass-edge: rgb(251 246 238 / 0.1);
+    --glass-shine: rgb(251 246 238 / 0.05);
+    --lantern: rgb(231 110 67 / 0.09);
+    --niche-ink: var(--text-soft);
+    --launcher-bg: var(--night-raised);
+    --launcher-edge: rgb(231 110 67 / 0.45);
+    --dock-shadow: 0 -6px 20px rgb(0 0 0 / 0.3);
+    --open-jar-stone: #7e7160;
+    --open-jar-top: #938573;
+    --open-jar-hollow: #0c0805;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: var(--night);
+  --surface: var(--night-raised);
+  --text: var(--rice);
+  --text-soft: #c9b8a6; /* 8.4:1 on night-raised */
+  --accent-text: var(--jar-orange); /* 5.7:1 on night, 5.2:1 on night-raised */
+  --rule: rgb(251 246 238 / 0.13);
+  --rule-strong: rgb(251 246 238 / 0.28);
+  --field-border: #a08b77;
+  --deep: var(--teak-deep);
+  --deep-text: var(--rice);
+  --deep-text-soft: var(--on-teak-soft);
+  --deep-accent: var(--lamplight);
+  --deep-rule: rgb(251 246 238 / 0.16);
+  --jar-1: #8c7b66;
+  --jar-2: #74644f;
+  --jar-3: #5e503f;
+  --placeholder: var(--night-raised);
+  --placeholder-ink: #c9b8a6;
+  --focus: var(--lamplight);
+  --danger: #ff8a7a;
+  --shadow-soft: 0 1px 0 rgb(0 0 0 / 0.4), 0 10px 24px -12px rgb(0 0 0 / 0.7);
+  --shadow-lift: 0 1px 0 rgb(0 0 0 / 0.45), 0 18px 40px -14px rgb(0 0 0 / 0.75);
+  --glass: rgb(32 21 12 / 0.62);
+  --glass-panel: rgb(44 30 19 / 0.7);
+  --glass-edge: rgb(251 246 238 / 0.1);
+  --glass-shine: rgb(251 246 238 / 0.05);
+  --lantern: rgb(231 110 67 / 0.09);
+  --niche-ink: var(--text-soft);
+  --launcher-bg: var(--night-raised);
+  --launcher-edge: rgb(231 110 67 / 0.45);
+  --dock-shadow: 0 -6px 20px rgb(0 0 0 / 0.3);
+  --open-jar-stone: #7e7160;
+  --open-jar-top: #938573;
+  --open-jar-hollow: #0c0805;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 /* Reset */
@@ -247,6 +260,13 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-padding-top: var(--space-xl);
+}
+
+/* Wider screens keep the glass header in view: anchors land below it. */
+@media (min-width: 48rem) {
+  html {
+    scroll-padding-top: calc(4.5rem + var(--space-xl));
+  }
 }
 
 /*
@@ -344,14 +364,16 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display-stack);
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1.08;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
 h3 {
+  font-weight: 600;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 p,
@@ -380,7 +402,7 @@ a:hover {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--saffron) 30%, transparent);
+  background: color-mix(in srgb, var(--jar-orange) 30%, transparent);
   color: inherit;
 }
 
@@ -431,13 +453,9 @@ strong {
   top: var(--space-m);
 }
 
-/* The small line icons (components/ui/icons.tsx). */
+/* The small icons (components/ui/icons.tsx): Phosphor Fill, in the text's colour. */
 .icon {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  fill: currentColor;
 }
 
 .tnum {
@@ -471,10 +489,66 @@ strong {
   animation: none;
 }
 
+/* Switching Day and Evening: the whole page, header included, cross-fades (theme-store.ts). */
+:root[data-theme-fade]::view-transition-group(*) {
+  animation-duration: 450ms;
+}
+
+:root[data-theme-fade]::view-transition-old(site-header) {
+  display: block;
+  animation: revert;
+}
+
+:root[data-theme-fade]::view-transition-new(site-header) {
+  animation: revert;
+}
+
 /* With reduced motion nothing moves: things only fade. */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*) {
     animation-name: none !important;
+  }
+}
+
+/*
+ * Glass: a frosted pane over a photograph or the page, with a hairline edge
+ * and a faint shine along the top. Without backdrop-filter the pane is solid.
+ */
+.glass {
+  background: var(--glass-panel);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-shine),
+    var(--shadow-soft);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--surface);
+  }
+}
+
+/*
+ * Settling into place: an element marked data-reveal rises a little as it
+ * scrolls into view. Scroll-driven, so no script waits on it, and only the
+ * position moves: everything is visible at rest, in screenshots and to
+ * readers who never scroll. Off with reduced motion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    [data-reveal] {
+      animation: settle-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+  }
+}
+
+@keyframes settle-in {
+  from {
+    transform: translateY(2.25rem);
   }
 }
 

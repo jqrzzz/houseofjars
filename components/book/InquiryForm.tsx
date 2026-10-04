@@ -9,6 +9,7 @@ import { ContactDetails } from "../contact/ContactDetails";
 import buttons from "../ui/button.module.css";
 import { ArrowIcon } from "../ui/icons";
 import { FollowLinks } from "./FollowLinks";
+import { focusField } from "./focus-field";
 import styles from "./InquiryForm.module.css";
 
 const subscribeNothing = () => () => {};
@@ -72,6 +73,9 @@ function today(): string {
  */
 export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  // Dates in the past make no sense here: the floor, once the browser knows today's date. Read on every render,
+  // so a form shown again after "Send another message" keeps it.
+  const floor = useSyncExternalStore(subscribeNothing, today, () => undefined);
   const [errors, setErrors] = useState<Partial<Record<FieldName | "form", string>>>({});
   const [checkIn, setCheckIn] = useState("");
   // One reference per inquiry: a retry after a failure can't create a duplicate.
@@ -97,9 +101,7 @@ export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
     if (prefill.guests && guestsRef.current) guestsRef.current.value = String(prefill.guests);
   }
 
-  // Dates in the past make no sense here; set the floor once the browser knows today's date.
   useEffect(() => {
-    if (checkInRef.current) checkInRef.current.min = today();
     // Once, on arrival; later links are followed by FollowLinks.
     fillFromLink(window.location.search);
   }, []);
@@ -203,8 +205,10 @@ export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
 
   return (
     // POST, so a guest who sends before the page's script has loaded never puts their details in the address bar.
+    // A form of its own: Shadow's floating button steps aside while it reaches the bottom of the screen.
     <form
       className={styles.form}
+      data-hides-launcher=""
       method="post"
       onSubmit={onSubmit}
       noValidate
@@ -217,7 +221,13 @@ export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
           <ul>
             {errorList.map((field) => (
               <li key={field}>
-                {field === "form" ? errors.form : <a href={`#${fieldId(field)}`}>{errors[field]}</a>}
+                {field === "form" ? (
+                  errors.form
+                ) : (
+                  <a href={`#${fieldId(field)}`} onClick={(event) => focusField(event, fieldId(field))}>
+                    {errors[field]}
+                  </a>
+                )}
               </li>
             ))}
           </ul>
@@ -265,7 +275,7 @@ export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
         </Field>
       </div>
 
-      <Field label="How should we reply?" htmlFor={fieldId("preferred_contact")} error={error("preferred_contact")}>
+      <Field label="How should the team reply?" htmlFor={fieldId("preferred_contact")} error={error("preferred_contact")}>
         <select
           id={fieldId("preferred_contact")}
           name="preferred_contact"
@@ -283,6 +293,7 @@ export function InquiryForm({ labelledBy }: { labelledBy?: string }) {
         <Field label="Check-in" optional htmlFor={fieldId("check_in")} error={error("check_in")}>
           <input
             ref={checkInRef}
+            min={floor}
             id={fieldId("check_in")}
             name="check_in"
             type="date"

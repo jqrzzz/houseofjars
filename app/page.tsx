@@ -4,7 +4,7 @@ import { BookingCard } from "@/components/BookingCard";
 import { PhotoFrame } from "@/components/PhotoFrame";
 import { Drawing } from "@/components/art/Drawing";
 import type { DrawingName } from "@/components/art/drawings";
-import { JarMark } from "@/components/brand/JarMark";
+import { Mark } from "@/components/brand/Mark";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import { shadowFull } from "@/components/concierge/mascot";
 import { Hero } from "@/components/home/Hero";
@@ -112,7 +112,7 @@ export default function HomePage() {
           </div>
           <ul role="list" className={styles.rooms}>
             {rooms.map(({ drawing, title, text }) => (
-              <li key={title} className={styles.room}>
+              <li key={title} className={styles.room} data-reveal="">
                 <div className={styles.niche}>
                   <Drawing name={drawing} className={styles.drawing} sizes="(min-width: 48rem) 20rem, 6rem" />
                 </div>
@@ -202,7 +202,7 @@ export default function HomePage() {
             className={styles.ownerFrame}
           />
           <div className={styles.ownerWords}>
-            <JarMark className={styles.ownerMark} />
+            <Mark className={styles.ownerMark} />
             <h2 id="owner-title" className={styles.heading}>
               Owned and run by {identity.owner.name.value}.
             </h2>

@@ -2,64 +2,58 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { SCENE } from "@/components/art/mekong-dawn";
-import { mekongDawnSvg } from "@/components/art/mekong-dawn-svg";
-import { JAR_PATH, JAR_VIEWBOX_TIGHT } from "@/components/brand/jar-shape";
+import { ARCH_OUTLINE, MARK_PATH, MARK_VIEWBOX } from "@/components/brand/mark-shape";
 import { identity } from "@/content/identity";
 import type { PageInfo } from "./site";
 
 /*
- * Open Graph images, drawn at build time with the brand's own parts: the
- * jar mark, Young Serif, the hero's Mekong dawn with its stone jars, and the
- * woven band.
+ * Open Graph images, drawn at build time with the house's own brand
+ * (brand/README.md): the arch mark, Figtree, jar orange on rice, and a real
+ * photograph of the dorms framed in the arch.
  */
 
 export const ogSize = { width: 1200, height: 630 };
 export const ogContentType = "image/png";
 
 const color = {
-  paper: "#fbf6ee",
-  ink: "#231710",
+  rice: "#fbf6ee",
+  ink: "#171713",
   soft: "#6b5645",
-  saffron: "#e8952b",
-  saffronText: "#9a5608",
-  brown: "#5b3a22",
-  saffronOnBrown: "#f2a948",
+  orange: "#e76e43",
+  orangeText: "#bf4a1b",
+  white: "#ffffff",
 };
 
 // Satori reads woff but not woff2; @fontsource ships both.
-const displayFont = readFile(
-  join(process.cwd(), "node_modules/@fontsource/young-serif/files/young-serif-latin-400-normal.woff"),
-);
-const textileTile = readFile(join(process.cwd(), "public/brand/textile-diamond.svg"), "utf8");
+const figtree = (weight: 500 | 700) =>
+  readFile(join(process.cwd(), `node_modules/@fontsource/figtree/files/figtree-latin-${weight}-normal.woff`));
+const fontBold = figtree(700);
+const fontMedium = figtree(500);
+const dormPhoto = readFile(join(process.cwd(), "public/photos/dorm-corridor-pods-and-window.jpg"));
 
 const svgData = (svg: string) => `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
-function jarMarkSvg(fill: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${JAR_VIEWBOX_TIGHT}"><path d="${JAR_PATH}" fill="${fill}"/></svg>`;
+function markSvg(fill: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${MARK_VIEWBOX}"><path d="${MARK_PATH}" fill="${fill}"/></svg>`;
 }
 
-/** The hero's woven band: saffron stepped diamonds on vest brown, from the same tile the site uses. */
-async function bandSvg(width: number): Promise<string> {
-  const tile = await textileTile;
-  const [, , tileWidth, tileHeight] = (/viewBox="([^"]+)"/.exec(tile)?.[1] ?? "0 0 48 36").split(" ");
-  const inner = tile
-    .replace(/^<svg[^>]*>/, "")
-    .replace(/<\/svg>\s*$/, "")
-    .replaceAll('stroke="#000"', `stroke="${color.saffronOnBrown}"`);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${tileHeight}" viewBox="0 0 ${width} ${tileHeight}"><defs><pattern id="t" width="${tileWidth}" height="${tileHeight}" patternUnits="userSpaceOnUse"><g fill="${color.saffronOnBrown}">${inner}</g></pattern></defs><rect width="${width}" height="${tileHeight}" fill="${color.brown}"/><rect width="${width}" height="${tileHeight}" fill="url(#t)"/></svg>`;
+/** A photograph cropped to fill a 2:3 arch, like the website's ArchPhoto. */
+function archPhotoSvg(jpeg: Buffer): string {
+  const href = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 600 900">` +
+    `<defs><clipPath id="a" clipPathUnits="objectBoundingBox"><path d="${ARCH_OUTLINE}"/></clipPath></defs>` +
+    `<g clip-path="url(#a)"><rect width="600" height="900" fill="${color.ink}"/>` +
+    `<image xlink:href="${href}" width="600" height="900" preserveAspectRatio="xMidYMid slice"/></g></svg>`
+  );
 }
 
-/** The scene fills the card's width, its right edge on the card's; this many scene units show. */
-const SCENE_SHOWN = 2000;
-const SCENE_HEIGHT = Math.round((ogSize.width / SCENE_SHOWN) * SCENE.height);
-const BAND_HEIGHT = 36;
+const ARCH = { width: 360, height: 540 };
 
 export async function renderOgImage(page: PageInfo, options: { eyebrow?: string } = {}): Promise<ImageResponse> {
   const isHome = page.path === "/";
   const title = isHome ? "A calm house in the heart of Vientiane." : page.title;
   const eyebrow = isHome ? "Sabaidee" : (options.eyebrow ?? page.nav ?? "House of Jars");
-  const band = await bandSvg(ogSize.width);
 
   return new ImageResponse(
     (
@@ -68,52 +62,57 @@ export async function renderOgImage(page: PageInfo, options: { eyebrow?: string 
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
           position: "relative",
-          background: `linear-gradient(180deg, ${color.paper} 35%, #f6e2c4 88%)`,
+          background: color.rice,
           color: color.ink,
-          fontFamily: "Young Serif",
+          fontFamily: "Figtree",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "52px 72px 0" }}>
-          <img src={svgData(jarMarkSvg(color.saffron))} width={52} height={52} alt="" />
-          <div style={{ fontSize: 36 }}>{identity.name.value}</div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", padding: "0 72px", marginTop: 52, width: 780 }}>
-          <div style={{ fontSize: 22, letterSpacing: 5, textTransform: "uppercase", color: color.saffronText }}>
-            {eyebrow}
+        <div style={{ display: "flex", flexDirection: "column", padding: "56px 0 0 72px", width: 720 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <img src={svgData(markSvg(color.orange))} width={34} height={51} alt="" />
+            <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5 }}>{identity.name.value}</div>
           </div>
-          <div style={{ fontSize: title.length > 24 ? 64 : 80, lineHeight: 1.04, marginTop: 18 }}>{title}</div>
-          <div style={{ fontSize: 24, marginTop: 22, color: color.soft }}>
-            {`Owned and run by ${identity.owner.name.value} · ${identity.address.village.value}, Vientiane`}
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 64 }}>
+            <div style={{ fontSize: 26, fontWeight: 500, color: color.orangeText }}>{eyebrow}</div>
+            <div
+              style={{
+                fontSize: title.length > 24 ? 64 : 80,
+                fontWeight: 700,
+                lineHeight: 1.04,
+                letterSpacing: -1.5,
+                marginTop: 14,
+              }}
+            >
+              {title}
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 500, marginTop: 24, color: color.soft }}>
+              {`Owned and run by ${identity.owner.name.value} · ${identity.address.village.value}, Vientiane`}
+            </div>
           </div>
         </div>
 
         <img
-          src={svgData(mekongDawnSvg(SCENE.width - SCENE_SHOWN))}
-          width={ogSize.width}
-          height={SCENE_HEIGHT}
+          src={svgData(archPhotoSvg(await dormPhoto))}
+          width={ARCH.width}
+          height={ARCH.height}
           alt=""
-          style={{ position: "absolute", left: 0, bottom: BAND_HEIGHT }}
+          style={{ position: "absolute", right: 72, bottom: 0 }}
         />
-        <img
-          src={svgData(band)}
-          width={ogSize.width}
-          height={BAND_HEIGHT}
-          alt=""
-          style={{ position: "absolute", left: 0, bottom: 0 }}
-        />
+        <div style={{ position: "absolute", left: 0, bottom: 0, width: 1200 - 72 - ARCH.width - 40, height: 12, background: color.orange }} />
       </div>
     ),
     {
       ...ogSize,
-      fonts: [{ name: "Young Serif", data: await displayFont, weight: 400, style: "normal" }],
+      fonts: [
+        { name: "Figtree", data: await fontBold, weight: 700, style: "normal" },
+        { name: "Figtree", data: await fontMedium, weight: 500, style: "normal" },
+      ],
     },
   );
 }
 
-/** The home-screen icon: the saffron jar on vest brown. */
+/** The home-screen icon and the logo search engines show: the white arch on jar orange. */
 export function renderAppleIcon(size: number): ImageResponse {
   return new ImageResponse(
     (
@@ -124,10 +123,10 @@ export function renderAppleIcon(size: number): ImageResponse {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: color.brown,
+          background: color.orange,
         }}
       >
-        <img src={svgData(jarMarkSvg(color.saffron))} width={size * 0.64} height={size * 0.64} alt="" />
+        <img src={svgData(markSvg(color.white))} width={size * 0.4} height={size * 0.6} alt="" />
       </div>
     ),
     { width: size, height: size },

@@ -9,3 +9,22 @@
   border-top: 1px solid var(--rule);
   font-size: var(--step-3);
 }
+
+/* A look inside: the house's photographs, two across on small screens and three on wide ones. */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-xl) var(--space-l);
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 60rem) {
+  .gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.locker {
+  width: min(100%, 22rem);
+}

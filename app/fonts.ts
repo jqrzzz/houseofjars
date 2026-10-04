@@ -5,37 +5,29 @@ import localFont from "next/font/local";
 // platform's own fonts: next/font's automatic one covers Arial only, which
 // Android and Linux don't have, so text there reflowed when the fonts arrived.
 //
-// Headlines swap to Young Serif whenever it arrives: it carries the house's
-// character, and headlines are short, so its sized stand-ins keep their lines.
-// Running text is "optional": preloaded, it is used from the first paint when
-// it arrives in time (and on every later visit); on a slow first visit the
-// page stays in its sized stand-in instead of reflowing paragraphs mid-read.
-export const displayFont = localFont({
-  src: "../node_modules/@fontsource/young-serif/files/young-serif-latin-400-normal.woff2",
-  weight: "400",
+// Figtree is the house's typeface (brand/README.md), the closest free match
+// to the lettering on its signs: one variable file for every weight, from the
+// headlines' 700 to the running text's 400. Its stand-ins are fitted to it, so
+// it swaps in without moving the lines.
+export const brandFont = localFont({
+  src: "../node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2",
+  weight: "300 900",
   style: "normal",
   display: "swap",
-  variable: "--font-display",
+  variable: "--font-brand",
   adjustFontFallback: false,
 });
 
-export const bodyFont = localFont({
-  src: "../node_modules/@fontsource-variable/hanken-grotesk/files/hanken-grotesk-latin-wght-normal.woff2",
-  weight: "100 900",
-  style: "normal",
-  display: "optional",
-  variable: "--font-body",
-  adjustFontFallback: false,
-});
-
-// Only the Lao-script greeting uses this, so it is not preloaded; its boxes
-// are sized so the swap moves nothing (components/home/Hero.module.css).
+// Lao script (the hero's greeting and any Lao text): Noto Sans Lao, which sits
+// beside Figtree in every stack. Not preloaded: only a few words use it. Its
+// unicode-range keeps browsers from fetching it for pages without Lao text.
 export const laoFont = localFont({
-  src: "../node_modules/@fontsource/noto-serif-lao/files/noto-serif-lao-lao-500-normal.woff2",
-  weight: "500",
+  src: "../node_modules/@fontsource-variable/noto-sans-lao/files/noto-sans-lao-lao-wght-normal.woff2",
+  weight: "100 900",
   style: "normal",
   display: "swap",
   preload: false,
   variable: "--font-lao",
   adjustFontFallback: false,
+  declarations: [{ prop: "unicode-range", value: "U+0E81-0EDF, U+200C-200D, U+25CC" }],
 });
