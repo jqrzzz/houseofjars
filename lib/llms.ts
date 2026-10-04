@@ -55,7 +55,7 @@ export interface LlmsOptions {
 function availabilityText(url: (path: string) => string, onlineBooking: boolean | undefined): string {
   return onlineBooking
     ? `Free beds for any dates, with prices where the house has set them, are on the booking page (${url(pages.book.path)}), not in this file; Booking.com and Agoda show live prices too.`
-    : "Prices and availability are not published here: see Booking.com or Agoda, or ask the team.";
+    : "Prices and availability are not published here: ask the team (book direct), or see Booking.com or Agoda.";
 }
 
 function summary(): string {
@@ -84,11 +84,11 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
           `- [Book online](${url(pages.book.path)}): the free beds for the guest's dates, booked directly with the house; the page says whether a booking is confirmed straight away or once the team has checked it (they reply by email or WhatsApp), and the guest pays at the house. ${onlineBookingLinkTemplate(siteUrl)} opens it at the free beds for those dates. Prices show there only where the house has set them, and nothing is booked until the guest sends the booking.`,
         ]
       : []),
-    `- [Booking.com](${identity.links.booking.value}): live prices and free beds`,
-    `- [Agoda](${identity.links.agoda.value}): live prices and free beds`,
     onlineBooking
       ? `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. There is no payment on this website.`
-      : `- [Message the team](${url(`${pages.book.path}#message`)}): on WhatsApp (${whatsappUrl()}), by phone or by email. A message does not book a bed. There is no payment on this website.`,
+      : `- [Book direct](${url(`${pages.book.path}#message`)}): the guest sends their dates to the team on WhatsApp (${whatsappUrl()}) or by email, and the team replies with what is free; nothing is booked until the team confirms. ${bookingLinkTemplate(siteUrl)} opens the page with the dates and number of guests filled in, written out ready to send. There is no payment on this website.`,
+    `- [Booking.com](${identity.links.booking.value}): also on Booking.com, with live prices and free beds`,
+    `- [Agoda](${identity.links.agoda.value}): also on Agoda, with live prices and free beds`,
   ];
 }
 
@@ -96,7 +96,7 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
 /** Where an assistant acting for a traveller can connect: the MCP server, and the API description. */
 export function agentLines(url: (path: string) => string, onlineBooking: boolean | undefined): string[] {
   return [
-    `- MCP server (Streamable HTTP, read-only, no sign-in): ${url("/api/mcp")}. Tools: house_information${onlineBooking ? ", check_availability (free beds, no prices)" : ""} and booking_link (the booking page with the stay filled in). Assistants can't book, hold a bed or send a message: the traveller sends the request on the website and the team confirms it.`,
+    `- MCP server (Streamable HTTP, read-only, no sign-in): ${url("/api/mcp")}. Tools: house_information${onlineBooking ? ", check_availability (free beds, no prices)" : ""} and booking_link (the booking page with the stay filled in${onlineBooking ? "" : ", and the request written out for WhatsApp and email"}). Assistants can't book, hold a bed or send a message: the traveller sends the request ${onlineBooking ? "on the website" : "themselves, on WhatsApp or by email"} and the team confirms it.`,
     `- API description (OpenAPI): ${url("/openapi.json")}`,
   ];
 }

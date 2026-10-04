@@ -72,10 +72,10 @@ export const pages = {
   book: {
     path: "/book",
     nav: "Book",
-    title: "Prices, booking and contact",
+    title: "Book direct",
     description:
-      "Live prices and free beds on Booking.com and Agoda, or message the House of Jars team on WhatsApp (+856 20 23 978 946) or by email. No payment on this site.",
-    teaser: "Live prices on Booking.com and Agoda, or a message to the team.",
+      "Book a bed directly with House of Jars: send your dates to the team on WhatsApp (+856 20 23 978 946) or by email. Also on Booking.com and Agoda.",
+    teaser: "Your dates to the team on WhatsApp or by email, written out for you.",
   },
   guides: {
     path: "/guides",

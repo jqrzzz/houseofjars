@@ -1,0 +1,98 @@
+/*
+ * Three layers: the curtain's ground, the gold thread and the orange hearts
+ * (each a mask cut from its tile in public/brand/, the thread's tile also
+ * carrying the weft). The tiles keep their proportions ("auto 100%"), so a
+ * band's height sets its scale.
+ */
+.band {
+  position: relative;
+  height: var(--band-height);
+}
+
+.band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--weave-ground);
+}
+
+.thread,
+.heart {
+  position: absolute;
+  inset: 0;
+  -webkit-mask: var(--tile) left center / auto 100% repeat-x;
+  mask: var(--tile) left center / auto 100% repeat-x;
+}
+
+.thread {
+  --tile: var(--thread-tile);
+  background: var(--weave-thread);
+}
+
+.heart {
+  --tile: var(--heart-tile);
+  background: var(--weave-heart);
+}
+
+/* Under the hero, and the hem of the splash's curtain: stepped diamonds. */
+.diamond {
+  --band-height: clamp(1.75rem, 1.5rem + 0.9vw, 2.25rem);
+  --thread-tile: url("/brand/weave-diamond.svg");
+  --heart-tile: url("/brand/weave-diamond-heart.svg");
+}
+
+/* Along the booking ticket: a chain of lozenges. */
+.lozenge {
+  --band-height: 1.5rem;
+  --thread-tile: url("/brand/weave-lozenge.svg");
+  --heart-tile: url("/brand/weave-lozenge-heart.svg");
+}
+
+/* Along the top of the footer: squared hooks. */
+.hooks {
+  --band-height: 2rem;
+  --thread-tile: url("/brand/weave-hooks.svg");
+  --heart-tile: url("/brand/weave-hooks-heart.svg");
+}
+
+/*
+ * Weaving in, as the band scrolls into view: the cloth and its thread run out
+ * from the left, and the hearts follow, so a band caught halfway is a shorter
+ * band, never an empty strip. Only where scroll-driven animations exist;
+ * everywhere else, and with reduced motion, the band is simply woven.
+ */
+@keyframes weave {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .weave::before,
+    .weave .thread,
+    .weave .heart {
+      animation: weave linear both;
+      animation-timeline: view();
+    }
+
+    .weave::before,
+    .weave .thread {
+      animation-range: entry 0% cover 20%;
+    }
+
+    .weave .heart {
+      animation-range: entry 60% cover 26%;
+    }
+  }
+}
+
+@media print {
+  .band {
+    display: none;
+  }
+}

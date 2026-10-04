@@ -17,7 +17,7 @@ function loadPanel() {
 
 /**
  * The butler's button, on every page: on phones in a dock along the bottom of
- * the screen with Book beside it (its own lane, like a toolbar, so it never
+ * the screen with Book direct beside it (its own lane, like a toolbar, so it never
  * lies over the page), on wider screens floating in the corner, in the margin
  * beside the page. Any element with a `data-ask-shadow` attribute also opens
  * the concierge, pre-filled with the attribute's text.
@@ -137,7 +137,7 @@ export function ConciergeLauncher() {
         </button>
         {pathname === "/book" ? null : (
           <Link href="/book" className={`${buttons.button} ${buttons.primary} ${buttons.small} ${styles.book}`}>
-            Book
+            Book direct
           </Link>
         )}
       </div>

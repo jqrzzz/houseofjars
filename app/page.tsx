@@ -5,6 +5,7 @@ import { PhotoFrame } from "@/components/PhotoFrame";
 import { Drawing } from "@/components/art/Drawing";
 import type { DrawingName } from "@/components/art/drawings";
 import { Mark } from "@/components/brand/Mark";
+import { WovenBand } from "@/components/brand/WovenBand";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import { shadowFull } from "@/components/concierge/mascot";
 import { Hero } from "@/components/home/Hero";
@@ -87,6 +88,8 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      {/* The house's curtains, woven in under the hero. */}
+      <WovenBand pattern="diamond" weave />
 
       <Section labelledBy="house-title" className={styles.house}>
         <div className="container">

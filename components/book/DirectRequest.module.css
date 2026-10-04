@@ -1,0 +1,61 @@
+/* The stay's three fields, then the two ways to send it. Fields as on the online booking card. */
+.request {
+  display: grid;
+  gap: var(--space-l);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-s);
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+}
+
+.date {
+  grid-column: 1 / -1;
+}
+
+.field input,
+.field select {
+  min-height: 2.9rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-s);
+  background: var(--page);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s);
+}
+
+.note {
+  margin-top: calc(var(--space-xs) - var(--space-l));
+  max-width: 32rem;
+  font-size: var(--step--1);
+  color: var(--text-soft);
+}
+
+@media (min-width: 40rem) {
+  .fields {
+    grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr));
+  }
+
+  .date {
+    grid-column: auto;
+  }
+}

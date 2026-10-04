@@ -1,9 +1,10 @@
 import Image from "next/image";
-import Link from "next/link";
 import { identity, whatsappUrl } from "@/content/identity";
 import { photos } from "@/content/photos";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pages } from "@/lib/site";
+import { DirectRequest } from "./book/DirectRequest";
+import { WovenBand } from "./brand/WovenBand";
 import styles from "./BookingCard.module.css";
 import { ShadowWriting } from "./shadow/ShadowWriting";
 import { Section } from "./ui/Section";
@@ -19,12 +20,13 @@ const platforms = [
 ];
 
 /**
- * The closing call to action on most pages, set like a ticket. With online
- * booking (lib/booking/config.ts) the form carries check-in, nights and
- * guests to /book's free beds (a plain GET, so it works without JavaScript).
- * Without it, nothing on the site could send a request, so the ticket offers
- * WhatsApp and the team's other contacts instead. The Booking.com and Agoda
- * links open the house's pages there: their date parameters can't be
+ * The closing call to action on most pages, set like a ticket, with the
+ * curtains' woven lozenges along its top. Booking direct comes first. With
+ * online booking (lib/booking/config.ts) the form carries check-in, nights
+ * and guests to /book's free beds (a plain GET, so it works without
+ * JavaScript). Without it, the same three fields write the guest's request
+ * into WhatsApp or an email for them to send (DirectRequest). The stub
+ * offers Booking.com and Agoda second: their date parameters can't be
  * verified from here, so the dates are not passed on.
  */
 export function BookingCard() {
@@ -37,6 +39,7 @@ export function BookingCard() {
         {/* A booking form of its own: Shadow's dock steps aside while it is at the bottom of the screen. */}
         <div className={styles.ticket} data-hides-launcher="" data-reveal="">
           <div className={styles.main}>
+            <WovenBand pattern="lozenge" weave />
             {online ? (
               <form
                 className={styles.form}
@@ -81,31 +84,19 @@ export function BookingCard() {
             ) : (
               <div className={styles.form}>
                 <h2 id="booking-card-title" className={styles.title}>
-                  Find a bed for your dates.
+                  Book direct with the house.
                 </h2>
                 <p className={styles.text}>
-                  Send the team your dates on WhatsApp: someone is on site day and night. Live prices and free beds are on
-                  the booking sites too.
+                  Choose your dates and send them to the team on WhatsApp or by email. Someone is on site day and night.
                 </p>
-                <div className={styles.actions}>
-                  <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer" className={`${buttons.button} ${buttons.primary}`}>
-                    Message on WhatsApp
-                    <ExternalIcon />
-                    <span className="visually-hidden"> (opens in a new tab)</span>
-                  </a>
-                  <Link href={`${pages.book.path}#message`} className={`${buttons.button} ${buttons.secondary}`}>
-                    Phone or email
-                  </Link>
-                </div>
+                <DirectRequest whatsapp={whatsappUrl()} email={identity.contact.email.value} />
               </div>
             )}
           </div>
           <div className={styles.stub}>
             <ShadowWriting still className={styles.clipboard} />
-            <p className={styles.stubTitle}>{online ? "Also on" : "Live prices"}</p>
-            <p className={styles.stubText}>
-              {online ? "The house is on the booking sites too." : "Free beds and prices are on the booking sites."}
-            </p>
+            <p className={styles.stubTitle}>Also on</p>
+            <p className={styles.stubText}>The house is on the booking sites too, with live prices.</p>
             <ul role="list" className={styles.platforms}>
               {platforms.map((platform) => (
                 <li key={platform.name}>

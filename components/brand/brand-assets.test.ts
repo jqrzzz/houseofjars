@@ -46,3 +46,17 @@ describe("brand assets stay in sync", () => {
     expect(MARK_PARTS.join("")).toBe(MARK_PATH);
   });
 });
+
+describe("the curtain weave", () => {
+  const css = readFileSync(join(process.cwd(), "components/brand/WovenBand.module.css"), "utf8");
+  const viewBox = (file: string) => readFileSync(join(process.cwd(), "public/brand", file), "utf8").match(/viewBox="([^"]+)"/)?.[1];
+
+  it("has a thread tile and a heart tile of the same size for every motif, so the two layers line up", () => {
+    for (const motif of ["diamond", "lozenge", "hooks"]) {
+      expect(css).toContain(`url("/brand/weave-${motif}.svg")`);
+      expect(css).toContain(`url("/brand/weave-${motif}-heart.svg")`);
+      expect(viewBox(`weave-${motif}.svg`), motif).toBeTruthy();
+      expect(viewBox(`weave-${motif}-heart.svg`), motif).toBe(viewBox(`weave-${motif}.svg`));
+    }
+  });
+});

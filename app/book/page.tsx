@@ -1,4 +1,5 @@
 import type { HouseNotes } from "@/components/book/BookingSteps";
+import { DirectRequest } from "@/components/book/DirectRequest";
 import { InquiryForm } from "@/components/book/InquiryForm";
 import { OnlineBooking } from "@/components/book/OnlineBooking";
 import { ContactDetails } from "@/components/contact/ContactDetails";
@@ -6,7 +7,7 @@ import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ExternalIcon } from "@/components/ui/icons";
 import { PageJsonLd } from "@/components/PageJsonLd";
-import { addressLines, identity } from "@/content/identity";
+import { addressLines, identity, whatsappUrl } from "@/content/identity";
 import { rules, times } from "@/content/stay";
 import { lowerFirst } from "@/content/text";
 import { onlineBookingConfigured } from "@/lib/booking/config";
@@ -31,10 +32,11 @@ const house: HouseNotes = {
 };
 
 /**
- * /book. With Shadow Check-in's address and key set when the site is built,
- * the page opens with online booking and has the message form. Without them
- * neither form could send anything (both go through Shadow Check-in), so the
- * page offers the booking sites and the team's WhatsApp, phone and email.
+ * /book: booking direct first, the booking sites last. With Shadow
+ * Check-in's address and key set when the site is built, the page opens with
+ * online booking and has the message form. Without them neither form could
+ * send anything (both go through Shadow Check-in), so the guest's dates are
+ * written out for them to send on WhatsApp or by email (DirectRequest).
  */
 export default function BookPage() {
   const online = onlineBookingConfigured();
@@ -49,21 +51,39 @@ export default function BookPage() {
             lede="Choose your dates to see the free beds, and book directly with the house. There is nothing to pay online: you pay when you arrive."
           />
           <OnlineBooking house={house} />
+          <Block id="message" title="Send the team a message" aside="For dates, questions or anything you need before you arrive.">
+            <InquiryForm labelledBy="message-title" />
+          </Block>
         </>
       ) : (
-        <PageHeader
-          eyebrow="Book"
-          morph="book"
-          title="Prices and booking"
-          lede="Live prices and free beds are on Booking.com and Agoda. Or send the team a message, and they will reply by email or WhatsApp."
-        />
+        <>
+          <PageHeader
+            eyebrow="Book"
+            morph="book"
+            title="Book direct"
+            lede="Send your dates to the team on WhatsApp or by email, and book with the house itself. Someone is on site day and night."
+          />
+          {/* Every "message the team" link lands here: the guest's dates, written out for their own WhatsApp or mail app. */}
+          <Block id="message" title="Send your dates" aside="The team replies on WhatsApp or by email with what is free.">
+            <DirectRequest whatsapp={whatsappUrl()} email={identity.contact.email.value} />
+          </Block>
+        </>
       )}
 
-      <Block
-        id="online"
-        title={online ? "Or book on Booking.com or Agoda" : "Book on Booking.com or Agoda"}
-        aside="Both open in a new tab. There is no payment on this website."
-      >
+      <Block id="contact" title={online ? "Contact the team" : "Or call, or write"} tone="cream">
+        <ContactDetails />
+        <Prose>
+          <p className={styles.addressLabel}>Address</p>
+          <address className={styles.address}>
+            {addressLines().map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </address>
+        </Prose>
+      </Block>
+
+      {/* The booking sites come after the house's own ways to book. */}
+      <Block id="online" title="Also on Booking.com and Agoda" aside="Live prices and free beds. Both open in a new tab; there is no payment on this website.">
         <ul role="list" className={styles.platforms}>
           {platforms.map((platform) => (
             <li key={platform.name}>
@@ -76,30 +96,6 @@ export default function BookPage() {
             </li>
           ))}
         </ul>
-      </Block>
-
-      {online ? (
-        <Block id="message" title="Send the team a message" aside="For dates, questions or anything you need before you arrive.">
-          <InquiryForm labelledBy="message-title" />
-        </Block>
-      ) : null}
-
-      {/* Without online booking this is where every "message the team" link lands: the ways that always work. */}
-      <Block
-        id={online ? "contact" : "message"}
-        title={online ? "Contact the team" : "Message the team"}
-        aside={online ? undefined : "Send your dates on WhatsApp or by email. The team is on site day and night."}
-        tone="cream"
-      >
-        <ContactDetails />
-        <Prose>
-          <p className={styles.addressLabel}>Address</p>
-          <address className={styles.address}>
-            {addressLines().map((line) => (
-              <span key={line}>{line}</span>
-            ))}
-          </address>
-        </Prose>
       </Block>
       <PageJsonLd path={pages.book.path} />
     </>

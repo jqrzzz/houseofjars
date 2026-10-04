@@ -21,8 +21,9 @@
  * file, the security headers, and that the API routes refuse cross-site
  * posts. Then it opens Shadow's window, checks that a /book link fills in the
  * dates and guests, and tries the booking form. Without API keys Shadow must
- * fall back to the team's contact details, and /book must offer only the
- * booking sites and those contact details (no form: nothing could send it). Against the fake Shadow
+ * fall back to the team's contact details, and /book must offer booking
+ * direct (the stay written out for WhatsApp and email), those contact
+ * details and the booking sites, and no form that could never send. Against the fake Shadow
  * Check-in it walks online booking on a phone and a desktop (dates by
  * keyboard, beds, details, review, confirmation), then beds taken while
  * booking (409), a price that changes while booking (409 price_changed, then
@@ -197,7 +198,7 @@ function checkJsonLd(label: string, scripts: string[], url: string) {
 
 /**
  * A /book link fills in the message form, as llms.txt tells assistants; the form is named for them. Without
- * online booking there is no form, and the link lands on the team's contact details.
+ * online booking the link fills in booking direct instead: the stay, written out for WhatsApp and email.
  */
 async function bookingLink(browser: Browser, mode: BookingMode) {
   const { context, page, errors } = await open(browser, viewports[0], "light");
@@ -206,9 +207,16 @@ async function bookingLink(browser: Browser, mode: BookingMode) {
   const [checkIn, checkOut] = [day(10), day(13)];
   await page.goto(`${base}/book?check_in=${checkIn}&check_out=${checkOut}&guests=2#message`, { waitUntil: "networkidle" });
   if (mode === "off") {
-    const contact = page.locator("#message");
-    check(await contact.getByRole("heading", { name: "Message the team" }).isVisible(), "booking link: no Message the team section");
-    check(await contact.getByText("Open WhatsApp").isVisible(), "booking link: no WhatsApp link at #message");
+    const direct = page.locator("#message");
+    check(await direct.getByRole("heading", { name: "Send your dates" }).isVisible(), "booking link: no Send your dates section");
+    const whatsapp = (await direct.getByRole("link", { name: /^Send on WhatsApp/ }).getAttribute("href")) ?? "";
+    const email = (await direct.getByRole("link", { name: "Send by email" }).getAttribute("href")) ?? "";
+    const asked = `2 beds from ${formatDay(checkIn, "long")} to ${formatDay(checkOut, "long")} (3 nights)`;
+    check(
+      whatsapp.startsWith("https://wa.me/") && decodeURIComponent(whatsapp).includes(asked),
+      `booking link: the WhatsApp request doesn't carry the stay: ${decodeURIComponent(whatsapp).slice(0, 160)}`,
+    );
+    check(email.startsWith("mailto:") && decodeURIComponent(email).includes(asked), "booking link: the email request doesn't carry the stay");
     check(errors.length === 0, `booking link: console errors: ${errors.join(" | ")}`);
     await context.close();
     return;
@@ -398,7 +406,7 @@ async function bookingPages(browser: Browser, mode: BookingMode) {
   const online = (await page.locator("#book-online").count()) === 1;
   const h1 = (await page.locator("h1").textContent())?.trim();
   if (mode === "off") {
-    check(!online && h1 === "Prices and booking", `/book without Shadow Check-in: online booking ${online ? "shown" : "hidden"}, h1 "${h1}"`);
+    check(!online && h1 === "Book direct", `/book without Shadow Check-in: online booking ${online ? "shown" : "hidden"}, h1 "${h1}"`);
   } else {
     check(
       online && h1 === "Book a bed",
@@ -411,18 +419,29 @@ async function bookingPages(browser: Browser, mode: BookingMode) {
   const messageForm = await page.getByRole("form", { name: "Send the team a message" }).count();
   if (mode === "off") {
     check(messageForm === 0, "/book without Shadow Check-in: a message form that could never send");
-    check(await page.locator("#message").getByText("Open WhatsApp").isVisible(), "/book without Shadow Check-in: no WhatsApp at #message");
+    check(
+      await page.locator("#message").getByRole("link", { name: /^Send on WhatsApp/ }).isVisible(),
+      "/book without Shadow Check-in: no Send on WhatsApp at #message",
+    );
+    // Booking direct comes before the booking sites.
+    const order = await page.evaluate(() => [...document.querySelectorAll("main section[id]")].map((section) => section.id));
+    check(order.indexOf("message") < order.indexOf("online"), `/book: the booking sites come before booking direct (${order.join(", ")})`);
   } else {
     check(messageForm === 1, "/book: no message form");
   }
 
   await page.goto(`${base}/`, { waitUntil: "networkidle" });
   if (mode === "off") {
-    const whatsapp = page.getByRole("link", { name: /^Message on WhatsApp/ });
+    const checkInDay = addDays(houseToday(), 10);
+    const card = page.locator('[data-hides-launcher]').filter({ has: page.locator("#booking-card-title") });
+    const whatsapp = card.getByRole("link", { name: /^Send on WhatsApp/ });
     check((await whatsapp.getAttribute("href"))?.startsWith("https://wa.me/") ?? false, "booking card: no WhatsApp link");
+    check((await card.getByRole("link", { name: "Send by email" }).getAttribute("href"))?.startsWith("mailto:") ?? false, "booking card: no email link");
+    // Choosing a date writes it into the request.
+    await card.locator('input[type="date"]').fill(checkInDay);
     check(
-      (await page.getByRole("link", { name: "Phone or email" }).getAttribute("href")) === "/book#message",
-      "booking card: no link to the team's contact details",
+      decodeURIComponent((await whatsapp.getAttribute("href")) ?? "").includes(formatDay(checkInDay, "long")),
+      "booking card: the chosen date isn't in the WhatsApp request",
     );
   } else {
     const card = page.locator('form[aria-labelledby="booking-card-title"]');
@@ -631,10 +650,33 @@ async function bookingPriceChange(browser: Browser, fake: FakeShadow) {
  * the message form below has them too (F1W-04).
  */
 async function bookingSoftNavigation(browser: Browser, mode: BookingMode, fake: FakeShadow | null) {
-  // Without online booking /book has no form to fill in.
-  if (mode === "off") return;
   const { context, page, errors } = await open(browser, viewports[0], "light");
   const label = "dated link without a reload";
+  if (mode === "off") {
+    // Without online booking the link fills in booking direct: the request written out for WhatsApp.
+    await page.goto(`${base}/faq`, { waitUntil: "networkidle" });
+    for (const [checkIn, nights, where] of [
+      [houseDay(60), 2, "from /faq"],
+      [houseDay(64), 3, "on /book"],
+    ] as const) {
+      await page.evaluate(
+        (url) => (window as unknown as { next: { router: { push(href: string): void } } }).next.router.push(url),
+        `/book?check_in=${checkIn}&check_out=${addDays(checkIn, nights)}&guests=2`,
+      );
+      const asked = `2 beds from ${formatDay(checkIn, "long")}`;
+      const carries = await page
+        .waitForFunction(
+          (words) => decodeURIComponent(document.querySelector<HTMLAnchorElement>('#message a[href^="https://wa.me/"]')?.href ?? "").includes(words),
+          asked,
+          { timeout: 10_000 },
+        )
+        .then(() => true, () => false);
+      check(carries, `${label} (${where}): the WhatsApp request doesn't carry ${checkIn}, ${nights} nights`);
+    }
+    check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
+    await context.close();
+    return;
+  }
   const flow = page.locator("#book-online");
   const message = page.getByRole("form", { name: "Send the team a message" });
   const stayShown = async () => (await flow.getByRole("complementary", { name: "Your stay" }).textContent()) ?? "";
