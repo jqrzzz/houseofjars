@@ -11,12 +11,15 @@
   background: var(--frame-ground, var(--surface));
 }
 
+/* Square, like the house's boards. */
 .rect {
-  border-radius: var(--radius-m);
+  border-radius: var(--radius-l);
 }
 
+/* The arch: the outline of the house's mark, like a doorway (the clip path is in MarkSymbol). */
 .arch {
-  border-radius: 999px 999px var(--radius-s) var(--radius-s);
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
 }
 
 .image {

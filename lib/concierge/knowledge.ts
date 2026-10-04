@@ -63,7 +63,8 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
       "Bathrooms, breakfast and amenities",
       bullet([
         `Shared bathrooms with hot showers, ${bathrooms.cleaning.value.toLowerCase()}.`,
-        `Breakfast is included, in the café on the ground floor: ${joinList(breakfast.items.value.map((i) => i.toLowerCase()))}.`,
+        `Breakfast is included, served ${breakfast.hours.value} in the café on the ground floor: ${joinList(breakfast.items.value.map((i) => i.toLowerCase()))}. Other drinks with breakfast cost extra.`,
+        `Coffee and tea are served in the café ${building.cafeDrinks.value}; after breakfast, guests are welcome to relax or work there.`,
         `Amenities: ${amenities.map((a) => a.value.name).join("; ")}.`,
       ]),
     ],

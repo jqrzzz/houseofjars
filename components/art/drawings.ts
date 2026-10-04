@@ -1,7 +1,7 @@
 /**
  * The illustration set in public/art/: drawings that stand in for
  * photographs, in one style (ink lines that keep their weight, flat fills,
- * saffron accents). Each file carries its own night colours, because an
+ * jar-orange accents). Each file carries its own night colours, because an
  * image cannot read the page's CSS. Sizes are the files' own.
  */
 export const drawings = {

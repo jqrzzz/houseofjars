@@ -10,6 +10,7 @@ export const sources = {
   facebook: `Facebook page, seen ${SEEN_ON}`,
   reviews: `Guest reviews on Booking.com and Tripadvisor, seen ${SEEN_ON}`,
   oneReview: `A single listing or review, seen ${SEEN_ON}`,
+  signs: "The house's own signs and menus, photographed by the team on 2026-10-04 (photos/signs, photos/menus)",
   immigration: `Lao Department of Immigration website, seen ${SEEN_ON}`,
   unesco: "UNESCO World Heritage List (inscribed 2019)",
   laoLaw: "General practice for guesthouses in Laos",
@@ -19,7 +20,7 @@ export const sources = {
 /**
  * What a source can carry before the house confirms a fact from it (see
  * content/certainty.ts for how each kind may be presented):
- * - listing: the house's own public listings;
+ * - listing: the house's own public listings, signs and menus;
  * - official: an official body;
  * - guests: what many guest reviews say;
  * - one-source: seen in one place only;
@@ -35,6 +36,7 @@ export const sourceKinds: Readonly<Record<string, SourceKind>> = {
   [sources.tripadvisor]: "listing",
   [sources.hostelz]: "listing",
   [sources.facebook]: "listing",
+  [sources.signs]: "listing",
   [sources.reviews]: "guests",
   [sources.oneReview]: "one-source",
   [sources.immigration]: "official",

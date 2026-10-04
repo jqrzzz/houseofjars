@@ -9,7 +9,7 @@
   min-height: 3rem;
   padding: 0.7rem 1.35rem;
   border: 1px solid var(--button-border);
-  border-radius: 999px;
+  border-radius: var(--radius-s);
   background: var(--button-bg);
   color: var(--button-fg);
   font-family: var(--font-body-stack);
@@ -45,23 +45,24 @@
   transform: translateX(3px);
 }
 
-/* Saffron: the bow tie. Ink text keeps 7:1 contrast. */
+/* Jar orange, like the house's plates. Ink text: 5.7:1 (white would be 3.1:1). */
 .primary {
-  --button-bg: var(--saffron);
+  --button-bg: var(--jar-orange);
   --button-fg: var(--ink);
-  --button-border: var(--saffron);
+  --button-border: var(--jar-orange);
 }
 
+/* Lighter on hover, so the ink only gains contrast. */
 .primary:hover {
-  --button-bg: #f0a445;
-  --button-border: #f0a445;
+  --button-bg: color-mix(in oklab, var(--jar-orange) 85%, white);
+  --button-border: color-mix(in oklab, var(--jar-orange) 85%, white);
 }
 
 .secondary:hover {
   --button-border: var(--text);
 }
 
-/* On deep (brown) sections */
+/* On deep (teak) sections */
 .onDeep {
   --button-fg: var(--deep-text);
   --button-border: var(--deep-rule);

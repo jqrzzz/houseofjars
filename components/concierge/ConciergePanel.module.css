@@ -20,7 +20,7 @@
 }
 
 .panel::backdrop {
-  background: rgb(20 14 9 / 0.4);
+  background: rgb(32 21 12 / 0.4);
 }
 
 @keyframes sheet-in {
@@ -41,7 +41,7 @@
   }
 
   .panel::backdrop {
-    background: rgb(20 14 9 / 0.18);
+    background: rgb(32 21 12 / 0.18);
   }
 }
 
@@ -61,9 +61,9 @@
   width: 2.75rem;
   height: 2.75rem;
   overflow: hidden;
-  border-radius: 50%;
-  background: var(--brown-deep);
-  box-shadow: 0 0 0 2px var(--deep-accent);
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
+  background: var(--teak-night);
 }
 
 .avatar svg {
@@ -93,14 +93,14 @@
   height: 2.75rem;
   flex: none;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--deep-text);
   transition: background-color 160ms ease;
 }
 
 .iconButton:hover:not(:disabled) {
-  background: rgb(247 238 221 / 0.12);
+  background: rgb(251 246 238 / 0.12);
 }
 
 .iconButton:disabled {
@@ -156,7 +156,7 @@
 .user {
   align-self: flex-end;
   border-bottom-right-radius: 0.3rem;
-  background: color-mix(in srgb, var(--saffron) 24%, var(--page));
+  background: color-mix(in srgb, var(--jar-orange) 24%, var(--page));
 }
 
 .failed {
@@ -181,7 +181,8 @@
   height: auto;
   margin: var(--space-xs) 0 var(--space-2xs);
   padding: 0.6rem 0.9rem 0.3rem;
-  border-radius: 999px 999px var(--radius-s) var(--radius-s);
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
   background: var(--surface);
 }
 
@@ -195,7 +196,7 @@
 .starter {
   padding: 0.5rem 0.9rem;
   border: 1px solid var(--rule-strong);
-  border-radius: 999px;
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--text);
   font-size: var(--step--1);
@@ -233,13 +234,13 @@
   width: 1.2rem;
   height: 1.2rem;
   margin: 0.1rem 0 0;
-  accent-color: var(--saffron);
+  accent-color: var(--jar-orange);
 }
 
 .cardTitle {
   font-family: var(--font-display-stack);
   font-size: var(--step-0);
-  font-weight: 400;
+  font-weight: var(--display-weight);
   line-height: 1.3;
 }
 
@@ -305,7 +306,7 @@
   min-height: 2.75rem;
   padding: 0.5rem 1rem;
   border: 1px solid var(--field-border);
-  border-radius: 999px;
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--text);
   font-weight: 600;
@@ -319,9 +320,9 @@
   justify-self: start;
   min-height: 2.75rem;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--saffron);
-  border-radius: 999px;
-  background: var(--saffron);
+  border: 1px solid var(--jar-orange);
+  border-radius: var(--radius-s);
+  background: var(--jar-orange);
   color: var(--ink);
   font-weight: 600;
 }
@@ -380,8 +381,8 @@
   width: 2.75rem;
   height: 2.75rem;
   border: 0;
-  border-radius: 50%;
-  background: var(--saffron);
+  border-radius: var(--radius-s);
+  background: var(--jar-orange);
   color: var(--ink);
   transition: opacity 160ms ease;
 }

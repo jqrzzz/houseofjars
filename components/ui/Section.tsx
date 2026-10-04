@@ -1,6 +1,6 @@
 import { ViewTransition, type ReactNode } from "react";
 import { laoNumeral } from "@/content/text";
-import { JarMark } from "../brand/JarMark";
+import { Mark } from "../brand/Mark";
 import styles from "./Section.module.css";
 
 interface SectionProps {
@@ -46,7 +46,7 @@ export function Eyebrow({ children, number, morph, className }: EyebrowProps) {
           {laoNumeral(number)}
         </span>
       )}
-      <JarMark className={styles.eyebrowMark} />
+      <Mark className={styles.eyebrowMark} />
       <span>{children}</span>
     </p>
   );

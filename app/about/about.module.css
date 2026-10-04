@@ -1,8 +1,9 @@
 .note {
   margin: var(--space-s) 0 0;
   padding-left: var(--space-l);
-  border-left: 2px solid var(--saffron);
+  border-left: 2px solid var(--jar-orange);
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-2);
   line-height: 1.35;
 }

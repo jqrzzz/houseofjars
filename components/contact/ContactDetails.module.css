@@ -29,8 +29,7 @@
 .label {
   font-size: var(--step--2);
   font-weight: 650;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--text-soft);
 }
 
@@ -70,7 +69,7 @@
   min-height: 2.25rem;
   padding: 0.3rem 0.8rem;
   border: 1px solid var(--rule-strong);
-  border-radius: 999px;
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--text);
   font-size: var(--step--1);

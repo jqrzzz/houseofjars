@@ -2,7 +2,6 @@ import Link from "next/link";
 import { addressLines, identity, whatsappUrl } from "@/content/identity";
 import { bookingLabel } from "@/lib/booking/config";
 import { pages, primaryNav, teamSignInUrl } from "@/lib/site";
-import { TextileBand } from "../brand/TextileBand";
 import { Wordmark } from "../brand/Wordmark";
 import styles from "./SiteFooter.module.css";
 
@@ -18,7 +17,6 @@ export function SiteFooter() {
   const signIn = teamSignInUrl();
   return (
     <footer className={styles.footer}>
-      <TextileBand pattern="hooks" weave="view" />
       <div className={`container ${styles.grid}`}>
         <div className={styles.brand}>
           <Wordmark tone="deep" />

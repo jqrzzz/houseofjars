@@ -33,7 +33,7 @@
   color: var(--text-soft);
 }
 
-/* A numbered spot: a saffron dot on the drawing, with room around it for a finger. */
+/* A numbered spot: an orange plate on the drawing, with room around it for a finger. */
 .spot {
   position: absolute;
   translate: -50% -50%;
@@ -63,14 +63,14 @@
   place-items: center;
   width: 1.65rem;
   height: 1.65rem;
-  border: 2px solid var(--paper);
-  border-radius: 50%;
-  background: var(--saffron);
+  border: 2px solid var(--rice);
+  border-radius: var(--radius-s);
+  background: var(--jar-orange);
   color: var(--ink);
   font-size: 0.8125rem;
   font-weight: 700;
   font-variant-numeric: lining-nums;
-  box-shadow: 0 1px 4px rgb(35 23 16 / 0.3);
+  box-shadow: 0 1px 4px rgb(23 23 19 / 0.3);
   transition: transform 180ms var(--ease-out);
 }
 
@@ -80,8 +80,8 @@
 }
 
 .spot[open] .dot > span[aria-hidden] {
-  background: var(--brown);
-  color: var(--on-brown);
+  background: var(--teak-deep);
+  color: var(--on-teak);
 }
 
 .dot:focus-visible {
@@ -154,8 +154,8 @@
   place-items: center;
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 50%;
-  background: var(--saffron);
+  border-radius: var(--radius-s);
+  background: var(--jar-orange);
   color: var(--ink);
   font-size: 0.75rem;
   font-weight: 700;

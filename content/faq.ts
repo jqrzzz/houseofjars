@@ -92,7 +92,7 @@ export const faq: readonly FaqGroup[] = [
         id: "breakfast",
         question: "Is breakfast included?",
         answer: [
-          `Yes. Breakfast is included and served in the café on the ground floor: ${joinList(breakfast.items.value.map((item) => item.toLowerCase()))}.`,
+          `Yes. Breakfast is included and served ${breakfast.hours.value} in the café on the ground floor: ${joinList(breakfast.items.value.map((item) => item.toLowerCase()))}.`,
         ],
       },
       {

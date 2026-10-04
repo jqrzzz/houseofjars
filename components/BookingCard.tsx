@@ -2,7 +2,6 @@ import { identity } from "@/content/identity";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pages } from "@/lib/site";
 import styles from "./BookingCard.module.css";
-import { TextileBand } from "./brand/TextileBand";
 import { ShadowWriting } from "./shadow/ShadowWriting";
 import { Section } from "./ui/Section";
 import buttons from "./ui/button.module.css";
@@ -32,7 +31,6 @@ export function BookingCard() {
         {/* A booking form of its own: Shadow's dock steps aside while it is at the bottom of the screen. */}
         <div className={styles.ticket} data-hides-launcher="">
           <div className={styles.main}>
-            <TextileBand pattern="lozenge" weave="view" />
             <form
               className={styles.form}
               action={online ? pages.book.path : `${pages.book.path}#message`}

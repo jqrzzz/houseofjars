@@ -59,7 +59,7 @@
 }
 
 .link[aria-current="page"]::after {
-  background: var(--saffron);
+  background: var(--jar-orange);
   height: 2px;
 }
 
@@ -78,7 +78,7 @@
   place-items: center;
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: 999px;
+  border-radius: var(--radius-s);
   border: 1px solid var(--rule-strong);
   list-style: none;
   cursor: pointer;
@@ -124,6 +124,7 @@
   padding: var(--space-m) 0;
   border-bottom: 1px solid var(--rule);
   font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
   font-size: var(--step-2);
   color: var(--text);
   text-decoration: none;

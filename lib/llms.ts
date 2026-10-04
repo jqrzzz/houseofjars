@@ -199,6 +199,8 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
       `Bathroom cleaning: ${bathrooms.cleaning.value}`,
       `Breakfast: included, in the café on the ground floor`,
       `Breakfast has: ${joinList(breakfast.items.value.map((item) => item.toLowerCase()))}`,
+      `Breakfast is served: ${breakfast.hours.value}`,
+      `Coffee and tea in the café: ${building.cafeDrinks.value}`,
       ...amenities.map((amenity) => `Amenity: ${amenity.value.name}`),
     ]),
     "",

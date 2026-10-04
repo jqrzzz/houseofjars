@@ -1,6 +1,6 @@
 /*
  * The calendar: round day marks, the chosen check-in and check-out in
- * saffron, the nights between on a soft band. Every day is a 44px target.
+ * orange, the nights between on a soft band. Every day is a 44px target.
  */
 .picker {
   position: relative;
@@ -23,7 +23,7 @@
   width: 2.75rem;
   height: 2.75rem;
   border: 1px solid var(--field-border);
-  border-radius: 50%;
+  border-radius: var(--radius-s);
   background: var(--page);
   color: var(--text);
 }
@@ -87,7 +87,7 @@
   height: 2.75rem;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--text);
   font-size: 0.95rem;
@@ -97,13 +97,13 @@
 }
 
 .day:hover {
-  background: color-mix(in srgb, var(--saffron) 22%, transparent);
+  background: color-mix(in srgb, var(--jar-orange) 22%, transparent);
 }
 
 .day:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
-  border-radius: 50%;
+  border-radius: var(--radius-s);
 }
 
 /* Today, at the house. */
@@ -131,23 +131,23 @@
 
 /* The nights of the stay on one band; it starts and ends at the middle of the chosen days. */
 .cell[data-role="in_stay"] {
-  background: color-mix(in srgb, var(--saffron) 20%, transparent);
+  background: color-mix(in srgb, var(--jar-orange) 20%, transparent);
 }
 
 .cell[data-role="check_in"][data-span] {
-  background: linear-gradient(to right, transparent 50%, color-mix(in srgb, var(--saffron) 20%, transparent) 50%);
+  background: linear-gradient(to right, transparent 50%, color-mix(in srgb, var(--jar-orange) 20%, transparent) 50%);
 }
 
 .cell[data-role="check_out"] {
-  background: linear-gradient(to left, transparent 50%, color-mix(in srgb, var(--saffron) 20%, transparent) 50%);
+  background: linear-gradient(to left, transparent 50%, color-mix(in srgb, var(--jar-orange) 20%, transparent) 50%);
 }
 
 .cell[data-role="check_in"] .day,
 .cell[data-role="check_out"] .day {
-  background: var(--saffron);
+  background: var(--jar-orange);
   color: var(--ink);
   font-weight: 700;
   opacity: 1;
-  /* Saffron on the ticket's cream is only about 2:1, so the chosen days get a dark edge (WCAG 1.4.11). */
+  /* Jar orange on rice is 2.9:1, under 3:1, so the chosen days get a dark edge (WCAG 1.4.11). */
   box-shadow: inset 0 0 0 2px var(--accent-text);
 }

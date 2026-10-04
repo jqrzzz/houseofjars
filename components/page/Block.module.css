@@ -29,7 +29,7 @@
 .title {
   font-size: var(--step-3);
   line-height: 1.1;
-  max-width: 9.63em; /* 16ch in Young Serif, in em so it holds while the font loads */
+  max-width: 9.63em; /* about 15ch of Figtree bold, in em so it holds while the font loads */
 }
 
 .aside {
@@ -85,17 +85,17 @@
   }
 }
 
-/* List markers: the house's jar, tiny, in saffron. */
+/* List markers: the house's arch, tiny, in jar orange. */
 .ticks li::before {
   content: "";
   position: absolute;
   left: 0.05rem;
   top: 0.42em;
-  width: 0.8rem;
-  height: 0.8rem;
-  background: var(--saffron);
-  -webkit-mask: url("/brand/jar.svg") center / contain no-repeat;
-  mask: url("/brand/jar.svg") center / contain no-repeat;
+  width: 0.55rem;
+  height: 0.82rem;
+  background: var(--jar-orange);
+  -webkit-mask: url("/brand/mark.svg") center / contain no-repeat;
+  mask: url("/brand/mark.svg") center / contain no-repeat;
 }
 
 .numbered {
@@ -117,7 +117,7 @@
   place-items: center;
   width: 1.4rem;
   height: 1.4rem;
-  border-radius: 50%;
+  border-radius: var(--radius-s);
   color: var(--ink);
   font-size: 0.75rem;
   font-weight: 700;

@@ -26,7 +26,7 @@ describe("house knowledge", () => {
   it("lists what is not published, so Shadow says he doesn't know", () => {
     expect(knowledge).toContain("female-only dorm");
     expect(knowledge).toContain("private rooms");
-    expect(knowledge).toContain("breakfast serving times");
+    expect(knowledge).toContain("late check-out");
   });
 
   it("writes site links as absolute URLs and never leaks placeholders", () => {

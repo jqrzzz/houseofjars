@@ -6,4 +6,4 @@ The source files of the house's design system. The full brand book (rules, voice
 - `icons/`: the house's icon set, Phosphor Fill (MIT licence, `icons/LICENSE-phosphor.txt`), in ink on a 256 grid.
 - `tokens.json`: colours for Day and Evening (jar orange #e76e43 from the logo, teak and lamplight sampled from the photos), type (Figtree with Noto Sans Lao and Noto Sans SC), spacing, radii and shadows, each with its use and contrast.
 
-Nothing here is used by the website yet: the redesign applies it in a later change.
+The website applies it: the tokens are in `app/globals.css`, the mark in `components/brand/mark-shape.ts` (checked against `logos/` by `components/brand/brand-assets.test.ts`), the icons in `components/ui/icons.tsx`, and the fonts in `app/fonts.ts`.

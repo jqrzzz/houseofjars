@@ -47,7 +47,6 @@ import { addDays } from "@/lib/dates";
 import { inquiryPrefill } from "@/lib/inquiry/prefill";
 import { replyChannel } from "@/lib/inquiry/reply";
 import { uuid } from "@/lib/uuid";
-import { TextileBand } from "../brand/TextileBand";
 import { entryFromBookingForm } from "./FollowLinks";
 import {
   Closed,
@@ -208,7 +207,6 @@ function Frame({
       <div className="container">
         <div className={styles.ticket}>
           <div className={styles.main}>
-            <TextileBand pattern="lozenge" weave="view" />
             <div className={styles.body}>{children}</div>
           </div>
           {stub}

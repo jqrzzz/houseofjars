@@ -27,19 +27,19 @@
   --text-soft: var(--deep-text-soft);
   --accent-text: var(--deep-accent);
   --rule: var(--deep-rule);
-  --rule-strong: rgb(247 238 221 / 0.34);
-  --focus: var(--saffron-on-brown);
+  --rule-strong: rgb(251 246 238 / 0.34);
+  --focus: var(--lamplight);
 }
 
+/* Sentence case, like the house's signs: never all caps. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
   margin-bottom: var(--space-l);
-  font-size: var(--step--2);
+  font-size: 0.875rem;
   font-weight: 650;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--accent-text);
 }
 
@@ -59,8 +59,8 @@
 }
 
 .eyebrowMark {
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 0.7rem;
+  height: 1.05rem;
   flex: none;
   color: currentColor;
   opacity: 0.9;

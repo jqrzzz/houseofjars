@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Crumb } from "@/lib/pages";
-import { JarMark } from "../brand/JarMark";
+import { Mark } from "../brand/Mark";
 import eyebrow from "../ui/Section.module.css";
 import styles from "./Breadcrumbs.module.css";
 
@@ -13,7 +13,7 @@ export function Breadcrumbs({ trail }: { trail: readonly Crumb[] }) {
   const shown = trail.filter((crumb) => crumb.path !== "/");
   return (
     <nav aria-label="Breadcrumb" className={`${eyebrow.eyebrow} ${styles.trail}`}>
-      <JarMark className={eyebrow.eyebrowMark} />
+      <Mark className={eyebrow.eyebrowMark} />
       <ol role="list" className={styles.list}>
         {shown.map((crumb, index) => (
           <li key={crumb.path} className={styles.crumb}>
