@@ -1,6 +1,6 @@
 # House of Jars
 
-The website of House of Jars Hostel, a calm dorm hostel in Ban Anou, central Vientiane, owned and run by Nang. It will live at [thehouseofjars.com](https://thehouseofjars.com).
+The website of House of Jars Hostel, a calm dorm hostel in Ban Anou, central Vientiane, owned and run by Nang. It lives at [www.houseofjars.la](https://www.houseofjars.la).
 
 Every page is static HTML. Small APIs sit behind it: **Shadow**, the house's AI concierge (Claude); the **message form**, which forwards messages to Shadow Check-in, the system the house uses to run the front desk; and **online booking**, which shows free beds and sends booking requests to Shadow Check-in for the team to confirm (the guest pays at the house).
 
@@ -51,7 +51,7 @@ All optional. See `.env.example`.
 
 | Variable | Used for |
 | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | Canonical URLs, sitemap, Open Graph. Defaults to `https://thehouseofjars.com`. |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URLs, sitemap, Open Graph. Defaults to the house's domain, `https://www.houseofjars.la` (the bare `houseofjars.la` redirects there). |
 | `ANTHROPIC_API_KEY` | Shadow, the concierge. Without it `/api/concierge` answers `503 {"error":"not_configured"}` and the chat window shows the team's WhatsApp and email. |
 | `CONCIERGE_MODEL` | The Claude model for Shadow. Defaults to `claude-opus-5`. |
 | `CONCIERGE_DAILY_TOKEN_BUDGET` | Shadow's daily spending ceiling per server instance, in input-token equivalents. Defaults to 1,000,000 (about US$5 a day at Claude Opus 5 list prices); `0` keeps Shadow resting. |

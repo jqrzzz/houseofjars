@@ -9,7 +9,7 @@
  *
  * The deployed site must already serve the same key at /indexnow-key.txt
  * (INDEXNOW_KEY in its environment); the script checks that first.
- * NEXT_PUBLIC_SITE_URL sets the site (default https://thehouseofjars.com).
+ * NEXT_PUBLIC_SITE_URL sets the site (default https://www.houseofjars.la).
  */
 import { buildSubmission, INDEXNOW_ENDPOINT, indexNowKey, keyIsLive, submit } from "../lib/indexnow";
 import { allPages } from "../lib/pages";
