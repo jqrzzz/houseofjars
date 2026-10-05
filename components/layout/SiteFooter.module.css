@@ -120,8 +120,28 @@
   }
 }
 
-.theme {
-  margin-top: var(--space-l);
+/* Theme and Motion: a row of their own, side by side where they fit. */
+.prefs {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-l) var(--space-xl);
+}
+
+/*
+ * Wide screens: the two link columns run down both rows, and the settings sit
+ * under the brand, the address and the contacts, so no column ends in a hole.
+ */
+@media (min-width: 64rem) {
+  .tall {
+    grid-row: span 2;
+  }
+
+  .prefs {
+    grid-column: 1 / span 3;
+    grid-row: 2;
+    align-self: end;
+  }
 }
 
 /* On the teak band: the share button takes the band's soft text. */

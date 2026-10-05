@@ -79,6 +79,10 @@
   transition: color 160ms ease;
 }
 
+/*
+ * Underlines draw in like thread: from the left as the pointer arrives, and
+ * drawn out to the right as it leaves. The page you're on keeps a 2 px thread.
+ */
 .link::after {
   content: "";
   position: absolute;
@@ -88,8 +92,7 @@
   height: 1px;
   background: currentColor;
   transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 220ms var(--ease-out);
+  transform-origin: right;
 }
 
 .link:hover,
@@ -100,11 +103,18 @@
 .link:hover::after,
 .link[aria-current="page"]::after {
   transform: scaleX(1);
+  transform-origin: left;
 }
 
 .link[aria-current="page"]::after {
-  background: var(--jar-orange);
+  background: var(--thread);
   height: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .link::after {
+    transition: transform var(--dur-ui) var(--ease-out);
+  }
 }
 
 .actions {
@@ -128,7 +138,11 @@
   }
 }
 
-.mobileTheme {
+/* Theme and Motion side by side where they fit, one above the other on narrow phones. */
+.mobilePrefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-l) var(--space-xl);
   margin-top: var(--space-l);
 }
 
@@ -142,6 +156,7 @@
   list-style: none;
   cursor: pointer;
   color: var(--text);
+  transition: background-color var(--dur-hover) ease;
 }
 
 .menuButton::-webkit-details-marker {
@@ -152,14 +167,20 @@
   background: var(--surface);
 }
 
-/* The button shows a close icon while the menu is open. */
-.menuButton svg[data-icon="close"],
-.mobileMenu[open] .menuButton svg[data-icon="open"] {
-  display: none;
+/* Two bars that cross into a close mark while the menu is open. */
+.menuButton [data-bar] {
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
-.mobileMenu[open] .menuButton svg[data-icon="close"] {
-  display: block;
+.mobileMenu[open] .menuButton [data-bar="top"] {
+  translate: 0 4px;
+  rotate: 45deg;
+}
+
+.mobileMenu[open] .menuButton [data-bar="bottom"] {
+  translate: 0 -4px;
+  rotate: -45deg;
 }
 
 .mobilePanel {
@@ -167,11 +188,60 @@
   left: 0;
   right: 0;
   top: 100%;
+  overflow: clip;
   /* Solid, not glass: the header's view-transition name makes it a backdrop root, so a blur here couldn't reach the page. */
   background: var(--page);
   border-bottom: 1px solid var(--rule);
   box-shadow: var(--shadow-soft);
   padding: var(--space-s) var(--gutter) var(--space-xl);
+  transform-origin: top center;
+  interpolate-size: allow-keywords;
+}
+
+/*
+ * The menu unfolds like a sheet of paper hinged under the header: it grows
+ * down from the fold, tilting flat as it comes, and folds back up on the way
+ * out (the details' content stays rendered until the fold is closed).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .mobileMenu::details-content {
+    transition: content-visibility var(--dur-ui) allow-discrete;
+  }
+
+  :global(:root:not([data-motion="still"])) .mobilePanel {
+    transition:
+      height var(--dur-ui) var(--ease-in-out),
+      padding-block var(--dur-ui) var(--ease-in-out),
+      transform var(--dur-ui) var(--ease-in-out);
+  }
+
+  :global(:root:not([data-motion="still"])) .mobileMenu[open] .mobilePanel {
+    transition:
+      height var(--dur-hinge) var(--ease-out),
+      padding-block var(--dur-hinge) var(--ease-out),
+      transform var(--dur-hinge) var(--ease-out);
+  }
+
+  /* Paper is opaque: the sheet never fades, it only unfolds. */
+  :global(:root:not([data-motion="still"])) .mobileMenu:not([open]) .mobilePanel {
+    height: 0;
+    padding-block: 0;
+    transform: perspective(900px) rotateX(-10deg);
+  }
+
+  @starting-style {
+    :global(:root:not([data-motion="still"])) .mobileMenu[open] .mobilePanel {
+      height: 0;
+      padding-block: 0;
+      transform: perspective(900px) rotateX(-10deg);
+    }
+  }
+
+  :global(:root:not([data-motion="still"])) .menuButton [data-bar] {
+    transition:
+      translate var(--dur-ui) var(--ease-out),
+      rotate var(--dur-ui) var(--ease-out);
+  }
 }
 
 .mobileLinks {

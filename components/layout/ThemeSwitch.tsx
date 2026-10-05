@@ -1,16 +1,39 @@
 "use client";
 
 import { useId } from "react";
-import type { ThemeChoice } from "@/lib/theme";
+import type { ThemeChoice } from "./theme-keys";
 import { AutoIcon, MoonIcon, SunIcon } from "../ui/icons";
 import { setTheme, useBrowserBarSync, useResolvedTheme, useThemeChoice } from "./theme-store";
 import styles from "./ThemeSwitch.module.css";
 
 /**
- * The header's switch between Day and Evening. It shows the theme it would
- * switch to; which icon shows before the page knows the theme is decided by
- * CSS from the same data-theme and device setting, so it never flickers.
+ * The house lamp on the header's switch: the café's pendant, drawn small for
+ * this site. A squat shade with rounded shoulders and a flat bottom, under a
+ * teak cap, on a cord from the top of the button. By Day it hangs unlit, a stone shade; by Evening it
+ * glows. CSS reads the same data-theme and device setting as the page, so the
+ * lamp is right from the first frame and never flickers.
  */
+function HouseLampIcon() {
+  return (
+    <svg className={styles.lamp} viewBox="0 0 24 42" aria-hidden="true" focusable="false">
+      <g className={styles.hang}>
+        <g className={styles.halo}>
+          <circle cx="12" cy="28" r="15" />
+          <circle cx="12" cy="28" r="12" />
+          <circle cx="12" cy="28" r="9" />
+          <circle cx="12" cy="28" r="6" />
+        </g>
+        <path className={styles.cord} d="M12-4V15.4" />
+        <ellipse className={styles.bulb} cx="12" cy="27.5" rx="3.6" ry="1.9" />
+        <rect className={styles.cap} x="9.7" y="14.6" width="4.6" height="2.8" rx="0.7" />
+        <path className={styles.shade} d="M1.9 27.3C1.9 21.6 6.3 17 12 17s10.1 4.6 10.1 10.3Z" />
+        <path className={styles.rim} d="M2.5 25.4h19" />
+      </g>
+    </svg>
+  );
+}
+
+/** The header's switch between Day and Evening: the lamp is lit by Evening; a press lights it, or puts it out. */
 export function ThemeToggle({ className }: { className?: string }) {
   useBrowserBarSync();
   const resolved = useResolvedTheme();
@@ -23,8 +46,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       title={toEvening ? "Evening theme" : "Day theme"}
       onClick={() => setTheme(toEvening ? "dark" : "light")}
     >
-      <MoonIcon className={styles.moon} />
-      <SunIcon className={styles.sun} />
+      <HouseLampIcon />
     </button>
   );
 }

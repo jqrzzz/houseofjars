@@ -4,6 +4,7 @@ import { bookingLabel } from "@/lib/booking/config";
 import { pages, primaryNav, teamSignInUrl } from "@/lib/site";
 import { Wordmark } from "../brand/Wordmark";
 import { WovenBand } from "../brand/WovenBand";
+import { MotionChoice } from "../motion/MotionChoice";
 import { ShareButton } from "../ui/ShareButton";
 import { ThemeChoices } from "./ThemeSwitch";
 import styles from "./SiteFooter.module.css";
@@ -27,7 +28,6 @@ export function SiteFooter() {
           <p className={styles.tagline}>A calm house in the heart of Vientiane.</p>
           <p className={styles.team}>A team on site, day and night.</p>
           <ShareButton path="/" label="Share House of Jars" className={styles.share} />
-          <ThemeChoices className={styles.theme} />
         </div>
 
         <div className={`${styles.column} ${styles.wide}`}>
@@ -60,7 +60,7 @@ export function SiteFooter() {
           </ul>
         </div>
 
-        <nav aria-label="Footer" className={styles.column}>
+        <nav aria-label="Footer" className={`${styles.column} ${styles.tall}`}>
           <h2 className={styles.heading}>The house</h2>
           <ul role="list" className={styles.list}>
             {primaryNav.map((page) => (
@@ -80,7 +80,7 @@ export function SiteFooter() {
           </ul>
         </nav>
 
-        <div className={styles.column}>
+        <div className={`${styles.column} ${styles.tall}`}>
           <h2 className={styles.heading}>Elsewhere</h2>
           <ul role="list" className={styles.list}>
             {elsewhere.map((link) => (
@@ -92,6 +92,15 @@ export function SiteFooter() {
               </li>
             ))}
           </ul>
+        </div>
+
+        {/*
+          The site's two settings, side by side where they fit: last in reading order, under the first columns on
+          wide screens. Shadow's dock steps aside while they are near the bottom of a phone's screen, so they can be tapped.
+        */}
+        <div className={styles.prefs} data-hides-launcher="">
+          <ThemeChoices />
+          <MotionChoice />
         </div>
       </div>
       <div className="container">

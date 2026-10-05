@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
-import { THEME_KEY, themeColor, type ThemeChoice } from "@/lib/theme";
+import { motionAllowed } from "@/lib/motion/prefs";
+import { THEME_KEY, themeColor, type ThemeChoice } from "./theme-keys";
 
 /*
  * The guest's theme lives on <html data-theme> (set before paint by the boot
@@ -57,7 +58,7 @@ function apply(choice: ThemeChoice) {
   window.dispatchEvent(new Event(CHANGE));
 }
 
-/** Sets the theme and remembers it in this browser; a soft cross-fade where motion is welcome. */
+/** Sets the theme and remembers it in this browser; a soft cross-fade where motion is welcome (not under reduced motion or Still). */
 export function setTheme(choice: ThemeChoice) {
   try {
     if (choice === "system") localStorage.removeItem(THEME_KEY);
@@ -65,8 +66,7 @@ export function setTheme(choice: ThemeChoice) {
   } catch {
     // Storage blocked: the choice holds for this page only.
   }
-  const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!calm && typeof document.startViewTransition === "function") {
+  if (motionAllowed() && typeof document.startViewTransition === "function") {
     document.documentElement.dataset.themeFade = "";
     const fade = document.startViewTransition(() => apply(choice));
     void fade.finished.finally(() => delete document.documentElement.dataset.themeFade);

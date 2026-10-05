@@ -1,0 +1,36 @@
+/*
+ * Motion: Full | Still (MotionChoice.tsx). The plates themselves are the theme
+ * choice's (components/layout/ThemeSwitch.module.css), so the two read as one
+ * set. Here: the little thread in each plate, slack for Full and taut for Still.
+ */
+.icon {
+  overflow: visible;
+}
+
+.icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.icon circle {
+  fill: currentColor;
+}
+
+/* Pointing at Full shows what it means: the thread ripples along once. */
+.wave {
+  stroke-dasharray: 3.2 1.6;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .option:hover .wave {
+    animation: thread-run 1200ms var(--ease-sway);
+  }
+}
+
+@keyframes thread-run {
+  to {
+    stroke-dashoffset: -9.6;
+  }
+}
