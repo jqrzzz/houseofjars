@@ -11,8 +11,10 @@ import {
   type BookingConfirmation,
   type BookingProblem,
   type BookingRequest,
+  type CancelTerms,
   type Currency,
   type FieldIssue,
+  type PaymentOffer,
   type Price,
   type Quote,
   type RoomKind,
@@ -123,6 +125,37 @@ export async function postBooking(body: BookingRequest): Promise<Outcome<{ confi
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
+    });
+    learnClock(response);
+    if (response.ok) return { ok: true, confirmation: (await response.json()) as BookingConfirmation };
+    return await problemFrom(response);
+  } catch {
+    return failure("unavailable");
+  }
+}
+
+/**
+ * GET /api/booking/{id}: where a booking paid online stands. Never throws;
+ * null when it can't be read just now (the page asks again).
+ */
+export async function fetchBookingStatus(id: string): Promise<BookingConfirmation | null> {
+  try {
+    const response = await fetch(`/api/booking/${encodeURIComponent(id)}`, { cache: "no-store" });
+    learnClock(response);
+    return response.ok ? ((await response.json()) as BookingConfirmation) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** POST /api/booking/{id}/payment: a new payment while the beds are still free ("taken" when they went). */
+export async function postPayAgain(id: string): Promise<Outcome<{ confirmation: BookingConfirmation }>> {
+  try {
+    const response = await fetch(`/api/booking/${encodeURIComponent(id)}/payment`, {
+      method: "POST",
+      // JSON, as every POST to the website's API must be (lib/http.ts rejectCrossSite).
+      headers: { "content-type": "application/json" },
+      body: "{}",
     });
     learnClock(response);
     if (response.ok) return { ok: true, confirmation: (await response.json()) as BookingConfirmation };
@@ -282,11 +315,39 @@ export function quoteText(quote: Quote): string | null {
   return quote.total !== null && quote.currency ? formatMoney(quote.total, quote.currency) : null;
 }
 
+/** Whether these beds can be paid for online now: the house takes payment online and they have an amount to pay. */
+export function canPayOnline(payment: PaymentOffer | null, room: Pick<RoomType, "pay_now">): payment is PaymentOffer {
+  return payment !== null && room.pay_now !== null;
+}
+
+/** "LAK 360,000", or for a deposit "LAK 108,000 (30% deposit)". */
+export function payNowText(payment: PaymentOffer, room: Pick<RoomType, "pay_now" | "price">): string | null {
+  if (room.pay_now === null || !room.price) return null;
+  const amount = formatMoney(room.pay_now, room.price.currency);
+  return payment.charge === "deposit" && payment.deposit_percent ? `${amount} (${payment.deposit_percent}% deposit)` : amount;
+}
+
+/** The cancellation terms, as the guest reads them before paying. */
+export function cancelText(terms: CancelTerms | null): string {
+  const days = terms?.cancel_days ?? null;
+  if (days === null) return "No refund once paid.";
+  if (days === 0) return "Free cancellation until the day you arrive; no refund after that.";
+  return `Free cancellation up to ${plural(days, "day")} before you arrive; no refund after that.`;
+}
+
 /**
  * The request body, in the contract's order; blank optional fields are null.
  * `quote` is the total the review shows: Shadow books nothing at another.
+ * `payOnline`: the guest pays now (the website adds where the bank sends them back).
  */
-export function bookingBody(clientRef: string, stay: Stay, roomTypeId: string, details: GuestDetails, quote: Quote): BookingRequest {
+export function bookingBody(
+  clientRef: string,
+  stay: Stay,
+  roomTypeId: string,
+  details: GuestDetails,
+  quote: Quote,
+  payOnline = false,
+): BookingRequest {
   const blank = (value: string) => value.trim() || null;
   return {
     client_ref: clientRef,
@@ -303,6 +364,7 @@ export function bookingBody(clientRef: string, stay: Stay, roomTypeId: string, d
     consent: true,
     quoted_total: quote.total,
     quoted_currency: quote.currency,
+    ...(payOnline ? { pay_online: true } : {}),
   };
 }
 

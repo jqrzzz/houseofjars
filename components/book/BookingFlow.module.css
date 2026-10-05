@@ -864,3 +864,49 @@
     display: none;
   }
 }
+
+/* Paying now or at the house (when the house takes payment online): two cards, as the rooms. */
+.payChoice {
+  display: grid;
+  gap: var(--space-s);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.payOption {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.2rem var(--space-m);
+  padding: var(--space-m);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-m);
+  background: var(--page);
+  cursor: pointer;
+}
+
+.payOption[data-chosen] {
+  border-color: var(--jar-orange);
+  box-shadow: 0 0 0 1px var(--jar-orange);
+}
+
+.payOption:has(:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.payOption input {
+  grid-row: span 2;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--jar-orange);
+}
+
+.payOption input:focus-visible {
+  outline: none;
+}
+
+.payOption span:first-of-type {
+  font-weight: 650;
+}

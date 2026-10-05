@@ -3,6 +3,7 @@ import { addDays, houseToday, isIsoDate, nightsBetween } from "../dates";
 import { MAX_DAYS_AHEAD } from "../inquiry/dates";
 import { CONTACT_METHODS } from "../inquiry/reply";
 import { toFieldIssues } from "../inquiry/schema";
+import { testPaymentsAllowed } from "./config";
 import { guestText } from "./text";
 import {
   ARRIVAL_TIME,
@@ -11,12 +12,14 @@ import {
   MAX_MESSAGE,
   MAX_NAME,
   MAX_STAY_NIGHTS,
+  PAYMENT_STATES,
   PHONE_LENGTH,
   ROOM_KINDS,
   type Availability,
   type BookingConfirmation,
   type BookingRequest,
   type FieldIssue,
+  type PaymentOffer,
   type Quote,
   type RoomKind,
 } from "./types";
@@ -104,6 +107,24 @@ const roomTypeSchema = z.object({
   min_free: count,
   bookable: z.boolean(),
   price: priceSchema.nullable(),
+  // Paid online (5 Oct): a Shadow from before sends neither.
+  terms: z
+    .object({ cancel_days: z.number().int().min(0).nullable() })
+    .nullish()
+    .transform((terms) => terms ?? null),
+  pay_now: z
+    .number()
+    .positive()
+    .nullish()
+    .transform((amount) => amount ?? null),
+});
+
+const paymentOfferSchema = z.object({
+  online: z.enum(["optional", "required"]),
+  charge: z.enum(["full", "deposit"]),
+  deposit_percent: z.number().int().min(1).max(99).nullable(),
+  pay_minutes: z.number().int().positive(),
+  test: z.boolean(),
 });
 
 const availabilitySchema = z.object({
@@ -126,14 +147,22 @@ const availabilitySchema = z.object({
     window_days: z.number().int().nonnegative(),
   }),
   room_types: z.array(roomTypeSchema),
+  payment: paymentOfferSchema.nullish().transform((payment) => payment ?? null),
 });
 
-/** Shadow's availability for exactly this query, without the parts the page doesn't use; null if it doesn't fit the contract. */
-export function readAvailability(body: unknown, query: AvailabilityQuery): Availability | null {
+/**
+ * Shadow's availability for exactly this query, without the parts the page
+ * doesn't use; null if it doesn't fit the contract. Payments to Shadow's test
+ * bank are offered only where `testPayments` allows (lib/booking/config.ts):
+ * elsewhere the guest pays at the house.
+ */
+export function readAvailability(body: unknown, query: AvailabilityQuery, testPayments = testPaymentsAllowed()): Availability | null {
   const parsed = availabilitySchema.safeParse(body);
   if (!parsed.success) return null;
-  const { check_in, check_out, nights, guests, mode, hold_hours, limits, room_types } = parsed.data;
-  const availability: Availability = { check_in, check_out, nights, guests, mode, hold_hours, limits, room_types };
+  const { check_in, check_out, nights, guests, mode, hold_hours, limits } = parsed.data;
+  const payment: PaymentOffer | null = parsed.data.payment && (testPayments || !parsed.data.payment.test) ? parsed.data.payment : null;
+  const room_types = parsed.data.room_types.map((room) => (payment ? room : { ...room, pay_now: null }));
+  const availability: Availability = { check_in, check_out, nights, guests, mode, hold_hours, limits, room_types, payment };
   const echoed =
     availability.check_in === query.check_in &&
     availability.check_out === query.check_out &&
@@ -166,6 +195,8 @@ const bookingRequestSchema = z
     // The total the guest saw; a page from before the price protection sends neither.
     quoted_total: z.number(guestText.checkForm).nonnegative(guestText.checkForm).nullable().optional(),
     quoted_currency: z.enum(CURRENCIES, guestText.checkForm).nullable().optional(),
+    // Pay now (5 Oct); the website adds the page the bank sends the guest back to.
+    pay_online: z.boolean(guestText.checkForm).optional(),
   })
   .superRefine((value, ctx) => {
     if (!value.email && !value.phone) {
@@ -208,6 +239,7 @@ export function parseBookingRequest(
       message: v.message,
       consent: true,
       ...(v.quoted_total === undefined ? {} : { quoted_total: v.quoted_total, quoted_currency: v.quoted_currency ?? null }),
+      ...(v.pay_online ? { pay_online: true } : {}),
     },
   };
 }
@@ -223,14 +255,41 @@ const bookingCreatedSchema = z.object({
     .nullable(),
   total: z.number().nonnegative().nullable(),
   currency: z.enum(CURRENCIES).nullable(),
+  payment: z
+    .object({
+      status: z.enum(PAYMENT_STATES),
+      amount: z.number().nonnegative(),
+      currency: z.enum(CURRENCIES),
+      url: z
+        .string()
+        .regex(/^https?:\/\/\S+$/)
+        .nullable(),
+      expires_at: z.string().refine((value) => !Number.isNaN(Date.parse(value))),
+      test: z.boolean(),
+    })
+    .nullish(),
 });
 
-/** What the guest's browser needs from Shadow's 201: everything but Shadow's own id. */
+/**
+ * What the guest's browser needs from Shadow's 201 (or a booking's state):
+ * everything but Shadow's own id, which only a booking paid online carries
+ * (to ask where it stands and to pay again).
+ */
 export function readConfirmation(body: unknown): BookingConfirmation | null {
   const parsed = bookingCreatedSchema.safeParse(body);
   if (!parsed.success) return null;
-  const { reference, status, hold_expires_at, total, currency } = parsed.data;
-  return { reference, status, hold_expires_at, total, currency };
+  const { id, reference, status, hold_expires_at, total, currency, payment } = parsed.data;
+  const { status: state, amount, currency: paidIn, url, expires_at, test } = payment ?? {};
+  return {
+    reference,
+    status,
+    hold_expires_at,
+    total,
+    currency,
+    ...(payment && state && paidIn && expires_at && amount !== undefined && url !== undefined && test !== undefined
+      ? { id, payment: { status: state, amount, currency: paidIn, url, expires_at, test } }
+      : {}),
+  };
 }
 
 const priceChangedSchema = z
@@ -278,6 +337,8 @@ const refusedField: Readonly<Record<string, string>> = {
   arrival_time: guestText.arrival,
   message: guestText.message,
   consent: guestText.consent,
+  pay_online: guestText.payRefused,
+  return_url: guestText.payRefused,
 };
 
 /** The issues of Shadow's 400 the website can place on a field of the guest's booking, in the guest's words. */

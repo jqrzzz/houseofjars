@@ -1,6 +1,6 @@
 # Booking API (website ↔ Shadow Check-in)
 
-Online booking on `/book` shows the free beds for a guest's dates and sends their booking request to Shadow Check-in, where the team confirms it. The guest pays at the house: there is no payment on this website. The website calls Shadow only from its server, with the property's key; both sides must match the contract below exactly (Shadow Check-in keeps the same contract in its own `docs/BOOKING_API.md`).
+Online booking on `/book` shows the free beds for a guest's dates and sends their booking request to Shadow Check-in, where the team confirms it. The guest pays at the house, or, when the house takes payment online (5 October; see [Paying online](#paying-online)), on the bank's page when they book; card details never touch this website. The website calls Shadow only from its server, with the property's key; both sides must match the contract below exactly (Shadow Check-in keeps the same contract in its own `docs/BOOKING_API.md`).
 
 ## Switching it on
 
@@ -8,6 +8,7 @@ Online booking on `/book` shows the free beds for a guest's dates and sends thei
 | --- | --- |
 | `SHADOW_API_URL` and `SHADOW_INQUIRY_KEY` both set | Online booking is on. The key is the same property inbound key as for inquiries ([INQUIRY_API.md](INQUIRY_API.md)). |
 | Either missing | `/book` is the message form plus Booking.com and Agoda, as before; `/api/availability` and `/api/booking` answer `503 {"error":"not_configured"}`. |
+| `BOOKING_TEST_PAYMENTS=on` | The form also offers payments that go to Shadow's **test bank** (no money moves). For a preview or a demo only: leave it unset on the live site, where a test payment would book a stay nobody paid for. Payments to the house's own bank need nothing here. |
 
 The pages that change (`/book`, the booking card on other pages, `/privacy`, `/llms.txt`, `/llms-full.txt`) are static, so they read the two variables **when the site is built**: set them, then redeploy. The API routes read them on every request; Shadow, the concierge, reads the switch once per server instance, so his instructions and tools stay the same (his prompt cache depends on it).
 
@@ -90,6 +91,10 @@ At least one of `email` and `phone` is required. Shadow computes the price; the 
 
 A Shadow Check-in from before these refuses the two quote keys as unknown (its body is strict): a `400` whose only issue is about the body as a whole (Shadow's schema writes the body's root as the field `body`: `Unrecognized keys: "quoted_total", "quoted_currency"`). Then, and only then, the website sends the same request again without them (nothing was stored), and logs `[booking] Shadow refused the price quote (400)…`; the guest's confirmation then says if the total differs from the one shown. Shadow never answers `price_changed` then, and holds as before. An issue on `quoted_total` or `quoted_currency`, or on any field of the booking, is never resent without the quote (`refusedOnlyTheBody` in `lib/booking/contract.ts`): the guest sees the issue, or the general "Please check your booking and try again."
 
+### Paying online (5 October, Shadow's migrations/073)
+
+Shadow's availability may carry `"payment": { "online": "optional" | "required", "charge": "full" | "deposit", "deposit_percent", "pay_minutes", "test" }` (`null` or missing: pay at the house), and each room `"terms": { "cancel_days": n | null }` (money back when cancelled at least n days before arrival; `null`: no refund once paid) and `"pay_now"` (what is paid online, in the price's units). The booking body may carry `"pay_online": true`; the website then adds `"return_url": "<site>/book?paid=1"` itself (the browser cannot send one). Shadow's `201` then carries its `id` and `"payment": { "status": "open", "amount", "currency", "url", "expires_at", "test" }`: the browser goes to `url`, the bank's page. Shadow holds the beds for `pay_minutes`; the bank's message that it is paid confirms the booking at once. The bank sends the guest back to `/book?paid=1&booking=<id>`. Shadow's two other endpoints: `GET /api/public/booking-requests/{id}` (where it stands, the same body) and `POST /api/public/booking-requests/{id}/payment` (pay again while the beds are free; `409` when they went). Shadow's `docs/BOOKING_API.md` and `docs/PAYMENTS.md` have the details.
+
 ### How the website reads Shadow's answers
 
 - `lib/booking/contract.ts` checks every answer against the contract before a guest sees it. Fields Shadow may add later are ignored. A `kind` the website doesn't know shows no kind label; a `mode` other than `"instant"` is treated as `"request"` (the safer promise: the team confirms). An availability answer must repeat the dates and guests asked for; anything else counts as Shadow being unavailable.
@@ -114,6 +119,13 @@ Both live in `app/api/*/route.ts`, built from `lib/booking/handler.ts`, and answ
 - The body is exactly Shadow's body, checked strictly (`lib/booking/contract.ts`), then forwarded unchanged.
 - The browser keeps one `client_ref` per distinct request (`clientRefFor` in `lib/booking/flow.ts`): sending exactly the same booking again, after a timeout or an error, reuses it, so Shadow answers `200` with the booking it may already have; any change, a new quote included, gets a new one.
 - Answers: `201`, or `200` for a repeat: `{ "reference", "status", "hold_expires_at", "total", "currency" }` (Shadow's `id` stays on the server); `409 {"error":"taken"}`; `409 {"error":"price_changed","total","currency"}`; `400 invalid_request` with issues; `429 rate_limited` (with `Retry-After`); `503 busy`; `503 not_configured`; `502 unavailable`.
+
+### `GET /api/booking/{id}` and `POST /api/booking/{id}/payment` (paying online)
+
+- Where a booking paid online stands, and paying again, for the page the bank sends the guest back to (`/book?paid=1&booking=<id>`). `{id}` must be a UUID (Shadow's id for the booking, which only that guest's browser has); the answers carry no personal data.
+- GET from this site's pages only; POST JSON from this site only. Per address, 30 at once, then one every 2 seconds (`429 rate_limited`).
+- Answers: `200` the booking as `POST /api/booking` gives it, with its `payment`; `404 not_found`; `409 {"error":"taken"}` (paying again: the beds went); `503`/`502` as above.
+- Back from the bank, the confirmation says "Checking your payment…", asks every 3 seconds for a minute, then shows: booked and paid (with what is left to pay at the house for a deposit), paid but the team will be in touch, waiting (with the bank's page again), or not paid with **Try paying again**. A booking paid on another device shows just its reference and state.
 
 ## Limits on both sides
 

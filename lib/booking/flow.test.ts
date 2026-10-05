@@ -35,6 +35,8 @@ const room: RoomType = {
   min_free: 4,
   bookable: true,
   price: null,
+  terms: null,
+  pay_now: null,
 };
 
 afterEach(() => {

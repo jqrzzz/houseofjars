@@ -123,6 +123,11 @@ export function sharedBookingGate(): BookingGate {
   return processSingleton("houseofjars.booking-gate", () => createBookingGate());
 }
 
+/** Asking where a payment stands and paying again, per client: 30 at once, then one every 2 seconds. */
+export function sharedPaymentLimiter() {
+  return processSingleton("houseofjars.payment-limiter", () => createRateLimiter({ capacity: 30, refillMs: 2_000 }));
+}
+
 export function sharedLookupLimiters(): LookupLimiters {
   return processSingleton("houseofjars.lookup-limiters", () => createLookupLimiters());
 }

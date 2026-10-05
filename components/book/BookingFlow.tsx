@@ -23,10 +23,13 @@ import {
 import {
   EMPTY_DETAILS,
   bookingBody,
+  canPayOnline,
   checkDetails,
   clientRefFor,
   fetchAvailability,
+  fetchBookingStatus,
   forgetBooking,
+  formatMoney,
   houseTodayNow,
   loadBooking,
   postBooking,
@@ -42,7 +45,15 @@ import {
   type Step,
 } from "@/lib/booking/flow";
 import { guestText } from "@/lib/booking/text";
-import type { Availability, BookingLimits, BookingMode, BookingProblem, FieldIssue, Quote } from "@/lib/booking/types";
+import type {
+  Availability,
+  BookingConfirmation,
+  BookingLimits,
+  BookingMode,
+  BookingProblem,
+  FieldIssue,
+  Quote,
+} from "@/lib/booking/types";
 import { addDays } from "@/lib/dates";
 import { inquiryPrefill } from "@/lib/inquiry/prefill";
 import { replyChannel } from "@/lib/inquiry/reply";
@@ -53,12 +64,14 @@ import {
   Confirmation,
   DatesStep,
   DetailsStep,
+  PaymentConfirmation,
   Problem,
   ReviewStep,
   RoomsStep,
   StayStub,
   StepList,
   type HouseNotes,
+  type PaidBooking,
 } from "./BookingSteps";
 import styles from "./BookingFlow.module.css";
 
@@ -122,6 +135,10 @@ function linkedStay(search: string, today: string): { range: DateRange; guests: 
 interface Arrival {
   readonly today: string;
   readonly saved: SavedBooking | null;
+  /** Back from the bank (?booking=<id>) on another tab or device: the booking to look up. */
+  readonly paidId: string | null;
+  /** Back from the bank, on this tab or another. */
+  readonly fromBank: boolean;
   readonly range: DateRange;
   readonly guests: number;
 }
@@ -134,8 +151,11 @@ interface Arrival {
 function readArrival(search: string): Arrival {
   const today = houseTodayNow();
   const step = (window.history.state as { booking?: Step } | null)?.booking;
-  const saved = step === "done" ? loadBooking() : null;
-  return { today, saved, ...linkedStay(search, today) };
+  // Back from the bank: Shadow added the booking's id to the address (lib/booking/handler.ts paidReturnUrl).
+  const paidId = new URLSearchParams(search).get("booking");
+  const kept = step === "done" || paidId ? loadBooking() : null;
+  const saved = paidId && kept?.confirmation.id !== paidId ? null : kept;
+  return { today, saved, paidId: paidId && !saved ? paidId : null, fromBank: Boolean(paidId), ...linkedStay(search, today) };
 }
 
 
@@ -228,8 +248,11 @@ function Flow({ house }: { house: HouseNotes }) {
 
   const [today, setToday] = useState(arrival.today);
   const [terms, setTerms] = useState<Terms | null>(null);
-  const [status, setStatus] = useState<Status>(arrival.saved ? "open" : "loading");
-  const [step, setStep] = useState<Step>(arrival.saved ? "done" : arrivedStay ? "rooms" : "dates");
+  const [status, setStatus] = useState<Status>(arrival.saved || arrival.paidId ? "open" : "loading");
+  const [step, setStep] = useState<Step>(arrival.saved || arrival.paidId ? "done" : arrivedStay ? "rooms" : "dates");
+  // A booking paid on another tab or device: only what Shadow says of it (no dates or beds).
+  const [elsewhere, setElsewhere] = useState<BookingConfirmation | "loading" | "lost" | null>(arrival.paidId ? "loading" : null);
+  const [payChoice, setPayChoice] = useState(true);
   const [range, setRange] = useState<DateRange>(arrival.range);
   const [guests, setGuests] = useState(arrival.guests);
   // A group bigger than online booking takes, as the guest asked: kept to say what changed (DatesStep).
@@ -243,6 +266,11 @@ function Flow({ house }: { house: HouseNotes }) {
   const [detailErrors, setDetailErrors] = useState<Partial<Record<DetailsField, string>>>({});
   const [sending, setSending] = useState<Sending>({ status: "idle" });
   const [saved, setSaved] = useState<SavedBooking | null>(arrival.saved);
+
+  useEffect(() => {
+    if (!arrival.paidId) return;
+    void fetchBookingStatus(arrival.paidId).then((found) => setElsewhere(found?.payment ? found : "lost"));
+  }, [arrival.paidId]);
 
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -380,8 +408,13 @@ function Flow({ house }: { house: HouseNotes }) {
 
   // On arrival: the history entries for the steps, then Shadow's rules or the linked dates' free beds.
   useEffect(() => {
-    if (started.current || arrival.saved) return;
+    if (started.current) return;
     started.current = true;
+    if (arrival.saved || arrival.paidId) {
+      // A booking to show (back from the bank, or a reload): the confirmation is this entry's step.
+      window.history.replaceState({ booking: "done" }, "");
+      return;
+    }
     window.history.replaceState({ booking: "dates" }, "");
     if (arrivedStay) {
       // Dates from a link: straight to the free beds, with the dates one step back.
@@ -478,6 +511,10 @@ function Flow({ house }: { house: HouseNotes }) {
     priceChange && shown && room && priceChange.roomId === room.id && sameStay(priceChange.stay, shown.stay) ? priceChange : null;
   // The total the guest is shown for their beds, and the one the request carries.
   const quote: Quote | null = room ? (change?.now ?? quoteOf(room.price)) : null;
+  // Paying now, when the house takes payment online for these beds (required, or the guest's choice).
+  const offer = shown?.availability.payment ?? null;
+  const payment = room && canPayOnline(offer, room) ? offer : null;
+  const payOnline = payment !== null && (payment.online === "required" || payChoice);
 
   function findBeds() {
     const now = refreshToday();
@@ -512,7 +549,7 @@ function Flow({ house }: { house: HouseNotes }) {
 
   function send() {
     if (!shown || !room || !quote || sending.status === "sending") return;
-    const draft = bookingBody("", shown.stay, room.id, details, quote);
+    const draft = bookingBody("", shown.stay, room.id, details, quote, payOnline);
     const next = clientRefFor(lastRequest.current, draft, uuid);
     lastRequest.current = next;
     setSending({ status: "sending" });
@@ -530,6 +567,13 @@ function Flow({ house }: { house: HouseNotes }) {
           shownTotal: shownTotal && bookedTotal && shownTotal !== bookedTotal ? shownTotal : null,
         };
         saveBooking(done);
+        // Paying now: on to the bank's page (the bank sends the guest back here, where the booking is kept for the tab).
+        const url = booked.payment?.status === "open" ? booked.payment.url : null;
+        if (url) {
+          window.history.replaceState({ booking: "done" }, "");
+          window.location.assign(url);
+          return;
+        }
         setSaved(done);
         setPriceChange(null);
         setSending({ status: "idle" });
@@ -577,6 +621,7 @@ function Flow({ house }: { house: HouseNotes }) {
     forgetBooking();
     lastRequest.current = null;
     setSaved(null);
+    setElsewhere(null);
     setRange(NO_DATES);
     setLookup({ status: "idle" });
     setRoomId(null);
@@ -595,12 +640,14 @@ function Flow({ house }: { house: HouseNotes }) {
       beds={booked.roomName}
       price={quoteText(booked.confirmation) ?? "Confirmed by the team"}
       booked
+      paying={payingText(booked.confirmation)}
     />
   ) : (
     <StayStub
       stay={shown?.stay ?? stay}
       beds={room?.name ?? null}
       price={quote ? (quoteText(quote) ?? "Confirmed by the team") : null}
+      paying={payOnline ? "You pay online when you book." : null}
     />
   );
 
@@ -613,8 +660,42 @@ function Flow({ house }: { house: HouseNotes }) {
   let content: ReactNode;
   if (status === "closed") {
     content = <Closed headingId={headingId} headingRef={headingRef} />;
+  } else if (step === "done" && saved?.confirmation.payment) {
+    const paid: PaidBooking = { ...saved, confirmation: saved.confirmation };
+    content = (
+      <PaymentConfirmation
+        booking={paid}
+        house={house}
+        headingId={headingId}
+        headingRef={headingRef}
+        fromBank={arrival.fromBank}
+        onUpdate={(confirmation) => {
+          const next = { ...saved, confirmation };
+          saveBooking(next);
+          setSaved(next);
+        }}
+        onAgain={startAgain}
+      />
+    );
   } else if (step === "done" && saved) {
     content = <Confirmation saved={saved} house={house} headingId={headingId} headingRef={headingRef} onAgain={startAgain} />;
+  } else if (step === "done" && elsewhere && typeof elsewhere === "object") {
+    content = (
+      <PaymentConfirmation
+        booking={{ confirmation: elsewhere, stay: null, roomName: null, replyBy: "by email or WhatsApp", arrival: null }}
+        house={house}
+        headingId={headingId}
+        headingRef={headingRef}
+        onUpdate={setElsewhere}
+        onAgain={startAgain}
+      />
+    );
+  } else if (step === "done" && elsewhere === "loading") {
+    content = (
+      <h2 id={headingId} ref={headingRef} tabIndex={-1} className={styles.title}>
+        Checking your payment…
+      </h2>
+    );
   } else if (current) {
     content = (
       <>
@@ -679,10 +760,13 @@ function Flow({ house }: { house: HouseNotes }) {
             priceChange={change}
             sending={sending.status === "sending"}
             sentAs={
-              saved && lastRequest.current?.signature === requestSignature(bookingBody("", shown.stay, room.id, details, quote))
+              saved && lastRequest.current?.signature === requestSignature(bookingBody("", shown.stay, room.id, details, quote, payOnline))
                 ? saved.confirmation.reference
                 : null
             }
+            payment={payment}
+            payOnline={payOnline}
+            onPayOnline={setPayChoice}
             onChange={(target) => show(target)}
             onSend={send}
           >
@@ -727,6 +811,15 @@ function Lost({
       </p>
     </div>
   );
+}
+
+/** The stay's summary line about paying, for a booking paid online. */
+function payingText(confirmation: BookingConfirmation): string | null {
+  const payment = confirmation.payment;
+  if (!payment) return null;
+  if (payment.status === "paid") return `Paid online: ${formatMoney(payment.amount, payment.currency)}${payment.test ? " (test, no money taken)" : ""}.`;
+  if (payment.status === "refunded") return "Paid online, and given back.";
+  return payment.status === "open" ? "Paying online." : "Not paid yet.";
 }
 
 function stayQuery(stay: Stay): string {

@@ -4,7 +4,7 @@ import { clientKey } from "../rate-limit";
 import type { AvailabilityCache } from "./cache";
 import { MAX_BOOKING_BYTES, parseAvailabilityQuery, parseBookingRequest } from "./contract";
 import type { BookingGate, LookupLimiters } from "./limits";
-import { lookUpAvailability, sendBookingRequest, type LookupResult } from "./shadow";
+import { bookingStatus, lookUpAvailability, payAgain, sendBookingRequest, type LookupResult } from "./shadow";
 
 interface ShadowCallsDeps {
   /** Shadow's address and the property's key; null when either is not set. */
@@ -123,8 +123,9 @@ export function createBookingHandler(deps: BookingHandlerDeps) {
     if (!parsed.ok) return json({ error: "invalid_request", issues: parsed.issues }, 400);
 
     // Only requests that would reach Shadow count, so fixing a typo never locks a guest out; and sending
-    // the same request again (its client_ref) never counts as a new one.
-    const booking = parsed.request;
+    // the same request again (its client_ref) never counts as a new one. Paying now: the bank sends the
+    // guest back to this website's booking page, never to an address the browser chose.
+    const booking = parsed.request.pay_online ? { ...parsed.request, return_url: paidReturnUrl(deps.siteUrl) } : parsed.request;
     const decision = deps.gate.take(clientKey(request.headers), booking.client_ref);
     if (!decision.allowed) {
       return decision.reason === "rate_limited"
@@ -142,6 +143,57 @@ export function createBookingHandler(deps: BookingHandlerDeps) {
     if (result.error === "taken") return json({ error: "taken" }, 409);
     if (result.error === "price_changed") return json({ error: "price_changed", ...result.quote }, 409);
     if (result.error === "invalid_request") return json({ error: "invalid_request", issues: result.issues }, 400);
+    return json({ error: result.error }, submitErrorStatus[result.error]);
+  };
+}
+
+/** The page the bank sends a guest back to after paying: the booking page (Shadow adds ?booking=<id>). */
+export function paidReturnUrl(siteUrl: string): string {
+  return `${siteUrl}/book?paid=1`;
+}
+
+const BOOKING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export interface PaymentHandlerDeps extends Omit<ShadowRouteDeps, "cache"> {
+  /** Per client: asking where a payment stands every few seconds, and the odd try again. */
+  readonly limiter: { take(key: string): { allowed: boolean; retryAfterSeconds: number } };
+}
+
+/**
+ * GET /api/booking/{id}: where a booking paid online stands, for the page the
+ * bank sends the guest back to. Shadow's id is a random UUID the guest's own
+ * booking carries; the answer has no personal data.
+ */
+export function createBookingStatusHandler(deps: PaymentHandlerDeps) {
+  return async function handleStatus(request: Request, id: string): Promise<Response> {
+    const refused = rejectForeignOrigin(request, deps.siteUrl);
+    if (refused) return refused;
+    const config = deps.config();
+    if (!config) return json({ error: "not_configured" }, 503);
+    if (!BOOKING_ID.test(id)) return json({ error: "not_found" }, 404);
+    const allowed = deps.limiter.take(clientKey(request.headers));
+    if (!allowed.allowed) return rateLimited(allowed.retryAfterSeconds);
+    const result = await bookingStatus(id, { config, fetch: deps.fetch, timeoutMs: deps.timeoutMs, log: deps.log });
+    if (result.ok) return json(result.confirmation);
+    if (result.error === "not_found") return json({ error: "not_found" }, 404);
+    return json({ error: result.error }, submitErrorStatus[result.error]);
+  };
+}
+
+/** POST /api/booking/{id}/payment: pay again after a declined or lapsed payment, while the beds are free. */
+export function createPayAgainHandler(deps: PaymentHandlerDeps) {
+  return async function handlePayAgain(request: Request, id: string): Promise<Response> {
+    const refused = rejectCrossSite(request, deps.siteUrl);
+    if (refused) return refused;
+    const config = deps.config();
+    if (!config) return json({ error: "not_configured" }, 503);
+    if (!BOOKING_ID.test(id)) return json({ error: "not_found" }, 404);
+    const allowed = deps.limiter.take(clientKey(request.headers));
+    if (!allowed.allowed) return rateLimited(allowed.retryAfterSeconds);
+    const result = await payAgain(id, paidReturnUrl(deps.siteUrl), { config, fetch: deps.fetch, timeoutMs: deps.timeoutMs, log: deps.log });
+    if (result.ok) return json(result.confirmation);
+    if (result.error === "taken") return json({ error: "taken" }, 409);
+    if (result.error === "not_found") return json({ error: "not_found" }, 404);
     return json({ error: result.error }, submitErrorStatus[result.error]);
   };
 }

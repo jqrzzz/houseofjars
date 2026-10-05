@@ -158,3 +158,46 @@ export async function sendBookingRequest(request: BookingRequest, deps: ShadowCa
       return { ok: false, error: problemFor(response.status, deps, "booking request") };
   }
 }
+
+export type StatusResult =
+  | { readonly ok: true; readonly confirmation: BookingConfirmation }
+  | { readonly ok: false; readonly error: "not_found" | ShadowProblem };
+
+/** GET {SHADOW_API_URL}/api/public/booking-requests/{id}: where a booking paid online stands. */
+export async function bookingStatus(id: string, deps: ShadowCallDeps): Promise<StatusResult> {
+  const response = await call(`/api/public/booking-requests/${encodeURIComponent(id)}`, { method: "GET" }, deps, "booking status");
+  if (!response) return { ok: false, error: "unavailable" };
+  if (response.status === 200) {
+    const confirmation = readConfirmation(await response.json().catch(() => null));
+    if (confirmation) return { ok: true, confirmation };
+    log(deps, "[booking] Shadow's booking status did not match the contract");
+    return { ok: false, error: "unavailable" };
+  }
+  if (response.status === 404) return { ok: false, error: "not_found" };
+  return { ok: false, error: problemFor(response.status, deps, "booking status") };
+}
+
+export type PayAgainResult =
+  | { readonly ok: true; readonly confirmation: BookingConfirmation }
+  /** The beds went (or there is no price now): nothing to pay for. */
+  | { readonly ok: false; readonly error: "taken" | "not_found" | ShadowProblem };
+
+/** POST {SHADOW_API_URL}/api/public/booking-requests/{id}/payment: pay again after a declined or lapsed payment. */
+export async function payAgain(id: string, returnUrl: string, deps: ShadowCallDeps): Promise<PayAgainResult> {
+  const response = await call(
+    `/api/public/booking-requests/${encodeURIComponent(id)}/payment`,
+    { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ return_url: returnUrl }) },
+    deps,
+    "payment again",
+  );
+  if (!response) return { ok: false, error: "unavailable" };
+  if (response.status === 200) {
+    const confirmation = readConfirmation(await response.json().catch(() => null));
+    if (confirmation) return { ok: true, confirmation };
+    log(deps, "[booking] Shadow's new payment did not match the contract");
+    return { ok: false, error: "unavailable" };
+  }
+  if (response.status === 409) return { ok: false, error: "taken" };
+  if (response.status === 404) return { ok: false, error: "not_found" };
+  return { ok: false, error: problemFor(response.status, deps, "payment again") };
+}
