@@ -306,7 +306,7 @@ label.btn:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
     const floors = floorsSorted();
     if (!floors.length) {
       $("tabs").innerHTML = "";
-      $("panel").innerHTML = `<div class="empty"><b>No floors yet.</b><span>Start with the street-level floor, then add the others.</span>${S.canWrite ? `<button class="btn primary" data-act="first-floor">Start with Floor 1</button>` : ""}</div>`;
+      $("panel").innerHTML = `<div class="empty"><b>No floors yet.</b><span>Start with the street-level floor, then add the others.</span>${S.canWrite ? `<button class="btn primary" data-act="first-floor">Start with the ground floor</button>` : ""}</div>`;
       return;
     }
     if (!S.cur || !S.floors.has(S.cur)) S.cur = floors[0][0];
@@ -334,6 +334,11 @@ label.btn:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
     return `
       <div class="floor-head">
         <div><h2>${esc(f.label)}</h2>${f.hint ? `<p>${esc(f.hint)}</p>` : ""}</div>
+        ${S.canWrite && !list.length && !f.sketch
+          ? (S.confirm === "floor:" + fid
+            ? `<span class="confirm">Remove ${esc(f.label)}? <button class="btn quiet" data-act="del-floor-yes">Remove</button><button class="btn" data-act="del-no">Keep</button></span>`
+            : `<button class="btn quiet" data-act="del-floor">Remove this empty floor</button>`)
+          : ""}
       </div>
       <div class="plan-box" style="margin-top:12px">
         <div class="plan-cap"><span>Back of the house</span><span>Rough plan</span></div>
@@ -470,8 +475,16 @@ label.btn:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
         const n = nums.length ? Math.max(...nums) + 1 : 1;
         const fid = "f" + n;
         if (S.floors.has(fid)) break;
-        S.floors.set(fid, { n, label: "Floor " + n, hint: n === 1 ? "Street level" : "", sketch: null, order: n });
+        // The house counts floors from the ground: Ground floor, Floor 1, Floor 2…
+        S.floors.set(fid, { n, label: n === 1 ? "Ground floor" : "Floor " + (n - 1), hint: n === 1 ? "Street level" : "", sketch: null, order: n });
         S.cur = fid; save("floors", fid, 0); render(); break;
+      }
+      case "del-floor": S.confirm = "floor:" + S.cur; render(); break;
+      case "del-floor-yes": {
+        const fid = S.cur; S.confirm = null;
+        if (areasOn(fid).length || S.floors.get(fid)?.sketch) { render(); break; }
+        await removeDoc("floors", fid);
+        S.cur = floorsSorted()[0]?.[0] ?? null; render(); break;
       }
       case "add-area": {
         const nid = "a-" + rid();
