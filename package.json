@@ -18,7 +18,9 @@
     "smoke": "tsx scripts/smoke.ts",
     "fake-shadow": "tsx test/fake-shadow.ts",
     "indexnow": "tsx scripts/indexnow.ts",
-    "house:render": "tsx scripts/house-render.ts"
+    "house:render": "tsx scripts/house-render.ts",
+    "house:game": "tsx scripts/house-game.ts",
+    "film": "tsx scripts/film.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

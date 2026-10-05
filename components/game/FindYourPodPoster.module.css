@@ -1,0 +1,94 @@
+.poster {
+  display: grid;
+  gap: var(--space-s);
+  justify-items: start;
+  max-width: 30rem;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 360 / 230;
+}
+
+.table {
+  fill: var(--paper-far);
+}
+
+.edge {
+  fill: var(--paper-edge);
+  transform: translate(var(--edge-x), var(--edge-y));
+}
+
+.sheet {
+  fill: var(--paper-near);
+}
+
+.wall,
+.line,
+.dash,
+.tread,
+.pod {
+  fill: none;
+  stroke: var(--text);
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.wall {
+  stroke-width: 2.5;
+}
+
+.line,
+.tread {
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.dash {
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+}
+
+.wood {
+  fill: var(--teak);
+}
+
+.pod {
+  fill: color-mix(in oklab, var(--teak) 35%, var(--paper-near));
+  stroke-width: 1;
+}
+
+.thread {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.ring {
+  fill: var(--paper-near);
+  stroke: var(--jar-orange);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.lamp {
+  transform: translate(224px, 90px);
+}
+
+.lamp circle {
+  fill: color-mix(in oklab, var(--lamplight) 72%, var(--thread));
+  opacity: calc(0.22 - 0.07 * var(--glow-strength));
+}
+
+.lamp .core {
+  fill: var(--lamplight);
+  stroke: var(--glow-ring);
+  stroke-width: 1.5;
+  opacity: 1;
+}
