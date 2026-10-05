@@ -1,0 +1,669 @@
+<title>House Walk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a teak header band with progress, floor chips, then one floor at a time: its rough plan, then its areas as cards. Phone first. */
+:root {
+  --ground: #fbf6ee; --surface: #ffffff; --line: #e6dacb; --ink: #171713; --muted: #6b5645;
+  --brand: #e76e43; --on-brand: #171713; --brand-text: #bf4a1b;
+  --band: #6f4d35; --on-band: #fbf6ee; --on-band-soft: #e7d6c2; --track: #5b3f2b;
+  --focus: #171713; --danger: #b42318; --success: #1e6b43; --success-bg: #e3f1e8; --guess-bg: #f3ebdf;
+  --k-sleep: #ecd3b6; --k-wash: #d3e4e6; --k-shared: #f6e2a6; --k-staff: #dde0cf; --k-path: #efe6d9; --k-outside: #cfdcc0;
+  --font: "Figtree", "Noto Sans Lao", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #20150c; --surface: #2c1e13; --line: #4a3625; --ink: #fbf6ee; --muted: #c9b8a6;
+  --brand: #e76e43; --on-brand: #171713; --brand-text: #e76e43;
+  --band: #5b3f2b; --on-band: #fbf6ee; --on-band-soft: #e7d6c2; --track: #3f2b1d;
+  --focus: #eed079; --danger: #ff8a7a; --success: #7dd3a0; --success-bg: #1f3a2a; --guess-bg: #3a2b1f;
+  --k-sleep: #5e4129; --k-wash: #2c4549; --k-shared: #5c4a1c; --k-staff: #3c4232; --k-path: #3a2b1f; --k-outside: #33432b;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --ground: #20150c; --surface: #2c1e13; --line: #4a3625; --ink: #fbf6ee; --muted: #c9b8a6;
+  --brand: #e76e43; --on-brand: #171713; --brand-text: #e76e43;
+  --band: #5b3f2b; --on-band: #fbf6ee; --on-band-soft: #e7d6c2; --track: #3f2b1d;
+  --focus: #eed079; --danger: #ff8a7a; --success: #7dd3a0; --success-bg: #1f3a2a; --guess-bg: #3a2b1f;
+  --k-sleep: #5e4129; --k-wash: #2c4549; --k-shared: #5c4a1c; --k-staff: #3c4232; --k-path: #3a2b1f; --k-outside: #33432b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--ground); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.band { background: var(--band); color: var(--on-band); padding-block: 20px 18px; padding-inline: 16px; }
+.band-in, .wrap { max-width: 44rem; margin-inline: auto; }
+.wrap { padding-inline: 16px; padding-block: 16px 48px; display: grid; gap: 20px; }
+.brandline { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--on-band-soft); }
+.brandline svg { width: 14px; height: 21px; flex: none; }
+h1 { margin: 6px 0 4px; font-size: 34px; line-height: 1.1; font-weight: 800; letter-spacing: -.01em; }
+.lede { margin: 0; color: var(--on-band-soft); max-width: 36rem; }
+.prog { margin-top: 16px; display: grid; gap: 6px; }
+.prog-bar { height: 8px; border-radius: 99px; background: var(--track); overflow: hidden; }
+.prog-bar span { display: block; height: 100%; background: var(--brand); border-radius: 99px; transition: width .3s; }
+.prog-txt { font-size: 14px; color: var(--on-band-soft); font-variant-numeric: tabular-nums; }
+
+.banner { border: 1px solid var(--muted); border-radius: var(--r); padding: 10px 14px; background: var(--surface); }
+.banner.bad { border-color: var(--danger); color: var(--danger); }
+
+.tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.tab { flex: none; border: 1.5px solid var(--muted); background: var(--surface); border-radius: 99px; padding: 7px 14px; cursor: pointer; text-align: left; line-height: 1.2; }
+.tab small { display: block; font-size: 12px; color: var(--muted); }
+.tab[aria-current="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.tab[aria-current="true"] small { color: var(--on-brand); }
+.tab.add { border-style: dashed; color: var(--muted); }
+
+.floor-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 16px; }
+.floor-head h2 { margin: 0; font-size: 24px; line-height: 1.2; font-weight: 800; }
+.floor-head p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+
+.plan-box { display: grid; gap: 6px; }
+.plan-cap { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.plan { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, minmax(64px, auto)); gap: 4px; padding: 4px; border: 1.5px solid var(--ink); border-radius: 6px; background: var(--surface); }
+.slot { border: 1px dashed var(--line); border-radius: 4px; }
+.blk { border-radius: 4px; padding: 6px 8px; font-size: 13px; font-weight: 600; line-height: 1.25; display: flex; align-items: flex-end; min-width: 0; overflow-wrap: anywhere; color: var(--ink); border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent); }
+.street { text-align: center; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-top: 3px solid var(--muted); padding-top: 4px; }
+.unplaced { font-size: 14px; color: var(--muted); margin: 0; }
+.sketch { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.sketch img { width: 72px; height: 54px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); cursor: pointer; }
+
+.k-sleep { background: var(--k-sleep); } .k-wash { background: var(--k-wash); } .k-shared { background: var(--k-shared); }
+.k-staff { background: var(--k-staff); } .k-path { background: var(--k-path); } .k-outside { background: var(--k-outside); }
+
+.cards { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.card.open { border-color: var(--muted); }
+.card-head { width: 100%; display: flex; gap: 12px; align-items: center; padding: 12px 14px; background: none; border: 0; cursor: pointer; text-align: left; }
+.dot { width: 14px; height: 14px; border-radius: 4px; flex: none; border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.ch-main { flex: 1; min-width: 0; display: grid; }
+.ch-name { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; }
+.ch-sum { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.tag { flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px; letter-spacing: .02em; }
+.tag.guess { background: var(--guess-bg); color: var(--muted); border: 1px dashed var(--muted); }
+.tag.ok { background: var(--success-bg); color: var(--success); }
+
+.card-body { padding: 4px 14px 16px; display: grid; gap: 18px; border-top: 1px solid var(--line); }
+.why { margin: 12px 0 0; font-size: 14px; color: var(--muted); background: var(--guess-bg); border-radius: 8px; padding: 8px 12px; }
+.why b { color: var(--ink); }
+.field { display: grid; gap: 6px; min-width: 0; }
+.lbl { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.hint { font-size: 13px; color: var(--muted); margin: 0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 30rem) { .row2 { grid-template-columns: 1fr; } }
+input[type="text"], select, textarea { width: 100%; border: 1.5px solid var(--muted); border-radius: 8px; background: var(--ground); padding: 9px 11px; min-height: 44px; }
+textarea { min-height: 72px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
+
+.cells { display: grid; grid-template-columns: auto repeat(3, 52px); grid-auto-rows: 44px; gap: 4px; align-items: center; justify-content: start; font-size: 12px; color: var(--muted); }
+.cells .ch { text-align: center; align-self: end; }
+.cells .rh { padding-right: 6px; text-align: right; }
+.cell { height: 44px; border: 1.5px solid var(--muted); border-radius: 6px; background: var(--ground); cursor: pointer; }
+.cell[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); }
+
+.items { display: grid; gap: 8px; }
+.item { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; }
+.item input[type="text"].iname { min-width: 0; }
+.stepper { display: flex; align-items: center; border: 1.5px solid var(--muted); border-radius: 8px; overflow: hidden; height: 44px; }
+.stepper button { width: 40px; height: 100%; border: 0; background: var(--ground); cursor: pointer; font-size: 20px; line-height: 1; }
+.stepper input { width: 46px; height: 100%; border: 0; border-inline: 1px solid var(--line); text-align: center; background: var(--surface); font-weight: 700; font-variant-numeric: tabular-nums; padding: 0; min-height: 0; }
+.x { width: 40px; height: 44px; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 22px; border-radius: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--muted); background: var(--ground); border-radius: 99px; padding: 5px 11px; font-size: 14px; cursor: pointer; }
+.chip.safe { border-color: var(--danger); }
+.addrow { display: flex; gap: 8px; }
+.addrow input { flex: 1; min-width: 0; }
+
+.btn { border: 1.5px solid var(--muted); background: var(--surface); border-radius: 8px; padding: 9px 14px; min-height: 44px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.btn.done { background: var(--success-bg); border-color: var(--success); color: var(--success); }
+.btn.quiet { border-color: transparent; background: none; color: var(--danger); }
+.btn.dashed { border-style: dashed; width: 100%; color: var(--muted); background: none; }
+label.btn:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+
+.photos { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.thumb { width: 72px; height: 72px; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; cursor: pointer; background: var(--ground); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.msg { font-size: 14px; margin: 0; color: var(--muted); }
+.msg.bad { color: var(--danger); }
+
+.foot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+
+.rules { border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 10px; }
+.rules h2 { margin: 0; font-size: 18px; font-weight: 800; }
+.rules ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.rules p { margin: 0; color: var(--muted); font-size: 15px; }
+
+.lb { position: fixed; inset: 0; background: color-mix(in srgb, #000 82%, transparent); display: grid; grid-template-rows: 1fr auto; padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px)); gap: 12px; z-index: 10; }
+.lb img { max-width: 100%; max-height: 100%; object-fit: contain; place-self: center; border-radius: 6px; min-height: 0; }
+.lb-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; color: #fbf6ee; }
+.lb-bar .btn { background: #2c1e13; color: #fbf6ee; border-color: #c9b8a6; }
+.lb-bar .btn.warn { border-color: #ff8a7a; color: #ff8a7a; }
+.empty { text-align: center; padding: 24px 12px; color: var(--muted); border: 1px dashed var(--muted); border-radius: var(--r); display: grid; gap: 10px; justify-items: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="band">
+  <div class="band-in">
+    <div class="brandline"><svg viewBox="0 0 600 900" aria-hidden="true"><path fill="#e76e43" d="M0 900V250C0 145.46 55.79 66.39 150 27.25V900ZM200 275V11.13C230.55 3.83 264.02 0 300 0C335.98 0 369.45 3.83 400 11.13V275ZM200 325H400V575H200ZM200 625H400V900H200ZM450 900V27.25C544.21 66.39 600 145.46 600 250V900Z"/></svg>House of Jars</div>
+    <h1>House Walk</h1>
+    <p class="lede">Walk each floor with your phone. Check what's there, count it, tap roughly where it sits, and add a photo. Claude turns this into the house map.</p>
+    <div class="prog" aria-live="polite">
+      <div class="prog-bar"><span id="progBar" style="width:0%"></span></div>
+      <div class="prog-txt" id="progTxt">Opening the walk…</div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" hidden></div>
+  <nav class="tabs" id="tabs" aria-label="Floors"></nav>
+  <section id="panel" aria-live="off"></section>
+  <section class="rules">
+    <h2>Accurate and simple: three rules</h2>
+    <ol>
+      <li><b>Count exactly.</b> Beds, lockers, toilets, extinguishers. Not sure? Leave it as <b>?</b></li>
+      <li><b>Place roughly.</b> Tap where each area sits on its floor. No tape measure.</li>
+      <li><b>Photograph everything.</b> One photo from a corner of each area is plenty. Keep guests and their things out of shot.</li>
+    </ol>
+    <p>Areas tagged <b>Guess</b> are what Claude worked out from your photos, signs and the Booking.com listing. Fix anything wrong, then tap <b>Mark as checked</b>. When you've walked every floor, tell Claude in the chat.</p>
+  </section>
+</main>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo">
+  <img id="lbImg" alt="">
+  <div class="lb-bar" id="lbBar"></div>
+</div>
+
+<script>
+(() => {
+  const KINDS = {
+    sleep: "Sleep (dorms, rooms)",
+    wash: "Wash (bathrooms, showers)",
+    shared: "Shared (café, lounge, water)",
+    staff: "Team (desk, storage, laundry)",
+    path: "Way through (entrance, stairs, halls)",
+    outside: "Outside (yard, parking, roof)",
+  };
+  const SUGGEST = {
+    sleep: ["Pod beds", "Lockers", "Air-conditioning units", "Ceiling fans", "Windows", "Lights"],
+    wash: ["Toilets", "Showers", "Sinks", "Mirrors", "Bins"],
+    shared: ["Tables", "Chairs", "Sofas", "Fridge", "Water dispenser", "Plants"],
+    staff: ["Desk", "Shelves", "Linen stock", "Cleaning cart", "Washing machine"],
+    path: ["Shoe rack", "Lights", "Signs", "Plants"],
+    outside: ["Motorbike spaces", "Plants", "Benches", "Lights"],
+  };
+  const SAFETY = ["Fire extinguishers", "Smoke alarms", "Exit signs", "First-aid kit"];
+  const PLACES = ["Back left", "Back centre", "Back right", "Middle left", "Middle centre", "Middle right", "Front left", "Front centre", "Front right"];
+
+  const S = {
+    floors: new Map(), areas: new Map(), cur: null, open: new Set(),
+    db: null, assets: null, canWrite: true, got: { floors: false, areas: false }, fatal: null,
+    banner: null, confirm: null, up: {}, msg: {}, lb: null,
+  };
+  const timers = new Map(), inflight = new Map(), dirty = new Set(), gone = new Set();
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const rid = () => Math.random().toString(36).slice(2, 9);
+  try { const t = localStorage.getItem("hw-floor"); if (t) S.cur = t; } catch {}
+
+  /* ---------- data helpers ---------- */
+  const floorsSorted = () => [...S.floors.entries()].sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0));
+  const areasOn = (fid) => [...S.areas.entries()].filter(([, a]) => a.floor === fid)
+    .sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0) || String(a[1].name).localeCompare(String(b[1].name)));
+  const floorName = (fid) => S.floors.get(fid)?.label || "a floor";
+
+  function summary(a) {
+    const items = a.items || [];
+    const parts = items.slice(0, 3).map((i) => `${i.count == null ? "?" : i.count} ${String(i.name || "item").toLowerCase()}`);
+    let s = parts.length ? parts.join(" · ") : "Nothing listed yet";
+    if (items.length > 3) s += ` · +${items.length - 3} more`;
+    const n = (a.photos || []).length;
+    if (n) s += ` · ${n} photo${n === 1 ? "" : "s"}`;
+    return s;
+  }
+
+  /* ---------- saving: one write at a time per document ---------- */
+  function save(col, id, delay = 600) {
+    if (!S.db || !S.canWrite) return;
+    const key = col + "/" + id;
+    dirty.add(key);
+    clearTimeout(timers.get(key));
+    timers.set(key, setTimeout(() => flush(col, id), delay));
+  }
+  async function flush(col, id, retried) {
+    const key = col + "/" + id;
+    timers.delete(key);
+    while (inflight.get(key)) { await inflight.get(key); if (timers.has(key)) return; }
+    const body = (col === "areas" ? S.areas : S.floors).get(id);
+    if (!body) { dirty.delete(key); return; }
+    const p = S.db.collection(col).doc(id).set(JSON.parse(JSON.stringify(body)));
+    inflight.set(key, p.catch(() => {}));
+    try { await p; }
+    catch (e) {
+      if (e?.code === "unavailable" && !retried) { inflight.delete(key); await new Promise((r) => setTimeout(r, 800 + Math.random() * 800)); return flush(col, id, true); }
+      writeFailed(e);
+    } finally { inflight.delete(key); }
+    if (!timers.has(key)) dirty.delete(key);
+  }
+  function writeFailed(e) {
+    if (e?.code === "invalid_argument" || e?.code === "not_granted") { S.canWrite = false; S.banner = { bad: false, text: "You can look at this walk, but only the people editing it can make changes." }; }
+    else if (e?.code === "quota_exceeded") S.banner = { bad: true, text: "The walk is full and couldn't save that. Tell Claude in the chat." };
+    else if (e?.code === "revoked") S.banner = { bad: true, text: "This page lost access to its saved data. Reload to continue." };
+    else S.banner = { bad: true, text: "That change didn't save. Check your connection, then try again." };
+    render();
+  }
+  async function removeDoc(col, id) {
+    const key = col + "/" + id;
+    clearTimeout(timers.get(key)); timers.delete(key); dirty.delete(key); gone.add(key);
+    (col === "areas" ? S.areas : S.floors).delete(id);
+    try { await S.db.collection(col).doc(id).delete(); } catch (e) { writeFailed(e); }
+  }
+  async function dropAsset(id) { if (!S.assets || !id) return; try { await S.assets.delete(id); } catch {} }
+
+  /* ---------- live updates without a full redraw (keeps typing smooth) ---------- */
+  function refreshLive(id) {
+    const a = S.areas.get(id);
+    if (a) {
+      document.querySelectorAll(`[data-name-for="${id}"]`).forEach((el) => { el.textContent = a.name || "Unnamed area"; });
+      const sum = document.querySelector(`[data-sum-for="${id}"]`); if (sum) sum.textContent = summary(a);
+    }
+    progress();
+  }
+  function progress() {
+    const areas = [...S.areas.values()];
+    const items = areas.flatMap((a) => a.items || []);
+    const checked = areas.filter((a) => a.status === "checked").length;
+    const counted = items.filter((i) => i.count != null).length;
+    const pct = areas.length ? Math.round((checked / areas.length) * 100) : 0;
+    $("progBar").style.width = pct + "%";
+    if (!S.got.floors || !S.got.areas) return;
+    $("progTxt").textContent = areas.length
+      ? `${checked} of ${areas.length} areas checked · ${counted} of ${items.length} things counted`
+      : "No areas yet";
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    const a = document.activeElement;
+    const fid = a && a.id; let ss = null, se = null;
+    try { ss = a.selectionStart; se = a.selectionEnd; } catch {}
+
+    const banner = $("banner");
+    if (S.fatal || S.banner) { const b = S.fatal || S.banner; banner.className = "banner" + (b.bad ? " bad" : ""); banner.textContent = b.text; banner.hidden = false; }
+    else banner.hidden = true;
+
+    progress();
+    if (!S.got.floors || !S.got.areas) { $("tabs").innerHTML = ""; $("panel").innerHTML = S.fatal ? "" : `<p class="msg">Loading the house…</p>`; return; }
+
+    const floors = floorsSorted();
+    if (!floors.length) {
+      $("tabs").innerHTML = "";
+      $("panel").innerHTML = `<div class="empty"><b>No floors yet.</b><span>Start with the street-level floor, then add the others.</span>${S.canWrite ? `<button class="btn primary" data-act="first-floor">Start with the ground floor</button>` : ""}</div>`;
+      return;
+    }
+    if (!S.cur || !S.floors.has(S.cur)) S.cur = floors[0][0];
+
+    $("tabs").innerHTML = floors.map(([id, f]) => {
+      const n = areasOn(id).length;
+      return `<button class="tab" data-act="tab" data-floor="${esc(id)}" aria-current="${id === S.cur}">${esc(f.label)}<small>${n} area${n === 1 ? "" : "s"}</small></button>`;
+    }).join("") + (S.canWrite ? `<button class="tab add" data-act="add-floor">+ Floor<small>add one</small></button>` : "");
+
+    $("panel").innerHTML = floorHTML(S.cur);
+
+    if (fid) { const el = $(fid); if (el && el !== document.activeElement) { el.focus({ preventScroll: true }); try { if (ss != null) el.setSelectionRange(ss, se); } catch {} } }
+  }
+
+  function floorHTML(fid) {
+    const f = S.floors.get(fid);
+    const list = areasOn(fid);
+    const dis = S.canWrite ? "" : " disabled";
+    const sk = f.sketch
+      ? `<button class="thumb" data-act="open-sketch" aria-label="Open the sketch of ${esc(f.label)}"><img src="/_blob/${esc(f.sketch)}" alt=""></button><span>Your sketch of this floor.</span>`
+      : `<span>Draw this floor on paper (boxes and names are enough), mark the street, and add a photo of it.</span>`;
+    const skBtn = S.assets && S.canWrite
+      ? `<label class="btn">${f.sketch ? "Replace sketch" : "Add sketch photo"}<input class="vh" type="file" accept="image/*" data-act="sketch-add"></label>` : "";
+    const upk = "floor:" + fid;
+    return `
+      <div class="floor-head">
+        <div><h2>${esc(f.label)}</h2>${f.hint ? `<p>${esc(f.hint)}</p>` : ""}</div>
+        ${S.canWrite && !list.length && !f.sketch
+          ? (S.confirm === "floor:" + fid
+            ? `<span class="confirm">Remove ${esc(f.label)}? <button class="btn quiet" data-act="del-floor-yes">Remove</button><button class="btn" data-act="del-no">Keep</button></span>`
+            : `<button class="btn quiet" data-act="del-floor">Remove this empty floor</button>`)
+          : ""}
+      </div>
+      <div class="plan-box" style="margin-top:12px">
+        <div class="plan-cap"><span>Back of the house</span><span>Rough plan</span></div>
+        ${planHTML(fid)}
+        <div class="street">Street · front door side</div>
+        ${unplacedHTML(list)}
+      </div>
+      <div class="sketch" style="margin-top:12px">${sk}${skBtn}${S.up[upk] ? `<span class="msg">Uploading…</span>` : ""}${S.msg[upk] ? `<span class="msg bad">${esc(S.msg[upk])}</span>` : ""}</div>
+      <div class="cards" style="margin-top:16px">
+        ${list.length ? list.map(([id, a]) => cardHTML(id, a)).join("") : `<div class="empty"><b>Nothing on ${esc(f.label)} yet.</b><span>Add each room or space you find here.</span></div>`}
+        ${S.canWrite ? `<button class="btn dashed" data-act="add-area"${dis}>+ Add an area on ${esc(f.label)}</button>` : ""}
+      </div>`;
+  }
+
+  function planHTML(fid) {
+    const placed = areasOn(fid).filter(([, a]) => (a.cells || []).length);
+    let html = "";
+    for (let i = 0; i < 9; i++) html += `<div class="slot" style="grid-row:${Math.floor(i / 3) + 1};grid-column:${(i % 3) + 1}"></div>`;
+    const labels = [];
+    for (const [id, a] of placed) {
+      const cells = [...new Set(a.cells)].filter((c) => c >= 0 && c < 9);
+      const rs = cells.map((c) => Math.floor(c / 3)), cs = cells.map((c) => c % 3);
+      const r0 = Math.min(...rs), r1 = Math.max(...rs), c0 = Math.min(...cs), c1 = Math.max(...cs);
+      const rect = (r1 - r0 + 1) * (c1 - c0 + 1) === cells.length;
+      const blocks = rect ? [[r0, c0, r1 - r0 + 1, c1 - c0 + 1]] : cells.map((c) => [Math.floor(c / 3), c % 3, 1, 1]);
+      for (const [r, c, h, w] of blocks) {
+        html += `<div class="blk k-${esc(a.kind)}" style="grid-row:${r + 1}/span ${h};grid-column:${c + 1}/span ${w}"><span data-name-for="${esc(id)}">${esc(a.name || "Unnamed area")}</span></div>`;
+      }
+      labels.push(`${a.name || "Unnamed area"}: ${cells.map((c) => PLACES[c].toLowerCase()).join(", ")}`);
+    }
+    const label = placed.length ? `Rough plan of ${floorName(fid)}. ${labels.join(". ")}.` : `Rough plan of ${floorName(fid)}: nothing placed yet.`;
+    return `<div class="plan" role="img" aria-label="${esc(label)}">${html}</div>`;
+  }
+
+  function unplacedHTML(list) {
+    const un = list.filter(([, a]) => !(a.cells || []).length);
+    if (!un.length) return "";
+    return `<p class="unplaced">Not placed yet: ${un.map(([id, a]) => `<span data-name-for="${esc(id)}">${esc(a.name || "Unnamed area")}</span>`).join(", ")}. Open each one and tap where it sits.</p>`;
+  }
+
+  function cardHTML(id, a) {
+    const open = S.open.has(id);
+    const tag = a.status === "checked" ? `<span class="tag ok">Checked</span>` : `<span class="tag guess">Guess</span>`;
+    return `<article class="card${open ? " open" : ""}">
+      <button class="card-head" data-act="toggle" data-id="${esc(id)}" aria-expanded="${open}">
+        <span class="dot k-${esc(a.kind)}" aria-hidden="true"></span>
+        <span class="ch-main"><span class="ch-name" data-name-for="${esc(id)}">${esc(a.name || "Unnamed area")}</span><span class="ch-sum" data-sum-for="${esc(id)}">${esc(summary(a))}</span></span>
+        ${tag}
+      </button>
+      ${open ? bodyHTML(id, a) : ""}
+    </article>`;
+  }
+
+  function bodyHTML(id, a) {
+    const d = S.canWrite ? "" : " disabled";
+    const items = a.items || [];
+    const have = new Set(items.map((i) => String(i.name).toLowerCase()));
+    const sugg = (SUGGEST[a.kind] || []).filter((s) => !have.has(s.toLowerCase()));
+    const safe = SAFETY.filter((s) => !have.has(s.toLowerCase()));
+    const cells = new Set(a.cells || []);
+    const floorOpts = floorsSorted().map(([fid, f]) => `<option value="${esc(fid)}"${fid === a.floor ? " selected" : ""}>${esc(f.label)}</option>`).join("");
+    const kindOpts = Object.entries(KINDS).map(([k, v]) => `<option value="${k}"${k === a.kind ? " selected" : ""}>${esc(v)}</option>`).join("");
+    const nPhotos = (a.photos || []).length;
+    const confirming = S.confirm === id;
+
+    return `<div class="card-body">
+      ${a.from && a.status !== "checked" ? `<p class="why"><b>Why Claude guessed this:</b> ${esc(a.from)}</p>` : ""}
+      <div class="field"><label class="lbl" for="nm-${esc(id)}">Name</label>
+        <input type="text" id="nm-${esc(id)}" data-act="name" data-id="${esc(id)}" value="${esc(a.name)}" placeholder="e.g. Dorm H, Café, Women's bathroom" autocomplete="off"${d}></div>
+      <div class="row2">
+        <div class="field"><label class="lbl" for="ki-${esc(id)}">Kind of area</label><select id="ki-${esc(id)}" data-act="kind" data-id="${esc(id)}"${d}>${kindOpts}</select></div>
+        <div class="field"><label class="lbl" for="fl-${esc(id)}">Floor</label><select id="fl-${esc(id)}" data-act="floor" data-id="${esc(id)}"${d}>${floorOpts}</select></div>
+      </div>
+      <div class="field"><span class="lbl" id="pl-${esc(id)}">Where on the floor</span>
+        <p class="hint">Stand in the street facing the house. Tap every part this area covers.</p>
+        <div class="cells" role="group" aria-labelledby="pl-${esc(id)}">
+          <span></span><span class="ch">Left</span><span class="ch">Centre</span><span class="ch">Right</span>
+          ${[0, 1, 2].map((r) => `<span class="rh">${["Back", "Middle", "Front"][r]}</span>` + [0, 1, 2].map((c) => {
+            const i = r * 3 + c;
+            return `<button class="cell" data-act="cell" data-id="${esc(id)}" data-cell="${i}" aria-pressed="${cells.has(i)}" aria-label="${PLACES[i]}"${d}></button>`;
+          }).join("")).join("")}
+        </div>
+      </div>
+      <div class="field"><span class="lbl">What's in it</span>
+        <div class="items">
+          ${items.length ? items.map((it) => `<div class="item">
+            <input type="text" class="iname" id="in-${esc(id)}-${esc(it.id)}" data-act="item-name" data-id="${esc(id)}" data-item="${esc(it.id)}" value="${esc(it.name)}" aria-label="Item name" autocomplete="off"${d}>
+            <div class="stepper"><button data-act="dec" data-id="${esc(id)}" data-item="${esc(it.id)}" aria-label="One fewer ${esc(it.name)}"${d}>−</button><input type="text" inputmode="numeric" id="ct-${esc(id)}-${esc(it.id)}" data-act="count" data-id="${esc(id)}" data-item="${esc(it.id)}" value="${it.count == null ? "" : esc(it.count)}" placeholder="?" aria-label="How many ${esc(it.name)}"${d}><button data-act="inc" data-id="${esc(id)}" data-item="${esc(it.id)}" aria-label="One more ${esc(it.name)}"${d}>+</button></div>
+            <button class="x" data-act="del-item" data-id="${esc(id)}" data-item="${esc(it.id)}" aria-label="Remove ${esc(it.name)}"${d}>×</button>
+          </div>`).join("") : `<p class="hint">Nothing listed yet. Tap a suggestion or type your own.</p>`}
+        </div>
+        ${S.canWrite ? `${sugg.length ? `<div class="chips">${sugg.map((s) => `<button class="chip" data-act="chip" data-id="${esc(id)}" data-name="${esc(s)}">+ ${esc(s)}</button>`).join("")}</div>` : ""}
+        ${safe.length ? `<div class="chips"><span class="hint" style="align-self:center">Safety:</span>${safe.map((s) => `<button class="chip safe" data-act="chip" data-id="${esc(id)}" data-name="${esc(s)}">+ ${esc(s)}</button>`).join("")}</div>` : ""}
+        <div class="addrow"><input type="text" id="ad-${esc(id)}" data-act="new-item" data-id="${esc(id)}" placeholder="Something else…" aria-label="Add another item" autocomplete="off"><button class="btn" data-act="add-item" data-id="${esc(id)}">Add</button></div>` : ""}
+      </div>
+      <div class="field"><span class="lbl">Photos</span>
+        <div class="photos">
+          ${(a.photos || []).map((p, n) => `<button class="thumb" data-act="open-photo" data-id="${esc(id)}" data-photo="${esc(p)}" aria-label="Open photo ${n + 1} of ${esc(a.name || "this area")}"><img src="/_blob/${esc(p)}" alt="" loading="lazy"></button>`).join("")}
+          ${S.assets && S.canWrite ? `<label class="btn">Add photos<input class="vh" type="file" accept="image/*" multiple data-act="photo-add" data-id="${esc(id)}"></label>` : (!nPhotos ? `<span class="msg">No photos yet.</span>` : "")}
+        </div>
+        ${S.up[id] ? `<p class="msg">Uploading ${S.up[id]} photo${S.up[id] === 1 ? "" : "s"}…</p>` : ""}
+        ${S.msg[id] ? `<p class="msg bad">${esc(S.msg[id])}</p>` : ""}
+      </div>
+      <div class="field"><label class="lbl" for="no-${esc(id)}">Notes</label>
+        <textarea id="no-${esc(id)}" data-act="note" data-id="${esc(id)}" placeholder="Anything worth knowing: a broken light, a door that sticks, where cleaning starts…"${d}>${esc(a.note)}</textarea></div>
+      ${S.canWrite ? `<div class="foot">
+        ${a.status === "checked"
+          ? `<button class="btn done" data-act="status" data-id="${esc(id)}" aria-pressed="true">✓ Checked · tap to undo</button>`
+          : `<button class="btn primary" data-act="status" data-id="${esc(id)}" aria-pressed="false">Mark as checked</button>`}
+        ${confirming
+          ? `<span class="confirm">Delete ${esc(a.name || "this area")}${nPhotos ? ` and its ${nPhotos} photo${nPhotos === 1 ? "" : "s"}` : ""}? <button class="btn quiet" data-act="del-yes" data-id="${esc(id)}">Delete</button><button class="btn" data-act="del-no">Keep</button></span>`
+          : `<button class="btn quiet" data-act="del-area" data-id="${esc(id)}">Delete area</button>`}
+      </div>` : ""}
+    </div>`;
+  }
+
+  /* ---------- actions ---------- */
+  function addItem(id, name) {
+    const a = S.areas.get(id); name = String(name || "").trim();
+    if (!a || !name) return;
+    a.items = [...(a.items || []), { id: rid(), name, count: null }];
+    save("areas", id, 0); render();
+  }
+
+  document.addEventListener("click", async (e) => {
+    const t = e.target.closest("[data-act]"); if (!t || t.disabled) return;
+    const act = t.dataset.act, id = t.dataset.id, a = id ? S.areas.get(id) : null;
+    const item = a && t.dataset.item ? (a.items || []).find((i) => i.id === t.dataset.item) : null;
+    switch (act) {
+      case "tab": S.cur = t.dataset.floor; S.confirm = null; try { localStorage.setItem("hw-floor", S.cur); } catch {} render(); break;
+      case "toggle": S.open.has(id) ? S.open.delete(id) : S.open.add(id); S.confirm = null; render(); break;
+      case "first-floor": case "add-floor": {
+        const nums = [...S.floors.values()].map((f) => f.n).filter((n) => typeof n === "number" && n < 50);
+        const n = nums.length ? Math.max(...nums) + 1 : 1;
+        const fid = "f" + n;
+        if (S.floors.has(fid)) break;
+        // The house counts floors from the ground: Ground floor, Floor 1, Floor 2…
+        S.floors.set(fid, { n, label: n === 1 ? "Ground floor" : "Floor " + (n - 1), hint: n === 1 ? "Street level" : "", sketch: null, order: n });
+        S.cur = fid; save("floors", fid, 0); render(); break;
+      }
+      case "del-floor": S.confirm = "floor:" + S.cur; render(); break;
+      case "del-floor-yes": {
+        const fid = S.cur; S.confirm = null;
+        if (areasOn(fid).length || S.floors.get(fid)?.sketch) { render(); break; }
+        await removeDoc("floors", fid);
+        S.cur = floorsSorted()[0]?.[0] ?? null; render(); break;
+      }
+      case "add-area": {
+        const nid = "a-" + rid();
+        const order = Math.max(0, ...areasOn(S.cur).map(([, x]) => x.order ?? 0)) + 1;
+        S.areas.set(nid, { name: "", floor: S.cur, kind: "shared", cells: [], items: [], photos: [], note: "", status: "checked", from: "", order });
+        S.open.add(nid); save("areas", nid, 0); render();
+        const el = $("nm-" + nid); if (el) { el.focus(); el.scrollIntoView({ block: "center", behavior: "smooth" }); }
+        break;
+      }
+      case "cell": {
+        if (!a) break; const c = Number(t.dataset.cell); const set = new Set(a.cells || []);
+        set.has(c) ? set.delete(c) : set.add(c); a.cells = [...set].sort((x, y) => x - y);
+        save("areas", id, 300); render(); break;
+      }
+      case "inc": case "dec": {
+        if (!item) break;
+        item.count = act === "inc" ? (item.count ?? 0) + 1 : Math.max(0, (item.count ?? 1) - 1);
+        const el = $(`ct-${id}-${item.id}`); if (el) el.value = item.count;
+        save("areas", id, 500); refreshLive(id); break;
+      }
+      case "del-item": if (!a) break; a.items = (a.items || []).filter((i) => i.id !== t.dataset.item); save("areas", id, 0); render(); break;
+      case "chip": addItem(id, t.dataset.name); break;
+      case "add-item": { const el = $("ad-" + id); if (el) { addItem(id, el.value); const n = $("ad-" + id); if (n) n.focus(); } break; }
+      case "status": if (!a) break; a.status = a.status === "checked" ? "guess" : "checked"; save("areas", id, 0); render(); break;
+      case "del-area": S.confirm = id; render(); break;
+      case "del-no": S.confirm = null; render(); break;
+      case "del-yes": {
+        if (!a) break; const photos = [...(a.photos || [])];
+        S.confirm = null; S.open.delete(id); await removeDoc("areas", id); render();
+        for (const p of photos) await dropAsset(p);
+        break;
+      }
+      case "open-photo": openLB({ kind: "area", owner: id, asset: t.dataset.photo }); break;
+      case "open-sketch": openLB({ kind: "floor", owner: S.cur, asset: S.floors.get(S.cur)?.sketch }); break;
+      case "lb-close": closeLB(); break;
+      case "lb-remove": S.lb.confirm = true; drawLB(); break;
+      case "lb-keep": S.lb.confirm = false; drawLB(); break;
+      case "lb-yes": {
+        const { kind, owner, asset } = S.lb;
+        if (kind === "area") { const x = S.areas.get(owner); if (x) { x.photos = (x.photos || []).filter((p) => p !== asset); save("areas", owner, 0); } }
+        else { const f = S.floors.get(owner); if (f) { f.sketch = null; save("floors", owner, 0); } }
+        closeLB(); render(); await dropAsset(asset); break;
+      }
+    }
+  });
+
+  document.addEventListener("input", (e) => {
+    const t = e.target, act = t.dataset?.act, id = t.dataset?.id;
+    const a = id ? S.areas.get(id) : null; if (!a) return;
+    if (act === "name") { a.name = t.value; save("areas", id); refreshLive(id); }
+    else if (act === "note") { a.note = t.value; save("areas", id, 900); }
+    else if (act === "item-name" || act === "count") {
+      const it = (a.items || []).find((i) => i.id === t.dataset.item); if (!it) return;
+      if (act === "item-name") it.name = t.value;
+      else { const digits = t.value.replace(/\D/g, "").slice(0, 4); if (digits !== t.value) t.value = digits; it.count = digits === "" ? null : Number(digits); }
+      save("areas", id); refreshLive(id);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && S.lb) { closeLB(); return; }
+    const t = e.target;
+    if (e.key === "Enter" && t.dataset?.act === "new-item") { e.preventDefault(); addItem(t.dataset.id, t.value); const n = $("ad-" + t.dataset.id); if (n) n.focus(); }
+  });
+
+  document.addEventListener("change", async (e) => {
+    const t = e.target, act = t.dataset?.act, id = t.dataset?.id;
+    if (act === "kind" || act === "floor") {
+      const a = S.areas.get(id); if (!a) return;
+      if (act === "kind") a.kind = t.value;
+      else { a.floor = t.value; a.cells = []; S.cur = t.value; }
+      save("areas", id, 0); render();
+      if (act === "floor") { const el = $("fl-" + id); if (el) el.scrollIntoView({ block: "center" }); }
+    } else if (act === "photo-add") {
+      const files = [...(t.files || [])]; t.value = "";
+      if (files.length) await uploadPhotos(id, files);
+    } else if (act === "sketch-add") {
+      const file = t.files?.[0]; t.value = "";
+      if (file) await uploadSketch(S.cur, file);
+    }
+  });
+
+  /* ---------- photos ---------- */
+  async function shrink(file) {
+    try {
+      const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+      const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.82));
+      return blob || file;
+    } catch { return file; }
+  }
+  function uploadError(e) {
+    switch (e?.code) {
+      case "too_large": return "That photo is too big. Try a smaller one.";
+      case "unsupported_type": return "That file isn't a photo this page can keep. Use a JPEG or PNG.";
+      case "rate_limited": return "Too many photos at once. Wait a moment, then add the rest.";
+      case "quota_or_state": return "Photo storage is full. Tell Claude in the chat.";
+      default: return "A photo didn't upload. Check your connection and try again.";
+    }
+  }
+  async function put(file) {
+    const blob = await shrink(file);
+    const type = ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(blob.type) ? blob.type : "image/jpeg";
+    try { return await S.assets.upload(blob, { type }); }
+    catch (e) { if (e?.code === "store_unavailable") { await new Promise((r) => setTimeout(r, 1200)); return S.assets.upload(blob, { type }); } throw e; }
+  }
+  async function uploadPhotos(id, files) {
+    if (!S.assets) return;
+    delete S.msg[id]; S.up[id] = files.length; render();
+    for (const file of files) {
+      try {
+        const r = await put(file);
+        const a = S.areas.get(id);
+        if (!a) { await dropAsset(r.id); break; }
+        a.photos = [...(a.photos || []), r.id]; save("areas", id, 0);
+      } catch (e) { S.msg[id] = uploadError(e); }
+      S.up[id] = Math.max(0, (S.up[id] || 1) - 1); render();
+    }
+    delete S.up[id]; render();
+  }
+  async function uploadSketch(fid, file) {
+    if (!S.assets) return; const k = "floor:" + fid;
+    delete S.msg[k]; S.up[k] = 1; render();
+    try {
+      const r = await put(file); const f = S.floors.get(fid);
+      if (f) { const old = f.sketch; f.sketch = r.id; save("floors", fid, 0); if (old) dropAsset(old); }
+    } catch (e) { S.msg[k] = uploadError(e); }
+    delete S.up[k]; render();
+  }
+
+  /* ---------- lightbox ---------- */
+  let lastFocus = null;
+  function openLB(state) { if (!state.asset) return; lastFocus = document.activeElement; S.lb = { ...state, confirm: false }; drawLB(); $("lb").hidden = false; $("lbBar").querySelector("button")?.focus(); }
+  function closeLB() { S.lb = null; $("lb").hidden = true; $("lbImg").removeAttribute("src"); try { lastFocus?.focus({ preventScroll: true }); } catch {} }
+  function drawLB() {
+    const { asset, confirm, kind } = S.lb;
+    $("lbImg").src = "/_blob/" + asset;
+    $("lbImg").alt = kind === "floor" ? "Sketch of the floor" : "Photo of the area";
+    const can = S.canWrite && S.assets;
+    $("lbBar").innerHTML = confirm
+      ? `<span>Remove this ${kind === "floor" ? "sketch" : "photo"} for good?</span><button class="btn warn" data-act="lb-yes">Remove</button><button class="btn" data-act="lb-keep">Keep</button>`
+      : `<button class="btn" data-act="lb-close">Close</button>${can ? `<button class="btn warn" data-act="lb-remove">Remove ${kind === "floor" ? "sketch" : "photo"}</button>` : ""}`;
+  }
+  $("lb").addEventListener("click", (e) => { if (e.target === $("lb")) closeLB(); });
+
+  /* ---------- sync with the saved walk ---------- */
+  function apply(col, snap) {
+    const map = col === "areas" ? S.areas : S.floors;
+    let changed = !S.got[col]; S.got[col] = true;
+    const seen = new Set();
+    for (const d of snap.docs) {
+      const key = col + "/" + d.id; seen.add(d.id);
+      if (dirty.has(key) || gone.has(key)) continue;
+      const body = d.data();
+      const prev = map.get(d.id);
+      if (!prev || JSON.stringify(prev) !== JSON.stringify(body)) { map.set(d.id, JSON.parse(JSON.stringify(body))); changed = true; }
+    }
+    for (const id of [...map.keys()]) {
+      const key = col + "/" + id;
+      if (!seen.has(id) && !dirty.has(key)) { map.delete(id); changed = true; }
+    }
+    for (const key of [...gone]) { if (key.startsWith(col + "/") && !seen.has(key.slice(col.length + 1))) gone.delete(key); }
+    if (changed) render();
+  }
+
+  async function start() {
+    render();
+    if (!window.claude?.use) { S.fatal = { bad: true, text: "Open this page on claude.ai to load and save the walk." }; S.got = { floors: true, areas: true }; render(); return; }
+    const [db, assets, user] = await Promise.all([window.claude.use("db"), window.claude.use("assets"), window.claude.use("user")]);
+    if (!db) { S.fatal = { bad: true, text: "The saved walk couldn't load here. Sign in to claude.ai and reload the page." }; S.got = { floors: true, areas: true }; render(); return; }
+    S.db = db; S.assets = assets;
+    try { const can = user ? await user.can("data.write") : null; if (can === false) { S.canWrite = false; S.banner = { bad: false, text: "You can look at this walk, but only the people editing it can make changes." }; } } catch {}
+    const onErr = (e) => { S.fatal = { bad: true, text: e?.code === "revoked" ? "This page lost access to the saved walk. Reload to continue." : "The saved walk stopped updating. Reload the page." }; render(); };
+    db.collection("floors").onSnapshot((s) => apply("floors", s), onErr);
+    db.collection("areas").onSnapshot((s) => apply("areas", s), onErr);
+  }
+  start();
+})();
+</script>
