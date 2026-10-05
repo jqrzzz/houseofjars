@@ -146,6 +146,14 @@ export const rules = {
     ),
     fact<HouseRule>(
       {
+        rule: "Smoke out past the terrace, by the small jar for cigarette butts, not on the terrace itself.",
+        why: "Smoke from the terrace drifts straight into the café.",
+      },
+      sources.team,
+      { confirmed: true, note: "Told by the owner on 2026-10-05." },
+    ),
+    fact<HouseRule>(
+      {
         rule: "No outside guests upstairs: the dorm floors are for registered guests, one to a pod.",
         why: "Everyone sleeps among people the house knows.",
       },

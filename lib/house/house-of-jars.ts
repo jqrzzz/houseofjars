@@ -9,8 +9,10 @@
  * public/house/ is drawn from this file (npm run house:render). See
  * docs/HOUSE_MODEL.md.
  */
+import { breakfast, policies, times } from "@/content/stay";
+import { joinList, lowerFirst } from "@/content/text";
 import { box, centred } from "./geometry";
-import type { Area, Box3, Facing, Fixture, FixtureType, Floor, FloorId, HouseModel, Mount, Rect, Route, Wall } from "./types";
+import type { Area, Box3, Facing, Fixture, FixtureType, Floor, FloorId, HouseModel, Mount, Rect, Route, RoutePoint, Wall } from "./types";
 
 const W = 4.0; // interior width
 const D = 16.0; // interior depth
@@ -44,7 +46,9 @@ export const floors: readonly Floor[] = [
 
 const FLOOR2_NOTE = 'Floor 2 has not been photographed: copied from Floor 1 on the owner\'s word ("the same layout").';
 const POD_NOTE =
-  "The numbers and which pods stack together are from the owner's bed register. Not confirmed: which pod of each stack is the upper one (the model puts the lower number below).";
+  'The numbers, the stacks and which pod is on top are from the owner\'s bed register, as drawn: the number written on top is the top bunk (the owner: "the top bunk is 1 and beneath it 2").';
+/** Down the left side and across the door the register writes the higher number on top: read as drawn, not yet checked in the room. */
+const POD_LEFT_NOTE = `${POD_NOTE} Not confirmed: on this side the register puts the higher number on top (09 over 08, 11 over 10, 15 over 12, 17 over 16).`;
 const LOCKER_NOTE =
   "One locker for each pod, with the pod's number (the owner's bed register). The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.";
 // ---------------------------------------------------------------------------
@@ -375,6 +379,14 @@ const groundFixtures: Fixture[] = on("ground", [
   { id: "sign-hanging", type: "sign-hanging", area: "terrace", box: box(2.9, 3.8, -0.62, -0.58, 2.3, 2.95), label: "House of Jars" },
   { id: "bench-terrace", type: "bench", area: "terrace", box: box(1.45, 3.75, -0.55, -0.2, 0, 0.45) },
   ...many("table-small-round", "table-terrace", "terrace", [centred(2.0, -1.1, 0.6, 0.6, 0.6), centred(2.9, -1.1, 0.6, 0.6, 0.6)]),
+  {
+    id: "jar-butts",
+    type: "jar-clay",
+    area: "terrace",
+    box: centred(3.55, -2.4, 0.22, 0.22, 0.35),
+    confirmed: false,
+    note: "A small jar for cigarette butts, a few steps out from the café's front: smoking is not allowed on the terrace itself (the owner). Where exactly it stands is assumed: by the awning's right post.",
+  },
   { id: "plant-terrace", type: "plant", area: "terrace", box: centred(0.38, -2.18, 0.35, 0.35, 0.8), note: "At the foot of the awning's left post (f1-01)." },
 
   // The café.
@@ -625,28 +637,30 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
   }
   list.push({ id: `ac-${letter}`, type: "ac-indoor", area: dorm, box: box(1.55, 2.45, 0.02, 0.27, 2.3, 2.6), faces: "+y", mount: "facade-inside" });
 
-  // Pods: seven stacks of two (lower and upper), numbered as on the owner's bed register. From the door they run
+  // Pods: seven stacks of two (upper and lower), numbered as on the owner's bed register. From the door they run
   // up the right-hand side to the front window and back down the left, and the last stack lies across the end of
-  // the aisle, just inside the door. The numbers skip 4, 13 and 14 (see the house's customs).
+  // the aisle, just inside the door. The numbers skip 4, 13 and 14 (see the house's customs). Each pair is
+  // [upper, lower], as the register draws it.
   const num = (n: number) => `${L}${String(n).padStart(2, "0")}`;
   const pods: readonly { side: "right" | "left" | "across"; b: Rect; numbers: readonly [number, number] }[] = [
     { side: "right", b: { x0: 2.75, x1: W, y0: 5.1, y1: 7.15 }, numbers: [1, 2] },
     { side: "right", b: { x0: 2.75, x1: W, y0: 3.0, y1: 5.05 }, numbers: [3, 5] },
     { side: "right", b: { x0: 2.75, x1: W, y0: 0.4, y1: 2.45 }, numbers: [6, 7] },
-    { side: "left", b: { x0: 0, x1: 1.25, y0: 0.3, y1: 2.35 }, numbers: [8, 9] },
-    { side: "left", b: { x0: 0, x1: 1.25, y0: 2.9, y1: 4.95 }, numbers: [10, 11] },
-    { side: "left", b: { x0: 0, x1: 1.25, y0: 5.5, y1: 7.55 }, numbers: [12, 15] },
-    { side: "across", b: { x0: 0, x1: 2.05, y0: 7.6, y1: 8.6 }, numbers: [16, 17] },
+    { side: "left", b: { x0: 0, x1: 1.25, y0: 0.3, y1: 2.35 }, numbers: [9, 8] },
+    { side: "left", b: { x0: 0, x1: 1.25, y0: 2.9, y1: 4.95 }, numbers: [11, 10] },
+    { side: "left", b: { x0: 0, x1: 1.25, y0: 5.5, y1: 7.55 }, numbers: [15, 12] },
+    { side: "across", b: { x0: 0, x1: 2.05, y0: 7.6, y1: 8.6 }, numbers: [17, 16] },
   ];
   pods.forEach(({ side, b, numbers }, k) => {
     const faces: Facing = side === "left" ? "+x" : side === "right" ? "-x" : "-y";
-    const [lower, upper] = numbers.map(num) as [string, string];
+    const [upper, lower] = numbers.map(num) as [string, string];
     // A fixed few upper curtains on the aisle side the camera sees are drawn half open, to show the bed.
-    const open = side === "left" && numbers[0] !== 10;
+    const open = side === "left" && numbers[1] !== 10;
     const look = side === "across" ? "" : `${side} `;
+    const sure = side === "right" ? { note: POD_NOTE } : { confirmed: false, note: POD_LEFT_NOTE };
     list.push(
-      { id: `pod-${lower}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 0, 1.15), label: lower, variant: `${look}lower`, faces, confirmed: false, note: POD_NOTE },
-      { id: `pod-${upper}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 1.15, 2.4), label: upper, variant: `${look}upper${open ? " open" : ""}`, faces, confirmed: false, note: POD_NOTE },
+      { id: `pod-${lower}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 0, 1.15), label: lower, variant: `${look}lower`, faces, ...sure },
+      { id: `pod-${upper}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 1.15, 2.4), label: upper, variant: `${look}upper${open ? " open" : ""}`, faces, ...sure },
       {
         id: `ladder-${letter}-${k + 1}`,
         type: "ladder",
@@ -811,83 +825,202 @@ const floor2 = dormFloor(2, "j", "men");
 // ---------------------------------------------------------------------------
 // Routes (a guest's path, one segment per floor)
 
+// ---------------------------------------------------------------------------
+// Walks through the house: how a guest or the team moves from place to place, step by step, with the rules met
+// on the way. Each is a path for the pictures (one segment per floor; on stairs a point carries its height) and
+// a list of steps for guides, the team and Shadow.
+
+/** Up the U-shaped stair from the ground floor to Floor 1, from the foot in the corridor to the top. */
+const UP_TO_FLOOR1: readonly RoutePoint[] = [
+  [3.25, 9.95],
+  [3.0, 9.95, 0],
+  [0.85, 9.95, 1.9],
+  [0.45, 9.95, 1.9],
+  [0.45, 9.15, 1.9],
+  [0.85, 9.15, 1.9],
+  [2.6, 9.15, 3.8],
+];
+/** The same, down: from the top on Floor 1 to the foot in the corridor. */
+const DOWN_FROM_FLOOR1: readonly RoutePoint[] = [...UP_TO_FLOOR1].reverse();
+/** Up the same stair from Floor 1 to Floor 2 (a storey of 3.1 m). */
+const UP_TO_FLOOR2: readonly RoutePoint[] = [
+  [2.9, 9.95],
+  [2.6, 9.95, 0],
+  [0.85, 9.95, 1.55],
+  [0.45, 9.95, 1.55],
+  [0.45, 9.15, 1.55],
+  [0.85, 9.15, 1.55],
+  [2.6, 9.15, 3.1],
+];
+/** From the top of the stairs on Floor 1, past the shoe cubbies, through the dorm door to the aisle. */
+const LANDING_TO_DORM: readonly RoutePoint[] = [
+  [2.6, 9.15],
+  [3.1, 9.3],
+  [3.3, 10.2],
+  [3.1, 9.0],
+  [3.15, 8.65],
+  [3.15, 8.0],
+  [2.4, 7.85],
+  [2.2, 6.6],
+];
+/** From pod H01's ladder back out of the dorm, past the shoe cubbies, to the top of the stairs. */
+const DORM_TO_STAIRS: readonly RoutePoint[] = [
+  [2.45, 5.4],
+  [2.2, 6.6],
+  [2.4, 7.85],
+  [3.15, 8.0],
+  [3.15, 8.65],
+  [3.1, 9.0],
+  [3.3, 10.2],
+  [3.1, 9.3],
+  [2.6, 9.15],
+];
+/** From the counter through the café and out of the glass door onto the terrace. */
+const CAFE_TO_TERRACE: readonly RoutePoint[] = [
+  [2.35, 4.6],
+  [1.5, 1.35],
+  [0.85, 0.9],
+  [0.85, -0.1],
+  [1.2, -1.6],
+];
+
+const deposit = `the ${policies.deposit.value.amount} deposit for ${policies.deposit.value.covers}`;
+const shoesOff = { label: "Shoes off", area: "stairs-ground", rules: ["no-shoes-upstairs", "registered-guests-upstairs"] } as const;
+
 const routes: readonly Route[] = [
   {
     id: "arrival",
     name: "Arriving: from the terrace to pod H01",
+    who: "guest",
+    when: `Check-in, ${times.checkIn.value} to ${times.checkInUntil.value}`,
     segments: [
       {
         floor: "ground",
-        points: [
-          [2.3, -1.9],
-          [1.2, -1.6],
-          [0.85, -0.1],
-          [0.85, 0.9],
-          [1.5, 1.35],
-          [2.35, 4.6],
-          [2.35, 5.8],
-          [2.35, 7.3],
-          [2.85, 8.45],
-          [3.25, 9.2],
-          [3.25, 9.95],
-          [3.0, 9.95, 0],
-          [0.85, 9.95, 1.9],
-          [0.45, 9.95, 1.9],
-          [0.45, 9.15, 1.9],
-          [0.85, 9.15, 1.9],
-          [2.6, 9.15, 3.8],
-        ],
+        points: [[2.3, -1.9], [1.2, -1.6], [0.85, -0.1], [0.85, 0.9], [1.5, 1.35], [2.35, 4.6], [2.35, 5.8], [2.35, 7.3], [2.85, 8.45], [3.25, 9.2], ...UP_TO_FLOOR1],
       },
-      {
-        floor: "floor1",
-        points: [
-          [2.6, 9.15],
-          [3.1, 9.3],
-          [3.3, 10.2],
-          [3.1, 9.0],
-          [3.15, 8.65],
-          [3.15, 8.0],
-          [2.4, 7.85],
-          [2.0, 6.8],
-          [2.0, 3.0],
-          [2.5, 1.4],
-        ],
-      },
+      { floor: "floor1", points: [...LANDING_TO_DORM, [2.45, 5.4]] },
     ],
     stops: [
-      { floor: "ground", at: [2.35, 5.8], label: "Check in" },
-      { floor: "floor1", at: [3.3, 10.2], label: "Shoes" },
+      {
+        floor: "ground",
+        at: [0.85, 0.3],
+        label: "Front door",
+        area: "entrance",
+        does: `In through the glass door on the left of the shopfront. From ${times.frontDoorLocked.value.from} to ${times.frontDoorLocked.value.until} it is locked: knock, and the night staff opens it.`,
+        rules: ["front-door-locked", "no-outside-food"],
+      },
+      {
+        floor: "ground",
+        at: [2.35, 5.8],
+        label: "Check in",
+        area: "desk",
+        does: `Check in at the café counter, which is also the front desk: show your passport and pay ${deposit}. Luggage can wait beside the desk.`,
+        rules: ["check-in-hours", "passport", "deposit"],
+      },
+      { floor: "ground", at: [3.25, 9.6], ...shoesOff, does: "Take your shoes off at the foot of the stairs and carry them up." },
+      { floor: "floor1", at: [3.3, 10.2], label: "Shoes", area: "landing-1", does: "Leave your shoes in the cubbies on the Floor 1 landing.", rules: ["no-shoes-upstairs"] },
+      {
+        floor: "floor1",
+        at: [2.45, 5.4],
+        label: "Pod H01",
+        area: "dorm-h",
+        does: "Find your pod by its number (H01 is a top bunk, up its ladder) and the locker with the same number. Keep your voice down: someone is always asleep.",
+        rules: ["quiet", "eat-in-the-cafe"],
+      },
     ],
   },
   {
-    id: "bathroom-women",
-    name: "From Dorm H to the women's bathroom",
+    id: "breakfast",
+    name: "Breakfast: from Dorm H down to the café",
+    who: "guest",
+    when: breakfast.hours.value.replace("–", " to "),
     segments: [
+      { floor: "floor1", points: [[2.0, 3.0], [2.0, 6.8], [2.4, 7.85], [3.15, 8.0], [3.15, 8.65], [3.1, 9.0], [3.3, 10.2], [3.1, 9.3], [2.6, 9.15]] },
+      { floor: "ground", points: [...DOWN_FROM_FLOOR1, [3.25, 9.2], [2.85, 8.45], [2.35, 7.3], [2.35, 6.2]] },
+    ],
+    stops: [
+      { floor: "floor1", at: [3.3, 10.2], label: "Shoes", area: "landing-1", does: "Take your shoes from the cubby and carry them down.", rules: ["no-shoes-upstairs"] },
+      { floor: "ground", at: [3.25, 9.6], ...shoesOff, label: "Shoes on", does: "Put them on at the foot of the stairs." },
       {
-        floor: "floor1",
-        points: [
-          [3.15, 8.7],
-          [3.1, 11.6],
-          [3.0, 12.7],
-          [3.1, 13.6],
-        ],
+        floor: "ground",
+        at: [2.35, 6.2],
+        label: "Breakfast",
+        area: "cafe",
+        does: `Breakfast is included, served at the counter from ${breakfast.hours.value.replace("–", " to ")}: ${joinList(breakfast.items.value.map(lowerFirst))}. Eat it at a table in the café.`,
+        rules: ["eat-in-the-cafe"],
       },
+    ],
+  },
+  {
+    id: "leaving-early",
+    name: "Leaving early: pack downstairs, check out",
+    who: "guest",
+    when: `Before 08:00 (check-out is open until ${times.checkOut.value})`,
+    segments: [
+      { floor: "floor1", points: DORM_TO_STAIRS },
+      { floor: "ground", points: [...DOWN_FROM_FLOOR1, [3.25, 9.2], [2.85, 8.45], [1.8, 7.75], [2.35, 6.4], [2.35, 5.8], ...CAFE_TO_TERRACE] },
+    ],
+    stops: [
+      { floor: "floor1", at: [3.3, 10.2], label: "Shoes", area: "landing-1", does: "Take your shoes and your bag; pack nothing in the dorm.", rules: ["pack-downstairs"] },
+      { floor: "ground", at: [1.8, 7.75], label: "Pack here", area: "cafe", does: "Pack on the ground floor, beside the luggage space by the front desk, so the dorm can sleep on.", rules: ["pack-downstairs"] },
+      {
+        floor: "ground",
+        at: [2.35, 5.8],
+        label: "Check out",
+        area: "desk",
+        does: `Check out at the front desk and get ${deposit} back. Leaving before 08:00? Tell the team beforehand, so they can return your deposit.`,
+        rules: ["check-out-hours", "leaving-before-eight", "deposit"],
+      },
+      { floor: "ground", at: [0.85, 0.3], label: "Front door", area: "entrance", does: "Out through the glass door. While it is locked, the night staff opens it.", rules: ["front-door-locked"] },
+    ],
+  },
+  {
+    id: "smoke",
+    name: "Going out for a smoke",
+    who: "guest",
+    segments: [{ floor: "ground", points: [...CAFE_TO_TERRACE, [2.4, -2.0], [3.3, -2.35]] }],
+    stops: [
+      { floor: "ground", at: [1.2, -1.6], label: "Not here", area: "terrace", does: "No smoking on the terrace or at the café's front: the smoke drifts straight inside.", rules: ["no-smoking", "smoke-past-the-terrace"] },
+      { floor: "ground", at: [3.3, -2.35], label: "Smoke here", area: "terrace", does: "A few steps further out, by the small jar for cigarette butts.", rules: ["smoke-past-the-terrace"] },
     ],
   },
   {
     id: "water",
     name: "From the counter to the free water",
+    who: "guest",
+    segments: [{ floor: "ground", points: [[2.3, 6.4], [2.35, 7.3], [2.85, 8.45], [3.25, 9.2], [3.3, 10.45]] }],
+    stops: [{ floor: "ground", at: [3.3, 10.45], label: "Free water", area: "water", does: "Free drinking water at the dispenser, at the start of the corridor, with glasses in the cupboard below." }],
+  },
+  {
+    id: "bathroom-women",
+    name: "From Dorm H to the women's bathroom",
+    who: "guest",
+    segments: [{ floor: "floor1", points: [[3.15, 8.7], [3.1, 11.6], [3.0, 12.7], [3.1, 13.6]] }],
+    stops: [
+      { floor: "floor1", at: [3.1, 13.6], label: "Women's bathroom", area: "bath-women", does: "The women's bathroom is on Floor 1, past the stairs; the men's is the same place on Floor 2." },
+    ],
+  },
+  {
+    id: "housekeeping-round",
+    name: "Housekeeping round: from the café up through every floor",
+    who: "staff",
+    when: "About every hour",
     segments: [
+      { floor: "ground", points: [[2.35, 6.2], [2.35, 7.3], [2.85, 8.45], [3.25, 9.2], [3.2, 11.0], [2.5, 11.8], [3.2, 11.0], ...UP_TO_FLOOR1] },
       {
-        floor: "ground",
-        points: [
-          [2.3, 6.4],
-          [2.35, 7.3],
-          [2.85, 8.45],
-          [3.25, 9.2],
-          [3.3, 10.45],
-        ],
+        floor: "floor1",
+        points: [[2.6, 9.15], [3.1, 9.3], [3.3, 10.2], [3.1, 11.6], [3.0, 12.7], [3.1, 13.6], [3.0, 12.7], [3.1, 11.6], [3.15, 8.65], [3.15, 8.0], [2.4, 7.85], [2.0, 6.8], [2.0, 3.0], [2.0, 6.8], [2.4, 7.85], [3.15, 8.0], [3.15, 8.65], ...UP_TO_FLOOR2],
       },
+      { floor: "floor2", points: [[2.6, 9.15], [3.1, 9.3], [3.15, 10.4], [3.1, 11.6], [3.0, 12.7], [3.1, 13.6], [3.0, 12.7], [3.1, 11.6], [3.15, 8.65], [3.15, 8.0], [2.4, 7.85], [2.0, 6.8], [2.0, 3.0]] },
+    ],
+    stops: [
+      { floor: "ground", at: [2.35, 6.2], label: "Café", area: "cafe", does: "Look over the tables, the counter and the floor; clean what needs it, then take a photo to compare with the standard." },
+      { floor: "ground", at: [2.5, 11.8], label: "Toilet", area: "toilet-ground", does: "The toilet, its sink and the corridor basin: clean, refill, photo." },
+      { floor: "floor1", at: [3.3, 10.2], label: "Landing", area: "landing-1", does: "Tidy the shoe cubbies and sweep the landing.", rules: ["no-shoes-upstairs"] },
+      { floor: "floor1", at: [3.1, 13.6], label: "Bathroom", area: "bath-women", does: "Toilets, showers, basins and floor: clean, refill, photo." },
+      { floor: "floor1", at: [2.0, 3.0], label: "Dorm H", area: "dorm-h", does: "Quietly: the aisle, the floor and the bins; pods made up fresh after check-out.", rules: ["quiet"] },
+      { floor: "floor2", at: [3.1, 13.6], label: "Bathroom", area: "bath-men", does: "Toilets, showers, basins and floor: clean, refill, photo." },
+      { floor: "floor2", at: [2.0, 3.0], label: "Dorm J", area: "dorm-j", does: "Quietly: the aisle, the floor and the bins; pods made up fresh after check-out.", rules: ["quiet"] },
     ],
   },
 ];

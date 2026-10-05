@@ -195,10 +195,20 @@ export function describeHouse(model: HouseModel = houseOfJars): string {
   lines.push("", "## Rules everywhere indoors", "", ...all.filter((r) => r.scope === "house").map(ruleLine));
   lines.push("", "## Rules about the stay", "", ...all.filter((r) => r.scope === "stay").map(ruleLine));
 
-  lines.push("", "## Routes", "");
+  // The walks, step by step: where each step happens, what happens there, and the rules met on the way.
+  lines.push("", "## Walks through the house");
   for (const route of model.routes) {
-    const stops = (route.stops ?? []).map((s) => s.label);
-    lines.push(`- ${route.name}${stops.length > 0 ? `: ${stops.join(", then ")}` : ""}.`);
+    lines.push("", `### ${route.name}`);
+    const meta = [route.who === "staff" ? "For the team" : route.who === "guest" ? "For guests" : undefined, route.when].filter(Boolean);
+    if (meta.length > 0) lines.push("", `${meta.join(". ")}.`);
+    const steps = route.stops ?? [];
+    if (steps.length === 0) continue;
+    lines.push("");
+    steps.forEach((step, i) => {
+      const where = step.area ? model.areas.find((a) => a.id === step.area)?.name : undefined;
+      const rules = step.rules?.length ? ` (rules: ${step.rules.map((id) => id.replaceAll("-", " ")).join(", ")})` : "";
+      lines.push(`${i + 1}. ${step.label}${where && where !== step.label ? `, ${where}` : ""}: ${step.does ?? ""}${rules}`.replace(/: $/, "."));
+    });
   }
   return `${lines.join("\n")}\n`;
 }

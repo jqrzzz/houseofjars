@@ -83,7 +83,7 @@ Examples:
 - **A custom.** Add a plain sentence to `customs` (numbers the house skips, and why): `docs/house-context.md` lists them for guides, the team and Shadow.
 - **The stairs moved.** Each flight is a `stairs` fixture: `faces` is the way it climbs and `climb` the heights it starts and ends at (relative to its floor); a landing has the variant `landing` and starts and ends at one height. Move the flights and the upper floors' `opening` with them; the slab holes, the floors around them and the plans follow. The test fails if a flight comes within 2 m of a slab without an opening over it.
 - **A room that is not a rectangle.** Give its area `more` rectangles (the café, the corridor and the toilet are drawn this way).
-- **A route.** Add it to `routes`: one segment per floor, points as `[x, y]` or `[x, y, z]` (on stairs), optional stops. The test fails if a flat stretch crosses a fixture standing on the floor.
+- **A walk.** Add it to `routes`: who walks it (`guest` or `staff`), when, one segment per floor (points as `[x, y]`, or `[x, y, z]` on stairs; `UP_TO_FLOOR1` and the other stair pieces are ready to reuse), and its steps: where each is drawn, its `area`, what happens there (`does`, one or two plain sentences) and the house rules met there (`rules`, ids from `lib/house/rules.ts`). The tests fail if a flat stretch crosses a fixture standing on the floor, or a step names an area on another floor or a rule that does not exist.
 
 ### What is assumed today (`confirmed: false`)
 
@@ -91,6 +91,14 @@ Examples:
 - **Which pod of each stack is the upper one, and most locker stacks.** The owner's bed register gives the 14 numbers on each floor (H01 to H17 and J01 to J17, with no 4, 13 or 14) and which two pods stack together; the model puts the lower number below. The stack of lockers beside the dorm door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
 - **The flights between Floor 1 and Floor 2.** Floor 1's photos show the first flight up beside the bathroom door (f2-02); the landing and the second flight are assumed to be the same as on the ground floor.
 - **The pendant lamps, downlights and framed photographs** in the café: seen in photos f1-03, gf-02 and gf-03; how many and where is approximate. So is where the clay jar on the landing stands.
+
+## Walks through the house
+
+`routes` holds the walks a guest or the team makes, each a path for the pictures and a list of steps for guides,
+the team and Shadow. Today: arriving (terrace to pod H01), breakfast, leaving early, going out for a smoke, the
+free water, the women's bathroom, and the housekeeping round about every hour. `docs/house-context.md` lists
+each walk step by step with the rules met at each step; `renderCutaway({ route })` draws one, its steps labelled.
+Hours, the deposit and the breakfast menu come from `content/stay.ts`, so a walk says what the website says.
 
 ## Views
 

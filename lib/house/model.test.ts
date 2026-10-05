@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { insideRect, intersects } from "./geometry";
 import { houseOfJars as model } from "./house-of-jars";
+import { placedRules } from "./rules";
 import type { Area, Box3, Fixture, FixtureType, FloorId, Rect } from "./types";
 
 const TOLERANCE = 0.05;
@@ -162,6 +163,35 @@ describe("the House of Jars model: integrity", () => {
     expect(hits).toEqual([]);
   });
 
+  it("walks guests and the team through the house step by step: each step in a real area on its floor, with real rules", () => {
+    const ruleIds = new Set(placedRules.map((r) => r.id));
+    for (const r of model.routes) {
+      expect(["guest", "staff"], r.id).toContain(r.who);
+      const floors = new Set(r.segments.map((s) => s.floor));
+      expect(r.stops?.length, r.id).toBeGreaterThan(0);
+      for (const stop of r.stops ?? []) {
+        const where = `${r.id} / ${stop.label}`;
+        expect(floors.has(stop.floor), where).toBe(true);
+        expect(area(stop.area!)?.floor, where).toBe(stop.floor);
+        expect(stop.does, where).toMatch(/\.$/);
+        for (const id of stop.rules ?? []) expect(ruleIds.has(id), `${where}: ${id}`).toBe(true);
+      }
+    }
+    // The guest's day: arriving, breakfast, leaving early, a smoke, water, the bathroom; the team's hourly round.
+    expect(model.routes.map((r) => r.id)).toEqual(["arrival", "breakfast", "leaving-early", "smoke", "water", "bathroom-women", "housekeeping-round"]);
+    // The arrival ends at pod H01's ladder, and the round reaches every bathroom and dorm.
+    const arrival = model.routes.find((r) => r.id === "arrival")!.segments.at(-1)!.points.at(-1)!;
+    const h01 = model.fixtures.find((f) => f.id === "pod-H01")!.box;
+    expect(Math.hypot(Math.max(h01.x0 - arrival[0], 0), Math.max(h01.y0 - arrival[1], 0, arrival[1] - h01.y1))).toBeLessThan(0.5);
+    const round = model.routes.find((r) => r.id === "housekeeping-round")!;
+    expect(round.who).toBe("staff");
+    expect(round.stops!.map((s) => s.area)).toEqual(expect.arrayContaining(["toilet-ground", "bath-women", "bath-men", "dorm-h", "dorm-j", "cafe"]));
+    // The smoke ends by the jar, past the terrace's seats.
+    const smoke = model.routes.find((r) => r.id === "smoke")!.segments[0]!.points.at(-1)!;
+    const jar = model.fixtures.find((f) => f.id === "jar-butts")!.box;
+    expect(Math.hypot(smoke[0] - (jar.x0 + jar.x1) / 2, smoke[1] - (jar.y0 + jar.y1) / 2)).toBeLessThan(0.5);
+  });
+
   it("runs every route over floors that exist, inside the house or on the terrace", () => {
     for (const r of model.routes) {
       expect(r.segments.length, r.id).toBeGreaterThan(0);
@@ -182,11 +212,12 @@ describe("the House of Jars model: integrity", () => {
     for (const a of model.areas.filter((x) => x.floor === "floor2")) expect(a.confirmed, a.id).toBe(false);
     // Floor 2's two small windows are seen from the street (f1-01); everything else up there is a copy of Floor 1.
     for (const f of model.fixtures.filter((x) => x.floor === "floor2")) expect(f.confirmed, f.id).toBe(f.type === "window" ? undefined : false);
-    // The numbers and the stacks are from the owner's bed register; which pod of each stack is the upper one, and
-    // where most locker stacks stand, are open.
-    for (const f of model.fixtures.filter((x) => x.type === "pod")) {
-      expect(f.confirmed, f.id).toBe(false);
-      expect(f.note, f.id).toMatch(/bed register\. Not confirmed: which pod of each stack is the upper one/);
+    // The numbers, stacks and top bunks are from the owner's bed register. The owner confirmed the right-hand side
+    // (the top bunk is 1, beneath it 2); down the left the register puts the higher number on top, not yet checked.
+    for (const f of model.fixtures.filter((x) => x.type === "pod" && x.floor === "floor1")) {
+      const left = f.faces !== "-x";
+      expect(f.confirmed, f.id).toBe(left ? false : undefined);
+      expect(f.note, f.id).toMatch(left ? /Not confirmed: on this side the register puts the higher number on top/ : /the top bunk is 1 and beneath it 2/);
     }
     for (const f of model.fixtures.filter((x) => x.type === "locker")) expect(f.note, f.id).toMatch(/is assumed\.$/);
     // Floor 1's dorm itself is seen (and drawn from the register); Floor 2's is a copy.
@@ -238,7 +269,9 @@ describe("the House of Jars model: counts from the walk", () => {
       for (const p of pods) stacks.set(`${p.box.x0},${p.box.y0}`, [...(stacks.get(`${p.box.x0},${p.box.y0}`) ?? []), p.label!]);
       const pairs = [[1, 2], [3, 5], [6, 7], [8, 9], [10, 11], [12, 15], [16, 17]].map((pair) => pair.map((n) => `${letter}${String(n).padStart(2, "0")}`).join("/"));
       expect([...stacks.values()].map((s) => s.sort().join("/")).sort()).toEqual(pairs.sort());
-      expect(pods.filter((p) => p.variant?.includes("lower"))).toHaveLength(7);
+      // The top bunk of each stack, as the register draws it.
+      const top = [1, 3, 6, 9, 11, 15, 17].map((n) => `${letter}${String(n).padStart(2, "0")}`);
+      expect(pods.filter((p) => p.variant?.includes("upper")).map((p) => p.label).sort()).toEqual(top);
       expect(pods.filter((p) => p.faces === "-y").map((p) => p.label).sort()).toEqual([`${letter}16`, `${letter}17`]);
     }
     expect(model.customs?.[0]).toMatch(/skip the numbers 4, 13 and 14/);
