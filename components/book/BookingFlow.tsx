@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  ViewTransition,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -44,6 +45,7 @@ import {
   type Stay,
   type Step,
 } from "@/lib/booking/flow";
+import { stayRail } from "@/lib/booking/stay-rail";
 import { guestText } from "@/lib/booking/text";
 import type {
   Availability,
@@ -226,12 +228,15 @@ function Frame({
     // The floating Ask Shadow button steps aside for the form (the stub offers Shadow instead).
     <section ref={sectionRef} id="book-online" aria-labelledby={headingId} className={styles.section} data-hides-launcher="">
       <div className="container">
-        <div className={styles.ticket}>
-          <div className={styles.main}>
-            <div className={styles.body}>{children}</div>
+        {/* Following a link here from the booking card, the card's ticket glides into this one. */}
+        <ViewTransition name="booking-ticket" share="morph" default="none">
+          <div className={styles.ticket}>
+            <div className={styles.main}>
+              <div className={styles.body}>{children}</div>
+            </div>
+            {stub}
           </div>
-          {stub}
-        </div>
+        </ViewTransition>
       </div>
     </section>
   );
@@ -633,6 +638,9 @@ function Flow({ house }: { house: HouseNotes }) {
   }
 
   const headingId = `${id}-step`;
+  // The stay as the house will live it: check-in, breakfast, check-out (under the calendar, and in the review).
+  const chosenRail = stayRail(range.checkIn, range.checkOut, house.rail, { today });
+  const shownRail = shown ? stayRail(shown.stay.check_in, shown.stay.check_out, house.rail, { today }) : null;
   const booked = step === "done" && saved ? saved : null;
   const stub = booked ? (
     <StayStub
@@ -726,6 +734,7 @@ function Flow({ house }: { house: HouseNotes }) {
             problem={status !== "open" && status !== "loading" ? status : null}
             onRetry={() => void loadTerms()}
             onFind={findBeds}
+            rail={chosenRail}
           />
         ) : current === "rooms" ? (
           <RoomsStep
@@ -769,6 +778,7 @@ function Flow({ house }: { house: HouseNotes }) {
             onPayOnline={setPayChoice}
             onChange={(target) => show(target)}
             onSend={send}
+            rail={shownRail}
           >
             {sending.status === "problem" ? (
               <Problem problem={sending.problem} action="send" retryAfterSeconds={sending.retryAfterSeconds} />

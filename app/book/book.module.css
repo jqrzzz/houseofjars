@@ -60,3 +60,41 @@
   font-style: normal;
   font-size: var(--step-1);
 }
+
+/*
+ * Booking direct on a paper ticket, the same paper as the booking card's
+ * (components/BookingCard.module.css): --paper-near with a faint fibre, the
+ * woven lozenges along its top and a card edge at (--edge-x, --edge-y). The
+ * card's ticket glides into it from other pages ("booking-ticket").
+ */
+.ticket {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 70% at 0% 0%, var(--lantern), transparent 55%),
+    var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+.ticket::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--text);
+  -webkit-mask: url(/art/paper-fibre.svg) repeat;
+  mask: url(/art/paper-fibre.svg) repeat;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.request {
+  padding: var(--space-l) var(--space-m) var(--space-xl);
+}
+
+@media (min-width: 40rem) {
+  .request {
+    padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+  }
+}

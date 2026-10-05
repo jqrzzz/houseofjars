@@ -35,9 +35,11 @@ import {
   type Quote,
   type RoomType,
 } from "@/lib/booking/types";
+import type { RailTimes, StayRail } from "@/lib/booking/stay-rail";
 import { guestText } from "@/lib/booking/text";
 import { formatDay, formatHouseTime, nightsBetween } from "@/lib/dates";
 import { pages } from "@/lib/site";
+import { HouseLamp } from "../art/HouseLamp";
 import { AskShadowButton } from "../concierge/AskShadowButton";
 import { ContactDetails } from "../contact/ContactDetails";
 import { CopyButton } from "../contact/CopyButton";
@@ -48,6 +50,8 @@ import { focusField } from "./focus-field";
 import styles from "./BookingFlow.module.css";
 import { DateRangePicker } from "./DateRangePicker";
 import form from "./InquiryForm.module.css";
+import { MiniRail } from "./MiniRail";
+import { TiedThread } from "./TiedThread";
 
 /*
  * The steps of the booking form (components/book/BookingFlow.tsx holds the
@@ -55,11 +59,13 @@ import form from "./InquiryForm.module.css";
  * set, the page says the team confirms the price.
  */
 
-/** What the confirmation says about arriving, from the content layer. */
+/** What the form says about arriving, from the content layer (app/book/page.tsx). */
 export interface HouseNotes {
   readonly checkInFrom: string;
   /** Why to bring a passport, in a sentence that says whose rule it is. */
   readonly passport: string;
+  /** Check-in, check-out and breakfast times, for the stay's rail once the dates are chosen. */
+  readonly rail: RailTimes;
 }
 
 const platforms = [
@@ -122,6 +128,7 @@ export function DatesStep({
   problem,
   onRetry,
   onFind,
+  rail = null,
 }: {
   id: string;
   headingId: string;
@@ -138,6 +145,8 @@ export function DatesStep({
   problem: BookingProblem | null;
   onRetry: () => void;
   onFind: () => void;
+  /** The stay's rail, once both dates are chosen: under the calendar, so the calendar never moves. */
+  rail?: StayRail | null;
 }) {
   const [tried, setTried] = useState(false);
   const chosen = Boolean(range.checkIn && range.checkOut);
@@ -225,6 +234,7 @@ export function DatesStep({
       <p role="status" className="visually-hidden">
         {rules ? "" : "Opening the calendar…"}
       </p>
+      {rail ? <MiniRail rail={rail} /> : null}
 
       <div className={styles.actions}>
         <button
@@ -702,6 +712,7 @@ export function ReviewStep({
   onPayOnline,
   onChange,
   onSend,
+  rail = null,
   children,
 }: {
   stay: Stay;
@@ -722,6 +733,8 @@ export function ReviewStep({
   sentAs: string | null;
   onChange: (step: Step) => void;
   onSend: () => void;
+  /** The stay's rail: check-in, breakfast and check-out, under the dates. */
+  rail?: StayRail | null;
   children: ReactNode;
 }) {
   const noticeRef = useRef<HTMLDivElement>(null);
@@ -757,6 +770,7 @@ export function ReviewStep({
           <span className={styles.reviewNote}>
             {stayNightsText(stay)}, {plural(stay.guests, "guest")}
           </span>
+          {rail ? <MiniRail rail={rail} className={styles.reviewRail} /> : null}
         </ReviewRow>
         <ReviewRow term="Beds" change="Change beds" onChange={() => onChange("rooms")}>
           {room.name}
@@ -938,10 +952,15 @@ export function Confirmation({
 
   return (
     <div className={styles.done}>
+      {/* One of the house's lamps lights for the guest, by Day too, and the thread is tied off (§5.3). Decorative. */}
+      <div className={styles.doneLamp} aria-hidden="true">
+        <HouseLamp cord={28} index={0} className={styles.lamp} />
+      </div>
       <Stamp text={pending ? "Request received" : "Booked"} className={styles.stamp} />
       <h2 id={headingId} ref={headingRef} tabIndex={-1} className={styles.title}>
         {pending ? "Booking request sent" : "You’re booked"}
       </h2>
+      <TiedThread className={styles.knot} />
       <div className={styles.reference}>
         <span className={styles.pickLabel}>Your reference</span>
         <span className={styles.referenceCode}>{confirmation.reference}</span>

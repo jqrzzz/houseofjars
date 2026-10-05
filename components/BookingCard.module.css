@@ -1,7 +1,10 @@
 /*
- * A ticket: cream card, a woven lozenge band along the top, and a stub torn
- * off along a perforation (two notches and a dashed line). Phones stack the
- * stub under the ticket; wide screens put it to the right.
+ * A paper ticket standing in a slot in the front desk's teak counter: a woven
+ * lozenge band along its top, and a stub torn off along a perforation (two
+ * notches and a dashed line). Phones stack the stub under the ticket; wide
+ * screens put it to the right. The paper is the lantern theatre's
+ * (docs/DESIGN.md §2.1): a flat --paper-near sheet with a faint fibre, and a
+ * card edge repeated at (--edge-x, --edge-y), a lamplight rim by Evening.
  */
 .section {
   position: relative;
@@ -9,7 +12,7 @@
   overflow: hidden;
 }
 
-/* The photograph behind the glass: blurred to light and colour, faded into the page at top and bottom. */
+/* The photograph behind the paper: blurred to light and colour, faded into the page at top and bottom. */
 .backdrop {
   z-index: -2;
   object-fit: cover;
@@ -26,12 +29,61 @@
   background: linear-gradient(var(--page), transparent 30%, transparent 70%, var(--page));
 }
 
+/* The ticket and its slot. */
+.holder {
+  position: relative;
+  max-width: 64rem;
+  margin-inline: auto;
+  margin-bottom: 0.5rem;
+}
+
+/*
+ * The ticket shows only above the slot's mouth: below it, it is inside the
+ * counter. The other three sides leave room for the card edge.
+ */
+.sleeve {
+  clip-path: inset(-1rem -1rem 0 -1rem);
+}
+
 .ticket {
   --notch: 0.85rem;
   display: grid;
-  max-width: 64rem;
-  margin-inline: auto;
   color: var(--text);
+  /* The card edge, following the notches. */
+  filter: drop-shadow(var(--edge-x) var(--edge-y) 0 var(--paper-edge));
+}
+
+/*
+ * The counter, in front of the ticket's foot: the slot's dark mouth, the
+ * counter's top seen from above (lighter teak), then its front face.
+ */
+.slot {
+  position: absolute;
+  top: calc(100% - 0.5rem);
+  left: -0.75rem;
+  right: -0.75rem;
+  height: 1rem;
+  background: linear-gradient(
+    color-mix(in oklab, var(--teak-night) 60%, var(--ink)) 0 2px,
+    color-mix(in oklab, var(--teak) 50%, var(--page)) 2px 6px,
+    color-mix(in oklab, var(--teak) 84%, var(--page)) 6px
+  );
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+/*
+ * The ticket's arrival (§5.1), a phrase: until the slot has been in view
+ * (StageLife's [data-played]) the ticket waits 1.25rem down inside it, then
+ * slides up to its rest frame on the paper ease. Nothing else here moves.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .ticket {
+    transition: translate var(--dur-section) var(--ease-paper);
+  }
+
+  :global(:root[data-life]:not([data-motion="still"])) .holder:has(> .slot[data-phrase]:not([data-played])) .ticket {
+    translate: 0 1.25rem;
+  }
 }
 
 /*
@@ -41,17 +93,23 @@
 .main,
 .stub {
   --bite: transparent var(--notch), #000 calc(var(--notch) + 0.5px);
-  background: var(--glass-panel);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  box-shadow: inset 0 1px 0 var(--glass-shine);
+  position: relative;
+  isolation: isolate;
+  background: var(--paper-near);
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .main,
-  .stub {
-    background: var(--surface);
-  }
+/* The paper's fibre: hairlines in the text's colour at 6% (public/art/paper-fibre.svg), under the words. */
+.main::before,
+.stub::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--text);
+  -webkit-mask: url(/art/paper-fibre.svg) repeat;
+  mask: url(/art/paper-fibre.svg) repeat;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .main {
@@ -80,6 +138,19 @@
   margin-top: calc(var(--space-s) - var(--space-l));
   max-width: 32rem;
   color: var(--text-soft);
+}
+
+/* "Your first morning: breakfast from 08:00." Its lead in the accent, like the stub's labels. */
+.morning {
+  margin-top: calc(var(--space-xs) - var(--space-l));
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.morning strong {
+  color: var(--accent-text);
+  font-weight: 650;
 }
 
 .fields {
@@ -120,15 +191,8 @@
   justify-self: start;
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-s);
-}
-
 /* The stub, torn along a dashed line. */
 .stub {
-  position: relative;
   display: grid;
   align-content: start;
   gap: var(--space-xs);
@@ -195,6 +259,21 @@
   flex: none;
 }
 
+/* The way to /book's other ways in: under the booking sites, across a fold. */
+.more {
+  margin-top: var(--space-s);
+  padding-top: var(--space-m);
+  border-top: 1px solid var(--rule);
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.more a {
+  display: inline-block;
+  padding-block: 0.7rem;
+  font-weight: 600;
+}
+
 @media (min-width: 40rem) {
   .fields {
     grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr));
@@ -236,13 +315,14 @@
       radial-gradient(circle at 0 0, var(--bite)) top / 100% 51% no-repeat,
       radial-gradient(circle at 0 100%, var(--bite)) bottom / 100% 51% no-repeat;
   }
+
 }
 
-/* Vientiane night: a little lantern light on the card (none by Day). */
+/* Vientiane night: a little lantern light on the ticket (none by Day). */
 .main {
   background:
     radial-gradient(120% 90% at 0% 0%, var(--lantern), transparent 55%),
-    var(--glass-panel);
+    var(--paper-near);
 }
 
 @media print {

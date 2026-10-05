@@ -3,10 +3,12 @@
 import { useSearchParams } from "next/navigation";
 import { useId, useState, useSyncExternalStore } from "react";
 import { DIRECT_GUESTS, DIRECT_NIGHTS, directLinks, directStayFromLink, type DirectContact, type DirectStay } from "@/lib/booking/direct";
+import { stayRailForNights, type RailTimes } from "@/lib/booking/stay-rail";
 import { houseToday, isIsoDate } from "@/lib/dates";
 import buttons from "../ui/button.module.css";
 import { MailIcon, WhatsAppIcon } from "../ui/icons";
 import styles from "./DirectRequest.module.css";
+import { MiniRail } from "./MiniRail";
 
 const subscribeNothing = () => () => {};
 const nightOptions = Array.from({ length: DIRECT_NIGHTS }, (_, index) => index + 1);
@@ -14,6 +16,8 @@ const guestOptions = Array.from({ length: DIRECT_GUESTS }, (_, index) => index +
 
 interface DirectRequestProps extends DirectContact {
   className?: string;
+  /** The house's times (content/stay): with them, the stay's rail appears once a date is chosen (/book). */
+  rail?: RailTimes;
 }
 
 /**
@@ -23,7 +27,8 @@ interface DirectRequestProps extends DirectContact {
  * ordinary links, so they work without JavaScript too, just without the
  * dates. A /book link fills the stay in (an assistant's, the booking card's,
  * or one followed inside the site without a reload). The team replies there;
- * nothing is sent or booked by the site.
+ * nothing is sent or booked by the site. On /book, once a date is chosen,
+ * the stay's rail (check-in, breakfast, check-out) sits above the buttons.
  */
 export function DirectRequest(props: DirectRequestProps) {
   // The page is static: the link's query string is read only in the browser.
@@ -37,7 +42,7 @@ function LinkedRequest(props: DirectRequestProps) {
   return <Request key={search} {...props} search={search} />;
 }
 
-function Request({ whatsapp, email, className, search }: DirectRequestProps & { search: string }) {
+function Request({ whatsapp, email, className, rail, search }: DirectRequestProps & { search: string }) {
   const id = useId();
   // The guest's own choices go on top of the link's.
   const [chosen, setChosen] = useState<Partial<DirectStay>>({});
@@ -46,6 +51,7 @@ function Request({ whatsapp, email, className, search }: DirectRequestProps & { 
   // Dates in the past make no sense: the floor, once the browser knows today's date at the house.
   const floor = useSyncExternalStore(subscribeNothing, houseToday, () => undefined);
   const links = directLinks(stay, { whatsapp, email });
+  const shown = rail ? stayRailForNights(stay.checkIn, stay.nights, rail, { today: floor }) : null;
 
   return (
     <div className={[styles.request, className].filter(Boolean).join(" ")}>
@@ -81,6 +87,7 @@ function Request({ whatsapp, email, className, search }: DirectRequestProps & { 
           </select>
         </label>
       </div>
+      {shown ? <MiniRail rail={shown} /> : null}
       <div className={styles.actions}>
         <a href={links.whatsapp} target="_blank" rel="noopener noreferrer" className={`${buttons.button} ${buttons.primary}`}>
           <WhatsAppIcon />
