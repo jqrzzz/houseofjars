@@ -1,0 +1,62 @@
+/* At rest the wisp has already risen and gone. */
+.wisp {
+  --wisp: color-mix(in srgb, var(--teak) 70%, transparent);
+  display: block;
+  overflow: visible;
+  opacity: 0;
+  pointer-events: none;
+}
+
+:global(:root[data-theme="dark"]) .wisp {
+  --wisp: var(--lamplight);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .wisp {
+    --wisp: var(--lamplight);
+  }
+}
+
+.wisp path {
+  fill: none;
+  stroke: var(--wisp);
+  stroke-width: var(--sw, 2);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+}
+
+/* It draws itself up from the mouth (1.6 s, --ease-lamp), then rises 16 px and fades (0.8 s). */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) :is(.wisp[data-play], :global(:is([data-play], [data-played])) .wisp) {
+    animation: wisp-rise 2400ms linear var(--wisp-delay, 0ms) both;
+  }
+
+  :global(:root:not([data-motion="still"])) :is(.wisp[data-play], :global(:is([data-play], [data-played])) .wisp) path {
+    animation: wisp-draw 1600ms var(--ease-lamp) var(--wisp-delay, 0ms) both;
+  }
+}
+
+@keyframes wisp-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes wisp-rise {
+  0%,
+  66.7% {
+    opacity: 1;
+    translate: 0 0;
+    animation-timing-function: var(--ease-out);
+  }
+
+  100% {
+    opacity: 0;
+    translate: 0 -16px;
+  }
+}

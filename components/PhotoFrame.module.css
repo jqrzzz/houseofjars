@@ -3,6 +3,80 @@
   gap: var(--space-s);
 }
 
+/*
+ * The mat: a --paper-near ground 1.25rem wide around the window, cut from
+ * card: its edge is the outline repeated at (--edge-x, --edge-y) in
+ * --paper-edge (a lamplight rim by Evening). A square mat carries the edge as
+ * a box shadow; an arch mat is clipped to the arch, so its edge is an arch of
+ * --paper-edge laid behind it (.archMount::before).
+ */
+.mount {
+  position: relative;
+}
+
+.archMount::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  translate: var(--edge-x) var(--edge-y);
+  background: var(--paper-edge);
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
+}
+
+.mat {
+  --wash: transparent;
+  position: relative;
+  padding: 1.25rem;
+  background: var(--paper-near);
+}
+
+.mat.rect {
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+/*
+ * Evening: lamplight spills from behind the photograph onto the mat, in two
+ * paper steps that end short of the mat's edge. The steps lie under the
+ * window, so no light ever falls on the photograph itself.
+ */
+.mat::before,
+.mat::after {
+  content: "";
+  position: absolute;
+  background: var(--wash);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.mat::before {
+  inset: 0.4rem;
+}
+
+.mat::after {
+  inset: 0.8rem;
+}
+
+.mat.arch::before,
+.mat.arch::after {
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
+}
+
+.mat > .frame {
+  z-index: 1;
+}
+
+:global(:root[data-theme="dark"]) .mat {
+  --wash: color-mix(in srgb, var(--lamplight) 9%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .mat {
+    --wash: color-mix(in srgb, var(--lamplight) 9%, transparent);
+  }
+}
+
 /* Cream by default; a section that is itself cream sets --frame-ground to paper. */
 .frame {
   position: relative;

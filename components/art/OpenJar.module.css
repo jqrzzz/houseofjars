@@ -1,64 +1,30 @@
+/* The jar is a button with nothing of a button's look: just the drawing, and a focus ring when it has focus. */
 .jar {
+  position: relative;
   display: block;
-  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.shadow {
-  fill: #3b2414;
-  opacity: 0.14;
+.wobble {
+  display: block;
+  transform-origin: 50% 92%;
 }
 
-.stone {
-  fill: var(--open-jar-stone);
+.drawing {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
-.lit {
-  stop-color: #fff;
-  stop-opacity: 0.22;
+/* The wisp rises from the mouth: centred, its foot on the opening. */
+.wisp {
+  position: absolute;
+  left: 50%;
+  bottom: 80%;
+  translate: -50% 0;
 }
-
-.none {
-  stop-color: #fff;
-  stop-opacity: 0;
-}
-
-.shaded {
-  stop-color: #140c06;
-  stop-opacity: 0.22;
-}
-
-.stain {
-  stop-color: #2b1c10;
-  stop-opacity: 0.14;
-}
-
-.clean {
-  stop-color: #2b1c10;
-  stop-opacity: 0;
-}
-
-.under {
-  fill: #140c06;
-  opacity: 0.22;
-}
-
-.crack {
-  fill: none;
-  stroke: #2b1c10;
-  stroke-width: 2.2;
-  opacity: 0.45;
-}
-
-.top {
-  fill: var(--open-jar-top);
-}
-
-.hollow {
-  fill: var(--open-jar-hollow);
-}
-
-.wall {
-  fill: var(--jar-3);
-  opacity: 0.55;
-}
-

@@ -4,6 +4,21 @@
   overflow: visible;
 }
 
+/* His outline on a lamplit scrim: one fill, teak night by Day, curtain night by Evening. */
+.silhouette {
+  fill: var(--teak-night);
+}
+
+:global(:root[data-theme="dark"]) .silhouette {
+  fill: var(--curtain-night);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .silhouette {
+    fill: var(--curtain-night);
+  }
+}
+
 .ghost {
   fill: #fbf1df;
   stroke: #4a2f1b;

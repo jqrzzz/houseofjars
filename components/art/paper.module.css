@@ -1,0 +1,143 @@
+/*
+ * The paper outfit for inline art (docs/DESIGN.md §2.1): flat sheets of
+ * paper with an ink silhouette, drawn in the page's own tokens, so inline
+ * drawings follow the site's Day and Evening rather than the device's.
+ *
+ * A drawing puts .paper on its root <svg>; its shapes take the drawing set's
+ * short class names (global, but only inside .paper), so markup stays small:
+ *   planes  .c near paper · .s mid paper · .f far paper · .p a board
+ *   wood    .w teak · .wd dark teak · .b teak night
+ *   accents .a jar orange (small only) · .y lamplight · .t gold thread · .g sage · .r clay · .cu curtain
+ *   light   .in glass or a shade: stone by Day, lamplight by Evening · .gl a halo step, by Evening only
+ *   ink     .k ink fill · .h 1 px inner detail at 60% · .l a 1.5 px ink line
+ *   .o      a <use> copy drawn behind its object: only its silhouette's ink shows
+ * The card edge is the root's own drop shadow, a CSS filter on an HTML-level
+ * <svg> (allowed; an SVG <filter> is not): the outline repeated at
+ * (--edge-x, --edge-y) in --paper-edge, a lamplight rim by Evening.
+ */
+.paper {
+  --ink-line: #4a2f1b;
+  --ink-hair: rgb(74 47 27 / 0.6);
+  --in: color-mix(in oklab, var(--stone) 55%, var(--paper-near));
+  --sage: #9aa585;
+  --clay: #b86a3f;
+  --lit: 0;
+  overflow: visible;
+  filter: drop-shadow(var(--edge-x) var(--edge-y) 0 var(--paper-edge));
+}
+
+/* Evening: lighter ink, and the glass and shades lit. */
+:global(:root[data-theme="dark"]) .paper {
+  --ink-line: #dccdb6;
+  --ink-hair: rgb(220 205 182 / 0.6);
+  --in: var(--lamplight);
+  --sage: #6f7a60;
+  --clay: #8f5334;
+  --lit: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .paper {
+    --ink-line: #dccdb6;
+    --ink-hair: rgb(220 205 182 / 0.6);
+    --in: var(--lamplight);
+    --sage: #6f7a60;
+    --clay: #8f5334;
+    --lit: 1;
+  }
+}
+
+.paper :global(:is(path, rect, circle, ellipse, use)) {
+  vector-effect: non-scaling-stroke;
+}
+
+.paper :global(.c) {
+  fill: var(--paper-near);
+}
+
+.paper :global(.s) {
+  fill: var(--paper-mid);
+}
+
+.paper :global(.f) {
+  fill: var(--paper-far);
+}
+
+.paper :global(.p) {
+  fill: var(--surface);
+}
+
+/* Wood darkens with the page: mixed toward night by Evening. */
+.paper :global(.w) {
+  fill: color-mix(in oklab, var(--teak) 84%, var(--page));
+}
+
+.paper :global(.wd) {
+  fill: color-mix(in oklab, var(--teak-deep) 90%, var(--page));
+}
+
+.paper :global(.b) {
+  fill: color-mix(in oklab, var(--teak-night) 80%, var(--page));
+}
+
+.paper :global(.a) {
+  fill: var(--jar-orange);
+}
+
+.paper :global(.y) {
+  fill: var(--lamplight);
+}
+
+.paper :global(.t) {
+  fill: var(--thread-gold);
+}
+
+/* A step of a lamp's halo: there only by Evening; stack two or three for the stepped rings. */
+.paper :global(.gl) {
+  fill: var(--lamplight);
+  opacity: calc(var(--lit) * 0.16);
+}
+
+.paper :global(.g) {
+  fill: var(--sage);
+}
+
+.paper :global(.r) {
+  fill: var(--clay);
+}
+
+.paper :global(.cu) {
+  fill: color-mix(in oklab, var(--curtain) 85%, var(--page));
+}
+
+.paper :global(.in) {
+  fill: var(--in);
+}
+
+.paper :global(.k) {
+  fill: var(--ink-line);
+}
+
+.paper :global(.h) {
+  fill: none;
+  stroke: var(--ink-hair);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.paper :global(.l) {
+  fill: none;
+  stroke: var(--ink-line);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Behind its object, three pixels wide: half of it shows, as the silhouette's ink. */
+.paper :global(.o) {
+  stroke: var(--ink-line);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

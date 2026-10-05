@@ -1,0 +1,46 @@
+.motes {
+  position: absolute;
+  left: var(--motes-x, 50%);
+  top: var(--motes-y, 50%);
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* At rest the motes have already risen and gone. */
+.motes i {
+  position: absolute;
+  left: var(--x);
+  top: 0;
+  width: var(--s);
+  aspect-ratio: 1;
+  margin: calc(var(--s) / -2);
+  border-radius: 50%;
+  background: var(--lamplight);
+  /* Lamplight does not read on rice: by Day each speck gets the core's 1 px ring. */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--glow-ring) 55%, transparent);
+  opacity: 0;
+}
+
+/* Each speck rises and fades within its own 1.9–2.3 s, the last gone by 3 s. */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) :is(.motes[data-on="load"], :global(:is([data-played], [data-play])) .motes) i {
+    animation: mote var(--d) var(--ease-out) calc(var(--delay, 0ms) + var(--w)) both;
+  }
+}
+
+@keyframes mote {
+  from {
+    opacity: 0;
+    translate: 0 0;
+  }
+
+  18% {
+    opacity: 0.95;
+  }
+
+  to {
+    opacity: 0;
+    translate: var(--dx) var(--dy);
+  }
+}

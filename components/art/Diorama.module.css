@@ -1,0 +1,324 @@
+/*
+ * The diorama's frame: a paper sky (its far band is the frame's own ground),
+ * three planes of inline SVG, each cut to fill the frame from its foot
+ * (preserveAspectRatio "xMidYMax slice"), and the tuk-tuk in front. The frame
+ * is a size container, so the tuk-tuk's place is a share of its width (cqw).
+ *
+ * Inside, shapes take short class names, global but scoped to the frame,
+ * beside the paper sheet's own (paper.module.css):
+ *   planes  .bk back · .md middle · .fr front · .tk the tuk-tuk
+ *   sky     .s2 .s3 its bands · .sun · .mn moon · .cr craters · .st stars
+ *           .cl a cloud (.cf the far one) · .eg a card edge laid behind
+ *   river   .r1 .r2 its ribbons · .gt glints
+ *   town    .wn lit shutters · .lt lanterns · .ln the street's lane line
+ */
+.diorama {
+  --sky-1: color-mix(in oklab, var(--lamplight) 8%, var(--paper-near));
+  --sky-2: color-mix(in oklab, var(--lamplight) 18%, var(--rice));
+  --sky-3: color-mix(in oklab, var(--lamplight) 30%, var(--rice));
+  --river-1: #efd6b4;
+  --river-2: #e4c6a0;
+  --glint: var(--paper-near);
+  --lantern: var(--jar-orange);
+  --is-day: 1;
+  --is-night: 0;
+  position: relative;
+  overflow: clip;
+  aspect-ratio: 4 / 3;
+  container-type: inline-size;
+  view-timeline: --diorama;
+  background: var(--sky-1);
+  /* The box itself is a card: its edge shows on the page. */
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+@media (min-width: 48rem) {
+  .home {
+    aspect-ratio: 16 / 5;
+  }
+}
+
+/* Evening: a night sky over a dark river, lanterns and windows lit. */
+:global(:root[data-theme="dark"]) .diorama {
+  --sky-1: var(--night);
+  --sky-2: var(--paper-far);
+  --sky-3: color-mix(in oklab, var(--teak-night) 40%, var(--night));
+  --river-1: #251b14;
+  --river-2: #1f1711;
+  --glint: color-mix(in srgb, var(--lamplight) 45%, transparent);
+  --lantern: color-mix(in oklab, var(--jar-orange) 60%, var(--lamplight));
+  --is-day: 0;
+  --is-night: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .diorama {
+    --sky-1: var(--night);
+    --sky-2: var(--paper-far);
+    --sky-3: color-mix(in oklab, var(--teak-night) 40%, var(--night));
+    --river-1: #251b14;
+    --river-2: #1f1711;
+    --glint: color-mix(in srgb, var(--lamplight) 45%, transparent);
+    --lantern: color-mix(in oklab, var(--jar-orange) 60%, var(--lamplight));
+    --is-day: 0;
+    --is-night: 1;
+  }
+}
+
+.diorama :global(:is(.bk, .md, .fr)) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The sky and the river are far away: only the clouds and the moon get a card edge. */
+.diorama :global(.bk) {
+  filter: none;
+}
+
+.diorama :global(.eg) {
+  fill: var(--paper-edge);
+  translate: var(--edge-x) var(--edge-y);
+}
+
+.diorama :global(.s2) {
+  fill: var(--sky-2);
+}
+
+.diorama :global(.s3) {
+  fill: var(--sky-3);
+}
+
+/* A low paper sun over the Thai bank by Day; by Evening a paper moon and pin-prick stars. */
+.diorama :global(.sun) {
+  fill: var(--stage-light);
+  opacity: var(--is-day);
+}
+
+.diorama :global(.mn) {
+  fill: color-mix(in oklab, var(--rice) 82%, var(--lamplight));
+  opacity: var(--is-night);
+}
+
+.diorama :global(.cr) {
+  fill: color-mix(in oklab, var(--rice) 70%, var(--stone));
+}
+
+.diorama :global(.st) {
+  stroke: var(--lamplight);
+  stroke-width: 1.8;
+  opacity: calc(var(--is-night) * 0.9);
+}
+
+.diorama :global(.st + .st) {
+  stroke-width: 2.4;
+}
+
+.diorama :global(.r1) {
+  fill: var(--river-1);
+}
+
+.diorama :global(.r2) {
+  fill: var(--river-2);
+}
+
+.diorama :global(.gt) {
+  fill: none;
+  stroke: var(--glint);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+/* Drawn as strokes in the stage's own units: lit shutters (dashes), lanterns and stars (round caps). */
+.diorama :global(:is(.wn, .lt, .st)) {
+  fill: none;
+  stroke-linecap: round;
+  vector-effect: none;
+}
+
+.diorama :global(.wn) {
+  stroke: var(--in);
+  stroke-width: 10;
+  stroke-dasharray: 7 8;
+  stroke-linecap: butt;
+}
+
+.diorama :global(.lt) {
+  stroke: var(--lantern);
+  stroke-width: 6.4;
+}
+
+.diorama :global(.ln) {
+  fill: none;
+  stroke: var(--paper-near);
+  stroke-width: 2;
+  stroke-dasharray: 14 12;
+}
+
+/* The tuk-tuk, parked at 40% on the street: as tall as 41 of the stage's 200 units. */
+.diorama :global(.tk) {
+  position: absolute;
+  left: 0;
+  bottom: 3%;
+  width: auto;
+  height: 20.5%;
+  translate: 40cqw 0;
+}
+
+.vientiane :global(.tk) {
+  translate: 38cqw 0;
+}
+
+.diorama :global(.tk .wh) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/*
+ * Scroll (home): as the frame crosses the view, the clouds drift, the middle
+ * and front planes move at their depths, and the tuk-tuk crosses from the
+ * left edge to 55% with its wheels turning. Linear: the reader holds the clock.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    :global(:root:not([data-motion="still"])) .home :global(.cl) {
+      animation: cloud-drift linear both;
+    }
+
+    :global(:root:not([data-motion="still"])) .home :global(.cf) {
+      animation-name: cloud-drift-far;
+    }
+
+    :global(:root:not([data-motion="still"])) .home :global(.md) {
+      animation: depth-mid linear both;
+    }
+
+    :global(:root:not([data-motion="still"])) .home :global(.fr) {
+      animation: depth-front linear both;
+    }
+
+    :global(:root:not([data-motion="still"])) .home :global(.tk) {
+      animation: tuk-cross linear both;
+    }
+
+    :global(:root:not([data-motion="still"])) .home :global(.tk .wh) {
+      animation: wheel-roll linear both;
+    }
+
+    :global(:root:not([data-motion="still"])) .home :global(:is(.cl, .md, .fr, .tk, .tk .wh)) {
+      animation-timeline: --diorama;
+      animation-range: cover 0% cover 100%;
+    }
+  }
+
+  /* Vientiane: the tuk-tuk rolls in once as the page opens. */
+  :global(:root:not([data-motion="still"])) .vientiane :global(.tk) {
+    animation: tuk-roll-in 900ms var(--ease-out) var(--roll-delay) both;
+  }
+
+  :global(:root:not([data-motion="still"])) .vientiane :global(.tk .wh) {
+    animation: wheel-roll-in 900ms var(--ease-out) var(--roll-delay) both;
+  }
+
+  /* Evening's moon and stars fade in once, the first time the scene is seen. */
+  :global(:root[data-life]:not([data-motion="still"])) .diorama:not([data-played]) :global(:is(.mn, .st)) {
+    opacity: 0;
+  }
+
+  :global(:root:not([data-motion="still"])) .diorama[data-played] :global(:is(.mn, .st)) {
+    animation: sky-in 1600ms var(--ease-lamp) 300ms both;
+  }
+
+  :global(:root:not([data-motion="still"])) .diorama[data-played] :global(.st + .st) {
+    animation-delay: 700ms;
+  }
+}
+
+/* As the page opens, or after the splash's curtain. */
+.vientiane {
+  --roll-delay: 250ms;
+}
+
+:global(html.splash) .vientiane {
+  --roll-delay: 1150ms;
+}
+
+@keyframes cloud-drift {
+  from {
+    translate: -10px 0;
+  }
+
+  to {
+    translate: 10px 0;
+  }
+}
+
+@keyframes cloud-drift-far {
+  from {
+    translate: -16px 0;
+  }
+
+  to {
+    translate: 16px 0;
+  }
+}
+
+@keyframes depth-mid {
+  from {
+    translate: 0 6px;
+  }
+
+  to {
+    translate: 0 -6px;
+  }
+}
+
+@keyframes depth-front {
+  from {
+    translate: 0 14px;
+  }
+
+  to {
+    translate: 0 -14px;
+  }
+}
+
+@keyframes tuk-cross {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: 55cqw 0;
+  }
+}
+
+@keyframes wheel-roll {
+  from {
+    rotate: 0deg;
+  }
+
+  to {
+    rotate: 1440deg;
+  }
+}
+
+@keyframes tuk-roll-in {
+  from {
+    translate: -32cqw 0;
+  }
+}
+
+@keyframes wheel-roll-in {
+  from {
+    rotate: -540deg;
+  }
+}
+
+@keyframes sky-in {
+  from {
+    opacity: 0;
+    translate: 0 3px;
+  }
+}

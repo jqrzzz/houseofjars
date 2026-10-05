@@ -12,17 +12,27 @@
   white-space: nowrap;
 }
 
-/* The arch, 2:3, a little taller than the name's capitals. */
+/*
+ * The arch, 2:3, a little taller than the name's capitals. Pointed at or
+ * focused, it lifts like a lamp drawn up on its cord, 3 px, and lamplight
+ * comes up round it, faint by Day and warm by Evening (--glow-strength), over
+ * 400 ms, as no light changes faster.
+ */
 .mark {
+  display: block;
   width: 1.2rem;
   height: 1.8rem;
   color: var(--jar-orange);
   flex: none;
-  transition: transform 300ms var(--ease-out);
+  filter: drop-shadow(0 0 0 transparent);
+  transition:
+    translate var(--dur-ui) var(--ease-out),
+    filter 400ms var(--ease-lamp);
 }
 
-.wordmark:hover .mark {
-  transform: translateY(-2px);
+.wordmark:is(:hover, :focus-visible) .mark {
+  translate: 0 -3px;
+  filter: drop-shadow(0 0 0.5rem color-mix(in srgb, var(--lamplight) calc(var(--glow-strength) * 90%), transparent));
 }
 
 .name {
