@@ -14,8 +14,31 @@ The model comes from the owner's walk of 5 October 2026 (the `place-walk` skill)
 | `lib/house/geometry.ts` | Boxes, panels, extruded polygons, cylinders, turned shapes (jars), text on a wall; the isometric and plan projections; painter's sorting; path writing. |
 | `lib/house/fixtures.ts` | The fixture library: how each kind of thing is drawn, in 3D and as a plan symbol. |
 | `lib/house/render.ts` | The views: `renderStreet`, `renderCutaway`, `renderPlan`, and `HOUSE_RENDERS` (the committed set). |
-| `scripts/house-render.ts` | `npm run house:render`: writes the committed SVGs to `public/house/`. |
+| `lib/house/rules.ts` | The house rules, placed: where each rule of `content/stay.ts` applies or is acted on (`placedRules`, `placedHouseRules`, `rulesAt`). |
+| `lib/house/context.ts` | The house in words (`describeHouse`): every floor, room and thing, counted, with the rules where they apply and what is assumed. |
+| `scripts/house-render.ts` | `npm run house:render`: writes the committed SVGs to `public/house/` and the house in words to `docs/house-context.md`. |
 | `lib/house/*.test.ts` | Model integrity and the walk's counts, geometry, rendering, and the drift check on `public/house/`. |
+
+## Layers on the places
+
+The model is the first layer: the places. Everything else points at the same ids (an area like `dorm-h`, a floor like `floor1`, a fixture like `shoe-cubbies` or `pod-H01`), so a rule, a cleaning task, a repair or a video can say exactly where it happens.
+
+1. **Places**: `lib/house/house-of-jars.ts` (done).
+2. **Rules**: `lib/house/rules.ts` (done). The rules themselves stay in `content/stay.ts`, each with its reason and source; `rules.ts` only places them. Each entry finds its rule by a phrase from the wording, has a scope (`house`: everywhere indoors; `places`: only where listed; `stay`: about the booking, handled where listed) and one sentence for guides. A test fails if a rule is reworded so its phrase stops matching, or a new rule is added to `content/stay.ts` without a place.
+3. **Care** (next, with the owner): what is cleaned, how often and how deeply, and what wears out (bulbs, shower heads, water heaters), placed on the same ids.
+4. **Team** (next, with the owner): roles and who looks after which places.
+5. **Culture**: the house's calm, its voice with guests; mostly in the brand book already.
+
+Places and rules can be public. Care logs, repairs, the team and day-to-day notes are internal: they belong in Shadow Check-in or another private store that refers to these ids, never in the public website.
+
+## The house in words (`docs/house-context.md`)
+
+`describeHouse()` turns the model and the placed rules into plain Markdown: each floor and room, what is in it (counted, with pod and locker numbers), the rules that apply there, and what is assumed. It is the context an assistant reads to know the house (Shadow can answer "where are the showers?" or "where do my shoes go?" from it). `npm run house:render` writes it to `docs/house-context.md`; a test fails while the committed copy differs from the model, so it never goes stale.
+
+## Where this is going
+
+- **The cute animated style.** This model is the accurate base. The cute style (soft, rounded shapes, warm glowing lamps, Shadow as a small guide character, gentle motion) is a later outfit drawn on the same places, so the cute version still shows the real house. Make it unmistakably this house: the woven pod curtains, the clay jars, the arch, the lamplight. Draw from the house's own life and the styles the owner loves, without copying any one studio.
+- **Other houses.** The house is the data in `house-of-jars.ts` plus its rules; the engine (`types.ts`, `geometry.ts`, `fixtures.ts`, `render.ts`, `rules.ts`, `context.ts`) draws whatever model it is given. A few House of Jars details still live in the engine: the facade's arch and pilasters (`render.ts`), the street view's description and neighbours' names, and the default model. When a second house comes (walked with the `place-walk` skill), move those into the house's data, so each property is one data file run through the same engine and Shadow can help run many.
 
 The website's `/the-house` page still uses its old drawing (`public/art/house.svg`) until the owner approves the new one.
 
