@@ -43,16 +43,17 @@ Ask for:
 1. **One area per message**, starting with where they are: "Floor 2, Dorm H". Photos can't tell which floor they show.
 2. **Two or three photos per room**: from the doorway, from the far corner looking back, and the ceiling (air-conditioning, fans, smoke alarms).
 3. **One line about what photos can't show**: counts behind curtains, what is next to what.
-4. **About 5 to 10 photos per message.**
+4. **About 5 to 15 photos per message.**
+5. **Their own names and numbers**, asked once at the start: what each floor and room is called, how beds and lockers are numbered, and the house rules that shape how people move (where shoes come off, which bathroom is on which floor).
 
 Keep out of every photo: guests and their things, passports and IDs, screens with guest details, the cash box or safe.
 
 ### 4. Claude's part, for each message
 
 1. Find the area on the page, or add it.
-2. Count what is visible. Leave hidden counts as `null`.
+2. Count what is visible, cross-checking every photo of the area so one thing seen from two sides is counted once. Leave hidden counts as `null`. Never treat a number read off a blurry plate or sign as fact: zoom in, and if it is not sharp, ask.
 3. Set the floor and the rough `cells` from the photos and the owner's line.
-4. Upload the photos to the walk page's asset store: Artifact tool, `url` of the page, `asset: true`, `file_paths` (up to 25 at once). Add the returned ids to the area's `photos`.
+4. Blur any bystanders (neighbours, passers-by), then upload the photos to the walk page's asset store: Artifact tool, `url` of the page, `asset: true`, `file_paths` (up to 25 at once). Add the returned ids to the area's `photos`.
 5. Write the area with `ArtifactData` (`update`, pinned with `if_version`). Keep `status: "guess"` and set `from` to "From your photos, <date>: …" so the owner knows what to check.
 6. Reply briefly: what was added, what is still "?", and any question.
 
@@ -73,4 +74,5 @@ When something changes (new beds, a moved counter), update the area on the walk 
 
 Add what each walk teaches, newest first, so the next walk goes better.
 
+- **House of Jars, 5 Oct 2026 (the walk, 42 photos in four messages):** Ask for the owner's names and numbering first: "H for House, J for Jars, lockers H01 to H12" was faster and surer than anything in the photos. Claude read blurry locker plates as H16 and H17 and nearly corrected the owner wrongly; they were unreadable. "Floor 3 is the same as Floor 2" is a fine answer: copy the floor, mark it as copied, check it later. House rules about movement (shoes off at the stairs, women's bathroom on Floor 2, men's on Floor 3) matter as much as the furniture for tours and staff guides. Cross-checking angles caught one drinks fridge that looked like two. A narrow, deep shophouse crowds the back row of the 3 × 3 grid (stairs, water, toilet, kitchen): offer more rows for deep buildings next time. Chairs move, so estimate them and say so.
 - **House of Jars, Oct 2026 (before the walk):** Basic facts already disagreed (2 floors or 3?), so start from guesses with reasons, never from "facts". Photos can't show which floor or what is behind curtains, so every batch needs a one-line caption. Sending photos in the chat was easier for the owner than filling in a form, so the form became Claude's notebook and the owner's review screen.
