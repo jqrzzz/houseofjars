@@ -4,7 +4,7 @@ import { identity, whatsappUrl } from "./identity";
 import type { Inline } from "./inline";
 import { honestNotes, praise, ratings } from "./reviews";
 import { SEEN_ON, TRAVEL_CHECKED } from "./sources";
-import { amenities, atmosphere, bathrooms, beds, rules, staff, times } from "./stay";
+import { amenities, atmosphere, bathrooms, beds, rules, services, staff, times } from "./stay";
 import { gettingAround, railway, sights, toThailand } from "./travel";
 import { formatDate, joinList, lowerFirst } from "./text";
 
@@ -277,10 +277,17 @@ const nearby: Guide = {
     rows: [
       { term: mekong.value.place, value: mekong.value.distance },
       { term: nightMarket.value.place, value: nightMarket.value.distance, note: "From guest reviews." },
+      { term: "Laundries", value: "Within a 5-minute walk", note: "Same-day wash, dry and fold." },
       { term: airport.value.place, value: airport.value.distance },
     ],
   },
   sections: [
+    {
+      kind: "text",
+      id: "laundry",
+      title: "Laundry",
+      paragraphs: [[`${services.laundry.value.summary}, ${services.laundry.value.price} (prices vary).`]],
+    },
     {
       kind: "text",
       id: "museum",
@@ -330,6 +337,7 @@ const nearby: Guide = {
     mekong,
     nightMarket,
     airport,
+    services.laundry,
     sights.museumMoved,
     plainOfJars.summary,
   ],
@@ -433,7 +441,7 @@ const trainTickets: Guide = {
   description: `How to buy Laos–China Railway tickets yourself in Vientiane: the official ${app.value.name} app, station ticket offices, passports and getting to the station.`,
   question: "How do I buy Laos–China Railway tickets in Vientiane?",
   answer: [
-    `Buy them yourself in ${app.value.name}, the railway’s own app, with ${lowerFirst(railway.passports.value.short)}. Travel sites report that ${lowerFirst(railway.onSale.value.rule)} and that ${lowerFirst(railway.sellOut.value)}, so book on the first day you can.`,
+    `Buy them yourself in ${app.value.name}, the railway’s own app, with ${lowerFirst(railway.passports.value.short)}, or ask the team to book them. Travel sites report that ${lowerFirst(railway.onSale.value.rule)} and that ${lowerFirst(railway.sellOut.value)}, so book on the first day you can.`,
   ],
   glance: {
     variant: "standards",
@@ -444,6 +452,7 @@ const trainTickets: Guide = {
       { term: "The station", value: railway.station.value, note: "Vientiane railway station, travel guides say." },
       { term: "To Vang Vieng", value: railway.journeys.value.vangVieng, note: "By fast train, travel guides say." },
       { term: "To Luang Prabang", value: railway.journeys.value.luangPrabang, note: "By fast train, travel guides say." },
+      { term: "Or", value: "The team books them", note: "Usually for less than the prices online." },
     ],
   },
   sections: [
@@ -476,6 +485,14 @@ const trainTickets: Guide = {
         {
           title: "Or buy at a station",
           body: [`${railway.stationTickets.value}, the Lao news agency KPL reported when the app launched in 2023.`],
+        },
+        {
+          title: "Or let the team book",
+          body: [
+            `${services.bookingHelp.value}. `,
+            { text: "Send them your trip", href: "/trips?kind=train" },
+            ", or ask at the desk.",
+          ],
         },
         {
           title: "Get to the station early",
@@ -526,6 +543,7 @@ const trainTickets: Guide = {
     railway.khamsavath,
     railway.toChina,
     railway.chinaTickets,
+    services.bookingHelp,
   ],
   reviewed: TRAVEL_CHECKED,
 };
@@ -602,6 +620,7 @@ const gettingAroundTown: Guide = {
           { text: "how to buy tickets", href: "/guides/laos-china-railway-tickets" },
           ".",
         ],
+        [`${services.bookingHelp.value}: `, { text: "send them your trip", href: "/trips?kind=bus" }, "."],
       ],
     },
     lastChecked("Bus routes, fares and the apps change, so check before you set out."),
@@ -619,6 +638,7 @@ const gettingAroundTown: Guide = {
     gettingAround.northernStation,
     gettingAround.southernStation,
     gettingAround.centralStation,
+    services.bookingHelp,
   ],
   reviewed: TRAVEL_CHECKED,
 };
@@ -698,6 +718,7 @@ const oneDay: Guide = {
       paragraphs: [
         [`${sights.buddhaPark.value}, travel guides say.`],
         [`${sights.museumMoved.value}, the Laotian Times reported.`],
+        [`Rather go with a guide? ${services.bookingHelp.value}: `, { text: "ask them", href: "/trips?kind=tour" }, "."],
       ],
     },
     lastChecked("Opening hours and entry fees differ between sources and change, so they are not on this page: check at the gate, or ask the team."),
@@ -720,6 +741,7 @@ const oneDay: Guide = {
     sights.noPhotos,
     sights.buddhaPark,
     sights.museumMoved,
+    services.bookingHelp,
   ],
   reviewed: TRAVEL_CHECKED,
 };

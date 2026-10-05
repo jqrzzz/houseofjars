@@ -5,8 +5,8 @@ import { formatAddress, identity } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
 import { openQuestions } from "@/content/open-questions";
 import { honestNotes, praise, ratings } from "@/content/reviews";
-import { joinList } from "@/content/text";
-import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, staff, times } from "@/content/stay";
+import { joinList, lowerFirst } from "@/content/text";
+import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, services, staff, times } from "@/content/stay";
 import { pages } from "../site";
 
 export interface KnowledgeOptions {
@@ -53,6 +53,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
           ? `Booking page, with the free beds, booking requests and a message form: ${book.page}`
           : `Booking page, with links to Booking.com and Agoda and the team's contact details: ${url(pages.book.path)}`,
         `Staff: ${staff.hours.value.summary}. Reception speaks ${joinList(staff.languages.value)}. ${staff.replies.value}.`,
+        `Trains, buses and tours: ${lowerFirst(services.bookingHelp.value)}. Guests send their trip from ${url(pages.trips.path)} (it opens WhatsApp or email with the request written out), or ask at the desk.`,
       ]),
     ],
     [

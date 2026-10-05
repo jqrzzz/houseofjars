@@ -77,6 +77,14 @@ export const pages = {
       "Book direct with House of Jars, for less than on the booking sites: send your dates on WhatsApp (+856 20 23 978 946) or by email.",
     teaser: "Your dates to the team on WhatsApp or by email, written out for you.",
   },
+  trips: {
+    path: "/trips",
+    nav: "Trips",
+    title: "Train, bus and tour tickets",
+    description:
+      "The House of Jars team in Vientiane books train tickets, buses and tours for guests, usually for less than online. Send your trip on WhatsApp or by email.",
+    teaser: "Trains, buses and tours, booked by the team for less than online.",
+  },
   guides: {
     path: "/guides",
     nav: "Guides",
@@ -107,7 +115,7 @@ export const bookOnlinePage = {
   teaser: "The free beds for your dates, booked directly with the house.",
 } as const satisfies PageInfo;
 
-export const primaryNav = [pages.house, pages.rules, pages.vientiane, pages.faq, pages.about] as const;
+export const primaryNav = [pages.house, pages.rules, pages.vientiane, pages.trips, pages.faq, pages.about] as const;
 
 export function absoluteUrl(path: string): string {
   return new URL(path, `${siteUrl}/`).toString();

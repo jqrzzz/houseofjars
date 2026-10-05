@@ -88,7 +88,7 @@ describe.each(guideList.map((guide) => [guide.slug, guide] as const))("the guide
   it("links only to pages that exist, and on to two or three others", () => {
     const paths = allPages.map((page) => page.path);
     for (const href of [...links(guide), ...guide.related]) {
-      if (href.startsWith("/")) expect(paths).toContain(href.split("#")[0]);
+      if (href.startsWith("/")) expect(paths).toContain(href.split(/[?#]/)[0]);
       else expect(href).toMatch(/^https:\/\//);
     }
     expect(guide.related.length).toBeGreaterThanOrEqual(2);
@@ -127,7 +127,7 @@ describe("guides", () => {
     const hrefs = faq.flatMap((group) =>
       group.entries.flatMap((entry) => entry.answer.flatMap((part) => (typeof part === "string" ? [] : [part.href]))),
     );
-    for (const href of hrefs.filter((candidate) => candidate.startsWith("/"))) expect(paths).toContain(href.split("#")[0]);
+    for (const href of hrefs.filter((candidate) => candidate.startsWith("/"))) expect(paths).toContain(href.split(/[?#]/)[0]);
     for (const guide of guideList) expect(hrefs).toContain(guidePath(guide));
   });
 });
