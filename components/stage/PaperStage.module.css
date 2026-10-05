@@ -1,0 +1,834 @@
+/*
+ * The paper stage (PaperStage.tsx). Everything is placed in the stage's one
+ * viewBox: .world is that viewBox at --u px per unit, so a layer, a floor's
+ * overlay and its thread line up exactly, and a floor lifts by
+ * translateY(--u x -90) per level. The frame is a size container: the world
+ * fits it (contain) and sits centred in it.
+ *
+ * Every base style below is the rest frame. Motion lives at the end: the
+ * acts on a scroll timeline, the IO fallback, the replayed walk, the phrases.
+ */
+.stage {
+  --ink-line: #4a2f1b;
+  --cloth: var(--curtain);
+  margin: 0;
+}
+
+/* Evening: the ink turns cream, and a closed curtain glows with the pod's lamp behind it. */
+:global(:root[data-theme="dark"]) .stage {
+  --ink-line: #dccdb6;
+  --cloth: color-mix(in oklab, var(--curtain) 70%, var(--lamplight));
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .stage {
+    --ink-line: #dccdb6;
+    --cloth: color-mix(in oklab, var(--curtain) 70%, var(--lamplight));
+  }
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--stage-aspect);
+  height: var(--stage-height, auto);
+  overflow: clip;
+  container-type: size;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+/* The paper's fibre over the sky: a themed mask at 6%, so it reads in either theme. */
+.fibre {
+  position: absolute;
+  inset: 0;
+  background: var(--text);
+  -webkit-mask: url(/art/paper-fibre.svg) repeat;
+  mask: url(/art/paper-fibre.svg) repeat;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.world {
+  --u: min(100cqw / var(--cw), 100cqh / var(--ch));
+  position: absolute;
+  left: calc((100cqw - var(--u) * var(--cw)) / 2 + var(--u) * (var(--vx) - var(--cx)));
+  top: calc((100cqh - var(--u) * var(--ch)) / 2 + var(--u) * (var(--vy) - var(--cy)));
+  width: calc(var(--u) * var(--vw));
+  height: calc(var(--u) * var(--vh));
+}
+
+.house,
+.stage [data-layer],
+.stage [data-ov],
+.stage [data-link] {
+  position: absolute;
+  inset: 0;
+}
+
+.stage [data-layer] img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* The card edge: each sheet's outline repeated below right by Day, a lamplight rim above by Evening. */
+  filter: drop-shadow(var(--edge-x) var(--edge-y) 0 var(--paper-edge));
+}
+
+/* Floors lifted apart: the rest frame. */
+.house > [data-level="1"] {
+  transform: translateY(calc(var(--u) * -90));
+}
+
+.house > [data-level="2"] {
+  transform: translateY(calc(var(--u) * -180));
+}
+
+/* The street front is only on stage while the house opens (Act A); at rest it has gone, and is never fetched. */
+.world > [data-layer="street"] {
+  display: none;
+  opacity: 0;
+  transform: translate(calc(var(--u) * -20.8), calc(var(--u) * 12));
+}
+
+/* ---------------------------------------------------------------- the walk */
+
+.stage :is([data-ov], [data-link], [data-thread], [data-beads]) {
+  pointer-events: none;
+}
+
+.stage [data-thread] {
+  position: absolute;
+  inset: 0;
+}
+
+.stage :is([data-thread], [data-link]) svg,
+.stage [data-beads] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.stage [data-thread] :global(:is(.th, .thc)) {
+  stroke: var(--thread);
+  stroke-width: 2.5px;
+  stroke-dasharray: 1 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.stage [data-thread] :global(.thc) {
+  stroke: var(--paper-near);
+  stroke-width: 5.5px;
+  stroke-opacity: 0.85;
+}
+
+/* The stairs between floors: the thread climbs, dotted, from one floor to the next. */
+.stage [data-link] :global(.tl) {
+  stroke: var(--thread);
+  stroke-width: 2.5px;
+  stroke-dasharray: 0.035 0.05;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The stops are drawn as HTML rings ([data-rings] > span), a steady 10 px at any size. */
+.stage [data-thread] :global(circle[data-stop]) {
+  display: none;
+}
+
+/* A pod's curtain: the house's dark weave with gold thread, sliding along its rail from the left. */
+.stage [data-thread] :global([data-cloth]) {
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+}
+
+.stage [data-thread] :global([data-cloth] rect) {
+  fill: var(--cloth);
+  stroke: var(--ink-line);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.stage [data-thread] :global([data-cloth] path) {
+  stroke: var(--thread-gold);
+  stroke-opacity: 0.4;
+  stroke-width: 3px;
+  vector-effect: non-scaling-stroke;
+}
+
+.stage [data-rings] {
+  position: absolute;
+  inset: 0;
+}
+
+.stage [data-rings] > span {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border: 2px solid var(--jar-orange);
+  border-radius: 50%;
+  background: var(--paper-near);
+}
+
+/* The bead: a lamplight drop with a teak ring, riding the thread. Only where offset-path works. */
+.stage [data-beads] {
+  display: none;
+}
+
+@supports (offset-path: path("M0 0h1")) {
+  .stage [data-beads] {
+    display: block;
+  }
+}
+
+.stage [data-bead] {
+  offset-distance: 100%;
+  offset-rotate: 0deg;
+  opacity: 0;
+}
+
+.stage [data-bead][data-last] {
+  opacity: 1;
+}
+
+.stage [data-bead] path {
+  fill: none;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.stage [data-bead] path:first-child {
+  stroke: var(--teak);
+  stroke-width: 12px;
+}
+
+.stage [data-bead] path:last-child {
+  stroke: var(--lamplight);
+  stroke-width: 7px;
+}
+
+/* ------------------------------------------------------------- the lights */
+
+/* The pod's own lamp, behind its closed curtain: lit by Evening only. */
+.podLamp {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: calc(2 * var(--r));
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  opacity: 0;
+}
+
+:global(:root[data-theme="dark"]) .podLamp {
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .podLamp {
+    opacity: 1;
+  }
+}
+
+/* The air over the big jar: a wisp and a few motes, gone at rest. */
+.air {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 0;
+  height: 0;
+}
+
+.wisp {
+  position: absolute;
+  left: -12.5px;
+  top: -42px;
+}
+
+.motes {
+  --motes-x: 0;
+  --motes-y: -4px;
+}
+
+/* The awning's valance: cloth in the awning's teak, hinged at its beam. */
+.valance {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.valance path {
+  fill: color-mix(in oklab, var(--teak) 82%, var(--jar-orange));
+  stroke: var(--ink-line);
+  stroke-width: 1px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+:global(:root[data-theme="dark"]) .valance path {
+  fill: color-mix(in oklab, var(--teak-night) 80%, var(--jar-orange));
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .valance path {
+    fill: color-mix(in oklab, var(--teak-night) 80%, var(--jar-orange));
+  }
+}
+
+.breath {
+  transform-box: view-box;
+}
+
+/* ------------------------------------------------- tags, notes and dots */
+
+.plate {
+  display: block;
+  padding: 0.2rem 0.45rem 0.25rem;
+  border-radius: var(--radius-s);
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--text);
+  font-size: var(--step--2);
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* A label tag hangs on a short cord from a pin at its anchor; it swings about the pin. */
+.tag {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 0;
+  height: 0;
+}
+
+.tag::before {
+  content: "";
+  position: absolute;
+  left: -0.5px;
+  bottom: 0;
+  width: 1px;
+  height: 1rem;
+  background: var(--text);
+}
+
+.tag::after {
+  content: "";
+  position: absolute;
+  left: -2.5px;
+  top: -2.5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.tag .plate {
+  position: absolute;
+  left: 0;
+  bottom: 1rem;
+  translate: -50% 0;
+}
+
+/* A note on the house: a tag with a plus that opens a short line beside it. */
+.note {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 0;
+  height: 0;
+  pointer-events: auto;
+}
+
+.note[open] {
+  z-index: 4;
+}
+
+.note summary {
+  position: absolute;
+  left: 0;
+  bottom: 0.4rem;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.5rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.note summary::-webkit-details-marker {
+  display: none;
+}
+
+.note summary::before {
+  content: "+";
+  display: grid;
+  place-items: center;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: var(--radius-s);
+  background: var(--jar-orange);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.note[open] summary::before {
+  content: "\2212";
+}
+
+.tip {
+  position: absolute;
+  bottom: 2.4rem;
+  left: 0;
+  width: min(17rem, 72cqw);
+  translate: -50% 0;
+  padding: var(--space-s) var(--space-m);
+  border-radius: var(--radius-s);
+  background: var(--paper-near);
+  box-shadow:
+    var(--edge-x) var(--edge-y) 0 var(--paper-edge),
+    var(--shadow-soft);
+  color: var(--text);
+  font-size: var(--step--1);
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.note[data-side="start"] .tip {
+  translate: -1.5rem 0;
+}
+
+.note[data-side="end"] .tip {
+  translate: calc(-100% + 1.5rem) 0;
+}
+
+.stage [data-ov]:has(.note[open]) {
+  z-index: 3;
+}
+
+/* A camera dot: where a photo in the gallery was taken, numbered like the gallery. */
+.camera {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  translate: calc(-50% + var(--nudge, 0) * 1.75rem) -50%;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-s);
+  background: var(--text);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--page);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.camera:hover {
+  background: var(--accent-text);
+}
+
+.caption {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: var(--space-s);
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  line-height: 1.45;
+}
+
+/* ================================================================ motion */
+
+/*
+ * The acts, on the ancestor's scroll timeline. Each element's animation runs
+ * from its start pose to its base style (the rest frame), over its act; the
+ * walk's own timing within Act C (the thread resting at each stop, the rings
+ * and lamps it reaches) is in keyframes the stage writes for its walk, named
+ * in --kf. Only transforms and opacity move, and the thread's dash offset.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"][data-open] .world > [data-layer="street"] {
+      display: block;
+      animation: street-open linear both;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-a, normal);
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"][data-open] .house {
+      animation: interior-in linear both;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-a, normal);
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .house > [data-level],
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] [data-link] {
+      animation: floor-lift linear both;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-b, normal);
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] [data-link] {
+      animation-name: link-in;
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .tag {
+      animation: tag-in-0 linear both;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-b, normal);
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .tag[data-k="1"] {
+      animation-name: tag-in-1;
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .tag[data-k="2"] {
+      animation-name: tag-in-2;
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .tag[data-k="3"] {
+      animation-name: tag-in-3;
+    }
+
+    /* Notes and camera dots come out once the floors stand apart (never while focused). */
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] :is(.note, .camera):not(:focus-within, :focus-visible) {
+      animation: link-in linear both;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-b, normal);
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] [data-thread] :global(:is(.th, .thc)),
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] [data-bead],
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] [data-rings] > span,
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] [data-ov] > i {
+      animation-name: var(--kf);
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-delay: 0s;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-c, normal);
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] [data-thread] :global([data-cloth]) {
+      animation: curtain-close linear both;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-d, normal);
+    }
+
+    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .podLamp {
+      animation: pod-lamp linear both;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-d, normal);
+    }
+
+    /* Layers get ready to move only while their act runs (StageDirector names the act). */
+    :global(:root:not([data-motion="still"]))
+      .stage[data-lift="scroll"]:is([data-act="a"], [data-act="b"])
+      :is(.house > [data-level], .world > [data-layer="street"]) {
+      will-change: transform, opacity;
+    }
+  }
+
+  /*
+   * Without scroll timelines (Firefox, older Safari): StageDirector names the
+   * act (data-act), the stop (data-step) and how far the walk has come
+   * (--walk, 0 to 1) as the reader passes the text, and transitions play the
+   * same states. Before it runs, and without JavaScript, the stage rests.
+   */
+  @supports not (animation-timeline: view()) {
+    :global(:root[data-life]:not([data-motion="still"]))
+      .stage[data-lift="scroll"][data-act]
+      :is(.house, [data-layer], [data-ov], [data-link], .tag, [data-rings] > span, [data-ov] > i, .podLamp),
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act] [data-thread] :global(:is(.th, .thc, [data-cloth])) {
+      transition:
+        transform var(--dur-scene) var(--ease-out),
+        opacity var(--dur-scene) var(--ease-out),
+        rotate var(--dur-hinge) var(--ease-out),
+        scale var(--dur-section) var(--ease-out),
+        stroke-dashoffset var(--dur-scene) var(--ease-out);
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-open] .world > [data-layer="street"] {
+      display: block;
+    }
+
+    :global(:root[data-life]:not([data-motion="still"]))
+      .stage[data-lift="scroll"][data-open]:is([data-act="none"], [data-act="a"])
+      .world
+      > [data-layer="street"] {
+      opacity: 1;
+      transform: none;
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"]:is([data-act="none"], [data-act="a"]) .house > [data-level] {
+      transform: none;
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-open]:is([data-act="none"], [data-act="a"]) .house {
+      opacity: 0.15;
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"]:is([data-act="none"], [data-act="a"]) :is([data-link], .tag) {
+      opacity: 0;
+      rotate: -4deg;
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act] [data-thread] :global(:is(.th, .thc)) {
+      stroke-dashoffset: calc((1 - clamp(0, (var(--walk, 1) - var(--a)) / max(0.0001, var(--b) - var(--a)), 1)) * 1px);
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act] :is([data-rings] > span, [data-ov] > i) {
+      opacity: clamp(0, (var(--walk, 1) - var(--at)) * 1000 + 1, 1);
+    }
+
+    :global(:root[data-life]:not([data-motion="still"]))
+      .stage[data-lift="scroll"][data-act]:not([data-act="d"])
+      [data-thread]
+      :global([data-cloth]) {
+      transform: scaleX(0.15);
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act]:not([data-act="d"]) .podLamp {
+      opacity: 0;
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act] [data-bead] {
+      visibility: hidden;
+    }
+  }
+
+  /*
+   * A walk chosen on the page (WalkPicker sets data-replay): it replays in
+   * 2.4 s whatever the scroll, each floor's thread in its share of the time,
+   * each ring settling as the thread reaches it, the bead riding along.
+   */
+  :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-thread] :global(:is(.th, .thc)) {
+    animation: walk-draw calc((var(--b) - var(--a)) * 2.4s) linear calc(var(--a) * 2.4s) both;
+    animation-timeline: auto;
+    animation-range: normal;
+  }
+
+  :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-rings] > span {
+    animation: ring-settle var(--dur-section) var(--ease-out) calc(var(--at) * 2.4s - 200ms) both;
+    animation-timeline: auto;
+    animation-range: normal;
+  }
+
+  :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-bead] {
+    animation: bead-walk calc((var(--b) - var(--a)) * 2.4s) linear calc(var(--a) * 2.4s) both;
+    animation-timeline: auto;
+    animation-range: normal;
+  }
+
+  :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-bead][data-last] {
+    animation-name: bead-walk-last;
+  }
+
+  /* Static stages: the tags swing in about their pins once the stage is seen (Lights on is the glow's own phrase). */
+  :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="static"]:not([data-played]) .tag {
+    opacity: 0;
+    rotate: -4deg;
+  }
+
+  :global(:root:not([data-motion="still"])) .stage[data-lift="static"][data-played] .tag {
+    animation: tag-swing var(--dur-hinge) var(--ease-out) calc(var(--k, 0) * 80ms + 500ms) both;
+  }
+
+  /* At the front desk a wisp of warm air rises from the big jar, with a few motes, once (StageDirector plays it on scroll stages). */
+  .wisp {
+    --wisp-delay: 200ms;
+  }
+
+  .stage[data-lift="static"] .wisp {
+    --wisp-delay: 1400ms;
+  }
+
+  .stage[data-lift="static"] .motes {
+    --delay: 900ms;
+  }
+}
+
+/*
+ * A breath of wind (§10.1): once, as the scene first comes into view, the
+ * awning's valance lifts up to 2° about its beam and settles.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) :global([data-played]) .breath {
+    animation: breath 2400ms var(--ease-sway) 300ms both;
+  }
+}
+
+@keyframes breath {
+  30% {
+    rotate: -2deg;
+  }
+
+  62% {
+    rotate: 0.6deg;
+  }
+}
+
+@keyframes street-open {
+  0%,
+  50% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes interior-in {
+  0%,
+  40% {
+    opacity: 0.15;
+  }
+
+  90% {
+    opacity: 1;
+  }
+}
+
+@keyframes floor-lift {
+  from {
+    transform: none;
+  }
+}
+
+@keyframes link-in {
+  0%,
+  80% {
+    opacity: 0;
+  }
+}
+
+@keyframes tag-in-0 {
+  0%,
+  40% {
+    opacity: 0;
+    rotate: -4deg;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes tag-in-1 {
+  0%,
+  56% {
+    opacity: 0;
+    rotate: -4deg;
+  }
+
+  66% {
+    opacity: 1;
+  }
+}
+
+@keyframes tag-in-2 {
+  0%,
+  72% {
+    opacity: 0;
+    rotate: -4deg;
+  }
+
+  82% {
+    opacity: 1;
+  }
+}
+
+@keyframes tag-in-3 {
+  0%,
+  84% {
+    opacity: 0;
+    rotate: -4deg;
+  }
+
+  94% {
+    opacity: 1;
+  }
+}
+
+@keyframes curtain-close {
+  from {
+    transform: scaleX(0.15);
+  }
+}
+
+@keyframes pod-lamp {
+  0%,
+  70% {
+    opacity: 0;
+  }
+}
+
+@keyframes walk-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ring-settle {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+
+@keyframes bead-walk {
+  from {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+
+  4%,
+  96% {
+    opacity: 1;
+  }
+
+  to {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes bead-walk-last {
+  from {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+
+  4% {
+    opacity: 1;
+  }
+
+  to {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+}
+
+@keyframes tag-swing {
+  from {
+    opacity: 0;
+    rotate: -4deg;
+  }
+}

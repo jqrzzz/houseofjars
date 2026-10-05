@@ -1,0 +1,159 @@
+/*
+ * The paper sky behind a stage (PaperSky.tsx). Its ground is the frame's own
+ * top band; two more bands of paper lie over it toward the horizon. By Day a
+ * warm, pale sky with white paper clouds; by Evening a night sky, dim clouds,
+ * a paper moon and pin-prick stars. No new hues: every tone is a mix of the
+ * palette. Each sheet carries the card edge (a drop shadow on its <svg>).
+ */
+.sky {
+  --sky-1: color-mix(in oklab, var(--lamplight) 9%, var(--paper-near));
+  --sky-2: color-mix(in oklab, var(--lamplight) 17%, var(--rice));
+  --sky-3: color-mix(in oklab, var(--stone) 26%, var(--rice));
+  --cloud: var(--paper-near);
+  --is-night: 0;
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  background: var(--sky-1);
+  pointer-events: none;
+}
+
+:global(:root[data-theme="dark"]) .sky {
+  --sky-1: var(--night);
+  --sky-2: var(--paper-far);
+  --sky-3: color-mix(in oklab, var(--teak-night) 38%, var(--night));
+  --cloud: color-mix(in oklab, var(--night-raised) 72%, var(--stone-dark));
+  --is-night: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .sky {
+    --sky-1: var(--night);
+    --sky-2: var(--paper-far);
+    --sky-3: color-mix(in oklab, var(--teak-night) 38%, var(--night));
+    --cloud: color-mix(in oklab, var(--night-raised) 72%, var(--stone-dark));
+    --is-night: 1;
+  }
+}
+
+.plane {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(var(--edge-x) var(--edge-y) 0 var(--paper-edge));
+}
+
+/* The far bands lie flat: only the clouds and the moon are cut sheets with an edge. */
+.back {
+  filter: none;
+}
+
+.band2 {
+  fill: var(--sky-2);
+}
+
+.band3 {
+  fill: var(--sky-3);
+}
+
+/* The moon and stars: out by Evening only. */
+.night {
+  opacity: var(--is-night);
+}
+
+.moon {
+  fill: color-mix(in oklab, var(--rice) 82%, var(--lamplight));
+}
+
+.crater {
+  fill: color-mix(in oklab, var(--rice) 66%, var(--stone));
+}
+
+.stars {
+  fill: none;
+  stroke: var(--lamplight);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.late {
+  stroke-width: 2.6;
+}
+
+.cloud {
+  fill: var(--cloud);
+}
+
+/*
+ * The clouds drift with the stage's timeline, the nearer the further, but
+ * never far: within 16 px. Linear, because the reader holds the clock. Where
+ * the stage has no timeline they rest where they are drawn.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    :global(:root:not([data-motion="still"])) .cloud {
+      animation: drift-near linear both;
+      animation-timeline: var(--stage-timeline, none);
+    }
+
+    :global(:root:not([data-motion="still"])) .far {
+      animation-name: drift-far;
+    }
+
+    :global(:root:not([data-motion="still"])) .low {
+      animation-name: drift-low;
+    }
+  }
+
+  /* The moon and stars come out once, the first time the sky is seen. */
+  :global(:root[data-life]:not([data-motion="still"])) :global([data-phrase]:not([data-played])) .night {
+    opacity: 0;
+  }
+
+  :global(:root:not([data-motion="still"])) :global([data-played]) .night {
+    animation: night-in 1600ms var(--ease-lamp) 400ms both;
+  }
+
+  :global(:root:not([data-motion="still"])) :global([data-played]) .late {
+    animation: night-in 1600ms var(--ease-lamp) 1100ms both;
+  }
+}
+
+@keyframes drift-near {
+  from {
+    translate: -16px 0;
+  }
+
+  to {
+    translate: 16px 0;
+  }
+}
+
+@keyframes drift-far {
+  from {
+    translate: -7px 0;
+  }
+
+  to {
+    translate: 7px 0;
+  }
+}
+
+@keyframes drift-low {
+  from {
+    translate: 12px 0;
+  }
+
+  to {
+    translate: -12px 0;
+  }
+}
+
+@keyframes night-in {
+  from {
+    opacity: 0;
+    translate: 0 3px;
+  }
+}

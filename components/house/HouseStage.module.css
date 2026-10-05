@@ -1,0 +1,137 @@
+/*
+ * The house in section. On wide screens a 160svh section whose view timeline
+ * drives the stage (the floors lift over the first part, the arrival walk
+ * draws over the second) while the stage and the walks beside it stay in
+ * view. On phones the stage is a still: no timeline, the floors at rest.
+ */
+.house {
+  --stage-timeline: none;
+  position: relative;
+}
+
+.sticky {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.side {
+  min-width: 0;
+}
+
+.walks {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.walk {
+  border-top: 1px solid var(--rule);
+}
+
+.walk:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.walk summary {
+  display: grid;
+  gap: 0.1rem;
+  padding: var(--space-s) 2rem var(--space-s) 0;
+  position: relative;
+  cursor: pointer;
+  list-style: none;
+}
+
+.walk summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A plus that turns to a minus, square like the house's plates. */
+.walk summary::after {
+  content: "+";
+  position: absolute;
+  right: 0.25rem;
+  top: var(--space-s);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.walk[open] summary::after {
+  content: "\2212";
+}
+
+.name {
+  font-weight: 650;
+}
+
+.when {
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.stops {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-m);
+  padding-left: 1.4rem;
+  font-size: var(--step--1);
+  line-height: 1.5;
+}
+
+.stops strong {
+  font-weight: 650;
+}
+
+.stops li::marker {
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.steps {
+  display: none;
+}
+
+@media (min-width: 60rem) {
+  .house {
+    --stage-timeline: --house;
+    --act-b: contain 0% contain 42%;
+    --act-c: contain 48% contain 94%;
+    height: 160svh;
+    view-timeline: --house;
+  }
+
+  .sticky {
+    position: sticky;
+    top: calc(4.5rem + var(--space-m));
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    align-items: start;
+    --stage-height: calc(100svh - 4.5rem - 7.5rem);
+  }
+
+  .side {
+    max-height: calc(100svh - 4.5rem - 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 var(--space-2xs) var(--space-m) 0;
+  }
+
+  .steps {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .steps span {
+    position: absolute;
+    left: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .steps span:first-child {
+    top: 12%;
+  }
+
+  .steps span:last-child {
+    top: 40%;
+  }
+}
