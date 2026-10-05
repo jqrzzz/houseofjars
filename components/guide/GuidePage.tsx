@@ -22,6 +22,9 @@ import { ReadNext } from "./ReadNext";
 import { Sources } from "./Sources";
 import styles from "./Guide.module.css";
 
+/** Links deeper into the site play the forward page transition. */
+const FORWARD = ["nav-forward"];
+
 export function guideMetadata(guide: Guide): Metadata {
   return pageMetadata(findPage(guidePath(guide)));
 }
@@ -45,7 +48,7 @@ export function GuidePage({ guide }: { guide: Guide }) {
             Last reviewed <time dateTime={guide.reviewed}>{formatDate(guide.reviewed)}</time>
           </>
         }
-        art={<Drawing name={art.header} priority />}
+        art={<Drawing name={art.header} preload />}
       />
       <Glance guide={guide} />
       {guide.sections.map((section) => (
@@ -61,7 +64,12 @@ export function GuidePage({ guide }: { guide: Guide }) {
 
 function GlanceValue({ row }: { row: GlanceRow }) {
   if (!row.href) return row.value;
-  if (row.href.startsWith("/")) return <Link href={row.href}>{row.value}</Link>;
+  if (row.href.startsWith("/"))
+    return (
+      <Link href={row.href} transitionTypes={FORWARD}>
+        {row.value}
+      </Link>
+    );
   return (
     <a
       href={row.href}

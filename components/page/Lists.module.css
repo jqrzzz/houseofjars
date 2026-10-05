@@ -21,15 +21,20 @@
   grid-column: 2;
 }
 
-/* An orange plate with an ink icon: the house's sign plates, small. */
+/*
+ * The house's sign plates, small and cut from paper: the icon in the house's
+ * orange on a paper plate with its card edge. (On a screen, the Book button
+ * is the only large orange fill.)
+ */
 .plate {
   display: grid;
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
   border-radius: var(--radius-s);
-  background: var(--jar-orange);
-  color: var(--ink);
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--accent-text);
 }
 
 .plate svg {
@@ -85,6 +90,47 @@
   color: var(--text-soft);
 }
 
+/*
+ * Where the rule lives: a stop ring, as on the house's walks, then the place.
+ * The ring lights (lamplight, never faster than 400 ms) while the rule's
+ * areas are lit on the plan beside it: pointed at, or crossing the middle
+ * of the screen (data-current, from CurrentMarker).
+ */
+.where {
+  position: relative;
+  margin-top: 0.4rem;
+  padding-left: 1.15rem;
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.where::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 0.625rem;
+  height: 0.625rem;
+  box-sizing: border-box;
+  border: 1.5px solid var(--jar-orange);
+  border-radius: 50%;
+  background: var(--paper-near);
+  transition:
+    background-color 480ms var(--ease-lamp),
+    box-shadow 480ms var(--ease-lamp);
+}
+
+.whereLabel {
+  font-weight: 650;
+  color: var(--text);
+}
+
+.rule[data-places]:is(:hover, [data-current]) .where::before {
+  background: var(--lamplight);
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--lamplight) calc(var(--glow-strength) * 60%), transparent);
+}
+
 .steps {
   display: grid;
   gap: var(--space-l);
@@ -100,7 +146,7 @@
   counter-increment: step;
 }
 
-/* Each number sits on a small orange plate. */
+/* Each number sits on a small paper plate, like the rules' icons. */
 .step::before {
   content: counter(step);
   position: absolute;
@@ -111,8 +157,9 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: var(--radius-s);
-  background: var(--jar-orange);
-  color: var(--ink);
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--accent-text);
   font-family: var(--font-display-stack);
   font-weight: var(--display-weight);
   font-size: var(--step-0);

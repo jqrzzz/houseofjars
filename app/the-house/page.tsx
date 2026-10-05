@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { BookingCard } from "@/components/BookingCard";
 import { PhotoFrame } from "@/components/PhotoFrame";
-import { HouseCutaway } from "@/components/house/HouseCutaway";
+import { FindYourPodPoster } from "@/components/game/FindYourPodPoster";
+import { HOUSE_PHOTOS, HouseStage } from "@/components/house/HouseStage";
 import { PodDiagram } from "@/components/house/PodDiagram";
+import { PhotoTwin } from "@/components/stage/PhotoTwin";
+import { cameraNumber, type PhotoKey } from "@/components/stage/places";
+import { isFirm } from "@/content/certainty";
 import { photos } from "@/content/photos";
 import { Block, Prose, TickList } from "@/components/page/Block";
 import { IconList } from "@/components/page/Lists";
@@ -13,21 +17,25 @@ import { honestNotes } from "@/content/reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building } from "@/content/stay";
 import { countWord, joinList, lowerFirst } from "@/content/text";
 import { onlineBookingConfigured } from "@/lib/booking/config";
+import { houseOfJars } from "@/lib/house/house-of-jars";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
 import styles from "./the-house.module.css";
 
 export const metadata = pageMetadata(pages.house);
 
-/** The dorms, then the stairs: the house's own photographs. */
-const lookInside = [
-  photos.dormFan,
-  photos.podCurtain,
-  photos.podLadder,
-  photos.wallOfJars,
-  photos.stairsJar,
-  photos.lamp,
-];
+/** The dorms, then the stairs: the house's own photographs. The camera dots on the drawing follow this order (HOUSE_PHOTOS). */
+const lookInside: readonly PhotoKey[] = ["dormFan", "podCurtain", "podLadder", "wallOfJars", "stairsJar", "lamp"];
+
+/** Links deeper into the site play the forward page transition. */
+const FORWARD = ["nav-forward"];
+
+/** Where a photo was taken, in the house model's words: "Dorm H, Floor 1". */
+function placeName(area: string): string | undefined {
+  const found = houseOfJars.areas.find((a) => a.id === area);
+  const floor = houseOfJars.floors.find((f) => f.id === found?.floor);
+  return found && floor ? `${found.name}, ${floor.name}` : undefined;
+}
 
 export default function TheHousePage() {
   return (
@@ -50,13 +58,19 @@ export default function TheHousePage() {
             The dorms include {joinList(beds.dorms.value)}.{" "}
             {onlineBookingConfigured() ? (
               <>
-                To see which beds are free on your dates, see the <Link href={pages.book.path}>booking page</Link>, or
-                Booking.com and Agoda.
+                To see which beds are free on your dates, see the{" "}
+                <Link href={pages.book.path} transitionTypes={FORWARD}>
+                  booking page
+                </Link>
+                , or Booking.com and Agoda.
               </>
             ) : (
               <>
                 To see which beds are free on your dates, check Booking.com or Agoda, or{" "}
-                <Link href={pages.book.path}>ask us</Link>.
+                <Link href={pages.book.path} transitionTypes={FORWARD}>
+                  ask us
+                </Link>
+                .
               </>
             )}
           </p>
@@ -64,41 +78,62 @@ export default function TheHousePage() {
         <PodDiagram />
       </Block>
 
-      <section id="look-inside" aria-labelledby="look-inside-title">
-        <div className={`container ${styles.section}`}>
+      <section id="section" aria-labelledby="section-title" className={styles.section}>
+        <div className="container">
+          <h2 id="section-title" className={styles.sectionTitle}>
+            The house in section
+          </h2>
+          <HouseStage photos={HOUSE_PHOTOS} />
+        </div>
+      </section>
+
+      <section id="look-inside" aria-labelledby="look-inside-title" className={styles.section}>
+        <div className="container">
           <h2 id="look-inside-title" className={styles.sectionTitle}>
             A look inside
           </h2>
           <ul role="list" className={styles.gallery}>
-            {lookInside.map((photo) => (
-              <li key={photo.src} data-reveal="">
-                <PhotoFrame
-                  caption={photo.caption}
-                  photo={photo}
-                  drawing="pod"
-                  aspect="4 / 5"
-                  sizes="(min-width: 60rem) 22rem, (min-width: 40rem) 45vw, 90vw"
-                />
-              </li>
-            ))}
+            {lookInside.map((key, index) => {
+              const photo = photos[key];
+              const n = cameraNumber(HOUSE_PHOTOS, key);
+              const area = photo.place?.area;
+              const where = area ? placeName(area) : undefined;
+              const placed = n !== undefined && area !== undefined && where !== undefined;
+              // One paper twin per place: photos taken in the same area would show the same tile.
+              const twin = placed && !lookInside.slice(0, index).some((k) => photos[k].place?.area === area);
+              return (
+                <li key={key} id={`photo-${key}`} className={twin ? `${styles.photo} ${styles.placed}` : styles.photo} data-reveal="">
+                  <div className={styles.stack}>
+                    <PhotoFrame
+                      caption={photo.caption}
+                      photo={photo}
+                      drawing="pod"
+                      aspect="4 / 5"
+                      sizes="(min-width: 60rem) 22rem, (min-width: 40rem) 45vw, 90vw"
+                    />
+                    {placed ? (
+                      <a href="#section" className={styles.where}>
+                        <span className={styles.number} aria-hidden="true">
+                          {n}
+                        </span>
+                        <span className="visually-hidden">Photo {n}: </span>
+                        Taken in {where}
+                      </a>
+                    ) : null}
+                  </div>
+                  {twin ? <PhotoTwin area={area} className={styles.twin} /> : null}
+                </li>
+              );
+            })}
           </ul>
-        </div>
-      </section>
-
-      <section id="section" aria-labelledby="section-title">
-        <div className={`container ${styles.section}`}>
-          <h2 id="section-title" className={styles.sectionTitle}>
-            The house in section
-          </h2>
-          <HouseCutaway />
         </div>
       </section>
 
       <Block id="bathrooms" title="Bathrooms">
         <Prose>
           <p>
-            The bathrooms are shared, with hot showers, and they are {lowerFirst(bathrooms.cleaning.value)}. Guests
-            often single out how clean the whole house is.
+            The bathrooms are shared, with hot showers. Guests say they are {lowerFirst(bathrooms.cleaning.value)},
+            and often single out how clean the whole house is.
           </p>
         </Prose>
         <PhotoFrame caption="A shared bathroom" drawing="shower" />
@@ -121,7 +156,8 @@ export default function TheHousePage() {
       ) : null}
 
       <Block id="comfort" title="Comfort and convenience">
-        <IconList items={amenities.map((amenity) => amenity.value.name)} />
+        {/* What only guests report keeps their credit. */}
+        <IconList items={amenities.map((amenity) => (isFirm(amenity) ? amenity.value.name : `${amenity.value.name}, guests say`))} />
         <PhotoFrame
           caption={photos.locker.caption}
           photo={photos.locker}
@@ -137,13 +173,27 @@ export default function TheHousePage() {
           <p>Travellers who want a clean bed, a quiet night and breakfast before the day starts.</p>
           <p>
             {atmosphere.summary.value} Hen and stag parties are not accepted.{" "}
-            <Link href="/guides/quiet-hostel-vientiane">Why guests call it quiet</Link>.
+            <Link href="/guides/quiet-hostel-vientiane" transitionTypes={FORWARD}>
+              Why guests call it quiet
+            </Link>
+            .
           </p>
         </Prose>
       </Block>
 
       <Block id="good-to-know" title="Good to know" tone="cream" aside="From what guests tell us.">
         <TickList items={honestNotes.map((note) => note.value)} />
+      </Block>
+
+      <Block id="play" title="Find your pod" aside="A small game: it loads only when you press Play.">
+        <Prose>
+          <p>
+            Practise the walk before you come. Three errands on the house’s own plans: arriving, back late and leaving
+            early. You are a small lamp light. Keep to the house rules on the way and earn up to nine lamps; miss one and
+            Shadow holds it up for you, so you can’t lose.
+          </p>
+        </Prose>
+        <FindYourPodPoster />
       </Block>
 
       <ReadNext paths={["/guides/quiet-hostel-vientiane", pages.rules.path, pages.vientiane.path]} />

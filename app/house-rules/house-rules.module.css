@@ -1,0 +1,84 @@
+/*
+ * Where each rule lives. Phones: the two paper plans stay at the top of the
+ * screen as strips while the rules scroll under them. From 48rem: the plans
+ * stand in the left column (the blocks' 5:7 columns from 60rem), sticky
+ * below the site header, beside the rules.
+ */
+.where {
+  --block-space: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  display: grid;
+  gap: var(--space-l) var(--space-3xl);
+  width: 100%;
+  max-width: calc(var(--max-width) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding: var(--block-space) var(--gutter);
+}
+
+.planColumn {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  align-self: start;
+  margin-inline: calc(-1 * var(--gutter));
+  padding-inline: var(--gutter);
+  background: var(--page);
+}
+
+.planLabel {
+  display: none;
+}
+
+.lists {
+  display: grid;
+  gap: var(--block-space);
+  min-width: 0;
+  max-width: 42rem;
+}
+
+.group {
+  scroll-margin-top: 13rem;
+}
+
+.groupTitle {
+  margin-bottom: var(--space-l);
+  font-size: var(--step-3);
+  line-height: 1.1;
+}
+
+@media (min-width: 48rem) {
+  .where {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .planColumn {
+    position: static;
+    align-self: stretch;
+    margin: 0;
+    padding: 0;
+    background: none;
+  }
+
+  .planHolder {
+    position: sticky;
+    top: calc(4.5rem + var(--space-l));
+  }
+
+  .planLabel {
+    display: block;
+    margin-bottom: var(--space-s);
+    font-size: var(--step--2);
+    font-weight: 650;
+    letter-spacing: 0.03em;
+    color: var(--accent-text);
+  }
+
+  .group {
+    scroll-margin-top: calc(4.5rem + var(--space-xl));
+  }
+}
+
+@media (min-width: 60rem) {
+  .where {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+}

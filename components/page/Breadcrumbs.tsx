@@ -4,6 +4,9 @@ import { Mark } from "../brand/Mark";
 import eyebrow from "../ui/Section.module.css";
 import styles from "./Breadcrumbs.module.css";
 
+/** A step back up the site: the page transition plays in reverse (.page-back in app/globals.css). */
+const BACK = ["nav-back"];
+
 /**
  * Where the page sits, set like the eyebrow it replaces: the jar, then each
  * level as a link, then the page itself. Home is the site's name in the
@@ -18,7 +21,9 @@ export function Breadcrumbs({ trail }: { trail: readonly Crumb[] }) {
         {shown.map((crumb, index) => (
           <li key={crumb.path} className={styles.crumb}>
             {index < shown.length - 1 ? (
-              <Link href={crumb.path}>{crumb.name}</Link>
+              <Link href={crumb.path} transitionTypes={BACK}>
+                {crumb.name}
+              </Link>
             ) : (
               <span aria-current="page">{crumb.name}</span>
             )}

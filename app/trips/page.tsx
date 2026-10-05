@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookingCard } from "@/components/BookingCard";
-import { Drawing } from "@/components/art/Drawing";
+import { PaperTrain } from "@/components/art/PaperTrain";
 import { ReadNext } from "@/components/guide/ReadNext";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
@@ -12,6 +12,9 @@ import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
 
 export const metadata = pageMetadata(pages.trips);
+
+/** Links deeper into the site play the forward page transition. */
+const FORWARD = ["nav-forward"];
 
 /**
  * /trips: the team books trains, buses and tours for guests. The guest
@@ -27,7 +30,8 @@ export default function TripsPage() {
         morph="trips"
         title="Trains, buses and tours, booked for you"
         lede={`${services.bookingHelp.value}. Tell them where and when, and they reply with the times and the price.`}
-        art={<Drawing name="train" priority />}
+        art={<PaperTrain arrive />}
+        artShape="band"
       />
 
       <Block id="ask" title="Ask the team to book" aside="Nothing to pay here: the team replies first.">
@@ -38,10 +42,18 @@ export default function TripsPage() {
         <Prose>
           <p>
             The guides show how, step by step, and say where every fact comes from:{" "}
-            <Link href="/guides/laos-china-railway-tickets">train tickets</Link>,{" "}
-            <Link href="/guides/getting-around-vientiane">buses and getting around</Link>,{" "}
-            <Link href="/guides/vientiane-to-thailand">crossing to Thailand</Link> and{" "}
-            <Link href="/guides/one-day-in-vientiane">a day in Vientiane</Link>.
+            <Link href="/guides/laos-china-railway-tickets" transitionTypes={FORWARD}>
+              train tickets
+            </Link>,{" "}
+            <Link href="/guides/getting-around-vientiane" transitionTypes={FORWARD}>
+              buses and getting around
+            </Link>,{" "}
+            <Link href="/guides/vientiane-to-thailand" transitionTypes={FORWARD}>
+              crossing to Thailand
+            </Link> and{" "}
+            <Link href="/guides/one-day-in-vientiane" transitionTypes={FORWARD}>
+              a day in Vientiane
+            </Link>.
           </p>
         </Prose>
       </Block>

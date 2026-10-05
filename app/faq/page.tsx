@@ -6,6 +6,7 @@ import { PageJsonLd } from "@/components/PageJsonLd";
 import { ReadNext } from "@/components/guide/ReadNext";
 import { faqFor } from "@/content/faq";
 import { noBreakHyphens } from "@/content/no-break";
+import { laoNumeral } from "@/content/text";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
@@ -26,11 +27,17 @@ export default function FaqPage() {
         lede="Plain answers about staying at House of Jars. If yours isn’t here, ask Shadow or message the team."
       />
 
+      {/* The topics as square paper index tabs, numbered in Lao like the house's eyebrows. Nothing moves. */}
       <nav aria-label="Topics" className={`container ${styles.topics}`}>
         <ul role="list" className={styles.topicList}>
-          {faq.map((group) => (
+          {faq.map((group, index) => (
             <li key={group.title}>
-              <a href={`#${groupId(group.title)}`}>{group.title}</a>
+              <a href={`#${groupId(group.title)}`} className={styles.tab}>
+                <span className={styles.tabNumber} aria-hidden="true">
+                  {laoNumeral(index + 1)}
+                </span>
+                {group.title}
+              </a>
             </li>
           ))}
         </ul>

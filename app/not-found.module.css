@@ -11,10 +11,33 @@
   text-align: center;
 }
 
-.jar {
-  width: 9.5rem;
-  height: auto;
+/*
+ * The empty jar, and Shadow behind it peering over the rim: he stands back
+ * and to the right, leaning in, so only his cap, his eyes and a hand of
+ * his head show above the jar. The jar is in front, and only the jar moves.
+ */
+.scene {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: 11rem;
+  padding-top: 2.6rem;
   margin-bottom: var(--space-xs);
+}
+
+.peek {
+  position: absolute;
+  top: 0.35rem;
+  right: -0.4rem;
+  width: 4.6rem;
+  height: auto;
+  rotate: -12deg;
+}
+
+.jar {
+  position: relative;
+  width: 11rem;
+  height: auto;
 }
 
 .code {
@@ -42,25 +65,25 @@
   margin: var(--space-s) 0 0;
 }
 
-/* Shadow keeps his own corner, away from the jar. */
-.shadow {
+/* Two more ways to keep looking, under a hairline. */
+.more {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--space-l);
-  align-items: center;
+  justify-items: center;
+  gap: var(--space-m);
   width: 100%;
   margin-top: var(--space-xl);
   padding-top: var(--space-xl);
   border-top: 1px solid var(--rule);
-  text-align: left;
 }
 
-.figure {
-  width: 4.5rem;
-  height: auto;
-}
-
-.shadowText {
-  margin-bottom: var(--space-s);
+.moreText {
+  max-width: 30rem;
   color: var(--text-soft);
+}
+
+.moreActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-s);
 }

@@ -2,30 +2,46 @@
   padding-bottom: var(--space-xl);
 }
 
+/*
+ * Square paper index tabs: each a slip of paper with its card edge and a
+ * coloured top, like the tabs of a card index. Pointing at one inks its top
+ * in the thread's orange; nothing moves.
+ */
 .topicList {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs);
+  gap: var(--space-s) var(--space-xs);
   margin: 0;
 }
 
-.topicList a {
+.tab {
+  --tab-top: color-mix(in oklab, var(--teak) 50%, var(--paper-near));
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
+  gap: 0.5rem;
   min-height: 2.75rem;
-  padding: 0.45rem 0.95rem;
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-s);
+  padding: 0.6rem 0.95rem 0.55rem;
+  border-top: 3px solid var(--tab-top);
+  border-radius: 0;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
   color: var(--text);
   font-size: var(--step--1);
-  font-weight: 550;
+  font-weight: 600;
+  line-height: 1.3;
   text-decoration: none;
-  transition: border-color 160ms ease, background-color 160ms ease;
+  transition: border-color var(--dur-hover) ease;
 }
 
-.topicList a:hover {
-  border-color: var(--accent-text);
-  background: var(--surface);
+.tab:hover,
+.tab:focus-visible {
+  --tab-top: var(--jar-orange);
+}
+
+.tabNumber {
+  font-family: var(--font-lao-stack);
+  font-weight: 500;
+  color: var(--stone-dark);
 }
 
 .list {
