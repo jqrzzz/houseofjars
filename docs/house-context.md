@@ -59,7 +59,7 @@ In it: 2 closet doors.
 
 ### Corridor
 
-In it: 2 ceiling lights, 2 clay jars, 1 cupboard, 2 fire extinguishers.
+In it: 1 basin, 2 ceiling lights, 2 clay jars, 1 cupboard, 2 fire extinguishers, 1 hand dryer.
 
 #### Water
 
@@ -67,10 +67,7 @@ In it: 1 bin, 2 low stools, 1 water dispenser.
 
 ### Toilet
 
-In it: 1 basin, 1 hand dryer, 1 small sink, 1 toilet.
-
-Assumed:
-- Where the toilet's door is and how the room is laid out inside are approximate: the door opens off a small wet corner beside the corridor, the basin right outside it (f1-10, gf-09, gf-10).
+In it: 1 small sink, 1 toilet.
 
 ### Staff room
 
@@ -84,7 +81,7 @@ In it: 1 cupboard, 1 exhaust fan, 1 fridge, 2 kitchen counters, 2 low stools, 1 
 
 ### Dorm H
 
-In it: 1 air-conditioner, 3 ceiling fans, 1 exhaust fan, 12 lockers (H01 to H12), 12 pods (H01 to H12), 2 windows.
+In it: 1 air-conditioner, 3 ceiling fans, 1 exhaust fan, 14 lockers (H01 to H17, with no H04, H13 or H14), 14 pods (H01 to H17, with no H04, H13 or H14), 2 windows.
 
 Rules here:
 - No outside guests upstairs: the dorm floors are for registered guests, one to a pod. Everyone sleeps among people the house knows. (Floor 1 and Floor 2 are for registered guests only; the stairs behind the counter lead up to them.)
@@ -95,11 +92,10 @@ Rules here:
 - Check-out from 08:00 until 11:30. So beds are ready for the guests arriving that afternoon. (Pods in Dorm H and Dorm J are left by 11:30, and guests check out at the front desk.)
 
 Assumed:
-- Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door.
-- The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read).
-- Not confirmed: which pod carries which number.
-- Not confirmed: which stack holds which numbers.
-- A wooden door with a small orange H sign, drawn open into the dorm.
+- The numbers and which pods stack together are from the owner's bed register.
+- Not confirmed: which pod of each stack is the upper one (the model puts the lower number below).
+- One locker for each pod, with the pod's number (the owner's bed register).
+- The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
 
 ### Landing
 
@@ -127,7 +123,7 @@ Not photographed yet: copied from Floor 1 on the owner's word.
 
 ### Dorm J
 
-In it: 1 air-conditioner, 3 ceiling fans, 1 exhaust fan, 12 lockers (J01 to J12), 12 pods (J01 to J12), 2 windows.
+In it: 1 air-conditioner, 3 ceiling fans, 1 exhaust fan, 14 lockers (J01 to J17, with no J04, J13 or J14), 14 pods (J01 to J17, with no J04, J13 or J14), 2 windows.
 
 Rules here:
 - No outside guests upstairs: the dorm floors are for registered guests, one to a pod. Everyone sleeps among people the house knows. (Floor 1 and Floor 2 are for registered guests only; the stairs behind the counter lead up to them.)
@@ -139,10 +135,10 @@ Rules here:
 
 Assumed:
 - Floor 2 has not been photographed: copied from Floor 1 on the owner's word ("the same layout").
-- Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door.
-- The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read).
-- Not confirmed: which pod carries which number.
-- Not confirmed: which stack holds which numbers.
+- The numbers and which pods stack together are from the owner's bed register.
+- Not confirmed: which pod of each stack is the upper one (the model puts the lower number below).
+- One locker for each pod, with the pod's number (the owner's bed register).
+- The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
 - A wooden door with a small orange J sign, drawn open into the dorm.
 
 ### Landing
@@ -181,6 +177,10 @@ Rules here:
 ### On the front wall
 
 3 outdoor air-conditioning units, at Floor 1's height.
+
+## House customs
+
+- The pods and lockers skip the numbers 4, 13 and 14. In Chinese, 4 sounds like "death" and 14 like "will die" (4 is unlucky in Japanese and Korean too), and 13 is unlucky for many Western guests. So no guest is given an unlucky bed, and nobody at the desk has to think about it at check-in.
 
 ## Rules everywhere indoors
 

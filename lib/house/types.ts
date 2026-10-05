@@ -253,6 +253,11 @@ export interface HouseModel {
   readonly routes: readonly Route[];
   /** The rectangle of the terrace in front of the facade (outside areas live here). */
   readonly terrace: Rect;
+  /**
+   * How the house is set up around its guests' cultures (numbers it skips, and why), in plain sentences
+   * for guides, the team and Shadow.
+   */
+  readonly customs?: readonly string[];
   /** Every area id of the owner's walk; each must have a model area. */
   readonly walkAreaIds: readonly string[];
 }

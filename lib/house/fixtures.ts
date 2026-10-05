@@ -750,6 +750,15 @@ function basinWall(fx: Fixture, b: Box3): Node[] {
         poly(arch("right", b.x0 + 0.01, yc, b.y1 - b.y0 + 0.04, top + 0.25, b.z1, 0.2), c("glass", 2)),
       ]),
     );
+  else if (fx.faces === "-y") {
+    // On a wall across the house: the arched mirror on the wall behind it, facing the camera.
+    const xc = (b.x0 + b.x1) / 2;
+    out.push(
+      part(box(b.x0 - 0.02, b.x1 + 0.02, b.y1 - 0.01, b.y1, top + 0.25, b.z1), [
+        poly(arch("front", b.y1 - 0.01, xc, b.x1 - b.x0 + 0.04, top + 0.25, b.z1, 0.2), c("glass", 1)),
+      ]),
+    );
+  }
   return out;
 }
 
@@ -769,6 +778,7 @@ function sinkSmall(b: Box3): Node[] {
 function wallBox(b: Box3, m: MaterialName, faces: Fixture["faces"]): Node[] {
   const paint: Paint[] = [];
   if (faces === "+x") paint.push(line([[b.x1, b.y0 + 0.04, b.z0 + 0.05], [b.x1, b.y1 - 0.04, b.z0 + 0.05]], "h"));
+  else if (faces === "-y") paint.push(line([[b.x0 + 0.04, b.y0, b.z0 + 0.05], [b.x1 - 0.04, b.y0, b.z0 + 0.05]], "h"));
   return [decorate(solid(b, m), paint)];
 }
 
@@ -967,6 +977,7 @@ function doorLeaf(fx: Fixture, b: Box3): Node[] {
 // The dorms
 
 function pod(fx: Fixture, b: Box3): Node[] {
+  if (fx.faces === "-y") return podAcross(fx, b);
   const variant = fx.variant ?? "";
   const left = variant.includes("left");
   const upper = variant.includes("upper");
@@ -1050,10 +1061,52 @@ function pod(fx: Fixture, b: Box3): Node[] {
   return out;
 }
 
+/**
+ * A pod lying across the house (the stack just inside the dorm's door), its back against the wall behind it
+ * and its curtain on the front, which the camera sees.
+ */
+function podAcross(fx: Fixture, b: Box3): Node[] {
+  const upper = (fx.variant ?? "").includes("upper");
+  const deck = 0.12;
+  const end = 0.04;
+  const rail = 0.06;
+  const zf = b.z0 + deck;
+  const x0 = b.x0 + end;
+  const x1 = b.x1 - end;
+  const cz1 = b.z1 - rail;
+  const band = zf + (cz1 - zf) * 0.2;
+  const folds: Vec3[][] = [];
+  for (let x = x0 + 0.17; x < x1 - 0.05; x += 0.17) folds.push([[x, b.y0, zf + 0.02], [x, b.y0, cz1 - 0.02]]);
+  const out: Node[] = [
+    solid(box(b.x0, b.x1, b.y0, b.y1, b.z0, zf), "woodDark"),
+    solid(box(b.x0, b.x1, b.y1 - end, b.y1, zf, b.z1), "wood"),
+    solid(box(b.x0, x0, b.y0, b.y1, zf, b.z1), "wood"),
+    decorate(solid(box(x1, b.x1, b.y0, b.y1, zf, b.z1), "wood"), [
+      poly(onRight(b.x1, b.y0 + 0.08, b.y1 - 0.08, zf + 0.08, b.z1 - 0.1), c("wood", 2, "tg")),
+    ]),
+  ];
+  if (upper) out.push(solid(box(x0, x1, b.y0 + rail, b.y1 - end, b.z1 - 0.03, b.z1), "wood"));
+  out.push(
+    solid(box(x0, x1, b.y0, b.y0 + rail, cz1, b.z1), "woodDark"),
+    part(box(x0, x1, b.y0, b.y0 + 0.03, zf, cz1), [
+      poly(onFront(b.y0, x0, x1, zf, cz1), c("curtain", 1)),
+      poly(onFront(b.y0, x0, x1, zf, band), c("curtainBand", 1)),
+      lines(folds, "tg"),
+    ]),
+  );
+  return out;
+}
+
+/** A pod's ladder: two rails and the rungs between them, standing along y (or along x for a pod lying across). */
 function ladder(b: Box3): Node[] {
-  const out: Node[] = [solid(box(b.x0, b.x1, b.y1 - 0.035, b.y1, b.z0, b.z1), "wood")];
-  for (let z = b.z0 + 0.42; z < b.z1 - 0.2; z += 0.4) out.push(solid(box(b.x0 + 0.015, b.x1 - 0.015, b.y0 + 0.035, b.y1 - 0.035, z, z + 0.035), "wood"));
-  out.push(solid(box(b.x0, b.x1, b.y0, b.y0 + 0.035, b.z0, b.z1), "wood"));
+  const alongX = b.x1 - b.x0 > b.y1 - b.y0;
+  const t = 0.035;
+  const railA = alongX ? box(b.x0, b.x0 + t, b.y0, b.y1, b.z0, b.z1) : box(b.x0, b.x1, b.y1 - t, b.y1, b.z0, b.z1);
+  const railB = alongX ? box(b.x1 - t, b.x1, b.y0, b.y1, b.z0, b.z1) : box(b.x0, b.x1, b.y0, b.y0 + t, b.z0, b.z1);
+  const out: Node[] = [solid(railA, "wood")];
+  for (let z = b.z0 + 0.42; z < b.z1 - 0.2; z += 0.4)
+    out.push(solid(alongX ? box(b.x0 + t, b.x1 - t, b.y0 + 0.015, b.y1 - 0.015, z, z + t) : box(b.x0 + 0.015, b.x1 - 0.015, b.y0 + t, b.y1 - t, z, z + t), "wood"));
+  out.push(solid(railB, "wood"));
   return out;
 }
 
@@ -1063,6 +1116,9 @@ function locker(fx: Fixture, b: Box3): Node[] {
   if (fx.faces === "+x") {
     paint.push(poly(onRight(b.x1, b.y0 + 0.03, b.y1 - 0.03, b.z0 + 0.03, b.z1 - 0.03), c("wood", 2, "h")));
     paint.push(plateRight(b.x1, yc, b.z1 - 0.2, 0.035, c("steel", 2)));
+  } else if (fx.faces === "-y") {
+    paint.push(poly(onFront(b.y0, b.x0 + 0.03, b.x1 - 0.03, b.z0 + 0.03, b.z1 - 0.03), c("wood", 1, "h")));
+    paint.push(plateFront((b.x0 + b.x1) / 2, b.y0, b.z1 - 0.2, 0.035, c("steel", 1)));
   }
   return [decorate(solid(b, "wood"), paint)];
 }
@@ -1530,6 +1586,8 @@ export function planStairs(b: Box3, p: Projection, arrows: readonly StairArrow[]
 export interface PlanMarkOptions {
   /** The arrows of a flight of stairs (default: one arrow "Up" the way it rises). */
   readonly stairs?: readonly StairArrow[];
+  /** The numbers of every locker in a stack, for the label on its bottom one (default: its own number). */
+  readonly lockerStack?: readonly string[];
 }
 
 /** The plan symbol of a fixture: simple shapes, a number where it helps. */
@@ -1543,27 +1601,30 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
     case "pod": {
       const upper = fx.variant?.includes("upper");
       const left = fx.variant?.includes("left");
+      const across = fx.faces === "-y";
       const curtainX = left ? b.x1 - 0.05 : b.x0 + 0.05;
+      // A stack lying across is too shallow for the two numbers one above the other: they sit side by side.
+      const [tx, ty] = across ? [cx + (upper ? 0.5 : -0.5), cy + 0.42] : [cx, cy];
       if (upper)
         return [
           mark("dl", planRect(p, b.x0 + 0.09, b.x1 - 0.09, b.y0 + 0.09, b.y1 - 0.09)),
-          planText(p, cx, cy + 0.42, fx.label ?? "", 13, "ls"),
-          planText(p, cx, cy + 0.12, "upper", 9, "lc"),
+          planText(p, tx, ty + (across ? -0.25 : 0.42), fx.label ?? "", 13, "ls"),
+          planText(p, tx, ty + (across ? -0.55 : 0.12), "upper", 9, "lc"),
         ];
       return [
         rect(c("wood", 0)),
         mark(c("paper", 0), planRect(p, b.x0 + 0.06, b.x1 - 0.06, b.y0 + 0.06, b.y1 - 0.06)),
-        mark("o n kcu", planLine(p, [[curtainX, b.y0 + 0.08], [curtainX, b.y1 - 0.08]])),
-        planText(p, cx, cy - 0.28, fx.label ?? "", 13, "ls"),
-        planText(p, cx, cy - 0.58, "lower", 9, "lc"),
+        mark("o n kcu", planLine(p, across ? [[b.x0 + 0.08, b.y0 + 0.05], [b.x1 - 0.08, b.y0 + 0.05]] : [[curtainX, b.y0 + 0.08], [curtainX, b.y1 - 0.08]])),
+        planText(p, tx, ty + (across ? -0.25 : -0.28), fx.label ?? "", 13, "ls"),
+        planText(p, tx, ty + (across ? -0.55 : -0.58), "lower", 9, "lc"),
       ];
     }
     case "locker": {
       if (b.z0 > 0.01) return [];
-      // One label for the stack of three: H01–H03.
-      const letter = fx.label?.slice(0, 1) ?? "";
-      const first = Number(fx.label?.slice(1) ?? 0);
-      return [rect(c("wood", 0)), planText(p, cx, cy, `${letter}${String(first).padStart(2, "0")}–${letter}${String(first + 2).padStart(2, "0")}`, 9, "ln")];
+      // One label for the whole stack, from its lowest number to its highest: H01–H03.
+      const stack = [...(opts.lockerStack ?? [fx.label ?? ""])].sort();
+      const text = stack.length > 1 ? `${stack[0]}–${stack[stack.length - 1]}` : stack[0]!;
+      return [rect(c("wood", 0)), planText(p, cx, cy, text, 9, "ln")];
     }
     case "ladder":
     case "ladder-wall":

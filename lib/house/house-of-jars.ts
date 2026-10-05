@@ -10,7 +10,7 @@
  * docs/HOUSE_MODEL.md.
  */
 import { box, centred } from "./geometry";
-import type { Area, Box3, Fixture, FixtureType, Floor, FloorId, HouseModel, Mount, Route, Wall } from "./types";
+import type { Area, Box3, Facing, Fixture, FixtureType, Floor, FloorId, HouseModel, Mount, Rect, Route, Wall } from "./types";
 
 const W = 4.0; // interior width
 const D = 16.0; // interior depth
@@ -43,16 +43,10 @@ export const floors: readonly Floor[] = [
 ];
 
 const FLOOR2_NOTE = 'Floor 2 has not been photographed: copied from Floor 1 on the owner\'s word ("the same layout").';
-/** The back of the dorm, as photos f2-04, f2-05 and f2-08 show it, which the model does not draw yet. */
-const DORM_BACK_NOTE =
-  "Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door.";
-const POD_NOTE = `The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read). Not confirmed: which pod carries which number. ${DORM_BACK_NOTE}`;
-const LOCKER_NOTE = `The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read). Not confirmed: which stack holds which numbers. ${DORM_BACK_NOTE}`;
-const TOILET_NOTE =
-  "Where the toilet's door is and how the room is laid out inside are approximate: the door opens off a small wet corner beside the corridor, the basin right outside it (f1-10, gf-09, gf-10).";
-const KITCHEN_NOTE =
-  "Where the kitchen's door is, is assumed: the photos show the staff room and the kitchen, not the way between them (gf-07, gf-08).";
-
+const POD_NOTE =
+  "The numbers and which pods stack together are from the owner's bed register. Not confirmed: which pod of each stack is the upper one (the model puts the lower number below).";
+const LOCKER_NOTE =
+  "One locker for each pod, with the pod's number (the owner's bed register). The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.";
 // ---------------------------------------------------------------------------
 // Areas
 
@@ -131,13 +125,12 @@ const groundAreas: Area[] = [
     kind: "path",
     name: "Corridor",
     rect: { x0: 3.0, x1: W, y0: 9.2, y1: 13.2 },
-    more: [
-      { x0: STAIR.x1, x1: 3.0, y0: STAIR.back + 0.1, y1: 13.2 },
-      // The teak cupboard between the stairs and the toilet.
-      { x0: 2.05, x1: STAIR.x1, y0: STAIR.back + 0.1, y1: 11.15 },
-    ],
+    // Behind the stairs it reaches left to the toilet's wall: the tall cupboard, the toilet's door, the second basin.
+    more: [{ x0: 2.05, x1: 3.0, y0: STAIR.back + 0.1, y1: 13.2 }],
     anchor: { x: 3.35, y: 12.2 },
-    note: "Along the right wall from the café to the Staff Only door: free water, then the clay jars and the extinguishers at the end (gf-04, gf-09, gf-11, gf-12).",
+    // Clear of the extinguishers against the right wall.
+    planAnchor: { x: 3.3, y: 12.6 },
+    note: "A narrow way along the right wall from the café to the Staff Only door at its end: the free water, then the clay jars and the extinguishers against the right wall (gf-04, gf-09, gf-11, gf-12).",
   },
   {
     id: "water",
@@ -155,11 +148,10 @@ const groundAreas: Area[] = [
     floor: "ground",
     kind: "wash",
     name: "Toilet",
-    rect: { x0: 0, x1: STAIR.x1, y0: 11.15, y1: 13.2 },
-    more: [{ x0: 0, x1: 1.95, y0: STAIR.back + 0.1, y1: 11.15 }],
-    anchor: { x: 1.0, y: 11.9 },
+    rect: { x0: 0, x1: 1.95, y0: STAIR.back + 0.1, y1: 13.2 },
+    anchor: { x: 1.0, y: 11.2 },
     planAnchor: { x: 1.0, y: 12.7 },
-    note: "Behind the stairs, on the left: one toilet for everyone. The hand-wash basin and dryer are outside its door, in a small wet corner off the corridor.",
+    note: "Behind the stairs, on the left: one toilet for everyone. Pass the stairs and turn left through its door, and the toilet faces you, centred on the far wall, with a small sink on its right (the owner; f1-10, gf-10). A second basin in the corridor is for washing hands while the toilet is busy.",
   },
   {
     id: "staff-kitchen",
@@ -169,18 +161,19 @@ const groundAreas: Area[] = [
     name: "Staff room",
     rect: { x0: 0, x1: W, y0: 13.3, y1: D },
     anchor: { x: 3.1, y: 14.6 },
-    note: "Through the Staff Only door at the end of the corridor (gf-07): the staff lockers, the electrical panel, a water tank, a shrine, and a teak lattice door at the back.",
+    note: "One room with the team's kitchen, no wall between (the owner), through the Staff Only door at the end of the corridor (gf-07): the staff lockers, the electrical panel, a water tank, a shrine, and a teak lattice door at the back that stays shut.",
   },
   {
     id: "kitchen",
-    walkId: "a-kitchen",
+    // One room with the staff room, so one card on the walk.
+    walkId: "a-storage",
     floor: "ground",
     kind: "staff",
     name: "Kitchen",
     rect: { x0: 0, x1: 1.95, y0: 13.3, y1: D },
     parent: "staff-kitchen",
     anchor: { x: 1.0, y: 14.7 },
-    note: "The team's kitchen (gf-08): a fridge, steel shelving, a counter with a double sink along the left wall and another along the back wall.",
+    note: "The team's kitchen, the left side of the staff room (gf-08): a fridge, steel shelving, a counter with a double sink along the left wall and another along the back wall.",
   },
 ];
 
@@ -195,8 +188,8 @@ function dormAreas(floor: FloorId, level: 1 | 2, letter: "h" | "j", bath: "women
       name: `Dorm ${letter.toUpperCase()}`,
       rect: { x0: 0, x1: W, y0: 0, y1: 8.6 },
       anchor: { x: 2.0, y: 4.3 },
-      confirmed: false,
-      note: level === 2 ? `${FLOOR2_NOTE} ${DORM_BACK_NOTE}` : DORM_BACK_NOTE,
+      note: "Fourteen pods in seven stacks of two: three stacks down each side of the aisle, and one lying across just inside the door, on the right as you come in (the owner; f2-04, f2-05).",
+      ...unconfirmed,
     },
     {
       id: `landing-${level}`,
@@ -269,29 +262,18 @@ const groundWalls: Wall[] = [
     floor: "ground",
     kind: "partition",
     box: box(1.95, 2.05, STAIR.back + 0.1, 13.2, 0, 3.6),
-    openings: [{ from: 11.25, to: 11.95, z1: 2.05 }],
+    // The toilet's door, straight across from the toilet (the owner).
+    openings: [{ from: 11.45, to: 12.15, z1: 2.05 }],
     material: "plaster",
-    confirmed: false,
-    note: TOILET_NOTE,
   },
   {
-    // The corridor ends at the Staff Only door (gf-09, gf-11).
+    // The corridor ends at the Staff Only door, against the right wall (the owner; gf-09, gf-11).
     id: "back-partition",
     floor: "ground",
     kind: "partition",
     box: box(0, W, 13.2, 13.3, 0, 3.6),
-    openings: [{ from: 2.2, to: 3.0, z1: 2.05 }],
+    openings: [{ from: 3.1, to: 3.9, z1: 2.05 }],
     material: "plaster",
-  },
-  {
-    id: "kitchen-wall",
-    floor: "ground",
-    kind: "partition",
-    box: box(1.95, 2.05, 13.3, D, 0, 3.6),
-    openings: [{ from: 14.1, to: 14.9, z1: 2.05 }],
-    material: "plaster",
-    confirmed: false,
-    note: KITCHEN_NOTE,
   },
 ];
 
@@ -324,8 +306,7 @@ function dormWalls(floor: FloorId, level: 1 | 2): Wall[] {
       // Straight ahead at the end of the passage beside the stairs (f2-03).
       openings: [{ from: 2.75, to: 3.55, z1: 2.1 }],
       material: "dormPlaster",
-      confirmed: false,
-      note: level === 2 ? `${FLOOR2_NOTE} ${DORM_BACK_NOTE}` : DORM_BACK_NOTE,
+      ...unconfirmed,
     },
     ...stair,
     {
@@ -556,40 +537,49 @@ const groundFixtures: Fixture[] = on("ground", [
     box: box(2.1, STAIR.x1, STAIR.back + 0.12, 11.15, 0, 2.4),
     faces: "+x",
     grid: { cols: 1, rows: 2 },
-    note: "A tall teak cupboard, upper and lower doors, between the stairs and the toilet (f1-11, gf-06). What it holds is not known.",
+    note: "A tall teak cupboard, upper and lower doors, between the stairs and the toilet (f1-11, gf-06). It holds towels and other supplies.",
   },
   { id: "water-dispenser", type: "water-dispenser", area: "water", box: centred(3.78, 10.62, 0.35, 0.35, 1.45), faces: "-x", note: '"Free Water", with a cupboard of glasses below and a woven basket on top (gf-12).' },
   ...many("stool-low", "stool-water", "water", [centred(3.78, 9.78, 0.3, 0.3, 0.6), centred(3.78, 10.12, 0.3, 0.3, 0.6)]),
   { id: "bin-water", type: "bin", area: "water", box: centred(3.8, 11.0, 0.22, 0.22, 0.5) },
-  // At the end of the corridor, against the back wall, right of the Staff Only door (f1-11, gf-09).
-  ...many("extinguisher", "extinguisher", "corridor", [centred(3.155, 13.05, 0.15, 0.15, 0.55), centred(3.335, 13.05, 0.15, 0.15, 0.55)]),
-  ...many("jar-clay", "jar-clay", "corridor", [centred(3.575, 13.04, 0.25, 0.25, 0.7), centred(3.845, 13.04, 0.25, 0.25, 0.7)]),
+  // Against the right wall, past the water and before the Staff Only door: the clay jars, then the extinguishers (f1-11, gf-09, gf-11).
+  ...many("jar-clay", "jar-clay", "corridor", [centred(3.86, 11.4, 0.25, 0.25, 0.7), centred(3.86, 11.72, 0.25, 0.25, 0.7)]),
+  ...many("extinguisher", "extinguisher", "corridor", [centred(3.9, 12.05, 0.15, 0.15, 0.55), centred(3.9, 12.25, 0.15, 0.15, 0.55)]),
   ...many("ceiling-light", "downlight-corridor", "corridor", [centred(3.3, 9.85, 0.16, 0.16, 0.04, 3.54), centred(3.3, 12.6, 0.16, 0.16, 0.04, 3.54)], {
     note: "In the corridor's ceiling (gf-04, gf-12).",
   }),
 
-  // The toilet, behind the stairs on the left; its basin and dryer outside the door, in a small wet corner.
-  { id: "toilet-ground", type: "toilet", area: "toilet-ground", box: box(0.1, 0.75, 11.4, 11.8, 0, 0.8), faces: "+x", confirmed: false, note: TOILET_NOTE },
-  { id: "sink-toilet", type: "sink-small", area: "toilet-ground", box: box(0.05, 0.35, 12.25, 12.65, 0.72, 0.94), confirmed: false, note: TOILET_NOTE },
+  // The toilet, behind the stairs on the left: through its door, the toilet faces you (the owner).
+  { id: "toilet-ground", type: "toilet", area: "toilet-ground", box: box(0.1, 0.75, 11.6, 12.0, 0, 0.8), faces: "+x", note: "Centred on the far wall, facing the door (the owner; f1-10, gf-10)." },
+  { id: "sink-toilet", type: "sink-small", area: "toilet-ground", box: box(0.05, 0.35, 12.25, 12.65, 0.72, 0.94), note: "A small sink on the toilet's right (f1-10, gf-10)." },
   {
     id: "door-toilet",
     type: "door-leaf",
     area: "toilet-ground",
-    box: box(1.25, 1.95, 11.25, 11.3, 0, 2.05),
+    box: box(1.25, 1.95, 11.45, 11.5, 0, 2.05),
     variant: "dark hinge-x1",
     label: "Toilet",
     note: "A dark wooden door with the men and women signs, opening in (f1-10).",
   },
-  { id: "basin-corridor", type: "basin", area: "toilet-ground", box: box(2.05, 2.45, 12.0, 12.45, 0.7, 1.85), faces: "+x", variant: "wall", note: "Right outside the toilet's door, under an arched mirror (f1-10, gf-10)." },
-  { id: "hand-dryer-ground", type: "hand-dryer", area: "toilet-ground", box: box(2.05, 2.25, 12.5, 12.75, 1.05, 1.4), faces: "+x" },
+  // The second basin, at the end of the corridor beside the Staff Only door (gf-09, gf-10, gf-11).
+  {
+    id: "basin-corridor",
+    type: "basin",
+    area: "corridor",
+    box: box(2.2, 2.65, 12.8, 13.2, 0.7, 1.85),
+    faces: "-y",
+    variant: "wall",
+    note: "Under an arched mirror, left of the Staff Only door: for washing hands while the toilet is busy (the owner).",
+  },
+  { id: "hand-dryer-ground", type: "hand-dryer", area: "corridor", box: box(2.75, 2.98, 13.0, 13.2, 1.05, 1.4), faces: "-y" },
 
   // The staff room, through the Staff Only door (gf-07).
-  { id: "door-staff", type: "door-leaf", area: "staff-kitchen", box: box(2.2, 2.25, 13.3, 14.1, 0, 2.05), variant: "dark", label: "Staff Only", note: "Opens in, to the left (gf-07)." },
-  { id: "staff-lockers", type: "staff-lockers", area: "staff-kitchen", box: box(3.5, W, 13.85, 15.2, 0, 2.2), faces: "-x", note: "Tall teak lockers along the right wall (gf-07); how many doors is not known." },
+  { id: "door-staff", type: "door-leaf", area: "staff-kitchen", box: box(3.1, 3.15, 13.3, 14.1, 0, 2.05), variant: "dark", label: "Staff Only", note: "Against the right wall (the owner); opens in, to the left (gf-07)." },
+  { id: "staff-lockers", type: "staff-lockers", area: "staff-kitchen", box: box(3.5, W, 14.2, 15.55, 0, 2.2), faces: "-x", note: "Tall teak lockers along the right wall (gf-07); how many doors is not known." },
   { id: "fuse-box", type: "fuse-box", area: "staff-kitchen", box: box(3.9, W, 13.35, 13.8, 1.45, 1.85), mount: "right-wall", faces: "-x", note: "The electrical panel, on the right wall just inside the door (gf-07)." },
   { id: "water-tank", type: "water-tank", area: "staff-kitchen", box: centred(2.85, 15.45, 0.6, 0.6, 1.3), note: "A plastic water tank with its pump, in front of the lattice door (gf-07)." },
   { id: "shrine", type: "shrine", area: "staff-kitchen", box: box(2.08, 2.48, 15.2, 15.8, 0, 1.15), note: "A small shrine with marigold offerings, left of the lattice door (gf-07)." },
-  { id: "lattice-door", type: "lattice-door", area: "staff-kitchen", box: box(2.35, 3.15, 15.94, D, 0, 2.1), faces: "-y", note: "A teak lattice door in the back wall (gf-07). Where it leads is not known." },
+  { id: "lattice-door", type: "lattice-door", area: "staff-kitchen", box: box(2.35, 3.15, 15.94, D, 0, 2.1), faces: "-y", note: "A teak lattice door in the back wall (gf-07). It is blocked and stays shut: not a way out (the owner)." },
   { id: "tube-light-staff", type: "ceiling-light", area: "staff-kitchen", box: box(2.5, 3.5, 14.5, 14.58, 3.5, 3.55), variant: "tube" },
 
   // The kitchen (gf-08): walking in, the shelving and the fridge on the left, the sink ahead, the cooking counter on the right.
@@ -635,82 +625,63 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
   }
   list.push({ id: `ac-${letter}`, type: "ac-indoor", area: dorm, box: box(1.55, 2.45, 0.02, 0.27, 2.3, 2.6), faces: "+y", mount: "facade-inside" });
 
-  // Pods: columns of two (lower and upper), on both sides of one long aisle (x 1.25-2.75).
-  const columns: readonly (readonly [number, number])[] = [
-    [0.4, 2.45],
-    [3.0, 5.05],
-    [5.1, 7.15],
+  // Pods: seven stacks of two (lower and upper), numbered as on the owner's bed register. From the door they run
+  // up the right-hand side to the front window and back down the left, and the last stack lies across the end of
+  // the aisle, just inside the door. The numbers skip 4, 13 and 14 (see the house's customs).
+  const num = (n: number) => `${L}${String(n).padStart(2, "0")}`;
+  const pods: readonly { side: "right" | "left" | "across"; b: Rect; numbers: readonly [number, number] }[] = [
+    { side: "right", b: { x0: 2.75, x1: W, y0: 5.1, y1: 7.15 }, numbers: [1, 2] },
+    { side: "right", b: { x0: 2.75, x1: W, y0: 3.0, y1: 5.05 }, numbers: [3, 5] },
+    { side: "right", b: { x0: 2.75, x1: W, y0: 0.4, y1: 2.45 }, numbers: [6, 7] },
+    { side: "left", b: { x0: 0, x1: 1.25, y0: 0.3, y1: 2.35 }, numbers: [8, 9] },
+    { side: "left", b: { x0: 0, x1: 1.25, y0: 2.9, y1: 4.95 }, numbers: [10, 11] },
+    { side: "left", b: { x0: 0, x1: 1.25, y0: 5.5, y1: 7.55 }, numbers: [12, 15] },
+    { side: "across", b: { x0: 0, x1: 2.05, y0: 7.6, y1: 8.6 }, numbers: [16, 17] },
   ];
-  const sides = [
-    { side: "right", x0: 2.75, x1: W, first: 1 },
-    { side: "left", x0: 0, x1: 1.25, first: 7 },
-  ] as const;
-  for (const { side, x0, x1, first } of sides) {
-    columns.forEach(([y0, y1], c) => {
-      const lower = `${L}${String(first + 2 * c).padStart(2, "0")}`;
-      const upper = `${L}${String(first + 2 * c + 1).padStart(2, "0")}`;
-      // A fixed few upper curtains on the aisle side the camera sees are drawn half open, to show the bed.
-      const open = side === "left" && c !== 1;
-      list.push(
-        {
-          id: `pod-${lower}`,
-          type: "pod",
-          area: dorm,
-          box: box(x0, x1, y0, y1, 0, 1.15),
-          label: lower,
-          variant: `${side} lower`,
-          faces: side === "left" ? "+x" : "-x",
-          confirmed: false,
-          note: POD_NOTE,
-        },
-        {
-          id: `pod-${upper}`,
-          type: "pod",
-          area: dorm,
-          box: box(x0, x1, y0, y1, 1.15, 2.4),
-          label: upper,
-          variant: `${side} upper${open ? " open" : ""}`,
-          faces: side === "left" ? "+x" : "-x",
-          confirmed: false,
-          note: POD_NOTE,
-        },
-        {
-          id: `ladder-${letter}-${side}-${c + 1}`,
-          type: "ladder",
-          area: dorm,
-          box: side === "left" ? box(1.25, 1.33, y0 + 0.08, y0 + 0.48, 0, 2.4) : box(2.67, 2.75, y0 + 0.08, y0 + 0.48, 0, 2.4),
-          faces: side === "left" ? "+x" : "-x",
-        },
-      );
-    });
-  }
-
-  // Lockers: four stacks of three doors, teak, a round number plate on each.
-  const stacks = [
-    { x0: 2.75, x1: W, y0: 2.5, y1: 2.95, first: 1, faces: "-x" },
-    { x0: 2.75, x1: W, y0: 7.2, y1: 7.65, first: 4, faces: "-x" },
-    { x0: 0, x1: 1.25, y0: 2.5, y1: 2.95, first: 7, faces: "+x" },
-    { x0: 0, x1: 1.25, y0: 7.2, y1: 7.65, first: 10, faces: "+x" },
-  ] as const;
-  for (const s of stacks) {
-    for (let k = 0; k < 3; k++) {
-      const label = `${L}${String(s.first + k).padStart(2, "0")}`;
-      list.push({
-        id: `locker-${label}`,
-        type: "locker",
+  pods.forEach(({ side, b, numbers }, k) => {
+    const faces: Facing = side === "left" ? "+x" : side === "right" ? "-x" : "-y";
+    const [lower, upper] = numbers.map(num) as [string, string];
+    // A fixed few upper curtains on the aisle side the camera sees are drawn half open, to show the bed.
+    const open = side === "left" && numbers[0] !== 10;
+    const look = side === "across" ? "" : `${side} `;
+    list.push(
+      { id: `pod-${lower}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 0, 1.15), label: lower, variant: `${look}lower`, faces, confirmed: false, note: POD_NOTE },
+      { id: `pod-${upper}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 1.15, 2.4), label: upper, variant: `${look}upper${open ? " open" : ""}`, faces, confirmed: false, note: POD_NOTE },
+      {
+        id: `ladder-${letter}-${k + 1}`,
+        type: "ladder",
         area: dorm,
-        box: box(s.x0, s.x1, s.y0, s.y1, k * 0.8, (k + 1) * 0.8),
-        label,
-        faces: s.faces,
-        confirmed: false,
-        note: LOCKER_NOTE,
-      });
-    }
+        box:
+          side === "left"
+            ? box(1.25, 1.33, b.y0 + 0.08, b.y0 + 0.48, 0, 2.4)
+            : side === "right"
+              ? box(2.67, 2.75, b.y0 + 0.08, b.y0 + 0.48, 0, 2.4)
+              : box(b.x1 - 0.48, b.x1 - 0.08, b.y0 - 0.08, b.y0, 0, 2.4),
+        faces,
+      },
+    );
+  });
+
+  // Lockers: teak stacks, a round number plate on each door, one locker for each pod with its number.
+  const lockerStacks: readonly { b: Rect; faces: Facing; numbers: readonly number[] }[] = [
+    { b: { x0: 2.75, x1: W, y0: 7.2, y1: 7.65 }, faces: "-x", numbers: [1, 2, 3] },
+    { b: { x0: 2.75, x1: W, y0: 2.5, y1: 2.95 }, faces: "-x", numbers: [5, 6, 7] },
+    { b: { x0: 0, x1: 1.25, y0: 2.4, y1: 2.85 }, faces: "+x", numbers: [8, 9, 10] },
+    { b: { x0: 0, x1: 1.25, y0: 5.0, y1: 5.45 }, faces: "+x", numbers: [11, 12] },
+    // Beside the door, next to the stack lying across (f2-04).
+    { b: { x0: 2.1, x1: 2.7, y0: 8.15, y1: 8.6 }, faces: "-y", numbers: [15, 16, 17] },
+  ];
+  for (const { b, faces, numbers } of lockerStacks) {
+    numbers.forEach((n, k) => {
+      const label = num(n);
+      list.push({ id: `locker-${label}`, type: "locker", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, k * 0.8, (k + 1) * 0.8), label, faces, confirmed: false, note: LOCKER_NOTE });
+    });
   }
 
   list.push(
     ...many("fan-ceiling", `fan-${letter}`, dorm, [centred(2.0, 1.5, 0.5, 0.5, 0.3, 2.6), centred(2.0, 4.0, 0.5, 0.5, 0.3, 2.6), centred(2.0, 6.5, 0.5, 0.5, 0.3, 2.6)]),
-    { id: `fan-exhaust-${letter}`, type: "fan-exhaust", area: dorm, box: box(0.45, 0.75, 8.5, 8.6, 1.8, 2.1), faces: "-y" },
+    // Above the stack lying across.
+    { id: `fan-exhaust-${letter}`, type: "fan-exhaust", area: dorm, box: box(0.45, 0.75, 8.5, 8.6, 2.5, 2.8), faces: "-y" },
     {
       id: `door-${dorm}`,
       type: "door-leaf",
@@ -718,8 +689,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
       box: box(3.5, 3.55, 7.8, 8.6, 0, 2.05),
       label: L,
       variant: "wood hinge-x1 hinge-y1",
-      confirmed: false,
-      note: `A wooden door with a small orange ${L} sign, drawn open into the dorm. ${DORM_BACK_NOTE}`,
+      note: `A wooden door with a small orange ${L} sign, drawn open into the dorm.`,
     },
   );
 
@@ -877,7 +847,8 @@ const routes: readonly Route[] = [
           [3.1, 9.0],
           [3.15, 8.65],
           [3.15, 8.0],
-          [2.0, 7.9],
+          [2.4, 7.85],
+          [2.0, 6.8],
           [2.0, 3.0],
           [2.5, 1.4],
         ],
@@ -934,6 +905,9 @@ export const houseOfJars: HouseModel = {
   roof: { z0: 9.8, z1: 10.0 },
   routes,
   terrace: { x0: -0.2, x1: 4.2, y0: -2.6, y1: -0.15 },
+  customs: [
+    'The pods and lockers skip the numbers 4, 13 and 14. In Chinese, 4 sounds like "death" and 14 like "will die" (4 is unlucky in Japanese and Korean too), and 13 is unlucky for many Western guests. So no guest is given an unlucky bed, and nobody at the desk has to think about it at check-in.',
+  ],
   walkAreaIds: [
     "a-front",
     "a-entrance",
@@ -945,7 +919,6 @@ export const houseOfJars: HouseModel = {
     "a-water",
     "a-toilet1",
     "a-storage",
-    "a-kitchen",
     "a-dorm-h",
     "a-stairs2",
     "a-womens",

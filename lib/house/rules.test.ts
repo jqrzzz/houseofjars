@@ -54,8 +54,9 @@ describe("the house in words", () => {
     const text = describeHouse();
     for (const f of model.floors) expect(text).toContain(`## ${f.name}`);
     for (const a of model.areas) expect(text).toContain(a.name);
-    expect(text).toContain("12 pods (H01 to H12)");
-    expect(text).toContain("12 pods (J01 to J12)");
+    expect(text).toContain("14 pods (H01 to H17, with no H04, H13 or H14)");
+    expect(text).toContain("14 pods (J01 to J17, with no J04, J13 or J14)");
+    expect(text).toContain("## House customs");
     expect(text).toContain("30 shoe cubbies");
     expect(text).not.toMatch(/undefined|NaN/);
   });

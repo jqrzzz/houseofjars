@@ -1347,7 +1347,8 @@ export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): 
   for (const f of sortedFx) {
     const under = f.type === "stairs" ? arriving.find((g) => reachesHere(g) && overlapsRect(g.box, f.box)) : undefined;
     const up: StairArrow[] = startsHere(f) ? [{ toward: climbOf(f), label: "Up" }] : [];
-    const marks = planMarks(f, p, f.type === "stairs" ? { stairs: [...(under ? downOf(under) : []), ...up] } : {});
+    const stack = f.type === "locker" ? fixtures.filter((g) => g.type === "locker" && overlapsRect(g.box, f.box)).map((g) => g.label ?? "") : [];
+    const marks = planMarks(f, p, f.type === "stairs" ? { stairs: [...(under ? downOf(under) : []), ...up] } : { lockerStack: stack });
     if (marks.length === 0) continue;
     content += `<g${attrs({ id: `${prefix}fx-${f.id}`, "data-fixture": f.type, "data-label": f.label, "data-area": f.area, "data-room": roomOf(model, f.area), "data-confirmed": confirmedAttr(f) })}>${writeMarks(marks, w)}</g>`;
   }

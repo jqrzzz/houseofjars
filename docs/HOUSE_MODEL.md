@@ -33,7 +33,7 @@ Places and rules can be public. Care logs, repairs, the team and day-to-day note
 
 ## The house in words (`docs/house-context.md`)
 
-`describeHouse()` turns the model and the placed rules into plain Markdown: each floor and room, what is in it (counted, with pod and locker numbers), the rules that apply there, and what is assumed. It is the context an assistant reads to know the house (Shadow can answer "where are the showers?" or "where do my shoes go?" from it). `npm run house:render` writes it to `docs/house-context.md`; a test fails while the committed copy differs from the model, so it never goes stale.
+`describeHouse()` turns the model and the placed rules into plain Markdown: each floor and room, what is in it (counted, with pod and locker numbers), the rules that apply there, what is assumed, and the house's customs (the bed numbers it skips, and why). It is the context an assistant reads to know the house (Shadow can answer "where are the showers?" or "where do my shoes go?" from it). `npm run house:render` writes it to `docs/house-context.md`; a test fails while the committed copy differs from the model, so it never goes stale.
 
 ## Where this is going
 
@@ -70,7 +70,7 @@ npm run house:render   # redraws public/house/
 npx vitest run lib/house   # checks the model and that the pictures match it
 ```
 
-The tests fail while `public/house/` differs from a fresh render, so the pictures never drift from the model. They also check that ids are unique, every fixture sits inside its area (to 5 cm), no two solid fixtures share volume (unless one is `mountedOn` the other), nothing stands in a doorway, no route walks through furniture, each slab opening covers the stairs below it, and the walk's counts (12 pods and 12 lockers per dorm, 3 toilets and 2 showers per bathroom, one toilet on the ground floor, 5 low tables and 10 chairs in the café, and so on).
+The tests fail while `public/house/` differs from a fresh render, so the pictures never drift from the model. They also check that ids are unique, every fixture sits inside its area (to 5 cm), no two solid fixtures share volume (unless one is `mountedOn` the other), nothing stands in a doorway, no route walks through furniture, each slab opening covers the stairs below it, and the walk's counts (14 pods and 14 lockers per dorm numbered as on the bed register, 3 toilets and 2 showers per bathroom, one toilet on the ground floor, 5 low tables and 10 chairs in the café, and so on).
 
 Everything the pictures show comes from the model, so a copy of the model with something changed draws that change: every renderer takes `model` (default `houseOfJars`), for a what-if or a test.
 
@@ -79,7 +79,8 @@ Examples:
 - **A table moved.** Change its centre in `LOW_TABLES`; its two chairs follow.
 - **Something new** (a second fridge): add a fixture with a unique `id`, its `type`, `area`, `box` (`centred(x, y, w, d, h, z0)` or `box(x0, x1, y0, y1, z0, z1)`), and `faces` if it has a front. Use an existing `type` when one fits; a new kind of thing also needs a builder in `fixtures.ts` (3D parts and a plan symbol).
 - **Floor 2 confirmed.** Drop `confirmed: false` from the `floor2` floor, and in `dormFloor` the `level === 2` unconfirmed marks for what the owner checked (and add the shoe cubbies if Floor 2 has them too). Update the counts test if a number changed.
-- **Which pod and locker carries which number, confirmed.** Fix the labels in `dormFloor` (the pod `columns` and the locker `stacks`) and update `POD_NOTE` and `LOCKER_NOTE`, or remove `confirmed: false` once the dorm's back end is confirmed too.
+- **Which pod of each stack is the upper one, or where a locker stack stands, confirmed.** Fix the `pods` and `lockerStacks` lists in `dormFloor` and update `POD_NOTE` or `LOCKER_NOTE`; remove `confirmed: false` from the pods or lockers once nothing in their note is open.
+- **A custom.** Add a plain sentence to `customs` (numbers the house skips, and why): `docs/house-context.md` lists them for guides, the team and Shadow.
 - **The stairs moved.** Each flight is a `stairs` fixture: `faces` is the way it climbs and `climb` the heights it starts and ends at (relative to its floor); a landing has the variant `landing` and starts and ends at one height. Move the flights and the upper floors' `opening` with them; the slab holes, the floors around them and the plans follow. The test fails if a flight comes within 2 m of a slab without an opening over it.
 - **A room that is not a rectangle.** Give its area `more` rectangles (the café, the corridor and the toilet are drawn this way).
 - **A route.** Add it to `routes`: one segment per floor, points as `[x, y]` or `[x, y, z]` (on stairs), optional stops. The test fails if a flat stretch crosses a fixture standing on the floor.
@@ -87,14 +88,9 @@ Examples:
 ### What is assumed today (`confirmed: false`)
 
 - **All of Floor 2** (copied from Floor 1), except its two small windows, which show in the street photo.
-- **Which pod and locker carries which number.** The numbers themselves are the owner's: H01 to H12 on Floor 1 and J01 to J12 on Floor 2 (the plates in the photos are too blurry to read). Their order is not known: ask the owner, one side at a time, before the labels go into a tour or a cleaning guide.
-- **The back end of the dorms.** Photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door. Confirm it with the owner, then in `dormFloor`: add the crosswise column facing -y beside a locker stack, shorten the right-hand columns to leave the way in, re-split the columns so there are still 12 pods, and update the arrival and bathroom routes.
-- **Inside the ground floor's toilet.** The photos show its door, off a small wet corner beside the corridor, and the basin right outside it (f1-10, gf-09, gf-10); where the toilet and its sink stand inside is assumed, and so is the wall between it and the corridor.
-- **The kitchen's door.** The photos show the staff room and the kitchen (gf-07, gf-08) but not the way between them; the model puts a doorway in the wall between them.
+- **Which pod of each stack is the upper one, and most locker stacks.** The owner's bed register gives the 14 numbers on each floor (H01 to H17 and J01 to J17, with no 4, 13 or 14) and which two pods stack together; the model puts the lower number below. The stack of lockers beside the dorm door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
 - **The flights between Floor 1 and Floor 2.** Floor 1's photos show the first flight up beside the bathroom door (f2-02); the landing and the second flight are assumed to be the same as on the ground floor.
 - **The pendant lamps, downlights and framed photographs** in the café: seen in photos f1-03, gf-02 and gf-03; how many and where is approximate. So is where the clay jar on the landing stands.
-
-Seen but not known: where the staff room's teak lattice door leads, and what the tall teak cupboard in the corridor holds. Their notes say so.
 
 ## Views
 
@@ -194,7 +190,6 @@ where `view.html` shows the SVG (`<img src>` or inline). For the Evening look, r
 ## Known gaps
 
 - Positions and sizes are approximate; Floor 2 is a copy of Floor 1.
-- The dorms' back end and the pod and locker numbers are drawn as assumed above, against what some photos show, until the owner confirms them.
 - The stairs are approximate: one U-shaped stair across the house behind the counter, the same on every floor. Its shape is read from the photos (the slope of its teak underside seen from the café, the turn at the landing against the left wall, the flight beside the bathroom door upstairs), not measured.
 - From this camera the stairs, the tall cupboard and the toilet's walls hide parts of the toilet and the corridor; the ground plan shows all of them. The inside of the curtains on the far side of the right-hand pods cannot be seen either.
 - A route's link between lifted floors is drawn for the rendered explode only.

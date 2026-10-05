@@ -89,13 +89,25 @@ function units(f: Fixture): number {
 /** "H01 to H12" for labels that run in order, otherwise the labels listed. */
 function labelRange(labels: readonly string[]): string {
   const sorted = [...labels].sort();
-  return sorted.length > 2 ? `${sorted[0]} to ${sorted[sorted.length - 1]}` : sorted.join(" and ");
+  if (sorted.length <= 2) return sorted.join(" and ");
+  const range = `${sorted[0]} to ${sorted[sorted.length - 1]}`;
+  // Numbers the house skips (no 4, 13 or 14 on the beds) are said, so nobody looks for them.
+  const parts = sorted.map((l) => /^([A-Z]+)(\d+)$/.exec(l));
+  const letter = parts[0]?.[1];
+  if (!letter || parts.some((x) => x?.[1] !== letter)) return range;
+  const width = parts[0]![2]!.length;
+  const have = new Set(parts.map((x) => Number(x![2])));
+  const missing: string[] = [];
+  for (let n = Math.min(...have); n <= Math.max(...have); n++) if (!have.has(n)) missing.push(`${letter}${String(n).padStart(width, "0")}`);
+  if (missing.length === 0) return range;
+  const list = missing.length === 1 ? missing[0] : `${missing.slice(0, -1).join(", ")} or ${missing[missing.length - 1]}`;
+  return `${range}, with no ${list}`;
 }
 
 /** Things hung on the outside of the front wall belong to the street, not to the room behind it. */
 const outdoors = (f: Fixture) => f.type === "ac-outdoor";
 
-/** Things counted by kind: "3 bar stools, 12 pods (H01 to H12)". */
+/** Things counted by kind: "3 bar stools, 14 pods (H01 to H17, with no H04, H13 or H14)". */
 function counted(fixtures: readonly Fixture[]): string {
   const byType = new Map<FixtureType, Fixture[]>();
   for (const f of fixtures) {
@@ -179,6 +191,7 @@ export function describeHouse(model: HouseModel = houseOfJars): string {
   const onFront = counted(model.fixtures.filter(outdoors));
   if (onFront) lines.push("", "### On the front wall", "", `${onFront}, at Floor 1's height.`);
 
+  if (model.customs?.length) lines.push("", "## House customs", "", ...model.customs.map((c) => `- ${c}`));
   lines.push("", "## Rules everywhere indoors", "", ...all.filter((r) => r.scope === "house").map(ruleLine));
   lines.push("", "## Rules about the stay", "", ...all.filter((r) => r.scope === "stay").map(ruleLine));
 
