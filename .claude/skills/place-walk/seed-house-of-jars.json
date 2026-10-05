@@ -1,0 +1,285 @@
+{
+  "floors": {
+    "f1": {
+      "n": 1,
+      "label": "Floor 1",
+      "hint": "Street level. Booking.com says the café is here.",
+      "sketch": null,
+      "order": 1
+    },
+    "f2": {
+      "n": 2,
+      "label": "Floor 2",
+      "hint": "A dorm floor, by the house rules board.",
+      "sketch": null,
+      "order": 2
+    },
+    "f3": {
+      "n": 3,
+      "label": "Floor 3",
+      "hint": "Your rules board mentions a 3rd floor, but Booking.com says the house has 2. Which is right?",
+      "sketch": null,
+      "order": 3
+    },
+    "out": {
+      "n": 99,
+      "label": "Outside",
+      "hint": "Yard, parking, roof: anything outside the rooms.",
+      "sketch": null,
+      "order": 99
+    }
+  },
+  "areas": {
+    "a-entrance": {
+      "name": "Front entrance",
+      "floor": "f1",
+      "kind": "path",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Lit sign over the door",
+          "count": 1
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "Your photo of the lit sign over the front door at night.",
+      "order": 1
+    },
+    "a-cafe": {
+      "name": "Café",
+      "floor": "f1",
+      "kind": "shared",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Tables",
+          "count": null
+        },
+        {
+          "id": "i2",
+          "name": "Chairs",
+          "count": null
+        },
+        {
+          "id": "i3",
+          "name": "Coffee counter",
+          "count": null
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "Booking.com says the café is on the ground floor, and breakfast is served there. The café menu says coffee and tea run from 8 AM to 7 PM.",
+      "order": 2
+    },
+    "a-desk": {
+      "name": "Front desk",
+      "floor": "f1",
+      "kind": "staff",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Desk",
+          "count": null
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "A guess: nothing yet says which floor the front desk is on.",
+      "order": 3
+    },
+    "a-stairs1": {
+      "name": "Stairs",
+      "floor": "f1",
+      "kind": "path",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Clay jar on the landing",
+          "count": 1
+        },
+        {
+          "id": "i2",
+          "name": "Shoe rack",
+          "count": null
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "Your photos of the tiled stairs, the clay jar on the landing and the wall of jars, and the sign asking guests to take their shoes off before going up.",
+      "order": 4
+    },
+    "a-dorm-h": {
+      "name": "Dorm H",
+      "floor": "f2",
+      "kind": "sleep",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Pod beds",
+          "count": null
+        },
+        {
+          "id": "i2",
+          "name": "Lockers",
+          "count": null
+        },
+        {
+          "id": "i3",
+          "name": "Air-conditioning units",
+          "count": null
+        },
+        {
+          "id": "i4",
+          "name": "Ceiling fans",
+          "count": null
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "The H door sign and locker H09 in your photos, so at least 9 lockers. Booking.com mentions a 14-bed dorm: is it this one or Dorm J? The floor is a guess.",
+      "order": 1
+    },
+    "a-mens": {
+      "name": "Men's bathroom",
+      "floor": "f2",
+      "kind": "wash",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Toilets",
+          "count": null
+        },
+        {
+          "id": "i2",
+          "name": "Showers",
+          "count": null
+        },
+        {
+          "id": "i3",
+          "name": "Sinks",
+          "count": null
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "The men's bathroom door sign in your photos. The floor is a guess, and there may be one on each dorm floor.",
+      "order": 2
+    },
+    "a-womens": {
+      "name": "Women's bathroom",
+      "floor": "f2",
+      "kind": "wash",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Toilets",
+          "count": null
+        },
+        {
+          "id": "i2",
+          "name": "Showers",
+          "count": null
+        },
+        {
+          "id": "i3",
+          "name": "Sinks",
+          "count": null
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "The women's bathroom door sign in your photos. The floor is a guess, and there may be one on each dorm floor.",
+      "order": 3
+    },
+    "a-water": {
+      "name": "Drinking water",
+      "floor": "f2",
+      "kind": "shared",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Water dispenser",
+          "count": null
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "The free water sign in your photos. Where the water stands is a guess.",
+      "order": 4
+    },
+    "a-stairs2": {
+      "name": "Stairs",
+      "floor": "f2",
+      "kind": "path",
+      "cells": [],
+      "items": [],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "The stairs reach every floor. Tap where they arrive on this floor, so the floors line up on the map.",
+      "order": 5
+    },
+    "a-dorm-j": {
+      "name": "Dorm J",
+      "floor": "f3",
+      "kind": "sleep",
+      "cells": [],
+      "items": [
+        {
+          "id": "i1",
+          "name": "Pod beds",
+          "count": null
+        },
+        {
+          "id": "i2",
+          "name": "Lockers",
+          "count": null
+        },
+        {
+          "id": "i3",
+          "name": "Air-conditioning units",
+          "count": null
+        },
+        {
+          "id": "i4",
+          "name": "Ceiling fans",
+          "count": null
+        }
+      ],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "The J door sign in your photos. The floor is a guess.",
+      "order": 1
+    },
+    "a-stairs3": {
+      "name": "Stairs",
+      "floor": "f3",
+      "kind": "path",
+      "cells": [],
+      "items": [],
+      "photos": [],
+      "note": "",
+      "status": "guess",
+      "from": "The stairs reach every floor. Tap where they arrive on this floor, so the floors line up on the map.",
+      "order": 2
+    }
+  }
+}
