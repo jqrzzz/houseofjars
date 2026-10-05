@@ -48,6 +48,13 @@ describe("paying online, as Shadow offers it", () => {
     expect(old.room_types[0]).toMatchObject({ terms: null, pay_now: null });
   });
 
+  it("says when the team checks each payment (the house's own QR)", () => {
+    const qr = { ...answer(false), payment: { ...answer(false).payment, manual: true } };
+    expect(readAvailability(qr, query, false)!.payment?.manual).toBe(true);
+    // A Shadow from before the QR never says so.
+    expect(readAvailability(answer(false), query, false)!.payment?.manual).toBe(false);
+  });
+
   it("words the deposit and the cancellation terms", () => {
     const offer = readAvailability(answer(false), query, false)!;
     expect(payNowText(offer.payment!, offer.room_types[0]!)).toBe("LAK 54,000 (30% deposit)");
@@ -80,6 +87,11 @@ describe("paying online, as Shadow offers it", () => {
       payment: { id: "x", status: "open", amount: 54000, currency: "LAK", url: "https://shadow.example/pay/test/abc", expires_at: "2026-10-05T13:09:01.786Z", test: true },
     });
     expect(paying).toMatchObject({ id: receipt.id, payment: { status: "open", amount: 54000, url: "https://shadow.example/pay/test/abc", test: true } });
+    const checking = readConfirmation({
+      ...receipt,
+      payment: { status: "claimed", amount: 180000, currency: "LAK", url: null, expires_at: "2026-10-05T19:09:01.786Z", test: false },
+    });
+    expect(checking?.payment?.status).toBe("claimed");
   });
 });
 

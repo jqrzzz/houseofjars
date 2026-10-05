@@ -65,6 +65,11 @@ export interface PaymentOffer {
   /** How long the guest has to pay; the beds are held meanwhile. */
   readonly pay_minutes: number;
   readonly test: boolean;
+  /**
+   * The house's own QR code: the guest pays in their banking app and says so,
+   * and the team confirms the booking once they see the money (Shadow's 074).
+   */
+  readonly manual: boolean;
 }
 
 export interface BookingLimits {
@@ -125,7 +130,8 @@ export interface BookingRequest {
   readonly return_url?: string;
 }
 
-export const PAYMENT_STATES = ["open", "paid", "failed", "expired", "refunded"] as const;
+/** "claimed": the guest says they paid by the house's QR, and the team is checking. */
+export const PAYMENT_STATES = ["open", "claimed", "paid", "failed", "expired", "refunded"] as const;
 export type PaymentState = (typeof PAYMENT_STATES)[number];
 
 /** A booking's payment online, as Shadow says it stands. */

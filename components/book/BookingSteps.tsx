@@ -799,7 +799,10 @@ export function ReviewStep({
             </>
           ) : payment.online === "required" ? (
             <>
-              <span className="tnum">Online now{payNow ? `: ${payNow}` : ""}</span>
+              <span className="tnum">
+                {payment.manual ? "By QR now" : "Online now"}
+                {payNow ? `: ${payNow}` : ""}
+              </span>
               <span className={styles.reviewNote}>{cancelText(room.terms)}</span>
             </>
           ) : (
@@ -807,8 +810,13 @@ export function ReviewStep({
               <legend className="visually-hidden">When you pay</legend>
               <label className={styles.payOption} data-chosen={payOnline ? "" : undefined}>
                 <input type="radio" name="pay-when" checked={payOnline} onChange={() => onPayOnline(true)} />
-                <span className="tnum">Pay now{payNow ? `: ${payNow}` : ""}</span>
-                <span className={styles.reviewNote}>Booked as soon as it’s paid. {cancelText(room.terms)}</span>
+                <span className="tnum">
+                  {payment.manual ? "Pay now by QR" : "Pay now"}
+                  {payNow ? `: ${payNow}` : ""}
+                </span>
+                <span className={styles.reviewNote}>
+                  {payment.manual ? "Booked once the team sees your payment." : "Booked as soon as it’s paid."} {cancelText(room.terms)}
+                </span>
               </label>
               <label className={styles.payOption} data-chosen={payOnline ? undefined : ""}>
                 <input type="radio" name="pay-when" checked={!payOnline} onChange={() => onPayOnline(false)} />
@@ -840,8 +848,9 @@ export function ReviewStep({
       {payment && payOnline ? (
         <>
           <p className={styles.next}>
-            Next you pay on the bank’s secure page: your card or QR details go only to the bank. Your beds are held for{" "}
-            {plural(payment.pay_minutes, "minute")} while you pay, and your booking is confirmed as soon as the payment goes through.
+            {payment.manual
+              ? `Next you see the house’s QR code: pay it with your banking app, then tap “I’ve paid”. Your beds are held for ${plural(payment.pay_minutes, "minute")} while you pay, and while the team checks your payment; they confirm your booking once they see it.`
+              : `Next you pay on the bank’s secure page: your card or QR details go only to the bank. Your beds are held for ${plural(payment.pay_minutes, "minute")} while you pay, and your booking is confirmed as soon as the payment goes through.`}
             {payment.charge === "deposit" ? " The rest is paid at the house." : ""}
           </p>
           {payment.test ? (
@@ -989,8 +998,13 @@ export interface PaidBooking {
   readonly arrival: string | null;
 }
 
-/** How often, and how many times, the page asks where a payment stands after the bank sends the guest back. */
+/**
+ * How often, and how many times, the page asks where a payment stands: every
+ * 3 seconds for a minute after the bank sends the guest back, and every 30
+ * seconds for 10 minutes while the team checks a payment by the house's QR.
+ */
 const POLL_MS = 3_000;
+const CHECKING_POLL_MS = 30_000;
 const POLL_TRIES = 20;
 
 /**
@@ -1021,23 +1035,28 @@ export function PaymentConfirmation({
   const payment = confirmation.payment;
   const [tries, setTries] = useState(0);
   // Until Shadow first answers after the bank, the kept "pay" link may be stale: say it is checking instead.
-  const checking = fromBank && tries === 0;
+  const stale = fromBank && tries === 0;
   const [again, setAgain] = useState<"idle" | "sending" | "taken" | "problem">("idle");
   const id = confirmation.id;
   const open = payment?.status === "open";
+  const checking = payment?.status === "claimed";
   const update = useEffectEvent(onUpdate);
 
   // Back from the bank, its word may still be on its way: ask again every few seconds for a minute.
+  // While the team checks a payment by QR, ask now and then, so the page shows their answer.
   useEffect(() => {
-    if (!id || !open || tries >= POLL_TRIES) return;
-    const timer = window.setTimeout(() => {
-      void fetchBookingStatus(id).then((next) => {
-        if (next) update(next);
-        setTries((count) => count + 1);
-      });
-    }, tries === 0 ? 300 : POLL_MS);
+    if (!id || !(open || checking) || tries >= POLL_TRIES) return;
+    const timer = window.setTimeout(
+      () => {
+        void fetchBookingStatus(id).then((next) => {
+          if (next) update(next);
+          setTries((count) => count + 1);
+        });
+      },
+      tries === 0 ? 300 : open ? POLL_MS : CHECKING_POLL_MS,
+    );
     return () => window.clearTimeout(timer);
-  }, [id, open, tries]);
+  }, [id, open, checking, tries]);
 
   if (!payment) return null;
 
@@ -1060,6 +1079,8 @@ export function PaymentConfirmation({
   }
 
   const paid = payment.status === "paid" || payment.status === "refunded";
+  // Paid by the house's QR, and the team is checking.
+  const claimed = payment.status === "claimed";
   const booked = paid && confirmation.status === "confirmed";
   const amount = formatMoney(payment.amount, payment.currency);
   const total = quoteText(confirmation);
@@ -1072,8 +1093,10 @@ export function PaymentConfirmation({
     ? "You’re booked and paid"
     : paid
       ? "Payment received"
-      : open
-        ? checking || !(tries >= POLL_TRIES || payment.url)
+      : claimed
+        ? "Thank you: the team is checking your payment"
+        : open
+        ? stale || !(tries >= POLL_TRIES || payment.url)
           ? "Checking your payment…"
           : "Waiting for your payment"
         : "Your payment didn’t go through";
@@ -1107,7 +1130,22 @@ export function PaymentConfirmation({
         </p>
       ) : null}
 
-      {paid ? (
+      {claimed ? (
+        <>
+          <h3 className={styles.nextTitle}>What happens next</h3>
+          <ol className={styles.nextSteps}>
+            <li>
+              The team looks for {amount} in the house’s bank account and confirms your booking once they see it. Your beds are held
+              for you while they check.
+            </li>
+            <li>If they can’t find it, this page says so and lets you try again. Questions: message the team with your reference.</li>
+            <li>
+              Check-in is from {house.checkInFrom}
+              {booking.arrival ? `, and the team knows you plan to arrive around ${booking.arrival}` : ""}. {house.passport}
+            </li>
+          </ol>
+        </>
+      ) : paid ? (
         <>
           <h3 className={styles.nextTitle}>What happens next</h3>
           <ol className={styles.nextSteps}>
@@ -1132,9 +1170,9 @@ export function PaymentConfirmation({
         <div className={styles.stack}>
           <p>
             {until ? `Your beds are held for you until ${until} (Vientiane time) while you pay.` : "Your beds are held for you while you pay."}{" "}
-            {payment.url && !checking ? "" : tries < POLL_TRIES ? "Checking with the bank…" : "If you have paid, the bank will tell the house shortly."}
+            {payment.url && !stale ? "" : tries < POLL_TRIES ? "Checking with the bank…" : "If you have paid, the bank will tell the house shortly."}
           </p>
-          {checking ? null : payment.url ? (
+          {stale ? null : payment.url ? (
             <p>
               <a href={payment.url} className={`${buttons.button} ${buttons.primary}`}>
                 Pay {amount}

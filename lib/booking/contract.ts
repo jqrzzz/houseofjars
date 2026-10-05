@@ -125,6 +125,11 @@ const paymentOfferSchema = z.object({
   deposit_percent: z.number().int().min(1).max(99).nullable(),
   pay_minutes: z.number().int().positive(),
   test: z.boolean(),
+  // The house's own QR, checked by the team (5 Oct): a Shadow from before never says so.
+  manual: z
+    .boolean()
+    .optional()
+    .transform((manual) => manual ?? false),
 });
 
 const availabilitySchema = z.object({

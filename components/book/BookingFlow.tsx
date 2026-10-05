@@ -819,6 +819,7 @@ function payingText(confirmation: BookingConfirmation): string | null {
   if (!payment) return null;
   if (payment.status === "paid") return `Paid online: ${formatMoney(payment.amount, payment.currency)}${payment.test ? " (test, no money taken)" : ""}.`;
   if (payment.status === "refunded") return "Paid online, and given back.";
+  if (payment.status === "claimed") return "Paid by QR: the team is checking.";
   return payment.status === "open" ? "Paying online." : "Not paid yet.";
 }
 
