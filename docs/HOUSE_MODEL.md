@@ -79,7 +79,7 @@ Examples:
 - **A table moved.** Change its centre in `LOW_TABLES`; its two chairs follow.
 - **Something new** (a second fridge): add a fixture with a unique `id`, its `type`, `area`, `box` (`centred(x, y, w, d, h, z0)` or `box(x0, x1, y0, y1, z0, z1)`), and `faces` if it has a front. Use an existing `type` when one fits; a new kind of thing also needs a builder in `fixtures.ts` (3D parts and a plan symbol).
 - **Floor 2 confirmed.** Drop `confirmed: false` from the `floor2` floor, and in `dormFloor` the `level === 2` unconfirmed marks for what the owner checked (and add the shoe cubbies if Floor 2 has them too). Update the counts test if a number changed.
-- **Which pod of each stack is the upper one, or where a locker stack stands, confirmed.** Fix the `pods` and `lockerStacks` lists in `dormFloor` and update `POD_NOTE` or `LOCKER_NOTE`; remove `confirmed: false` from the pods or lockers once nothing in their note is open.
+- **Where a locker stack stands, confirmed.** Fix the `lockerStacks` list in `dormFloor` and update `LOCKER_NOTE`; remove `confirmed: false` from the lockers once nothing in their note is open.
 - **A custom.** Add a plain sentence to `customs` (numbers the house skips, and why): `docs/house-context.md` lists them for guides, the team and Shadow.
 - **The stairs moved.** Each flight is a `stairs` fixture: `faces` is the way it climbs and `climb` the heights it starts and ends at (relative to its floor); a landing has the variant `landing` and starts and ends at one height. Move the flights and the upper floors' `opening` with them; the slab holes, the floors around them and the plans follow. The test fails if a flight comes within 2 m of a slab without an opening over it.
 - **A room that is not a rectangle.** Give its area `more` rectangles (the café, the corridor and the toilet are drawn this way).
@@ -88,7 +88,7 @@ Examples:
 ### What is assumed today (`confirmed: false`)
 
 - **All of Floor 2** (copied from Floor 1), except its two small windows, which show in the street photo.
-- **Which pod of each stack is the upper one, and most locker stacks.** The owner's bed register gives the 14 numbers on each floor (H01 to H17 and J01 to J17, with no 4, 13 or 14) and which two pods stack together; the model puts the lower number below. The stack of lockers beside the dorm door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
+- **Most locker stacks.** One locker per pod, with its number (the owner's bed register). The stack beside the dorm door holds the three highest numbers (f2-04); some stacks are three high, towards the middle (the owner; photos to come). Where the others stand, and which numbers each holds, is assumed.
 - **The flights between Floor 1 and Floor 2.** Floor 1's photos show the first flight up beside the bathroom door (f2-02); the landing and the second flight are assumed to be the same as on the ground floor.
 - **The pendant lamps, downlights and framed photographs** in the café: seen in photos f1-03, gf-02 and gf-03; how many and where is approximate. So is where the clay jar on the landing stands.
 

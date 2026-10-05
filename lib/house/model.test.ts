@@ -206,18 +206,16 @@ describe("the House of Jars model: integrity", () => {
     }
   });
 
-  it("marks what was not seen as unconfirmed: all of Floor 2, which pod of each stack is upper, where most locker stacks stand", () => {
+  it("marks what was not seen as unconfirmed: all of Floor 2, where most locker stacks stand", () => {
     expect(floor("floor2").confirmed).toBe(false);
     expect(floor("floor2").note).toBeTruthy();
     for (const a of model.areas.filter((x) => x.floor === "floor2")) expect(a.confirmed, a.id).toBe(false);
     // Floor 2's two small windows are seen from the street (f1-01); everything else up there is a copy of Floor 1.
     for (const f of model.fixtures.filter((x) => x.floor === "floor2")) expect(f.confirmed, f.id).toBe(f.type === "window" ? undefined : false);
-    // The numbers, stacks and top bunks are from the owner's bed register. The owner confirmed the right-hand side
-    // (the top bunk is 1, beneath it 2); down the left the register puts the higher number on top, not yet checked.
+    // The numbers, stacks and top bunks are from the owner's bed register, confirmed by the owner on both sides.
     for (const f of model.fixtures.filter((x) => x.type === "pod" && x.floor === "floor1")) {
-      const left = f.faces !== "-x";
-      expect(f.confirmed, f.id).toBe(left ? false : undefined);
-      expect(f.note, f.id).toMatch(left ? /Not confirmed: on this side the register puts the higher number on top/ : /the top bunk is 1 and beneath it 2/);
+      expect(f.confirmed, f.id).toBeUndefined();
+      expect(f.note, f.id).toMatch(/the top bunk is 1 and beneath it 2"; down the left, 09 over 08/);
     }
     for (const f of model.fixtures.filter((x) => x.type === "locker")) expect(f.note, f.id).toMatch(/is assumed\.$/);
     // Floor 1's dorm itself is seen (and drawn from the register); Floor 2's is a copy.

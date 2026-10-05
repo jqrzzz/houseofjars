@@ -46,9 +46,7 @@ export const floors: readonly Floor[] = [
 
 const FLOOR2_NOTE = 'Floor 2 has not been photographed: copied from Floor 1 on the owner\'s word ("the same layout").';
 const POD_NOTE =
-  'The numbers, the stacks and which pod is on top are from the owner\'s bed register, as drawn: the number written on top is the top bunk (the owner: "the top bunk is 1 and beneath it 2").';
-/** Down the left side and across the door the register writes the higher number on top: read as drawn, not yet checked in the room. */
-const POD_LEFT_NOTE = `${POD_NOTE} Not confirmed: on this side the register puts the higher number on top (09 over 08, 11 over 10, 15 over 12, 17 over 16).`;
+  'The numbers, the stacks and which pod is on top are from the owner\'s bed register, as drawn: the number written on top is the top bunk (the owner: "the top bunk is 1 and beneath it 2"; down the left, 09 over 08).';
 const LOCKER_NOTE =
   "One locker for each pod, with the pod's number (the owner's bed register). The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.";
 // ---------------------------------------------------------------------------
@@ -657,10 +655,9 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
     // A fixed few upper curtains on the aisle side the camera sees are drawn half open, to show the bed.
     const open = side === "left" && numbers[1] !== 10;
     const look = side === "across" ? "" : `${side} `;
-    const sure = side === "right" ? { note: POD_NOTE } : { confirmed: false, note: POD_LEFT_NOTE };
     list.push(
-      { id: `pod-${lower}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 0, 1.15), label: lower, variant: `${look}lower`, faces, ...sure },
-      { id: `pod-${upper}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 1.15, 2.4), label: upper, variant: `${look}upper${open ? " open" : ""}`, faces, ...sure },
+      { id: `pod-${lower}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 0, 1.15), label: lower, variant: `${look}lower`, faces, note: POD_NOTE },
+      { id: `pod-${upper}`, type: "pod", area: dorm, box: box(b.x0, b.x1, b.y0, b.y1, 1.15, 2.4), label: upper, variant: `${look}upper${open ? " open" : ""}`, faces, note: POD_NOTE },
       {
         id: `ladder-${letter}-${k + 1}`,
         type: "ladder",

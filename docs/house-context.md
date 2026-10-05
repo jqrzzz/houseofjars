@@ -92,8 +92,6 @@ Rules here:
 - Check-out from 08:00 until 11:30. So beds are ready for the guests arriving that afternoon. (Pods in Dorm H and Dorm J are left by 11:30, and guests check out at the front desk.)
 
 Assumed:
-- The numbers, the stacks and which pod is on top are from the owner's bed register, as drawn: the number written on top is the top bunk (the owner: "the top bunk is 1 and beneath it 2").
-- Not confirmed: on this side the register puts the higher number on top (09 over 08, 11 over 10, 15 over 12, 17 over 16).
 - One locker for each pod, with the pod's number (the owner's bed register).
 - The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
 
@@ -135,8 +133,7 @@ Rules here:
 
 Assumed:
 - Floor 2 has not been photographed: copied from Floor 1 on the owner's word ("the same layout").
-- The numbers, the stacks and which pod is on top are from the owner's bed register, as drawn: the number written on top is the top bunk (the owner: "the top bunk is 1 and beneath it 2").
-- Not confirmed: on this side the register puts the higher number on top (09 over 08, 11 over 10, 15 over 12, 17 over 16).
+- The numbers, the stacks and which pod is on top are from the owner's bed register, as drawn: the number written on top is the top bunk (the owner: "the top bunk is 1 and beneath it 2"; down the left, 09 over 08).
 - One locker for each pod, with the pod's number (the owner's bed register).
 - The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
 - A wooden door with a small orange J sign, drawn open into the dorm.
