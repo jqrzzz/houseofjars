@@ -36,8 +36,8 @@ import {
  * plans drawn in the same projection, such as a day and an evening pair.
  */
 export const PLAN_IMAGES: Readonly<Record<FloorKey, { readonly day: string; readonly evening: string }>> = {
-  ground: { day: "/house/plan-ground.svg", evening: "/house/plan-ground.svg" },
-  floor1: { day: "/house/plan-floor1.svg", evening: "/house/plan-floor1.svg" },
+  ground: { day: "/house/paper-plan-ground-day.svg", evening: "/house/paper-plan-ground-evening.svg" },
+  floor1: { day: "/house/paper-plan-floor1-day.svg", evening: "/house/paper-plan-floor1-evening.svg" },
 };
 
 /** renderPlan's scale (lib/house/render.ts): plan pixels to the metre. */

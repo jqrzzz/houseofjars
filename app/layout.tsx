@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ViewTransition, type ReactNode } from "react";
 import { MarkSymbol } from "@/components/brand/Mark";
 import { Splash } from "@/components/brand/Splash";
+import { StageLife } from "@/components/motion/StageLife";
 import { ConciergeLauncher } from "@/components/concierge/ConciergeLauncher";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -51,6 +52,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </main>
         <SiteFooter />
         <ConciergeLauncher />
+        {/* Wakes stages and phrases as they come into view, and pauses ambient motion off screen (components/motion). */}
+        <StageLife />
       </body>
     </html>
   );
