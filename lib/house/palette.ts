@@ -1,0 +1,255 @@
+/**
+ * The colours of the House Model, in the house's illustration style
+ * (public/art/house.svg is the source of truth: ink #4a2f1b by day and
+ * #dccdb6 by night, cream, teak, jar orange, lamplight).
+ *
+ * Every material has a day and an Evening base colour and three tones each:
+ * the top (the base), the face toward the viewer's left (a little darker) and
+ * the face toward the right (darker still), as if lit from the upper left.
+ * The tones are mixed from the base so that changing one colour here changes
+ * the whole drawing; a material can set its tones by hand instead.
+ *
+ * Classes are short (a material code and a tone digit: "wd1" is the
+ * left-facing tone of wood) and every rule is scoped under the SVG's own
+ * class, so several drawings can sit inline on one page.
+ */
+import type { AreaKind, Theme } from "./types";
+
+export type Tone = 0 | 1 | 2;
+
+export interface Material {
+  /** Two or three letters, the class prefix. */
+  readonly code: string;
+  readonly day: string;
+  readonly evening: string;
+  /** Hand-set tones (top, left, right), when mixing from the base is not right (lit glass at night). */
+  readonly dayTones?: readonly [string, string, string];
+  readonly eveningTones?: readonly [string, string, string];
+}
+
+/** Ink and the lines' night colour, from public/art/house.svg. */
+export const INK = { day: "#4a2f1b", evening: "#dccdb6" } as const;
+
+export const materials = {
+  // From public/art/house.svg.
+  cream: { code: "cr", day: "#fbf6ee", evening: "#2c1e13" },
+  paper: { code: "pa", day: "#fffaf2", evening: "#3a2b1f" },
+  stone: { code: "st", day: "#e7dac6", evening: "#34281d" },
+  wood: { code: "wd", day: "#b97440", evening: "#7d4526" },
+  woodDark: { code: "wk", day: "#8f532c", evening: "#5e3219" },
+  brown: { code: "br", day: "#6f4d35", evening: "#8a6444" },
+  jar: { code: "ja", day: "#e76e43", evening: "#d0623a" },
+  lamp: { code: "la", day: "#eed079", evening: "#eed079", eveningTones: ["#f2d98a", "#eed079", "#e2c062"] },
+  sage: { code: "sg", day: "#9aa585", evening: "#6f7a60" },
+  terracotta: { code: "tc", day: "#b86a3f", evening: "#8f5334" },
+  // The pods' woven curtains: grey-brown with a cream band at the bottom.
+  curtain: { code: "cu", day: "#7d6f63", evening: "#5d5750" },
+  curtainBand: { code: "cb", day: "#efe3cf", evening: "#9a8c76" },
+  // The counter's cream tiles, the bathrooms' white tiles and grey floor.
+  tile: { code: "ti", day: "#efe6d6", evening: "#4d4034" },
+  bathTile: { code: "bt", day: "#f3f1ec", evening: "#4b4743" },
+  bathFloor: { code: "bf", day: "#9aa0a6", evening: "#4e5358" },
+  // The street front: a warm terracotta orange, darker than jar orange.
+  facade: { code: "fa", day: "#d9774f", evening: "#8c4b30" },
+  facadeDeep: { code: "fd", day: "#c66843", evening: "#773d25" },
+  // Inside: the café's ochre plaster, the dorms' clay-pink plaster.
+  plaster: { code: "pl", day: "#ecd9a8", evening: "#4b3b24" },
+  dormPlaster: { code: "dp", day: "#d29b78", evening: "#5b3726" },
+  // Floors: the café's cream tiles, the dorms' brown tiles, terracotta on the landings and terrace.
+  cafeFloor: { code: "cf", day: "#f3eadb", evening: "#3d3025" },
+  dormFloor: { code: "df", day: "#93603f", evening: "#4b3021" },
+  landingFloor: { code: "lf", day: "#d27a49", evening: "#7f4327" },
+  terraceTile: { code: "tt", day: "#cc6a40", evening: "#7a3b23" },
+  pavement: { code: "pv", day: "#e6dccb", evening: "#2b231d" },
+  // Glass: pale by day, lit from inside in the evening.
+  glass: {
+    code: "gl",
+    day: "#cfdcd9",
+    evening: "#d9a64a",
+    dayTones: ["#dbe5e2", "#cfdcd9", "#bfcfcc"],
+    eveningTones: ["#e2b25a", "#d9a64a", "#c99640"],
+  },
+  // The drinks fridge's glass door glows all day.
+  fridgeGlass: {
+    code: "fg",
+    day: "#f6e7b0",
+    evening: "#eed079",
+    dayTones: ["#f8edc4", "#f6e7b0", "#efdc9c"],
+    eveningTones: ["#f2d98a", "#eed079", "#e2c062"],
+  },
+  white: { code: "wh", day: "#f8f6f1", evening: "#5f5a54" },
+  steel: { code: "sl", day: "#c2c1b9", evening: "#6a6862" },
+  dark: { code: "dk", day: "#55504a", evening: "#29251f" },
+  pillow: { code: "gy", day: "#aaa6b2", evening: "#5a5660" },
+  cushion: { code: "cs", day: "#e48a4e", evening: "#a3582f" },
+  red: { code: "rd", day: "#c4432f", evening: "#93301f" },
+  copper: { code: "cp", day: "#8a4f2c", evening: "#5a2f17" },
+  bamboo: { code: "bm", day: "#d6af70", evening: "#806139" },
+  slate: { code: "fs", day: "#5a6870", evening: "#2f3a40" },
+  roofTile: { code: "rf", day: "#a3553a", evening: "#5f301d" },
+  shadow: { code: "sh", day: "#5e3c27", evening: "#1b130d" },
+  // Neighbours, in low detail: NinetyNine 99 Bar (dark grey) and Swedish Baking (blue).
+  neighbourGrey: { code: "nl", day: "#8e8c88", evening: "#2a2826" },
+  neighbourBlue: { code: "nb", day: "#7c9bc8", evening: "#25344c" },
+  neighbourPanel: { code: "np", day: "#dcdcd6", evening: "#3c3d3d" },
+} as const satisfies Record<string, Material>;
+
+export type MaterialName = keyof typeof materials;
+
+/** Plan tints by area kind (flat, no tones). */
+export const kindTints: Record<AreaKind, { readonly day: string; readonly evening: string }> = {
+  sleep: { day: "#f2dcc4", evening: "#3f2b1d" },
+  wash: { day: "#e2e8ea", evening: "#2d3336" },
+  shared: { day: "#f8eedb", evening: "#33281d" },
+  staff: { day: "#ebe1d1", evening: "#2f271f" },
+  path: { day: "#f7dcc6", evening: "#40291b" },
+  outside: { day: "#eedfc6", evening: "#2a221b" },
+};
+
+/** The floor finish of each area kind in the 3D views (sub-areas reuse their room's floor). */
+export const kindFloors: Record<AreaKind, MaterialName> = {
+  sleep: "dormFloor",
+  wash: "bathFloor",
+  shared: "cafeFloor",
+  staff: "stone",
+  path: "landingFloor",
+  outside: "terraceTile",
+};
+
+const DAY_SHADE = "#2a1608";
+const EVENING_SHADE = "#000000";
+
+function rgb(hex: string): [number, number, number] {
+  const n = Number.parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function hex([r, g, b]: readonly [number, number, number]): string {
+  return "#" + [r, g, b].map((c) => Math.round(Math.min(255, Math.max(0, c))).toString(16).padStart(2, "0")).join("");
+}
+
+/** Mixes a colour toward another by t (0 to 1). */
+export function mix(from: string, to: string, t: number): string {
+  const a = rgb(from);
+  const b = rgb(to);
+  return hex([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]);
+}
+
+export function tones(material: Material, theme: "day" | "evening"): readonly [string, string, string] {
+  const set = theme === "day" ? material.dayTones : material.eveningTones;
+  if (set) return set;
+  const base = theme === "day" ? material.day : material.evening;
+  return theme === "day"
+    ? [base, mix(base, DAY_SHADE, 0.1), mix(base, DAY_SHADE, 0.22)]
+    : [base, mix(base, EVENING_SHADE, 0.16), mix(base, EVENING_SHADE, 0.32)];
+}
+
+/** The class of a material's tone: "wd0" (top), "wd1" (left-facing), "wd2" (right-facing). */
+export function fill(material: MaterialName, tone: Tone = 0): string {
+  return materials[material].code + tone;
+}
+
+/** The class that strokes a line in a material's base colour (copper window bars, white grout). */
+export function strokeOf(material: MaterialName): string {
+  return "k" + materials[material].code;
+}
+
+/** The class of a plan tint. */
+export function tint(kind: AreaKind): string {
+  return "t-" + kind;
+}
+
+/**
+ * Role classes, the same in every view. Lines keep their weight at any size
+ * (vector-effect: non-scaling-stroke): 1.5 px for main outlines, 1 px for
+ * hairlines, round caps and joins.
+ */
+const ROLES: Record<string, { day: string; evening?: string }> = {
+  o: { day: "stroke-width:1.5" },
+  h: { day: "stroke-width:1" },
+  b: { day: "stroke-width:2.5" },
+  wl: { day: "fill:none;stroke-width:4;stroke-linecap:butt" },
+  wf: { day: "fill:#4a2f1b;stroke:none", evening: "fill:#dccdb6" },
+  wp: { day: "fill:#4a2f1b;stroke:none;opacity:.4", evening: "fill:#dccdb6" },
+  eo: { day: "fill-rule:evenodd" },
+  n: { day: "fill:none" },
+  ns: { day: "stroke:none" },
+  tg: { day: "fill:none;stroke-opacity:.2" },
+  dl: { day: "fill:none;stroke-dasharray:3 4" },
+  sd: { day: "fill:none;stroke-opacity:.45;stroke-dasharray:2 4" },
+  rt: { day: "fill:none;stroke:#e76e43;stroke-width:3.5;stroke-dasharray:7 8", evening: "stroke:#f08a5d" },
+  ra: { day: "fill:#e76e43;stroke:none", evening: "fill:#f08a5d" },
+  rs: { day: "fill:#fffaf2;stroke:#e76e43;stroke-width:2.5", evening: "fill:#2c1e13;stroke:#f08a5d" },
+  hl: { day: "fill:none;stroke:#e76e43;stroke-width:3", evening: "stroke:#f08a5d" },
+  dim: { day: "opacity:.28" },
+  gw: { day: "fill:#eed079;opacity:.28;stroke:none", evening: "opacity:.42" },
+  lb: { day: "fill:#fffaf2;stroke-width:1.5", evening: "fill:#2c1e13" },
+  ld: { day: "fill:none;stroke-width:1" },
+  lp: { day: "fill:#e76e43;stroke:none", evening: "fill:#f08a5d" },
+  lt: { day: "fill:#4a2f1b;font-size:19px;font-weight:600", evening: "fill:#f1e4cf" },
+  ls: { day: "fill:#4a2f1b;font-size:12px;font-weight:600", evening: "fill:#f1e4cf" },
+  lc: { day: "fill:#6f4d35;font-size:12px", evening: "fill:#cbb89c" },
+  lx: { day: "fill:#4a2f1b;font-size:15px;font-weight:600", evening: "fill:#f1e4cf" },
+  lw: { day: "fill:#fffaf2;font-size:12px;font-weight:700", evening: "fill:#2c1e13" },
+  ln: { day: "fill:#4a2f1b;font-size:10px;font-weight:600", evening: "fill:#f1e4cf" },
+};
+
+export interface CssOptions {
+  readonly theme: Theme;
+  /** The root class every rule is scoped under. */
+  readonly scope: string;
+  /** Every class the drawing uses: only those get a rule. */
+  readonly used: ReadonlySet<string>;
+}
+
+const byCode = new Map<string, Material>(Object.values(materials).map((m) => [m.code, m]));
+const kinds = Object.keys(kindTints) as AreaKind[];
+
+/** Role rules: the day declarations carry the structure (widths, dashes), the evening ones only recolour. */
+function roleRules(scope: string, used: readonly string[], which: "day" | "evening"): string {
+  let out = "";
+  for (const cls of used) {
+    const role = ROLES[cls];
+    const decl = role && (which === "day" ? role.day : role.evening);
+    if (decl) out += `.${scope} .${cls}{${decl}}`;
+  }
+  return out;
+}
+
+/** Colour rules for material tones, stroke colours and plan tints. */
+function colourRules(scope: string, used: readonly string[], theme: "day" | "evening"): string {
+  let out = "";
+  for (const cls of used) {
+    if (ROLES[cls]) continue;
+    const tone = /^([a-z]{2})([012])$/.exec(cls);
+    const material = tone && byCode.get(tone[1]!);
+    if (tone && material) {
+      out += `.${scope} .${cls}{fill:${tones(material, theme)[Number(tone[2]) as Tone]}}`;
+      continue;
+    }
+    const stroke = /^k([a-z]{2})$/.exec(cls);
+    const lined = stroke && byCode.get(stroke[1]!);
+    if (lined) {
+      out += `.${scope} .${cls}{stroke:${theme === "day" ? lined.day : lined.evening}}`;
+      continue;
+    }
+    const kind = /^t-([a-z]+)$/.exec(cls);
+    if (kind && kinds.includes(kind[1] as AreaKind)) out += `.${scope} .${cls}{fill:${kindTints[kind[1] as AreaKind][theme]}}`;
+  }
+  return out;
+}
+
+/** The SVG's whole stylesheet: base rules, then the Evening palette (under the media query for auto). */
+export function paletteCss({ theme, scope, used }: CssOptions): string {
+  const s = `.${scope}`;
+  const list = [...used].sort();
+  const base =
+    `${s}{stroke:${theme === "evening" ? INK.evening : INK.day};stroke-width:1;stroke-linecap:round;stroke-linejoin:round}` +
+    `${s} path{vector-effect:non-scaling-stroke}` +
+    `${s} text{stroke:none;font-family:Figtree,"Noto Sans Lao",system-ui,sans-serif}`;
+  const structure = roleRules(scope, list, "day");
+  if (theme === "day") return base + structure + colourRules(scope, list, "day");
+  const evening = roleRules(scope, list, "evening") + colourRules(scope, list, "evening");
+  if (theme === "evening") return base + structure + evening;
+  return base + structure + colourRules(scope, list, "day") + `@media (prefers-color-scheme:dark){${s}{stroke:${INK.evening}}${evening}}`;
+}
