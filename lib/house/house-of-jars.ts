@@ -17,17 +17,34 @@ const D = 16.0; // interior depth
 const T = 0.15; // outer walls
 const SLAB = 0.2;
 
+/** The stairwell on the upper floors: the opening in the slab over the flight from the floor below. */
+const STAIRWELL = { x0: 0, x1: 1.25, y0: 8.7, y1: 12.6 } as const;
+
 export const floors: readonly Floor[] = [
   { id: "ground", name: "Ground floor", level: 0, z: 0, ceiling: 3.6 },
-  { id: "floor1", name: "Floor 1", level: 1, z: 3.8, ceiling: 6.7 },
-  { id: "floor2", name: "Floor 2", level: 2, z: 6.9, ceiling: 9.8 },
+  { id: "floor1", name: "Floor 1", level: 1, z: 3.8, ceiling: 6.7, opening: STAIRWELL },
+  {
+    id: "floor2",
+    name: "Floor 2",
+    level: 2,
+    z: 6.9,
+    ceiling: 9.8,
+    opening: STAIRWELL,
+    confirmed: false,
+    note: "Not photographed yet: copied from Floor 1 on the owner's word.",
+  },
 ];
 
-/** The roof slab, over Floor 2. */
-export const ROOF = { z0: 9.8, z1: 10.0 } as const;
-
 const FLOOR2_NOTE = 'Floor 2 has not been photographed: copied from Floor 1 on the owner\'s word ("the same layout").';
-const POD_ORDER_NOTE = "The order of the numbers on the pods' plates is not confirmed.";
+/** The back of the dorm, as photos f2-04, f2-05 and f2-08 show it, which the model does not draw yet. */
+const DORM_BACK_NOTE =
+  "Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight to a door in the middle.";
+const POD_NOTE = `The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read). Not confirmed: which pod carries which number. ${DORM_BACK_NOTE}`;
+const LOCKER_NOTE = `The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read). Not confirmed: which stack holds which numbers. ${DORM_BACK_NOTE}`;
+const STAIRS_NOTE =
+  "Not confirmed: photo f1-12, from the foot of the flight, shows a plain plastered wall on the climber's right and the teak panel with the café floor beyond it on the left; the model has them the other way round. The flight may also turn at a landing near the top.";
+const CORRIDOR_NOTE =
+  "Not confirmed: photos f1-10 and f1-11 do not pin down the plan behind the café. f1-10 shows the basin right beside the toilet's door; f1-11 shows the basin and the staff room's doorway on the same plastered, tiled wall, the teak cupboards on the other side, and the extinguishers and clay jars against a blank end wall.";
 
 // ---------------------------------------------------------------------------
 // Areas
@@ -42,14 +59,14 @@ const groundAreas: Area[] = [
     rect: { x0: -0.2, x1: 4.2, y0: -2.6, y1: -0.15 },
     anchor: { x: 2.5, y: -1.6 },
   },
-  { id: "cafe", walkId: "a-cafe", floor: "ground", kind: "shared", name: "Café", rect: { x0: 0, x1: W, y0: 0, y1: 11.0 }, anchor: { x: 2.6, y: 2.6 } },
+  { id: "cafe", walkId: "a-cafe", floor: "ground", kind: "shared", name: "Café", rect: { x0: 0, x1: W, y0: 0, y1: 11.0 }, anchor: { x: 2.4, y: 2.6 } },
   {
     id: "entrance",
     walkId: "a-entrance",
     floor: "ground",
     kind: "path",
     name: "Entrance",
-    rect: { x0: 0, x1: 1.15, y0: 0, y1: 1.4 },
+    rect: { x0: 0, x1: 1.45, y0: 0, y1: 1.4 },
     parent: "cafe",
   },
   {
@@ -71,7 +88,17 @@ const groundAreas: Area[] = [
     rect: { x0: 0, x1: 1.3, y0: 8.6, y1: 12.6 },
     note: "Inside a wood-panelled enclosure. Shoes come off here: no shoes above the ground floor.",
   },
-  { id: "water", walkId: "a-water", floor: "ground", kind: "shared", name: "Water", rect: { x0: 2.5, x1: W, y0: 10.3, y1: 11.0 }, parent: "cafe" },
+  {
+    id: "water",
+    walkId: "a-water",
+    floor: "ground",
+    kind: "shared",
+    name: "Water",
+    rect: { x0: 2.5, x1: W, y0: 10.3, y1: 11.0 },
+    parent: "cafe",
+    anchor: { x: 2.9, y: 10.75, z: 1.5 },
+    planAnchor: { x: 3.25, y: 9.85 },
+  },
   {
     id: "toilet-ground",
     walkId: "a-toilet1",
@@ -79,6 +106,8 @@ const groundAreas: Area[] = [
     kind: "wash",
     name: "Toilet",
     rect: { x0: 1.3, x1: W, y0: 11.0, y1: 13.2 },
+    anchor: { x: 3.3, y: 12.4 },
+    planAnchor: { x: 3.3, y: 11.85 },
     note: "One toilet for everyone, a hand-wash basin and dryer outside it, 2 fire extinguishers.",
   },
   {
@@ -88,8 +117,11 @@ const groundAreas: Area[] = [
     kind: "staff",
     name: "Staff and kitchen",
     rect: { x0: 0, x1: W, y0: 13.2, y1: D },
+    anchor: { x: 3.3, y: 14.4 },
+    // Behind the stairs, entered from the corridor (photos f1-09 and f1-11 show its doorway in a side wall).
+    more: [{ x0: 0, x1: 1.3, y0: 12.6, y1: 13.2 }],
     confirmed: false,
-    note: "The staff area and kitchen (the owner's word); not photographed inside.",
+    note: "The staff area and kitchen (the owner's word); not photographed inside, but seen through its doorway (wooden lockers, drinking-water stock).",
   },
 ];
 
@@ -104,7 +136,8 @@ function dormAreas(floor: FloorId, level: 1 | 2, letter: "h" | "j", bath: "women
       name: `Dorm ${letter.toUpperCase()}`,
       rect: { x0: 0, x1: W, y0: 0, y1: 8.6 },
       anchor: { x: 2.0, y: 4.3 },
-      ...unconfirmed,
+      confirmed: false,
+      note: level === 2 ? `${FLOOR2_NOTE} ${DORM_BACK_NOTE}` : DORM_BACK_NOTE,
     },
     {
       id: `landing-${level}`,
@@ -143,8 +176,8 @@ function outerWalls(floor: FloorId, height: number, openings: Wall["openings"]):
 
 const groundWalls: Wall[] = [
   ...outerWalls("ground", 3.6, [
-    { from: 0.15, to: 1.05, z1: 2.4 },
-    { from: 1.2, to: 3.2, z1: 3.0 },
+    { from: 0.3, to: 1.35, z1: 2.4 },
+    { from: 1.45, to: 3.75, z1: 3.0 },
   ]),
   {
     id: "stair-front",
@@ -153,6 +186,8 @@ const groundWalls: Wall[] = [
     box: box(0, 1.35, 8.6, 8.7, 0, 3.6),
     material: "wood",
     panelled: true,
+    confirmed: false,
+    note: STAIRS_NOTE,
   },
   {
     id: "stair-side",
@@ -163,9 +198,18 @@ const groundWalls: Wall[] = [
     material: "wood",
     panelled: true,
     confirmed: false,
-    note: "Where the stairs open to the café is assumed (beside the counter's back end).",
+    note: `Where the stairs open to the café is assumed (beside the counter's back end). ${STAIRS_NOTE}`,
   },
-  { id: "stair-back", floor: "ground", kind: "enclosure", box: box(0, 1.25, 12.5, 12.6, 0, 3.6), material: "wood", panelled: true },
+  {
+    id: "stair-back",
+    floor: "ground",
+    kind: "enclosure",
+    box: box(0, 1.25, 12.5, 12.6, 0, 3.6),
+    material: "wood",
+    panelled: true,
+    confirmed: false,
+    note: STAIRS_NOTE,
+  },
   {
     id: "water-partition",
     floor: "ground",
@@ -178,18 +222,29 @@ const groundWalls: Wall[] = [
     id: "toilet-room",
     floor: "ground",
     kind: "partition",
-    box: box(2.4, 2.5, 11.1, 13.2, 0, 3.6),
-    openings: [{ from: 11.9, to: 12.7, z1: 2.1 }],
+    box: box(2.5, 2.6, 11.1, 13.2, 0, 3.6),
+    openings: [{ from: 12.1, to: 12.9, z1: 2.1 }],
     material: "plaster",
     confirmed: false,
-    note: "The toilet's door is assumed to open off the corridor.",
+    note: `The toilet's door is assumed to open off the corridor. ${CORRIDOR_NOTE}`,
   },
   {
+    // The corridor's side wall past the stairs, with the staff room's doorway (f1-09, f1-11).
+    id: "staff-door-wall",
+    floor: "ground",
+    kind: "partition",
+    box: box(1.25, 1.35, 12.6, 13.3, 0, 3.6),
+    openings: [{ from: 12.62, to: 13.18, z1: 2.1 }],
+    material: "plaster",
+    confirmed: false,
+    note: CORRIDOR_NOTE,
+  },
+  {
+    // A blank end wall to the corridor: the extinguishers and clay jars stand against it (f1-11).
     id: "kitchen-wall",
     floor: "ground",
     kind: "partition",
-    box: box(0, W, 13.2, 13.3, 0, 3.6),
-    openings: [{ from: 1.4, to: 2.3, z1: 2.1 }],
+    box: box(1.35, W, 13.2, 13.3, 0, 3.6),
     material: "plaster",
   },
 ];
@@ -227,7 +282,8 @@ function dormWalls(floor: FloorId, level: 1 | 2): Wall[] {
       box: box(0, W, 8.6, 8.7, 0, 2.9),
       openings: [{ from: 1.55, to: 2.45, z1: 2.1 }],
       material: "dormPlaster",
-      ...unconfirmed,
+      confirmed: false,
+      note: level === 2 ? `${FLOOR2_NOTE} ${DORM_BACK_NOTE}` : DORM_BACK_NOTE,
     },
     ...stair,
     {
@@ -275,8 +331,8 @@ const LOW_TABLES: readonly (readonly [number, number])[] = [
 
 const groundFixtures: Fixture[] = on("ground", [
   // The front: glass door on the left, the big grid window to its right.
-  facade("door-front", "door", "entrance", box(0.15, 1.05, -0.12, -0.04, 0, 2.4), { grid: { cols: 2, rows: 6 } }),
-  facade("window-front", "window", "cafe", box(1.2, 3.2, -0.15, 0, 0, 3.0), {
+  facade("door-front", "door", "entrance", box(0.3, 1.35, -0.12, -0.04, 0, 2.4), { grid: { cols: 2, rows: 6 } }),
+  facade("window-front", "window", "cafe", box(1.45, 3.75, -0.15, 0, 0, 3.0), {
     grid: { cols: 4, rows: 3 },
     variant: "shopfront",
     note: "A 4 x 3 grid of copper-brown frames over a solid low panel (z 0-0.95), a bamboo blind rolled at the top.",
@@ -293,13 +349,14 @@ const groundFixtures: Fixture[] = on("ground", [
     note: "White letters on orange in reality; drawn as a cream plate with an orange edge.",
   },
   { id: "sign-hanging", type: "sign-hanging", area: "terrace", box: box(2.9, 3.8, -0.62, -0.58, 2.3, 2.95), label: "House of Jars" },
-  { id: "bench-terrace", type: "bench", area: "terrace", box: box(1.3, 3.3, -0.55, -0.2, 0, 0.45) },
+  { id: "bench-terrace", type: "bench", area: "terrace", box: box(1.45, 3.75, -0.55, -0.2, 0, 0.45) },
   ...many("table-small-round", "table-terrace", "terrace", [centred(2.0, -1.1, 0.6, 0.6, 0.6), centred(2.9, -1.1, 0.6, 0.6, 0.6)]),
-  { id: "plant-terrace", type: "plant", area: "terrace", box: centred(0.3, -0.5, 0.35, 0.35, 0.8) },
+  { id: "plant-terrace", type: "plant", area: "terrace", box: centred(0.38, -2.18, 0.35, 0.35, 0.8), note: "At the foot of the awning's left post (f1-01)." },
 
   // The café.
-  { id: "doormat", type: "doormat", area: "entrance", box: centred(0.6, 0.5, 0.8, 0.5, 0.01), flat: true },
-  { id: "window-ledge", type: "window-ledge", area: "cafe", box: box(1.2, 3.2, 0, 0.35, 0, 1.0) },
+  { id: "doormat", type: "doormat", area: "entrance", box: centred(0.82, 0.5, 0.8, 0.5, 0.01), flat: true },
+  // The ledge runs under the window up to the big jar in the front-right corner.
+  { id: "window-ledge", type: "window-ledge", area: "cafe", box: box(1.45, 3.35, 0, 0.35, 0, 1.0) },
   ...many("stool-low", "stool-window", "cafe", [centred(1.9, 0.6, 0.35, 0.35, 0.65), centred(2.6, 0.6, 0.35, 0.35, 0.65)]),
   ...many(
     "table",
@@ -321,7 +378,14 @@ const groundFixtures: Fixture[] = on("ground", [
   },
   ...many("table-tall-round", "table-tall", "cafe", [centred(3.0, 1.9, 0.6, 0.6, 1.05), centred(3.0, 3.4, 0.6, 0.6, 1.05)]),
   { id: "jar-big", type: "jar-big", area: "cafe", box: centred(3.7, 0.45, 0.6, 0.6, 0.85), note: "The house's signature clay jar." },
-  { id: "plant-cafe", type: "plant", area: "cafe", box: centred(3.3, 0.3, 0.2, 0.2, 0.9) },
+  {
+    id: "plant-cafe",
+    type: "plant",
+    area: "cafe",
+    box: centred(3.72, 1.06, 0.22, 0.22, 0.9, 0.45),
+    mountedOn: "bench-seat",
+    note: "On the front end of the bench seat, beside the big jar (f1-03).",
+  },
   ...many("ac-indoor", "ac-cafe", "cafe", [box(0, 0.25, 0.85, 1.75, 2.8, 3.1), box(0, 0.25, 5.55, 6.45, 2.8, 3.1)], { faces: "+x" }),
   {
     id: "counter",
@@ -335,8 +399,38 @@ const groundFixtures: Fixture[] = on("ground", [
   { id: "coffee-machine", type: "coffee-machine", area: "desk", box: box(0.06, 0.46, 5.0, 5.4, 0.9, 1.3), mountedOn: "back-counter", faces: "+x" },
   { id: "shelves", type: "shelves", area: "desk", box: box(0, 0.3, 4.4, 7.6, 1.3, 2.8), faces: "+x", grid: { cols: 8, rows: 4 } },
   ...many("stool-bar", "stool-bar", "cafe", [centred(1.95, 5.0, 0.35, 0.35, 0.75), centred(1.95, 5.8, 0.35, 0.35, 0.75), centred(1.95, 6.6, 0.35, 0.35, 0.75)]),
-  { id: "fridge-drinks", type: "fridge-drinks", area: "cafe", box: box(0.2, 0.85, 7.8, 8.4, 0, 1.9), faces: "+x" },
-  { id: "dehumidifier", type: "dehumidifier", area: "cafe", box: centred(0.9, 4.15, 0.35, 0.25, 0.6) },
+  { id: "fridge-drinks", type: "fridge-drinks", area: "cafe", box: box(0.2, 0.85, 7.7, 8.3, 0, 1.9), faces: "+x" },
+  {
+    id: "printer",
+    type: "printer",
+    area: "cafe",
+    box: box(0.2, 0.7, 8.32, 8.58, 0, 0.95),
+    faces: "+x",
+    note: "The front desk's printer (a-desk), on a low stand beside the drinks fridge (f1-08).",
+  },
+  // Pendant lamps over the front tables, the counter and the tables along the right wall (f1-03, f1-05, f1-08).
+  ...many(
+    "pendant-lamp",
+    "pendant",
+    "cafe",
+    [
+      [0.85, 1.9],
+      [0.85, 3.4],
+      [1.35, 4.9],
+      [1.35, 6.0],
+      [1.35, 7.1],
+      [3.35, 5.6],
+      [3.35, 7.0],
+    ].map(([x, y]) => centred(x!, y!, 0.34, 0.34, 1.25, 2.35)),
+    { confirmed: false, note: "Seen in photos f1-03, f1-05 and f1-08; how many there are and where they hang is approximate." },
+  ),
+  {
+    id: "dehumidifier",
+    type: "dehumidifier",
+    area: "cafe",
+    box: centred(0.95, 4.25, 0.35, 0.25, 0.6),
+    note: "Nudged 10 cm from the walk's spot (0.9, 4.15) so it clears the chair at the second table.",
+  },
   {
     id: "luggage-space",
     type: "luggage-space",
@@ -351,7 +445,17 @@ const groundFixtures: Fixture[] = on("ground", [
     area: "stairs-ground",
     box: box(0.05, 1.25, 8.8, 12.4, 0, 3.6),
     variant: "solid",
-    note: "A straight flight of terracotta-tiled steps, from y 8.8 up to Floor 1 at y 12.4.",
+    confirmed: false,
+    note: `A straight flight of terracotta-tiled steps, from y 8.8 up to Floor 1 at y 12.4. ${STAIRS_NOTE}`,
+  },
+  {
+    id: "jar-clay-stairs",
+    type: "jar-clay",
+    area: "stairs-ground",
+    box: centred(0.22, 8.93, 0.25, 0.25, 0.7, 0.19),
+    mountedOn: "stairs-up",
+    confirmed: false,
+    note: "The walk lists one clay jar on the stairs' landing (perhaps where the flight turns near the top, f1-12); where it stands is not known.",
   },
 
   // The back of the café: free water, the passage to the toilet.
@@ -359,31 +463,50 @@ const groundFixtures: Fixture[] = on("ground", [
   ...many("stool-low", "stool-water", "water", [centred(3.45, 10.75, 0.3, 0.3, 0.6), centred(3.85, 10.75, 0.3, 0.3, 0.6)]),
   { id: "bin-water", type: "bin", area: "water", box: centred(2.6, 10.8, 0.22, 0.22, 0.5) },
   { id: "toilet-ground", type: "toilet", area: "toilet-ground", box: centred(3.5, 12.6, 0.65, 0.4, 0.8), faces: "-x" },
-  { id: "sink-toilet", type: "sink-small", area: "toilet-ground", box: centred(2.8, 11.5, 0.4, 0.28, 0.22, 0.72) },
+  { id: "sink-toilet", type: "sink-small", area: "toilet-ground", box: centred(2.85, 11.45, 0.4, 0.28, 0.22, 0.72) },
   {
     id: "door-toilet",
     type: "door-leaf",
     area: "toilet-ground",
-    box: box(2.5, 3.3, 11.9, 11.95, 0, 2.05),
+    box: box(2.6, 3.4, 12.1, 12.15, 0, 2.05),
     variant: "dark",
     label: "Toilet",
     confirmed: false,
-    note: "Where the toilet's door is, is assumed.",
+    note: `Where the toilet's door is, is assumed. ${CORRIDOR_NOTE}`,
   },
-  { id: "basin-corridor", type: "basin", area: "toilet-ground", box: box(1.35, 1.75, 11.78, 12.22, 0.7, 1.85), faces: "+x", variant: "wall" },
-  { id: "hand-dryer-ground", type: "hand-dryer", area: "toilet-ground", box: box(1.35, 1.55, 12.3, 12.55, 1.05, 1.4), faces: "+x" },
-  ...many("extinguisher", "extinguisher", "toilet-ground", [centred(1.45, 12.9, 0.15, 0.15, 0.55), centred(1.6, 12.9, 0.15, 0.15, 0.55)]),
-  ...many("jar-clay", "jar-clay", "toilet-ground", [centred(1.9, 12.95, 0.25, 0.25, 0.7), centred(2.15, 12.95, 0.25, 0.25, 0.7)]),
-
-  // The staff area and kitchen (not photographed inside).
+  // Outside the toilet, on the corridor side of its wall: the hand-wash basin under its arched mirror, right beside the door (f1-10), and the dryer.
   {
-    id: "door-kitchen",
+    id: "basin-corridor",
+    type: "basin",
+    area: "toilet-ground",
+    box: box(2.08, 2.5, 11.65, 12.1, 0.7, 1.85),
+    faces: "-x",
+    variant: "wall",
+    confirmed: false,
+    note: CORRIDOR_NOTE,
+  },
+  {
+    id: "hand-dryer-ground",
+    type: "hand-dryer",
+    area: "toilet-ground",
+    box: box(2.3, 2.5, 11.25, 11.5, 1.05, 1.4),
+    faces: "-x",
+    confirmed: false,
+    note: CORRIDOR_NOTE,
+  },
+  // Against the corridor's blank end wall (f1-11).
+  ...many("extinguisher", "extinguisher", "toilet-ground", [centred(1.74, 13.1, 0.15, 0.15, 0.55), centred(1.91, 13.1, 0.15, 0.15, 0.55)]),
+  ...many("jar-clay", "jar-clay", "toilet-ground", [centred(2.12, 13.07, 0.25, 0.25, 0.7), centred(2.375, 13.07, 0.25, 0.25, 0.7)]),
+
+  // The staff area and kitchen (not photographed inside): its door opens off the corridor into the space behind the stairs.
+  {
+    id: "door-staff",
     type: "door-leaf",
     area: "staff-kitchen",
-    box: box(1.4, 1.45, 13.3, 14.2, 0, 2.05),
-    variant: "dark",
+    box: box(0.69, 1.25, 13.13, 13.18, 0, 2.05),
+    variant: "dark hinge-x1 hinge-y1",
     confirmed: false,
-    note: "Not photographed inside.",
+    note: `The staff room's door, in the corridor's side wall past the stairs (f1-09, f1-11). ${CORRIDOR_NOTE}`,
   },
   {
     id: "staff-lockers",
@@ -428,9 +551,11 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
       facade("ac-outdoor-3", "ac-outdoor", dorm, box(3.0, 3.8, -0.5, -0.2, 1.0, 1.6)),
     );
   } else {
+    // Seen from the street (f1-01), so confirmed although the rest of Floor 2 is not.
+    const seen = { variant: "upper", note: "Seen from the street (f1-01): two small windows inside the arch." };
     list.push(
-      facade(`window-${letter}-low`, "window", dorm, box(1.75, 2.25, -0.12, -0.04, 0.5, 1.0), { variant: "upper" }),
-      facade(`window-${letter}-high`, "window", dorm, box(1.75, 2.25, -0.12, -0.04, 1.5, 2.0), { variant: "upper" }),
+      facade(`window-${letter}-low`, "window", dorm, box(1.75, 2.25, -0.12, -0.04, 0.5, 1.0), seen),
+      facade(`window-${letter}-high`, "window", dorm, box(1.75, 2.25, -0.12, -0.04, 1.5, 2.0), seen),
     );
   }
   list.push({ id: `ac-${letter}`, type: "ac-indoor", area: dorm, box: box(1.55, 2.45, 0.02, 0.27, 2.3, 2.6), faces: "+y", mount: "facade-inside" });
@@ -461,7 +586,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
           variant: `${side} lower`,
           faces: side === "left" ? "+x" : "-x",
           confirmed: false,
-          note: POD_ORDER_NOTE,
+          note: POD_NOTE,
         },
         {
           id: `pod-${upper}`,
@@ -472,7 +597,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
           variant: `${side} upper${open ? " open" : ""}`,
           faces: side === "left" ? "+x" : "-x",
           confirmed: false,
-          note: POD_ORDER_NOTE,
+          note: POD_NOTE,
         },
         {
           id: `ladder-${letter}-${side}-${c + 1}`,
@@ -503,22 +628,23 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
         label,
         faces: s.faces,
         confirmed: false,
-        note: "Which stack holds which numbers is not confirmed.",
+        note: LOCKER_NOTE,
       });
     }
   }
 
   list.push(
     ...many("fan-ceiling", `fan-${letter}`, dorm, [centred(2.0, 1.5, 0.5, 0.5, 0.3, 2.6), centred(2.0, 4.0, 0.5, 0.5, 0.3, 2.6), centred(2.0, 6.5, 0.5, 0.5, 0.3, 2.6)]),
-    { id: `fan-exhaust-${letter}`, type: "fan-exhaust", area: dorm, box: box(3.45, 3.75, 8.5, 8.6, 2.05, 2.35), faces: "-y" },
+    { id: `fan-exhaust-${letter}`, type: "fan-exhaust", area: dorm, box: box(3.45, 3.75, 8.5, 8.6, 1.8, 2.1), faces: "-y" },
     {
       id: `door-${dorm}`,
       type: "door-leaf",
       area: dorm,
       box: box(1.55, 1.6, 7.7, 8.6, 0, 2.05),
       label: L,
-      variant: "wood",
-      note: `A wooden door with a small orange ${L} sign, drawn open into the dorm.`,
+      variant: "wood hinge-y1",
+      confirmed: false,
+      note: `A wooden door with a small orange ${L} sign, drawn open into the dorm. ${DORM_BACK_NOTE}`,
     },
   );
 
@@ -589,7 +715,8 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
   for (let i = 0; i < 3; i++) {
     const stall = `stall-${bathroom}-${i + 1}`;
     list.push(
-      { id: stall, type: "toilet-stall", area: bath, box: box(i * 0.9, (i + 1) * 0.9, 14.75, D, 0, 2.2), faces: "-y" },
+      // The stall nearest the camera (on the right) is drawn cut open low, so one toilet shows in the 3D views.
+      { id: stall, type: "toilet-stall", area: bath, box: box(i * 0.9, (i + 1) * 0.9, 14.75, D, 0, 2.2), faces: "-y", variant: i === 2 ? "cut" : undefined },
       { id: `toilet-${bathroom}-${i + 1}`, type: "toilet", area: bath, box: centred(i * 0.9 + 0.45, 15.55, 0.4, 0.65, 0.8), faces: "-y", mountedOn: stall },
     );
   }
@@ -605,7 +732,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
   return {
     areas: dormAreas(floor, level, letter, bathroom),
     walls: dormWalls(floor, level),
-    fixtures: on(floor, list).map((f) => (level === 2 ? { ...f, ...extra, note: f.note ? `${FLOOR2_NOTE} ${f.note}` : FLOOR2_NOTE } : f)),
+    fixtures: on(floor, list).map((f) => (level === 2 && f.type !== "window" ? { ...f, ...extra, note: f.note ? `${FLOOR2_NOTE} ${f.note}` : FLOOR2_NOTE } : f)),
   };
 }
 
@@ -624,9 +751,13 @@ const routes: readonly Route[] = [
         floor: "ground",
         points: [
           [2.3, -1.9],
-          [0.6, -0.1],
-          [0.6, 1.2],
-          [2.2, 5.8],
+          [1.2, -1.6],
+          [0.85, -0.1],
+          [0.85, 0.9],
+          [1.5, 1.35],
+          [2.35, 4.6],
+          [2.35, 5.8],
+          [2.35, 7.2],
           [1.6, 8.9],
           [0.65, 9.05, 0.35],
           [0.65, 12.25, 3.55],
@@ -646,7 +777,7 @@ const routes: readonly Route[] = [
       },
     ],
     stops: [
-      { floor: "ground", at: [2.2, 5.8], label: "Check in" },
+      { floor: "ground", at: [2.35, 5.8], label: "Check in" },
       { floor: "floor1", at: [3.3, 10.3], label: "Shoes" },
     ],
   },
@@ -672,8 +803,8 @@ const routes: readonly Route[] = [
       {
         floor: "ground",
         points: [
-          [2.2, 6.4],
-          [2.6, 10.4],
+          [2.3, 6.4],
+          [2.65, 10.35],
         ],
       },
     ],
@@ -690,6 +821,7 @@ export const houseOfJars: HouseModel = {
   areas: [...groundAreas, ...floor1.areas, ...floor2.areas],
   walls: [...groundWalls, ...floor1.walls, ...floor2.walls],
   fixtures: [...groundFixtures, ...floor1.fixtures, ...floor2.fixtures],
+  roof: { z0: 9.8, z1: 10.0 },
   routes,
   terrace: { x0: -0.2, x1: 4.2, y0: -2.6, y1: -0.15 },
   walkAreaIds: [

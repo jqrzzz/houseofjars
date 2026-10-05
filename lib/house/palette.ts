@@ -47,16 +47,17 @@ export const materials = {
   curtainBand: { code: "cb", day: "#efe3cf", evening: "#9a8c76" },
   // The counter's cream tiles, the bathrooms' white tiles and grey floor.
   tile: { code: "ti", day: "#efe6d6", evening: "#4d4034" },
-  bathTile: { code: "bt", day: "#f3f1ec", evening: "#4b4743" },
-  bathFloor: { code: "bf", day: "#9aa0a6", evening: "#4e5358" },
+  // Evening tones stay warm (lamplight), not the cold grey of the day colours darkened.
+  bathTile: { code: "bt", day: "#f3f1ec", evening: "#57514b" },
+  bathFloor: { code: "bf", day: "#9aa0a6", evening: "#534d47" },
   // The street front: a warm terracotta orange, darker than jar orange.
   facade: { code: "fa", day: "#d9774f", evening: "#8c4b30" },
   facadeDeep: { code: "fd", day: "#c66843", evening: "#773d25" },
   // Inside: the café's ochre plaster, the dorms' clay-pink plaster.
-  plaster: { code: "pl", day: "#ecd9a8", evening: "#4b3b24" },
+  plaster: { code: "pl", day: "#ecd9a8", evening: "#4a3423" },
   dormPlaster: { code: "dp", day: "#d29b78", evening: "#5b3726" },
   // Floors: the café's cream tiles, the dorms' brown tiles, terracotta on the landings and terrace.
-  cafeFloor: { code: "cf", day: "#f3eadb", evening: "#3d3025" },
+  cafeFloor: { code: "cf", day: "#f3eadb", evening: "#463628" },
   dormFloor: { code: "df", day: "#93603f", evening: "#4b3021" },
   landingFloor: { code: "lf", day: "#d27a49", evening: "#7f4327" },
   terraceTile: { code: "tt", day: "#cc6a40", evening: "#7a3b23" },
@@ -78,6 +79,8 @@ export const materials = {
     eveningTones: ["#f2d98a", "#eed079", "#e2c062"],
   },
   white: { code: "wh", day: "#f8f6f1", evening: "#5f5a54" },
+  // Bed linen: stays light at night, in lamplight.
+  linen: { code: "li", day: "#fbfaf6", evening: "#b9a98c" },
   steel: { code: "sl", day: "#c2c1b9", evening: "#6a6862" },
   dark: { code: "dk", day: "#55504a", evening: "#29251f" },
   pillow: { code: "gy", day: "#aaa6b2", evening: "#5a5660" },
@@ -99,7 +102,7 @@ export type MaterialName = keyof typeof materials;
 /** Plan tints by area kind (flat, no tones). */
 export const kindTints: Record<AreaKind, { readonly day: string; readonly evening: string }> = {
   sleep: { day: "#f2dcc4", evening: "#3f2b1d" },
-  wash: { day: "#e2e8ea", evening: "#2d3336" },
+  wash: { day: "#e2e8ea", evening: "#36302b" },
   shared: { day: "#f8eedb", evening: "#33281d" },
   staff: { day: "#ebe1d1", evening: "#2f271f" },
   path: { day: "#f7dcc6", evening: "#40291b" },
@@ -167,7 +170,7 @@ export function tint(kind: AreaKind): string {
 const ROLES: Record<string, { day: string; evening?: string }> = {
   o: { day: "stroke-width:1.5" },
   h: { day: "stroke-width:1" },
-  b: { day: "stroke-width:2.5" },
+  b: { day: "fill:none;stroke-width:2.5" },
   wl: { day: "fill:none;stroke-width:4;stroke-linecap:butt" },
   wf: { day: "fill:#4a2f1b;stroke:none", evening: "fill:#dccdb6" },
   wp: { day: "fill:#4a2f1b;stroke:none;opacity:.4", evening: "fill:#dccdb6" },
@@ -177,13 +180,25 @@ const ROLES: Record<string, { day: string; evening?: string }> = {
   tg: { day: "fill:none;stroke-opacity:.2" },
   dl: { day: "fill:none;stroke-dasharray:3 4" },
   sd: { day: "fill:none;stroke-opacity:.45;stroke-dasharray:2 4" },
-  rt: { day: "fill:none;stroke:#e76e43;stroke-width:3.5;stroke-dasharray:7 8", evening: "stroke:#f08a5d" },
+  // The route, drawn in short pieces in depth order (walls and beds in front hide it). Its dashes scale with
+  // the drawing (no non-scaling stroke) so that every piece, one dash period long, lines up with the next.
+  rt: { day: "fill:none;stroke:#e76e43;stroke-width:4;stroke-dasharray:7 7.8;vector-effect:none", evening: "stroke:#f08a5d" },
+  // The whole route again on top, faint, so the stretches behind walls stay traceable.
+  rh: { day: "fill:none;stroke:#e76e43;stroke-opacity:.55;stroke-width:2;stroke-dasharray:2 5", evening: "stroke:#f08a5d" },
+  // Between floors lifted apart: from where the route leaves one floor to where it arrives on the next.
+  rl: { day: "fill:none;stroke:#e76e43;stroke-opacity:.8;stroke-width:2;stroke-dasharray:1 6", evening: "stroke:#f08a5d" },
   ra: { day: "fill:#e76e43;stroke:none", evening: "fill:#f08a5d" },
   rs: { day: "fill:#fffaf2;stroke:#e76e43;stroke-width:2.5", evening: "fill:#2c1e13;stroke:#f08a5d" },
   hl: { day: "fill:none;stroke:#e76e43;stroke-width:3", evening: "stroke:#f08a5d" },
+  // Under the highlight's outline, so it shows on terracotta and orange floors too.
+  hu: { day: "fill:none;stroke:#fffaf2;stroke-width:7", evening: "stroke:#2c1e13" },
   dim: { day: "opacity:.28" },
+  // A see-through face (the awning's roof in the street view, so the shopfront under it shows).
+  gh: { day: "fill-opacity:.32" },
   gw: { day: "fill:#eed079;opacity:.28;stroke:none", evening: "opacity:.42" },
   lb: { day: "fill:#fffaf2;stroke-width:1.5", evening: "fill:#2c1e13" },
+  // A label of a highlighted area: its pill outlined in jar orange.
+  lbh: { day: "stroke:#e76e43;stroke-width:2.5", evening: "stroke:#f08a5d" },
   ld: { day: "fill:none;stroke-width:1" },
   lp: { day: "fill:#e76e43;stroke:none", evening: "fill:#f08a5d" },
   lt: { day: "fill:#4a2f1b;font-size:19px;font-weight:600", evening: "fill:#f1e4cf" },
@@ -191,6 +206,8 @@ const ROLES: Record<string, { day: string; evening?: string }> = {
   lc: { day: "fill:#6f4d35;font-size:12px", evening: "fill:#cbb89c" },
   lx: { day: "fill:#4a2f1b;font-size:15px;font-weight:600", evening: "fill:#f1e4cf" },
   lw: { day: "fill:#fffaf2;font-size:12px;font-weight:700", evening: "fill:#2c1e13" },
+  // Letters on a sign (white, lit at night too).
+  lsn: { day: "fill:#fffaf2;font-size:12px;font-weight:700" },
   ln: { day: "fill:#4a2f1b;font-size:10px;font-weight:600", evening: "fill:#f1e4cf" },
 };
 
@@ -239,17 +256,55 @@ function colourRules(scope: string, used: readonly string[], theme: "day" | "eve
   return out;
 }
 
+/**
+ * The ghost of a faded area or fixture on a partly highlighted floor: every face filled with one opaque
+ * paper tone and the lines faint. Nothing shows through (unlike opacity, which turns overlapping things
+ * into muddy glass), the painter's order still holds, and it works when the class is toggled at runtime.
+ * Two classes and an element outrank the material rules (two classes).
+ */
+export const GHOST = { day: "#f1e8dc", evening: "#2e241b" } as const;
+
+function ghostRules(scope: string, theme: "day" | "evening", structure: boolean): string {
+  const s = `.${scope} .dg`;
+  return (structure ? `${s} path{stroke-opacity:.3}` : "") + `${s} path:not(.n){fill:${GHOST[theme]}}`;
+}
+
+/** Every class the stylesheet can style (roles, material tones, stroke colours, plan tints): for tests. */
+export function styledClass(cls: string): boolean {
+  if (ROLES[cls] || cls === "dg") return true;
+  const tone = /^([a-z]{2})[012]$/.exec(cls);
+  if (tone && byCode.has(tone[1]!)) return true;
+  const stroke = /^k([a-z]{2})$/.exec(cls);
+  if (stroke && byCode.has(stroke[1]!)) return true;
+  const kind = /^t-([a-z]+)$/.exec(cls);
+  return Boolean(kind && kinds.includes(kind[1] as AreaKind));
+}
+
+/** Whether a class sets a fill (a material tone, a plan tint, or a role with a fill): for tests. */
+export function fillingClass(cls: string): boolean {
+  const role = ROLES[cls];
+  if (role) return /(^|;)fill:/.test(role.day);
+  return styledClass(cls) && !/^k/.test(cls) && cls !== "dg";
+}
+
 /** The SVG's whole stylesheet: base rules, then the Evening palette (under the media query for auto). */
 export function paletteCss({ theme, scope, used }: CssOptions): string {
   const s = `.${scope}`;
   const list = [...used].sort();
+  const ghost = used.has("dg");
   const base =
     `${s}{stroke:${theme === "evening" ? INK.evening : INK.day};stroke-width:1;stroke-linecap:round;stroke-linejoin:round}` +
     `${s} path{vector-effect:non-scaling-stroke}` +
     `${s} text{stroke:none;font-family:Figtree,"Noto Sans Lao",system-ui,sans-serif}`;
   const structure = roleRules(scope, list, "day");
-  if (theme === "day") return base + structure + colourRules(scope, list, "day");
+  if (theme === "day") return base + structure + colourRules(scope, list, "day") + (ghost ? ghostRules(scope, "day", true) : "");
   const evening = roleRules(scope, list, "evening") + colourRules(scope, list, "evening");
-  if (theme === "evening") return base + structure + evening;
-  return base + structure + colourRules(scope, list, "day") + `@media (prefers-color-scheme:dark){${s}{stroke:${INK.evening}}${evening}}`;
+  if (theme === "evening") return base + structure + evening + (ghost ? ghostRules(scope, "evening", true) : "");
+  return (
+    base +
+    structure +
+    colourRules(scope, list, "day") +
+    (ghost ? ghostRules(scope, "day", true) : "") +
+    `@media (prefers-color-scheme:dark){${s}{stroke:${INK.evening}}${evening}${ghost ? ghostRules(scope, "evening", false) : ""}}`
+  );
 }

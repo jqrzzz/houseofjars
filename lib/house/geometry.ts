@@ -108,12 +108,15 @@ export type Paint =
   /** Many open polylines in one path (grids, boards, folds). */
   | { readonly t: "lines"; readonly lines: readonly (readonly Vec3[])[]; readonly cls: string }
   /** A shape built in screen space from the projection (curves: ellipses, cylinders, jars). */
-  | { readonly t: "screen"; readonly cls: string; readonly build: (p: Projection) => readonly Cmd[] };
+  | { readonly t: "screen"; readonly cls: string; readonly build: (p: Projection) => readonly Cmd[] }
+  /** Text lying on a vertical plane (letters on a sign), centred on a point, its size in pixels. */
+  | { readonly t: "text"; readonly cls: string; readonly at: Vec3; readonly plane: "front" | "right"; readonly text: string; readonly size: number };
 
 export const poly = (pts: readonly Vec3[], cls: string): Paint => ({ t: "poly", pts, cls });
 export const line = (pts: readonly Vec3[], cls: string): Paint => ({ t: "poly", pts, cls, open: true });
 export const lines = (list: readonly (readonly Vec3[])[], cls: string): Paint => ({ t: "lines", lines: list, cls });
 export const screen = (cls: string, build: (p: Projection) => readonly Cmd[]): Paint => ({ t: "screen", cls, build });
+export const planeText = (cls: string, at: Vec3, plane: "front" | "right", text: string, size: number): Paint => ({ t: "text", cls, at, plane, text, size });
 
 /** A rectangle on the plane y (a face pointing to the street). */
 export function onFront(y: number, x0: number, x1: number, z0: number, z1: number): Vec3[] {
@@ -352,12 +355,17 @@ export function turned(p: Projection, cx: number, cy: number, z0: number, profil
     ["Z"],
   ];
   // The shade: the right third of the body, bounded by a curve through each level's 40% point.
-  const inner = levels.map((l) => [l.x + l.rx * 0.38, l.y] as const);
+  // Its inner edge runs from the rim's front to the foot's front, 38% of the way out from the middle.
+  const inner = levels.map((l, i) => {
+    const y = i === 0 ? l.y + l.ry * 0.925 : i === levels.length - 1 ? l.y + l.ry * 0.925 : l.y;
+    return [l.x + l.rx * 0.38, y] as const;
+  });
+  const k = KAPPA;
   const shade: Cmd[] = [
-    ["M", inner[0]![0], foot.y + foot.ry * 0.93],
-    ["C", foot.x + foot.rx * 0.75, foot.y + foot.ry * 0.75, foot.x + foot.rx, foot.y + foot.ry * 0.4, foot.x + foot.rx, foot.y],
+    ["M", inner[0]![0], inner[0]![1]],
+    ["C", foot.x + foot.rx * 0.38 + foot.rx * 0.62 * k, foot.y + foot.ry * 0.925, foot.x + foot.rx, foot.y + foot.ry * k * 0.62, foot.x + foot.rx, foot.y],
     ...rightCurve,
-    ["L", inner[inner.length - 1]![0], top.y + top.ry * 0.9],
+    ["C", top.x + top.rx, top.y + top.ry * k * 0.62, top.x + top.rx * 0.38 + top.rx * 0.62 * k, top.y + top.ry * 0.925, inner[inner.length - 1]![0], inner[inner.length - 1]![1]],
     ...smooth([...inner].reverse()).slice(1),
     ["Z"],
   ];
@@ -575,6 +583,7 @@ export class Writer {
   /** A paint in a projection. */
   paint(p: Paint, proj: Projection): string {
     if (p.t === "screen") return this.path(p.cls, p.build(proj));
+    if (p.t === "text") return this.planeText(p, proj);
     if (p.t === "lines") {
       const cmds: Cmd[] = [];
       for (const l of p.lines) {
@@ -593,15 +602,41 @@ export class Writer {
     return this.path(p.cls, cmds);
   }
 
-  /** Text, with an estimate of its box (Figtree-like widths) added to the bounds. */
-  text(cls: string, x: number, y: number, content: string, size: number, anchor: "start" | "middle" | "end" = "middle"): string {
+  /**
+   * Text, with an estimate of its box (Figtree-like widths) added to the bounds. The class sets the font
+   * size; `sized` writes the size on the element instead, for text drawn larger or smaller than its class.
+   */
+  text(cls: string, x: number, y: number, content: string, size: number, anchor: "start" | "middle" | "end" = "middle", sized = false): string {
     const w = textWidth(content, size);
     const left = anchor === "start" ? x : anchor === "middle" ? x - w / 2 : x - w;
     this.addPoint(left, y - size * 0.8);
     this.addPoint(left + w, y + size * 0.25);
     const a = anchor === "start" ? "" : ` text-anchor="${anchor}"`;
+    const style = sized ? ` style="font-size:${num(size)}px"` : "";
     // The width is fixed (glyphs scaled to fit), so labels fit their pills whatever font the viewer has.
-    return `<text class="${this.classes(cls)}" x="${num(x)}" y="${num(y)}"${a} textLength="${num(w)}" lengthAdjust="spacingAndGlyphs">${escapeXml(content)}</text>`;
+    return `<text class="${this.classes(cls)}"${style} x="${num(x)}" y="${num(y)}"${a} textLength="${num(w)}" lengthAdjust="spacingAndGlyphs">${escapeXml(content)}</text>`;
+  }
+
+  /**
+   * Text on a vertical plane: an affine matrix maps the text's own x (along the plane) and y (down) onto
+   * the projected plane, so the letters lie on the wall like paint. The box's corners go into the bounds.
+   */
+  private planeText(p: Extract<Paint, { t: "text" }>, proj: Projection): string {
+    const o = proj.point(p.at);
+    const along = proj.point(p.plane === "front" ? [p.at[0] + 1, p.at[1], p.at[2]] : [p.at[0], p.at[1] + 1, p.at[2]]);
+    const ax = (along[0] - o[0]) / proj.scale;
+    const ay = (along[1] - o[1]) / proj.scale;
+    const w = textWidth(p.text, p.size);
+    const baseline = p.size * 0.36;
+    for (const [lx, ly] of [
+      [-w / 2, baseline - p.size * 0.8],
+      [w / 2, baseline - p.size * 0.8],
+      [-w / 2, baseline + p.size * 0.25],
+      [w / 2, baseline + p.size * 0.25],
+    ] as const)
+      this.addPoint(o[0] + ax * lx, o[1] + ay * lx + ly);
+    const m = [ax, ay, 0, 1, o[0], o[1]].map((v) => (Math.abs(v) < 1 && v !== 0 ? (Math.round(v * 1000) / 1000).toString() : num(v)));
+    return `<text class="${this.classes(p.cls)}" transform="matrix(${m.join(" ")})" x="0" y="${num(baseline)}" text-anchor="middle" textLength="${num(w)}" lengthAdjust="spacingAndGlyphs">${escapeXml(p.text)}</text>`;
   }
 
   /** Draws a node and its children in painter's order. */

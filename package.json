@@ -17,7 +17,8 @@
     "content:check": "tsx scripts/content-check.ts",
     "smoke": "tsx scripts/smoke.ts",
     "fake-shadow": "tsx test/fake-shadow.ts",
-    "indexnow": "tsx scripts/indexnow.ts"
+    "indexnow": "tsx scripts/indexnow.ts",
+    "house:render": "tsx scripts/house-render.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

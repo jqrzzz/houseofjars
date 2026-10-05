@@ -9,6 +9,8 @@
  * height above the floor. See docs/HOUSE_MODEL.md.
  */
 
+import type { MaterialName } from "./palette";
+
 export type FloorId = "ground" | "floor1" | "floor2";
 
 /** What an area is for. Plans tint areas by kind. */
@@ -43,7 +45,8 @@ export interface Certainty {
   readonly note?: string;
 }
 
-export interface Floor {
+/** A whole floor can be unconfirmed (Floor 2 has not been photographed); its note is shown on its plan. */
+export interface Floor extends Certainty {
   readonly id: FloorId;
   /** The owner's name for the floor: Ground floor, Floor 1, Floor 2. */
   readonly name: string;
@@ -53,6 +56,8 @@ export interface Floor {
   readonly z: number;
   /** Height of the ceiling above the street-level floor. */
   readonly ceiling: number;
+  /** The opening in this floor's slab where the stairs come up from the floor below. */
+  readonly opening?: Rect;
 }
 
 export interface Area extends Certainty {
@@ -64,10 +69,14 @@ export interface Area extends Certainty {
   readonly kind: AreaKind;
   readonly name: string;
   readonly rect: Rect;
+  /** More rectangles of the same room, when it is not a plain rectangle (an L-shaped room). */
+  readonly more?: readonly Rect[];
   /** A sub-area drawn on top of a bigger one (the counter inside the café). */
   readonly parent?: string;
-  /** Where its label points, when the middle of the rectangle is a poor spot. */
-  readonly anchor?: { readonly x: number; readonly y: number };
+  /** Where its label points, when the middle of the rectangle is a poor spot (z: on top of something, above the floor). */
+  readonly anchor?: { readonly x: number; readonly y: number; readonly z?: number };
+  /** Where its label sits on the plans, when that differs from the anchor (which points at things in 3D). */
+  readonly planAnchor?: { readonly x: number; readonly y: number };
 }
 
 export type FixtureType =
@@ -101,9 +110,11 @@ export type FixtureType =
   | "locker"
   | "luggage-space"
   | "mirror"
+  | "pendant-lamp"
   | "plant"
   | "pod"
   | "post"
+  | "printer"
   | "shelves"
   | "shoe-cubbies"
   | "shower"
@@ -180,7 +191,7 @@ export interface Wall extends Certainty {
   readonly box: Box3;
   readonly openings?: readonly Opening[];
   /** Material name in lib/house/palette.ts. */
-  readonly material: string;
+  readonly material: MaterialName;
   /** Wood-panelled walls show their boards. */
   readonly panelled?: boolean;
 }
@@ -220,6 +231,8 @@ export interface HouseModel {
   readonly areas: readonly Area[];
   readonly walls: readonly Wall[];
   readonly fixtures: readonly Fixture[];
+  /** The roof slab over the top floor (absolute heights). */
+  readonly roof: { readonly z0: number; readonly z1: number };
   readonly routes: readonly Route[];
   /** The rectangle of the terrace in front of the facade (outside areas live here). */
   readonly terrace: Rect;
