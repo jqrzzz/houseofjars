@@ -27,13 +27,14 @@ import {
   onFront,
   onRight,
   onTop,
+  planeText,
   poly,
   prismFaces,
   screen,
   turned,
   union,
 } from "./geometry";
-import { type MaterialName, fill, strokeOf } from "./palette";
+import { type MaterialName, fill } from "./palette";
 import type { Box3, Fixture } from "./types";
 
 export interface FixtureContext {
@@ -43,6 +44,8 @@ export interface FixtureContext {
   readonly depth: number;
   /** An absolute height above which this fixture is cut away (the cutaway's low facade line), if any. */
   readonly cut?: number;
+  /** How far the floor above is from this one (a flight of stairs climbs that far). */
+  readonly rise?: number;
 }
 
 const c = (m: MaterialName, tone: 0 | 1 | 2, extra = "") => (extra ? `${fill(m, tone)} ${extra}` : fill(m, tone));
@@ -115,6 +118,24 @@ function arch(plane: "front" | "right", at: number, centre: number, width: numbe
   }
   pts.push(put(centre + half, z0));
   return pts;
+}
+
+/** Clips a flat polygon (on any vertical plane) to z <= zMax (Sutherland-Hodgman against one plane); null when nothing is left. */
+function clipBelow(pts: readonly Vec3[], zMax: number | undefined): Vec3[] | null {
+  if (zMax === undefined) return [...pts];
+  const out: Vec3[] = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i]!;
+    const b = pts[(i + 1) % pts.length]!;
+    const ina = a[2] <= zMax + 1e-9;
+    const inb = b[2] <= zMax + 1e-9;
+    if (ina) out.push(a);
+    if (ina !== inb) {
+      const t = (zMax - a[2]) / (b[2] - a[2]);
+      out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, zMax]);
+    }
+  }
+  return out.length >= 3 ? out : null;
 }
 
 /** Clips a rectangle on a vertical plane at height zMax (null when entirely above). */
@@ -404,8 +425,10 @@ function awning(b: Box3): Node[] {
   const fascia = box(b.x0, b.x1, b.y0, b.y0 + beam, b.z0, b.z1);
   const roof = box(b.x0, b.x1, b.y0 + beam, b.y1, b.z1 - 0.09, b.z1);
   const boards = gridTop(b.z1, b.x0, b.x1, b.y0 + beam, b.y1, 0.28, 0);
+  // Only the street view shows the awning: its roof is drawn see-through (gh), so the shopfront under it
+  // (the glass door, the grid window, the bamboo blind, the hanging sign) still reads, as in photo f1-01.
   return [
-    decorate(solid(roof, "woodDark"), [lines(boards, "tg")]),
+    decorate(solid(roof, "woodDark", "gh"), [lines(boards, "tg")]),
     decorate(solid(fascia, "wood"), [line([[b.x0, b.y0, b.z0 + 0.1], [b.x1, b.y0, b.z0 + 0.1]], "tg")]),
   ];
 }
@@ -414,12 +437,13 @@ function post(b: Box3, ctx: FixtureContext): Node[] {
   return present([cutSolid(b, "wood", ctx.cut)]);
 }
 
+/** The "hostel" sign on the awning: white letters on an orange plate (photo f1-01). */
 function signHostel(b: Box3): Node[] {
   const y = b.y0;
   return [
-    decorate(solid(b, "paper"), [
-      poly(onFront(y, b.x0 + 0.05, b.x1 - 0.05, b.z0 + 0.05, b.z1 - 0.05), c("jar", 1)),
-      poly(onFront(y, b.x0 + 0.1, b.x1 - 0.1, b.z0 + 0.1, b.z1 - 0.1), c("paper", 1, "ns")),
+    decorate(solid(b, "jar"), [
+      line([[b.x0 + 0.04, y, b.z0 + 0.05], [b.x1 - 0.04, y, b.z0 + 0.05]], "tg"),
+      planeText("lsn", [(b.x0 + b.x1) / 2, y, (b.z0 + b.z1) / 2], "front", "hostel", 12),
     ]),
   ];
 }
@@ -571,27 +595,53 @@ function windowLedge(b: Box3): Node[] {
   ];
 }
 
-/** Steps. "solid": masonry from the floor (the ground floor's flight); "flight": a floating slab of steps. */
+/**
+ * Steps, climbing to the floor above (ctx.rise). "solid": masonry from the floor (the ground floor's
+ * flight); "flight": steps on a stringer, from the back (y1, at the floor) up to the front (y0). A cut
+ * (ctx.cut) clips a flight like the cutaway's partitions, its cut tops in hairline.
+ */
 function stairs(fx: Fixture, b: Box3, ctx: FixtureContext): Node[] {
   const out: Node[] = [];
   const top = b.z1;
   const rise = 0.19;
+  const total = ctx.rise ?? b.z1 - b.z0;
   if (fx.variant === "flight") {
-    // From the back (y1, at the floor) up to the front (y0).
-    const total = 3.1;
     const n = Math.round(total / rise);
     const r = total / n;
     const run = (b.y1 - b.y0) / (n - 1);
+    const xm = b.x0 + (b.x1 - b.x0) / 2;
     for (let k = 1; k < n; k++) {
       const tz = Math.min(ctx.z + k * r, top);
       const y1 = b.y1 - (k - 1) * run;
       const y0 = y1 - run;
-      const sb = box(b.x0, b.x1, y0, y1, Math.max(b.z0, tz - 0.32), tz);
-      out.push(decorate(solid(sb, "terracotta"), [line([[b.x0 + (b.x1 - b.x0) / 2, y0, tz], [b.x0 + (b.x1 - b.x0) / 2, y1, tz]], "tg")]));
+      const z0 = Math.max(b.z0, tz - 0.32);
+      if (ctx.cut !== undefined && z0 >= ctx.cut - 1e-6) continue;
+      const cut = ctx.cut !== undefined && tz > ctx.cut;
+      const z1 = cut ? ctx.cut! : tz;
+      const sb = box(b.x0, b.x1, y0, y1, z0, z1);
+      out.push(
+        part(sb, [
+          ...boxFaces(sb, { top: c("terracotta", 0, cut ? "h" : ""), front: c("terracotta", 1), right: c("terracotta", 2) }),
+          ...(cut ? [] : [line([[xm, y0, tz], [xm, y1, tz]], "tg")]),
+        ]),
+      );
     }
+    // The stringer along the open side, under the nosings: the flight reads as one piece, not a stack of blocks.
+    const slope = r / run;
+    const noseAt = (y: number) => ctx.z + (b.y1 - y) * slope - 0.03;
+    const x = b.x1 + 0.004;
+    const stringer = clipBelow(
+      [
+        [x, b.y1, ctx.z],
+        [x, b.y0, noseAt(b.y0)],
+        [x, b.y0, noseAt(b.y0) - 0.3],
+        [x, b.y1 - 0.33 / slope, ctx.z],
+      ],
+      ctx.cut,
+    );
+    if (stringer) out.push(part(box(b.x1, x, b.y0, b.y1, ctx.z, Math.max(...stringer.map((p) => p[2]))), [poly(stringer, c("wood", 2))]));
     return out;
   }
-  const total = 3.8;
   const n = Math.round(total / rise);
   const r = total / n;
   const run = (b.y1 - b.y0) / (n - 1);
@@ -668,7 +718,7 @@ function toilet(fx: Fixture, b: Box3): Node[] {
       union([rect(-width * 0.42, width * 0.42, depth * 0.08, depth * 0.72, b.z0 + 0.25, bowlTop)]),
       [
         ...prismFaces(ring, b.z0 + 0.25, bowlTop, 16, { top: c("white", 0), front: c("white", 1, "ns"), right: c("white", 2, "ns") }),
-        screen("h", (p) => {
+        screen(c("white", 2, "h"), (p) => {
           const centre = at(0, depth * 0.4);
           return ellipseOnPlane(
             p,
@@ -683,17 +733,22 @@ function toilet(fx: Fixture, b: Box3): Node[] {
   ];
 }
 
-function basinWall(b: Box3): Node[] {
+/** A hand-wash basin on a wall, under an arched mirror. The mirror shows only on a wall facing the camera (+x). */
+function basinWall(fx: Fixture, b: Box3): Node[] {
   const top = b.z0 + 0.2;
   const yc = (b.y0 + b.y1) / 2;
-  return [
+  const out: Node[] = [
     decorate(solid(box(b.x0, b.x1, b.y0, b.y1, b.z0, top), "white"), [
-      poly(onTop(top, b.x0 + 0.06, b.x1 - 0.05, b.y0 + 0.06, b.y1 - 0.06), c("white", 2)),
-    ]),
-    part(box(b.x0, b.x0 + 0.01, b.y0 - 0.02, b.y1 + 0.02, top + 0.25, b.z1), [
-      poly(arch("right", b.x0 + 0.01, yc, b.y1 - b.y0 + 0.04, top + 0.25, b.z1, 0.2), c("glass", 2)),
+      poly(onTop(top, b.x0 + 0.06, b.x1 - 0.06, b.y0 + 0.06, b.y1 - 0.06), c("white", 2)),
     ]),
   ];
+  if (fx.faces === "+x")
+    out.push(
+      part(box(b.x0, b.x0 + 0.01, b.y0 - 0.02, b.y1 + 0.02, top + 0.25, b.z1), [
+        poly(arch("right", b.x0 + 0.01, yc, b.y1 - b.y0 + 0.04, top + 0.25, b.z1, 0.2), c("glass", 2)),
+      ]),
+    );
+  return out;
 }
 
 function vessel(b: Box3): Node[] {
@@ -722,7 +777,7 @@ function extinguisher(b: Box3): Node[] {
   const body = b.z1 - 0.1;
   return [
     decorate(cylinder(cx, cy, r * 0.9, b.z0, body, "red"), [
-      screen("h", (p) => {
+      screen("n h", (p) => {
         const [x, y] = p.point([cx, cy, body - 0.12]);
         const rx = r * 0.9 * p.scale * 1.2247;
         return [
@@ -764,7 +819,7 @@ function kitchenCounter(b: Box3): Node[] {
 
 function doorLeaf(fx: Fixture, b: Box3): Node[] {
   const alongY = b.x1 - b.x0 < b.y1 - b.y0;
-  const m: MaterialName = fx.variant === "dark" ? "brown" : "woodDark";
+  const m: MaterialName = (fx.variant ?? "").split(" ").includes("dark") ? "brown" : "woodDark";
   const paint: Paint[] = [];
   const signZ = b.z0 + 1.5;
   if (alongY) {
@@ -820,8 +875,10 @@ function pod(fx: Fixture, b: Box3): Node[] {
         poly(onRight(b.x0 + 0.03, y0, y1, zf, cz1r), c("curtain", 2)),
         poly(onRight(b.x0 + 0.03, y0, y1, zf, bandR), c("curtainBand", 2)),
       ]),
-      decorate(solid(box(b.x0 + 0.03, b.x1, y0, y1, zf, mTop), "white"), [line([[b.x1, y0 + 0.5, mTop], [b.x1, y0 + 0.5, zf + 0.02]], "tg")]),
-      solid(box(b.x0 + 0.25, b.x1 - 0.12, y0 + 0.06, y0 + 0.4, mTop, mTop + 0.1), "white"),
+      decorate(solid(box(b.x0 + 0.03, b.x1, y0, y1, zf, mTop), "linen"), [line([[b.x1, y0 + 0.5, mTop], [b.x1, y0 + 0.5, zf + 0.02]], "tg")]),
+      // A folded blanket across the middle and the pillow at the back end, against the back panel: a bed, not a shelf.
+      solid(box(b.x0 + 0.03, b.x1, (y0 + y1) / 2 - 0.26, (y0 + y1) / 2 + 0.06, mTop, mTop + 0.035), "sage"),
+      solid(box(b.x0 + 0.22, b.x1 - 0.1, y1 - 0.42, y1 - 0.06, mTop, mTop + 0.14), "linen"),
       part(box(b.x0 + 0.5, b.x0 + 0.62, y1 - 0.001, y1 - 0.001, cz1r - 0.32, cz1r - 0.22), [
         poly(onFront(y1 - 0.001, b.x0 + 0.5, b.x0 + 0.62, cz1r - 0.32, cz1r - 0.22), c("lamp", 1)),
       ]),
@@ -851,8 +908,8 @@ function pod(fx: Fixture, b: Box3): Node[] {
       decorate(solid(box(b.x0, b.x0 + 0.03, y0, cy0, zf, cz1), "wood"), [
         poly(onRight(b.x0 + 0.03, y0 + 0.35, y0 + 0.47, mTop + 0.42, mTop + 0.5), c("lamp", 2)),
       ]),
-      solid(box(b.x0 + 0.03, b.x1 - 0.04, y0, cy0, zf, mTop), "white"),
-      solid(box(b.x0 + 0.1, b.x1 - 0.2, y0 + 0.06, y0 + 0.38, mTop, mTop + 0.1), "white"),
+      solid(box(b.x0 + 0.03, b.x1 - 0.04, y0, cy0, zf, mTop), "linen"),
+      solid(box(b.x0 + 0.1, b.x1 - 0.2, y0 + 0.06, y0 + 0.38, mTop, mTop + 0.1), "linen"),
       part(box(b.x1 - 0.03, b.x1, y0, cy0, zf, cz1), [
         poly(onRight(b.x1, y0, y0 + 0.1, zf, cz1), c("curtain", 2)),
         poly(onRight(b.x1, y0, y0 + 0.1, zf, band), c("curtainBand", 2)),
@@ -879,26 +936,21 @@ function locker(fx: Fixture, b: Box3): Node[] {
   return [decorate(solid(b, "wood"), paint)];
 }
 
+/** A ceiling fan: three solid blades around a small motor, on a rod to the ceiling (not a lamp-like disc). */
 function fan(b: Box3, ceiling: number): Node[] {
   const cx = (b.x0 + b.x1) / 2;
   const cy = (b.y0 + b.y1) / 2;
-  const r = (b.x1 - b.x0) / 2 - 0.03;
-  const disc = b.z0 + 0.05;
+  const r = (b.x1 - b.x0) / 2;
+  const z = b.z0 + 0.04;
+  const at = (a: number, d: number): Vec3 => [cx + Math.cos(a) * d, cy + Math.sin(a) * d, z];
+  const blades = [0, 1, 2].map((k) => {
+    const a = (k * 2 * Math.PI) / 3 + 0.4;
+    return poly([at(a - 0.35, 0.05), at(a - 0.2, r * 0.97), at(a, r), at(a + 0.2, r * 0.97), at(a + 0.35, 0.05)], c("white", k === 0 ? 1 : 0));
+  });
   return [
-    part(box(cx, cx, cy, cy, disc + 0.1, ceiling), [line([[cx, cy, disc + 0.1], [cx, cy, ceiling]], "o")]),
-    decorate(cylinder(cx, cy, r, b.z0, disc, "white"), [
-      lines(
-        [0, 1, 2].map((k) => {
-          const a = (k * 2 * Math.PI) / 3 + 0.4;
-          return [
-            [cx, cy, disc],
-            [cx + Math.cos(a) * r * 0.85, cy + Math.sin(a) * r * 0.85, disc],
-          ];
-        }),
-        "tg",
-      ),
-    ]),
-    cylinder(cx, cy, 0.06, disc, disc + 0.1, "white"),
+    part(box(cx - r, cx + r, cy - r, cy + r, z, z), blades),
+    cylinder(cx, cy, 0.075, b.z0, b.z0 + 0.1, "white"),
+    part(box(cx, cx, cy, cy, b.z0 + 0.1, ceiling), [line([[cx, cy, b.z0 + 0.1], [cx, cy, ceiling]], "o")]),
   ];
 }
 
@@ -951,6 +1003,63 @@ function wallLamp(b: Box3): Node[] {
   ];
 }
 
+/** A pendant lamp: a jar-orange dome on a cord from the ceiling, its light falling in a soft cone below (as in house.svg). */
+function pendantLamp(b: Box3): Node[] {
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
+  const r = (b.x1 - b.x0) / 2;
+  const domeH = 0.16;
+  const base = b.z0 + 0.02;
+  const shape = (p: Projection) => {
+    const [x, y] = p.point([cx, cy, base]);
+    const rx = r * p.scale * 1.2247;
+    const h = domeH * p.scale;
+    return { x, y, rx, h };
+  };
+  return [
+    part(b, [
+      screen("gw", (p) => {
+        const { x, y, rx } = shape(p);
+        const down = 0.85 * p.scale;
+        return [["M", x - rx * 0.6, y], ["L", x - rx * 2.1, y + down], ["L", x + rx * 2.1, y + down], ["L", x + rx * 0.6, y], ["Z"]];
+      }),
+      line([[cx, cy, base + domeH], [cx, cy, b.z1]], "h"),
+      screen(c("jar", 1), (p) => {
+        const { x, y, rx, h } = shape(p);
+        return [
+          ["M", x - rx, y],
+          ["C", x - rx, y - h * 0.75, x - rx * 0.45, y - h, x, y - h],
+          ["C", x + rx * 0.45, y - h, x + rx, y - h * 0.75, x + rx, y],
+          ["Z"],
+        ];
+      }),
+      screen(c("lamp", 0, "h"), (p) => {
+        const { x, y, rx } = shape(p);
+        return [["M", x - rx * 0.8, y], ["C", x - rx * 0.4, y + rx * 0.22, x + rx * 0.4, y + rx * 0.22, x + rx * 0.8, y], ["Z"]];
+      }),
+    ]),
+  ];
+}
+
+/** The front desk's printer on a low wooden stand. */
+function printer(b: Box3): Node[] {
+  const standTop = b.z0 + 0.7;
+  const i = 0.03;
+  const leg = (x: number, y: number) => solid(box(x, x + 0.04, y, y + 0.04, b.z0, standTop - 0.04), "woodDark");
+  const body = box(b.x0 + 0.04, b.x1 - 0.04, b.y0 + 0.02, b.y1 - 0.02, standTop, b.z1);
+  return [
+    leg(b.x0 + i, b.y1 - i - 0.04),
+    leg(b.x0 + i, b.y0 + i),
+    leg(b.x1 - i - 0.04, b.y1 - i - 0.04),
+    leg(b.x1 - i - 0.04, b.y0 + i),
+    solid(box(b.x0, b.x1, b.y0, b.y1, standTop - 0.04, standTop), "wood"),
+    decorate(solid(body, "dark"), [
+      poly(onTop(body.z1, body.x0 + 0.06, body.x1 - 0.06, body.y0 + 0.04, body.y1 - 0.04), c("dark", 2)),
+      line([[body.x1, body.y0 + 0.04, body.z0 + 0.08], [body.x1, body.y1 - 0.04, body.z0 + 0.08]], "h"),
+    ]),
+  ];
+}
+
 // ---------------------------------------------------------------------------
 // The bathrooms
 
@@ -972,14 +1081,25 @@ function ladderWall(b: Box3): Node[] {
   return out;
 }
 
-function stall(b: Box3): Node[] {
+function stall(fx: Fixture, b: Box3): Node[] {
   const t = 0.05;
   const front = box(b.x0, b.x1 - t, b.y0, b.y0 + t, b.z0, b.z1);
-  const door: Vec3[] = onFront(b.y0, b.x0 + 0.1, b.x1 - t - 0.12, b.z0 + 0.04, b.z0 + 1.95);
+  const dx0 = b.x0 + 0.1;
+  const dx1 = b.x1 - t - 0.12;
+  const doorTop = b.z0 + 1.95;
+  const door: Vec3[] = onFront(b.y0, dx0, dx1, b.z0 + 0.04, doorTop);
+  const side = decorate(solid(box(b.x1 - t, b.x1, b.y0, b.y1, b.z0, b.z1), "bathTile"), [line([[b.x1, b.y0, b.z0 + 1.2], [b.x1, b.y1, b.z0 + 1.2]], "tg")]);
+  if (fx.variant === "cut") {
+    // Cut open low (70 cm), as the cutaway cuts the facade, its cut tops in hairline: the toilet inside shows.
+    const cut = b.z0 + 0.7;
+    const panel = (pb: Box3) => part(pb, boxFaces(pb, { top: c("bathTile", 0, "h"), front: c("bathTile", 1), right: c("bathTile", 2) }));
+    return [
+      panel(box(b.x1 - t, b.x1, b.y0, b.y1, b.z0, cut)),
+      decorate(panel(box(b.x0, b.x1 - t, b.y0, b.y0 + t, b.z0, cut)), [poly(onFront(b.y0, dx0, dx1, b.z0 + 0.04, cut), c("steel", 1))]),
+    ];
+  }
   return [
-    decorate(solid(box(b.x1 - t, b.x1, b.y0, b.y1, b.z0, b.z1), "bathTile"), [
-      line([[b.x1, b.y0, b.z0 + 1.2], [b.x1, b.y1, b.z0 + 1.2]], "tg"),
-    ]),
+    side,
     decorate(solid(front, "bathTile"), [
       line([[b.x0, b.y0, b.z0 + 1.2], [b.x1 - t, b.y0, b.z0 + 1.2]], "tg"),
       poly(door, c("steel", 1)),
@@ -1090,7 +1210,7 @@ export function isoParts(fx: Fixture, ctx: FixtureContext, ceiling: number): Nod
     case "sink-small":
       return sinkSmall(b);
     case "basin":
-      return fx.variant === "vessel" ? vessel(b) : basinWall(b);
+      return fx.variant === "vessel" ? vessel(b) : basinWall(fx, b);
     case "hand-dryer":
     case "hair-dryer":
       return wallBox(b, "white", fx.faces);
@@ -1122,13 +1242,17 @@ export function isoParts(fx: Fixture, ctx: FixtureContext, ceiling: number): Nod
     case "ladder-wall":
       return ladderWall(b);
     case "toilet-stall":
-      return stall(b);
+      return stall(fx, b);
     case "shower":
       return shower(b);
     case "mirror":
       return [part(b, [poly(arch("right", b.x0, (b.y0 + b.y1) / 2, b.y1 - b.y0, b.z0, b.z1), c("glass", 2))])];
     case "sign-plate":
       return [solid(b, "paper")];
+    case "pendant-lamp":
+      return pendantLamp(b);
+    case "printer":
+      return printer(b);
   }
 }
 
@@ -1187,8 +1311,55 @@ export function swing(p: Projection, hinge: readonly [number, number], a: readon
   ];
 }
 
+/** Which way a flight rises along y: the ground floor's masonry flight toward the back, the flight above it toward the front. */
+export function risesToward(fx: Fixture): 1 | -1 {
+  return fx.variant === "flight" ? -1 : 1;
+}
+
+/** One arrow on a flight in plan: the way you walk (toward +y or -y), and "Up" or "Down". */
+export interface StairArrow {
+  readonly toward: 1 | -1;
+  readonly label: string;
+}
+
+/**
+ * Stairs in plan, the usual way: treads, and an arrow that starts where you stand and points the way you
+ * walk, its label at the tail. Two arrows (a flight up over the flight down, as on Floor 1) share the
+ * width, split by a diagonal break line.
+ */
+export function planStairs(b: Box3, p: Projection, arrows: readonly StairArrow[]): PlanMark[] {
+  const out: PlanMark[] = [mark(c("terracotta", 0), planRect(p, b.x0, b.x1, b.y0, b.y1))];
+  const treads: [number, number][][] = [];
+  for (let y = b.y0 + 0.19; y < b.y1 - 0.05; y += 0.19)
+    treads.push([
+      [b.x0, y],
+      [b.x1, y],
+    ]);
+  out.push(mark("tg", treads.flatMap((t) => planLine(p, t))));
+  const width = (b.x1 - b.x0) / arrows.length;
+  arrows.forEach(({ toward, label }, i) => {
+    const cx = b.x0 + width * (i + 0.5);
+    const from = toward > 0 ? b.y0 + 0.4 : b.y1 - 0.4;
+    const to = toward > 0 ? b.y1 - 0.4 : b.y0 + 0.4;
+    const head = Math.min(0.18, width * 0.3);
+    out.push(mark("b n", planLine(p, [[cx, from + toward * 0.55], [cx, to]])));
+    out.push(mark("b n", planLine(p, [[cx - head, to - toward * 0.25], [cx, to], [cx + head, to - toward * 0.25]])));
+    out.push(planText(p, cx, from + toward * 0.2, label, 11, "ls"));
+  });
+  if (arrows.length > 1) {
+    const ym = (b.y0 + b.y1) / 2;
+    out.push(mark("h n", planLine(p, [[b.x0, ym - 0.35], [b.x1, ym + 0.35]])));
+  }
+  return out;
+}
+
+export interface PlanMarkOptions {
+  /** The arrows of a flight of stairs (default: one arrow "Up" the way it rises). */
+  readonly stairs?: readonly StairArrow[];
+}
+
 /** The plan symbol of a fixture: simple shapes, a number where it helps. */
-export function planMarks(fx: Fixture, p: Projection): PlanMark[] {
+export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}): PlanMark[] {
   const b = fx.box;
   const cx = (b.x0 + b.x1) / 2;
   const cy = (b.y0 + b.y1) / 2;
@@ -1208,24 +1379,28 @@ export function planMarks(fx: Fixture, p: Projection): PlanMark[] {
       return [
         rect(c("wood", 0)),
         mark(c("paper", 0), planRect(p, b.x0 + 0.06, b.x1 - 0.06, b.y0 + 0.06, b.y1 - 0.06)),
-        mark("o kcu", planLine(p, [[curtainX, b.y0 + 0.08], [curtainX, b.y1 - 0.08]])),
+        mark("o n kcu", planLine(p, [[curtainX, b.y0 + 0.08], [curtainX, b.y1 - 0.08]])),
         planText(p, cx, cy - 0.28, fx.label ?? "", 13, "ls"),
         planText(p, cx, cy - 0.58, "lower", 9, "lc"),
       ];
     }
-    case "locker":
+    case "locker": {
       if (b.z0 > 0.01) return [];
-      return [rect(c("wood", 0)), planText(p, cx, cy, `${fx.label?.slice(0, 1)}${Number(fx.label?.slice(1))}-${Number(fx.label?.slice(1)) + 2}`, 9, "ln")];
+      // One label for the stack of three: H01–H03.
+      const letter = fx.label?.slice(0, 1) ?? "";
+      const first = Number(fx.label?.slice(1) ?? 0);
+      return [rect(c("wood", 0)), planText(p, cx, cy, `${letter}${String(first).padStart(2, "0")}–${letter}${String(first + 2).padStart(2, "0")}`, 9, "ln")];
+    }
     case "ladder":
     case "ladder-wall":
-      return [rect(c("wood", 0)), mark("h", planLine(p, b.x1 - b.x0 < b.y1 - b.y0 ? [[cx, b.y0], [cx, b.y1]] : [[b.x0, cy], [b.x1, cy]]))];
+      return [rect(c("wood", 0)), mark("h n", planLine(p, b.x1 - b.x0 < b.y1 - b.y0 ? [[cx, b.y0], [cx, b.y1]] : [[b.x0, cy], [b.x1, cy]]))];
     case "table":
     case "window-ledge":
     case "bench":
       return [rect(c("wood", 0))];
     case "chair": {
       const backY = fx.faces === "+y" ? b.y0 + 0.03 : b.y1 - 0.03;
-      return [rect(c("wood", 0), 0.03), mark("b", planLine(p, [[b.x0 + 0.02, backY], [b.x1 - 0.02, backY]]))];
+      return [rect(c("wood", 0), 0.03), mark("b n", planLine(p, [[b.x0 + 0.02, backY], [b.x1 - 0.02, backY]]))];
     }
     case "table-small-round":
     case "table-tall-round":
@@ -1255,8 +1430,8 @@ export function planMarks(fx: Fixture, p: Projection): PlanMark[] {
       return [rect(c("steel", 0), 0.02)];
     case "basin":
       return fx.variant === "vessel"
-        ? [mark(c("white", 0), planCircle(p, cx, cy, r)), mark("h", planCircle(p, cx, cy, r * 0.6))]
-        : [rect(c("white", 0)), mark("h", planCircle(p, cx + 0.03, cy, r * 0.55))];
+        ? [mark(c("white", 0), planCircle(p, cx, cy, r)), mark("h n", planCircle(p, cx, cy, r * 0.6))]
+        : [rect(c("white", 0)), mark("h n", planCircle(p, cx + 0.03, cy, r * 0.55))];
     case "coffee-machine":
     case "dehumidifier":
       return [rect(c(fx.type === "coffee-machine" ? "dark" : "white", 0))];
@@ -1264,7 +1439,7 @@ export function planMarks(fx: Fixture, p: Projection): PlanMark[] {
     case "staff-lockers":
       return [rect(c("wood", 0)), mark("tg", planLine(p, [[b.x1 - 0.06, b.y0], [b.x1 - 0.06, b.y1]]))];
     case "fridge-drinks":
-      return [rect(c("dark", 0)), mark("b kfg", planLine(p, [[b.x1 - 0.03, b.y0 + 0.05], [b.x1 - 0.03, b.y1 - 0.05]]))];
+      return [rect(c("dark", 0)), mark("b n kfg", planLine(p, [[b.x1 - 0.03, b.y0 + 0.05], [b.x1 - 0.03, b.y1 - 0.05]]))];
     case "luggage-space":
       return [rect("dl")];
     case "doormat":
@@ -1281,32 +1456,17 @@ export function planMarks(fx: Fixture, p: Projection): PlanMark[] {
       return [
         rect(c("bathTile", 0), 0.04),
         mark(c("slate", 0), planCircle(p, cx, cy, 0.05)),
-        mark("h", planLine(p, [[b.x1 - 0.04, b.y0 + 0.1], [b.x1 - 0.04, b.y1 - 0.1]])),
+        mark("h n", planLine(p, [[b.x1 - 0.04, b.y0 + 0.1], [b.x1 - 0.04, b.y1 - 0.1]])),
       ];
     case "toilet-stall":
       return [
         mark("wl", planLine(p, [[b.x1, b.y0], [b.x1, b.y1]])),
         mark("wl", planLine(p, [[b.x0, b.y0], [b.x0 + 0.08, b.y0]])),
         mark("wl", planLine(p, [[b.x1 - 0.12, b.y0], [b.x1, b.y0]])),
-        mark("h", swing(p, [b.x0 + 0.08, b.y0], [0.7, 0], [0, 0.7])),
+        mark("h n", swing(p, [b.x0 + 0.08, b.y0], [0.7, 0], [0, 0.7])),
       ];
-    case "stairs": {
-      const out: PlanMark[] = [rect(c("terracotta", 0))];
-      const treads: [number, number][][] = [];
-      for (let y = b.y0 + 0.19; y < b.y1 - 0.05; y += 0.19)
-        treads.push([
-          [b.x0, y],
-          [b.x1, y],
-        ]);
-      out.push(mark("tg", treads.flatMap((t) => planLine(p, t))));
-      const up = fx.variant === "flight" ? -1 : 1;
-      const from = up > 0 ? b.y0 + 0.4 : b.y1 - 0.4;
-      const to = up > 0 ? b.y1 - 0.4 : b.y0 + 0.4;
-      out.push(mark("b n", planLine(p, [[cx, from], [cx, to]])));
-      out.push(mark("b n", planLine(p, [[cx - 0.18, to - up * 0.25], [cx, to], [cx + 0.18, to - up * 0.25]])));
-      out.push(planText(p, cx, from + up * 0.55 - up * 0.2, "Up", 11, "ls"));
-      return out;
-    }
+    case "stairs":
+      return planStairs(b, p, opts.stairs ?? [{ toward: risesToward(fx), label: "Up" }]);
     case "shoe-cubbies": {
       const cols = fx.grid?.cols ?? 5;
       const cells: [number, number][][] = [];
@@ -1317,18 +1477,20 @@ export function planMarks(fx: Fixture, p: Projection): PlanMark[] {
           [b.x1, y],
         ]);
       }
-      return [rect(c("dormPlaster", 0)), mark("h", cells.flatMap((t) => planLine(p, t)))];
+      return [rect(c("dormPlaster", 0)), mark("h n", cells.flatMap((t) => planLine(p, t)))];
     }
     case "door-leaf": {
+      // Drawn open. The hinge is at the (x0, y0) corner unless the variant says hinge-x1 / hinge-y1; the arc
+      // runs from the leaf's free end to where it closes, across the opening beside the hinge.
       const alongY = b.x1 - b.x0 < b.y1 - b.y0;
       const len = alongY ? b.y1 - b.y0 : b.x1 - b.x0;
-      if (alongY) {
-        // Hinged at the wall end of the leaf.
-        const hingeY = fx.area.startsWith("dorm") ? b.y1 : b.y0;
-        const dir = hingeY === b.y1 ? -1 : 1;
-        return [rect(c("woodDark", 0)), mark("h", swing(p, [b.x0, hingeY], [0, dir * len], [len, 0]))];
-      }
-      return [rect(c("brown", 0)), mark("h", swing(p, [b.x0, b.y0], [len, 0], [0, len]))];
+      const tokens = (fx.variant ?? "").split(" ");
+      const hx = tokens.includes("hinge-x1") ? b.x1 : b.x0;
+      const hy = tokens.includes("hinge-y1") ? b.y1 : b.y0;
+      const sx = hx === b.x1 ? -1 : 1;
+      const sy = hy === b.y1 ? -1 : 1;
+      const arc = alongY ? swing(p, [hx, hy], [0, sy * len], [sx * len, 0]) : swing(p, [hx, hy], [sx * len, 0], [0, sy * len]);
+      return [rect(c(tokens.includes("dark") ? "brown" : "woodDark", 0)), mark("h n", arc)];
     }
     case "awning":
       return [rect("dl")];
@@ -1351,7 +1513,11 @@ export function planMarks(fx: Fixture, p: Projection): PlanMark[] {
     case "wall-lamp":
       return [rect(c(fx.type === "wall-lamp" ? "lamp" : "white", 0))];
     case "door":
-      return [mark(c("glass", 0), planRect(p, b.x0, b.x1, b.y0, b.y1)), mark("h", swing(p, [b.x0, b.y0 - 0.02], [b.x1 - b.x0, 0], [0, -(b.x1 - b.x0)]))];
+      return [mark(c("glass", 0), planRect(p, b.x0, b.x1, b.y0, b.y1))];
+    case "pendant-lamp":
+      return [mark("dl", planCircle(p, cx, cy, r * 0.8))];
+    case "printer":
+      return [rect(c("wood", 0)), mark(c("dark", 0), planRect(p, b.x0 + 0.04, b.x1 - 0.04, b.y0 + 0.02, b.y1 - 0.02))];
     case "window":
       return fx.variant === "shopfront" ? [mark(c("glass", 0), planRect(p, b.x0, b.x1, -0.1, -0.05))] : [mark(c("glass", 0), planRect(p, b.x0, b.x1, -0.11, -0.05))];
   }
