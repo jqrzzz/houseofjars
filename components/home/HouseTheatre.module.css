@@ -1,0 +1,396 @@
+/*
+ * ① The house as a paper theatre (HouseTheatre.tsx). The section is tall; the
+ * stage stands still in it (sticky) and its acts play on the section's view
+ * timeline, in shares of its contain range:
+ *   A  0 → --a1      the street front opens
+ *   B  --a1 → --c0   Floor 1 lifts, the tags swing in
+ *   C  --c0 → --c1   the thread walks; stop k is reached at c0 + (c1 − c0) × at
+ *   D  --c1 → 100    the curtain closes
+ * --scroll is the distance that range takes: the section's height less the
+ * screen, give or take the page's scroll padding (which a view timeline takes
+ * as its inset). Each step of the words beside the stage is placed so that it
+ * reaches its line (--line) as its act or stop begins, and keeps to that line
+ * (sticky) until the next one arrives: nothing lags the stage. The figures
+ * here are the rest of the arithmetic; change one and the rest follow.
+ */
+.theatre {
+  /*
+   * Phones: the walk gets more of the scroll, and the scroll is a fixed
+   * length (one screen plus 1950px), so every stop's words, which are as long
+   * on a short phone as on a tall one, have the room they need under the stage.
+   */
+  --a1: 18;
+  --c0: 33;
+  --c1: 95;
+  --w: calc(var(--c1) - var(--c0));
+  --h: calc(100svh + 1950px);
+  --inset-top: var(--space-xl);
+  --inset-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  --stage-top: 0px;
+  --stage-h: 48svh;
+  --scroll: calc(var(--h) - 100dvh + var(--inset-top) + var(--inset-bottom));
+  /* The current step's words stand just under the stage. */
+  --line: calc(var(--inset-top) + var(--stage-h));
+
+  --stage-timeline: --theatre;
+  --act-a: contain 0% contain calc(var(--a1) * 1%);
+  --act-b: contain calc(var(--a1) * 1%) contain calc(var(--c0) * 1%);
+  --act-c: contain calc(var(--c0) * 1%) contain calc(var(--c1) * 1%);
+  --act-d: contain calc(var(--c1) * 1%) contain 100%;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  height: var(--h);
+  padding-inline: var(--gutter);
+  view-timeline: --theatre;
+}
+
+/* Tablets: the glass header stays, so the stage stands under it. */
+@media (min-width: 48rem) {
+  .theatre {
+    --inset-top: calc(4.5rem + var(--space-xl));
+    --inset-bottom: 0px;
+    --stage-top: 4.5rem;
+  }
+}
+
+/* A skip link, for those who would rather not walk the house: shown when focused. */
+.skip {
+  position: absolute;
+  top: 0;
+  left: var(--gutter);
+  z-index: 3;
+  padding: 0.5rem 0.8rem;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.skip:not(:focus, :focus-visible) {
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 0;
+}
+
+/* ------------------------------------------------------------- the stage */
+
+.stage {
+  grid-row: 1;
+  align-self: start;
+  position: sticky;
+  top: var(--stage-top);
+  z-index: 1;
+  height: var(--stage-h);
+  margin-inline: calc(var(--gutter) * -1);
+  overflow: clip;
+  background: var(--page);
+  --stage-height: calc(var(--stage-h) - 2.25rem);
+}
+
+/* On a phone the caption is one small line under the stage, out of the words' way. */
+.stage figcaption {
+  margin-top: 0.35rem;
+  padding-inline: var(--gutter);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+/* ------------------------------------------------------------- the words */
+
+.steps {
+  grid-row: 2;
+}
+
+.act,
+.stops > li {
+  position: relative;
+}
+
+/* Each step keeps to the line while its act or stop plays. */
+.body {
+  position: sticky;
+  top: var(--line);
+  padding-block: 0 var(--space-l);
+}
+
+.act:first-child {
+  min-height: calc(var(--a1) / 100 * var(--scroll));
+}
+
+.actB {
+  min-height: calc((var(--c0) - var(--a1)) / 100 * var(--scroll));
+}
+
+.steps .stops {
+  margin: 0;
+  padding: calc(var(--w) * var(--first) / 100 * var(--scroll)) 0 0;
+}
+
+.stops > li {
+  min-height: calc((var(--w) * (var(--next) - var(--at)) + var(--tail, 0)) / 100 * var(--scroll));
+}
+
+.stops > li:last-child {
+  --tail: calc(100 - var(--c1));
+}
+
+.heading {
+  font-size: var(--step-4);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  max-width: 12em;
+}
+
+.lede {
+  margin-top: var(--space-m);
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+/* The three phrases the stage's tags carry, each on a pin. */
+.phrases {
+  display: grid;
+  gap: var(--space-s);
+  margin: 0;
+  padding: 0;
+}
+
+.phrases li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
+  font-size: var(--step-1);
+  line-height: 1.3;
+}
+
+.phrases li::before {
+  content: "";
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 0 3px var(--paper-near), var(--edge-x) var(--edge-y) 0 3px var(--paper-edge);
+}
+
+/*
+ * The walk's stops, on a thread like the stage's: each stop has its ring, and
+ * the thread runs from ring to ring. The current stop's ring becomes the bead
+ * (lamplight in a teak ring) and the others step back to --text-soft.
+ */
+.stops > li {
+  padding-left: 2.1rem;
+}
+
+.stops > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: calc(0.475rem - 1.5px);
+  top: 0.95rem;
+  bottom: -0.55rem;
+  width: 3px;
+  background: var(--thread);
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+.stops .body::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: -2.1rem;
+  top: 0.32rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 2.5px solid var(--jar-orange);
+  border-radius: 50%;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  transition:
+    background-color var(--dur-ui) var(--ease-out),
+    border-color var(--dur-ui) var(--ease-out);
+}
+
+.stops h3 {
+  font-size: var(--step-1);
+  line-height: 1.3;
+}
+
+.stops p {
+  margin-top: 0.3rem;
+  max-width: 34rem;
+  line-height: 1.55;
+}
+
+.stops > li {
+  transition: color var(--dur-ui) var(--ease-out);
+}
+
+/* The closing lines, as the curtain closes. */
+.closing {
+  font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
+  font-size: var(--step-1);
+  line-height: 1.4;
+  max-width: 30rem;
+}
+
+.closing + .closing {
+  margin-top: var(--space-2xs);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-xl);
+  margin-top: var(--space-l);
+}
+
+/* The current stop (StageDirector names it on the stage): others step back, its ring takes the bead. */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="0"]) .stops > li:not([data-stop="0"]),
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="1"]) .stops > li:not([data-stop="1"]),
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="2"]) .stops > li:not([data-stop="2"]),
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="3"]) .stops > li:not([data-stop="3"]),
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="4"]) .stops > li:not([data-stop="4"]),
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="5"]) .stops > li:not([data-stop="5"]) {
+    color: var(--text-soft);
+  }
+
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="0"]) .stops > li[data-stop="0"] .body::before,
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="1"]) .stops > li[data-stop="1"] .body::before,
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="2"]) .stops > li[data-stop="2"] .body::before,
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="3"]) .stops > li[data-stop="3"] .body::before,
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="4"]) .stops > li[data-stop="4"] .body::before,
+  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="5"]) .stops > li[data-stop="5"] .body::before {
+    border-color: var(--teak);
+    background: var(--lamplight);
+  }
+}
+
+/* --------------------------------------------------------------- the cues */
+
+/*
+ * StageDirector's cues: one per act and stop, each placed so its top crosses
+ * the line halfway down the screen (its own line, 0.5) as that act or stop
+ * begins, and running on to the section's end: the latest cue at the line is
+ * the current one, however far the reader jumps.
+ */
+.cues {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.cues > span {
+  --from: 0;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  top: calc(50dvh - var(--inset-top) + var(--from) / 100 * var(--scroll));
+}
+
+.cues > [data-act="b"] {
+  --from: var(--a1);
+}
+
+.cues > [data-act="c"] {
+  --from: calc(var(--c0) + var(--w) * var(--at));
+}
+
+.cues > [data-act="d"] {
+  --from: var(--c1);
+}
+
+/* ------------------------------------------------------------- wide screens */
+
+/*
+ * Wide screens: the words on the left (5/12), the stage on the right (7/12),
+ * held under the header. The five stops stand together as an itinerary while
+ * the thread walks, so all of them are always in view.
+ */
+@media (min-width: 60rem) {
+  .theatre {
+    --a1: 20;
+    --c0: 45;
+    --c1: 95;
+    --h: 260svh;
+    /*
+     * The words stand level with the middle of the stage: the itinerary (about
+     * 34rem tall) is centred in the screen below the header, and no lower
+     * than 10rem under it.
+     */
+    --line: calc(var(--inset-top) + clamp(1rem, (100svh - var(--inset-top) - 34rem) / 2, 10rem));
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: clamp(2rem, 4vw, 4.5rem);
+    max-width: calc(var(--max-width) + 2 * var(--gutter));
+    margin-inline: auto;
+  }
+
+  .steps {
+    grid-row: 1;
+    grid-column: 1;
+    padding-top: calc(var(--line) - var(--inset-top));
+  }
+
+  .stage {
+    grid-row: 1;
+    grid-column: 2;
+    top: var(--inset-top);
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    background: none;
+    --stage-height: min(80svh, 46rem);
+  }
+
+  .stage figcaption {
+    margin-top: var(--space-s);
+    padding: 0;
+    font-size: var(--step--1);
+  }
+
+  .steps .stops {
+    position: sticky;
+    top: var(--line);
+    padding-top: 0;
+  }
+
+  .stops > li {
+    min-height: 0;
+    padding-bottom: var(--space-m);
+  }
+
+  .stops .body {
+    position: relative;
+    top: auto;
+    padding: 0;
+  }
+
+  .stops > li:not(:last-child)::after {
+    bottom: -0.35rem;
+  }
+
+  .stops p {
+    font-size: var(--step--1);
+  }
+
+  /* The itinerary holds its place for the whole walk. */
+  .walk::after {
+    content: "";
+    display: block;
+    height: calc(var(--w) / 100 * var(--scroll));
+  }
+}

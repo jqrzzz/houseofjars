@@ -1,0 +1,118 @@
+/*
+ * The rooms, each drawing in a niche cut into the paper: an arch of far paper
+ * with its card edge, the drawing standing on its sill. The Pop-up (§4.3): the
+ * drawing hinges up from 62° about its foot as it scrolls into view, the
+ * reader holding the clock; at rest it stands. Never the words.
+ */
+.block {
+  padding-block: var(--space-3xl) var(--space-4xl);
+}
+
+.rooms {
+  display: grid;
+  gap: var(--space-xl);
+  margin: 0 0 var(--space-2xl);
+}
+
+.rooms > li {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  column-gap: var(--space-l);
+  align-items: start;
+}
+
+.rooms > li > div {
+  position: relative;
+  grid-row: span 2;
+  aspect-ratio: 4 / 5;
+}
+
+/* The card edge: the arch again, behind, offset. */
+.rooms > li > div::before,
+.rooms > li > div::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
+}
+
+.rooms > li > div::before {
+  translate: var(--edge-x) var(--edge-y);
+  background: var(--paper-edge);
+}
+
+/* The recess: far paper, darker under the crown, where the arch's thickness shades it. */
+.rooms > li > div::after {
+  background:
+    linear-gradient(to bottom, color-mix(in oklab, var(--paper-edge) 45%, transparent) 0 0.4rem, transparent 0.4rem),
+    var(--paper-far);
+}
+
+.rooms span {
+  position: absolute;
+  z-index: 1;
+  inset: 30% 8% 9%;
+  display: grid;
+  place-items: end center;
+  transform-origin: 50% 100%;
+}
+
+.rooms img {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+.rooms h3 {
+  font-size: var(--step-2);
+}
+
+.rooms p {
+  margin-top: var(--space-xs);
+  color: var(--text-soft);
+}
+
+@media (min-width: 48rem) {
+  .rooms {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2xl) clamp(1.5rem, 0.5rem + 2.5vw, 3rem);
+  }
+
+  .rooms > li {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+
+  .rooms > li > div {
+    grid-row: auto;
+    aspect-ratio: 6 / 5;
+    margin-bottom: var(--space-l);
+  }
+
+  .rooms span {
+    inset: 20% 11% 8%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    :global(:root:not([data-motion="still"])) .rooms span {
+      animation: pop-up linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 80%;
+    }
+  }
+}
+
+@keyframes pop-up {
+  from {
+    transform: perspective(900px) rotateX(62deg);
+  }
+
+  to {
+    transform: perspective(900px) rotateX(0deg);
+  }
+}

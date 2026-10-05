@@ -1,11 +1,15 @@
-/* The hero: the headline beside a real photograph of the dorms, framed in the house's arch. */
+/* The hero: the headline beside a real photograph of the dorms, framed in the house's arch under three of its lamps. */
 .hero {
-  padding-block: clamp(2rem, 1rem + 3.2vw, 4rem) var(--space-3xl);
+  padding-block: clamp(1.5rem, 0.75rem + 2.4vw, 3rem) var(--space-3xl);
+  /* The lamps rise a little as the hero leaves the screen (its exit, measured from the very top). */
+  view-timeline: --hero;
+  view-timeline-inset: 0px;
 }
 
+/* Phones: the arch follows the words closely, so its lamps and crown are on the first screen. */
 .grid {
   display: grid;
-  gap: var(--space-2xl);
+  gap: var(--space-m);
   align-items: end;
 }
 
@@ -65,16 +69,61 @@
   margin-top: var(--space-xl);
 }
 
-/* Phones: the arch under the words, not quite full width, so the page still reads as a page. */
+.now {
+  margin-top: var(--space-l);
+}
+
+/*
+ * The photograph under its lamps. The lamps hang from a line --ceiling above
+ * the arch's crown, each at its share across; their shades clear the mat and
+ * their halos lie behind it (the frame is above them), so no light or drawing
+ * ever crosses the photograph.
+ */
 .photoWrap {
+  --ceiling: 5.25rem;
   position: relative;
   width: min(100%, 22rem);
   justify-self: center;
+  padding-top: var(--ceiling);
+}
+
+.lamps {
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--ceiling);
+  pointer-events: none;
+}
+
+.hang {
+  position: absolute;
+  top: 0;
+  left: var(--at);
+  translate: -50% 0;
+}
+
+/* Each cord hangs from a small teak ceiling rose, so the lamps hang from a ceiling, not from the air. */
+.hang::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  width: 10px;
+  height: 4px;
+  translate: -50% 0;
+  border-radius: 1px 1px 3px 3px;
+  background: color-mix(in oklab, var(--teak) 84%, var(--page));
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+.photo {
+  position: relative;
+  z-index: 1;
 }
 
 /* The score: a small pane of glass over the foot of the arch, above the caption. */
 .score {
   position: absolute;
+  z-index: 2;
   left: -0.75rem;
   bottom: 3.25rem;
   display: grid;
@@ -107,58 +156,23 @@
 }
 
 /*
- * Arriving: the words and the photograph drift up into place, one after
- * another. They start barely faded, never hidden, so the headline is on screen
- * from the first frame. After the logo splash, they wait for the curtain.
+ * One move in this view: the Lamplighting (HouseLamp.module.css). The words
+ * and the photograph stand still from the first frame. As the hero scrolls
+ * away, the lamps are drawn up 24 px, linear, as the reader holds the clock.
  */
 @media (prefers-reduced-motion: no-preference) {
-  .copy > *,
-  .score {
-    animation: hero-rise 900ms var(--ease-out) both;
-  }
-
-  .copy > :nth-child(2) {
-    animation-delay: 70ms;
-  }
-
-  .copy > :nth-child(3) {
-    animation-delay: 140ms;
-  }
-
-  .copy > :nth-child(4) {
-    animation-delay: 200ms;
-  }
-
-  .copy > :nth-child(5) {
-    animation-delay: 260ms;
-  }
-
-  .photoWrap {
-    animation: hero-photo 1200ms var(--ease-out) 80ms both;
-  }
-
-  .score {
-    animation-delay: 520ms;
-  }
-
-  :global(html.splash) .copy > *,
-  :global(html.splash) .photoWrap,
-  :global(html.splash) .score {
-    animation-delay: 1150ms;
+  @supports (animation-timeline: view()) {
+    :global(:root:not([data-motion="still"])) .lamps {
+      animation: lamps-rise linear both;
+      animation-timeline: --hero;
+      animation-range: exit 0% exit 100%;
+    }
   }
 }
 
-@keyframes hero-rise {
-  from {
-    opacity: 0.35;
-    transform: translateY(1.1rem);
-  }
-}
-
-@keyframes hero-photo {
-  from {
-    opacity: 0.35;
-    transform: translateY(1rem) scale(0.975);
+@keyframes lamps-rise {
+  to {
+    transform: translateY(-24px);
   }
 }
 

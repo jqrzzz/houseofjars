@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import walks from "../../public/house/walks.json";
-import { actAt, actRanges, arriveFrames, beadFrames, keyframes, shareAlong, shareAt, threadFrames, walkClock } from "./acts";
+import { actAt, actRanges, arriveFrames, beadFrames, keyframes, lightName, shareAlong, shareAt, stageKeyframes, threadFrames, walkClock } from "./acts";
 
 const arrival = walks.routes.arrival.stops;
 
@@ -121,5 +121,33 @@ describe("shareAlong", () => {
     expect(shareAlong("M0 0L10 0L10 10", [10, 5])).toEqual({ share: 0.75, distance: 0 });
     expect(shareAlong("M0 0L10 0", [5, 3]).share).toBe(0.5);
     expect(shareAlong("M-1.5 2L-1.5 -8", [0, -3]).share).toBe(0.5);
+  });
+});
+
+describe("stageKeyframes", () => {
+  const clock = {
+    ats: [0.1, 0.4, 1],
+    shares: { ground: [0, 0.6], floor1: [0.6, 1] } as Record<string, readonly [number, number]>,
+    last: "floor1",
+    lights: [0.1, 0.104, 0.55, 1],
+  };
+
+  it("writes a thread and a bead per floor, a ring per stop and one set per moment a light comes on", () => {
+    const css = stageKeyframes("s-", clock);
+    const names = [...css.matchAll(/@keyframes ([\w-]+)\{/g)].map((m) => m[1]);
+    expect(names).toEqual(["s-t-ground", "s-b-ground", "s-t-floor1", "s-b-floor1", "s-r0", "s-r1", "s-r2", "s-l10", "s-l55", "s-l100"]);
+  });
+
+  it("names a light's keyframes as its disc does", () => {
+    expect(lightName("s-", 0.104)).toBe("s-l10");
+    expect(stageKeyframes("s-", clock)).toContain(`@keyframes ${lightName("s-", 0.55)}{`);
+  });
+
+  it("is deterministic and keeps the bead in sight only on the floor the walk ends on", () => {
+    const css = stageKeyframes("s-", clock);
+    expect(stageKeyframes("s-", clock)).toBe(css);
+    const bead = (floor: string) => new RegExp(`@keyframes s-b-${floor}\\{([^@]*)\\}`).exec(css)?.[1] ?? "";
+    expect(bead("floor1")).toMatch(/100%\{[^}]*opacity:1/);
+    expect(bead("ground")).toMatch(/100%\{[^}]*opacity:0/);
   });
 });

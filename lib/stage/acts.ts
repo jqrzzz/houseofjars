@@ -225,3 +225,42 @@ export function shareAlong(d: string, point: readonly [number, number]): { share
   });
   return best;
 }
+
+/** What a scroll stage's keyframes need to know of its walk: each stop's share, each floor's stretch, the floor it ends on, and the shares at which its lights come on. */
+export interface StageClock {
+  readonly ats: readonly number[];
+  readonly shares: Readonly<Record<string, readonly [number, number]>>;
+  readonly last?: string;
+  readonly lights: readonly number[];
+}
+
+/** The name of the keyframes a light at share `share` of the walk plays on stage `p`: lights that come on together share them. */
+export const lightName = (p: string, share: number) => `${p}l${Math.round(share * 100)}`;
+
+/**
+ * The keyframes a scroll stage plays inside Act C, named after the stage (its
+ * prefix `p`), so two stages on a page never share them: per floor its thread
+ * (`{p}t-{floor}`) and bead (`{p}b-{floor}`), per stop its ring (`{p}r{k}`),
+ * and one per moment a light comes on (lightName). Pure, so the stage can
+ * write them wherever it renders.
+ */
+export function stageKeyframes(p: string, c: StageClock): string {
+  const clock = walkClock(c.ats.map((at) => ({ at })));
+  let css = "";
+  for (const [floor, share] of Object.entries(c.shares)) {
+    css += keyframes(`${p}t-${floor}`, threadFrames(clock, share));
+    css += keyframes(`${p}b-${floor}`, beadFrames(clock, share, floor === c.last));
+  }
+  c.ats.forEach((at, k) => {
+    css += keyframes(`${p}r${k}`, arriveFrames(clock, at, { wait: "opacity:0;scale:.6", ahead: "opacity:.5;scale:.6", rest: "opacity:1;scale:1" }));
+  });
+  const named = new Set<string>();
+  for (const share of c.lights) {
+    const name = lightName(p, share);
+    if (named.has(name)) continue;
+    named.add(name);
+    const at = Math.round(share * 100) / 100;
+    css += keyframes(name, arriveFrames(clock, at, { wait: "opacity:0;scale:.9", rest: "opacity:1;scale:1", lead: 0.03 }));
+  }
+  return css;
+}

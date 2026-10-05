@@ -1,0 +1,42 @@
+.split {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.intro {
+  max-width: 40rem;
+}
+
+.heading {
+  font-size: var(--step-4);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+}
+
+.lede {
+  margin-top: var(--space-l);
+  max-width: 34rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s) var(--space-xl);
+  margin-top: var(--space-xl);
+}
+
+/* The diorama closes the section, the width of the page's column. */
+.diorama {
+  margin-top: var(--space-3xl);
+}
+
+@media (min-width: 60rem) {
+  .split {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: var(--space-4xl);
+    align-items: start;
+  }
+}

@@ -97,42 +97,52 @@
   border-bottom: 0;
 }
 
-.tick {
+/*
+ * The tick, in running stitches: 3 on, 2 off, like a thread through paper.
+ * Drawn by CSS (a mask of the stitched tick, filled with the accent), so a
+ * long ledger carries no markup for it.
+ */
+.ticked .term::before {
+  content: "";
   position: absolute;
-  left: -2.75rem;
-  top: calc(var(--space-m) - 0.1rem);
-  width: 1.3rem;
-  height: 1.3rem;
-  fill: none;
-  stroke: var(--deep-accent, var(--jar-orange));
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 1;
+  left: -2.85rem;
+  top: calc(var(--space-m) - 0.2rem);
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--deep-accent, var(--jar-orange));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3.5 10.5 8 15 16.5 4.5' fill='none' stroke='%23000' stroke-width='3' stroke-dasharray='3.2 2' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3.5 10.5 8 15 16.5 4.5' fill='none' stroke='%23000' stroke-width='3' stroke-dasharray='3.2 2' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 /*
- * Where the browser can, the tick draws itself as its row slides into view,
- * and is whole by the time the row is: a row already on screen never shows
- * half a tick.
+ * Where the browser can, the stitches are sewn in from the left as their row
+ * slides into view, and are whole by the time the row is: a row already on
+ * screen never shows half a tick. (The tick only ever runs rightward, so a
+ * wipe from the left follows the thread.)
  */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
-    .tick path {
-      animation: tick linear both;
-      animation-timeline: view();
+    .ticked .row {
+      view-timeline: --ledger-row;
+    }
+
+    :global(:root:not([data-motion="still"])) .ticked .term::before {
+      animation: stitch linear both;
+      animation-timeline: --ledger-row;
       animation-range: entry 10% entry 100%;
     }
   }
 }
 
-@keyframes tick {
+@keyframes stitch {
   from {
-    stroke-dashoffset: 1;
+    clip-path: inset(0 100% 0 0);
   }
 
   to {
-    stroke-dashoffset: 0;
+    clip-path: inset(0 0 0 0);
   }
 }
 
