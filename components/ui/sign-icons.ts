@@ -7,6 +7,8 @@ import type { HouseIconName } from "./house-icons";
  * amenity gets one it should.
  */
 const byWords: readonly [RegExp, HouseIconName][] = [
+  // Where smoking is allowed, a place, not a ban.
+  [/smoke out past/i, "location"],
   [/smok/i, "no-smoking"],
   [/front door/i, "front-door"],
   [/padlock/i, "valuables"],

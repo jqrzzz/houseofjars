@@ -670,7 +670,8 @@ strong {
 :root[data-motion="still"] *::before,
 :root[data-motion="still"] *::after {
   animation: none !important;
-  transition-duration: 0.01ms !important;
+  /* No transitions at all, not even instant ones: hidden controls would otherwise keep them pending. */
+  transition: none !important;
   scroll-behavior: auto !important;
 }
 

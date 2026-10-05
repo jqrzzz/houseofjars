@@ -20,10 +20,12 @@
   }
 
   @supports (animation-timeline: scroll()) {
-    .header {
-      animation: header-lift linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 6rem;
+    @media (prefers-reduced-motion: no-preference) {
+      .header {
+        animation: header-lift linear both;
+        animation-timeline: scroll(root);
+        animation-range: 0 6rem;
+      }
     }
   }
 }

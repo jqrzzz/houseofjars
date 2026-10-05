@@ -10,6 +10,7 @@ describe("icons for rules and amenities", () => {
   it("gives the rules the icons on the house's signs", () => {
     const icon = (start: string) => signIcon([...rules.house, ...rules.stay].find((rule) => rule.value.rule.startsWith(start))!.value.rule);
     expect(icon("No smoking")).toBe("no-smoking");
+    expect(icon("Smoke out past the terrace, by the small jar for cigarette butts, not on the terrace itself.")).toBe("location");
     expect(icon("No outside guests")).toBe("no-outside-guests");
     expect(icon("Eat and drink")).toBe("no-food-in-dorms");
     expect(icon("No outside food")).toBe("no-food-in-dorms");
