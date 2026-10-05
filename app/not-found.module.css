@@ -40,6 +40,17 @@
   height: auto;
 }
 
+/* The focus ring goes round the whole scene, Shadow and the jar, so it never cuts across him. */
+.scene:has(> .jar:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 6px;
+  border-radius: var(--radius-m);
+}
+
+.scene .jar:focus-visible {
+  outline: none;
+}
+
 .code {
   font-size: var(--step--2);
   font-weight: 650;

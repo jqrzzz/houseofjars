@@ -623,13 +623,16 @@ strong {
   }
 }
 
+/*
+ * Reduced motion rests exactly as Still does (below): no animations and no
+ * transitions, not even instant ones, since every base style is its rest frame.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
     scroll-behavior: auto !important;
   }
 }

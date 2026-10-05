@@ -6,22 +6,26 @@
   view-timeline-inset: 0px;
 }
 
-/* Phones: the arch follows the words closely, so its lamps and crown are on the first screen. */
+/*
+ * Phones: the words are set tight and the house-now line waits under the
+ * arch, so the first screen holds the headline, Book and the top half of the
+ * photograph under its lamps. The words' box steps aside (display: contents)
+ * so that line can follow the photograph; the spacing is the words' own.
+ */
 .grid {
   display: grid;
-  gap: var(--space-m);
   align-items: end;
 }
 
 .copy {
-  max-width: 40rem;
+  display: contents;
 }
 
 .greeting {
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
-  margin-bottom: var(--space-l);
+  margin-bottom: var(--space-s);
   color: var(--accent-text);
   font-size: var(--step--1);
   font-weight: 650;
@@ -47,17 +51,17 @@
 }
 
 .lede {
-  margin-top: var(--space-l);
+  margin-top: var(--space-m);
   max-width: 36rem;
-  font-size: var(--step-1);
+  font-size: var(--step-0);
   line-height: 1.55;
   color: var(--text-soft);
 }
 
 /* Why to book direct, under the lede. */
 .direct {
-  margin-top: var(--space-s);
-  font-size: var(--step-1);
+  margin-top: var(--space-xs);
+  font-size: var(--step-0);
   font-weight: var(--display-weight);
   color: var(--text);
 }
@@ -66,10 +70,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-s);
-  margin-top: var(--space-xl);
+  margin-top: var(--space-l);
 }
 
 .now {
+  order: 2;
   margin-top: var(--space-l);
 }
 
@@ -80,10 +85,12 @@
  * ever crosses the photograph.
  */
 .photoWrap {
-  --ceiling: 5.25rem;
+  --ceiling: 4.75rem; /* the longest cord and its shade are 68 px: 8 px clear of the crown */
+  order: 1;
   position: relative;
   width: min(100%, 22rem);
   justify-self: center;
+  margin-top: var(--space-l);
   padding-top: var(--ceiling);
 }
 
@@ -182,8 +189,33 @@
     gap: var(--space-3xl);
   }
 
+  .copy {
+    display: block;
+    max-width: 40rem;
+  }
+
+  .greeting {
+    margin-bottom: var(--space-l);
+  }
+
+  .lede {
+    margin-top: var(--space-l);
+    font-size: var(--step-1);
+  }
+
+  .direct {
+    margin-top: var(--space-s);
+    font-size: var(--step-1);
+  }
+
+  .actions {
+    margin-top: var(--space-xl);
+  }
+
   .photoWrap {
+    --ceiling: 5.25rem;
     width: 100%;
+    margin-top: 0;
   }
 
   .score {

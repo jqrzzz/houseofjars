@@ -90,7 +90,10 @@
   margin-inline: calc(var(--gutter) * -1);
   overflow: clip;
   background: var(--page);
-  --stage-height: calc(var(--stage-h) - 2.25rem);
+  /* The words slide out from under the stage through a short fade of the page's own colour, not a hard edge. */
+  box-shadow: 0 0.75rem 0.6rem -0.2rem var(--page);
+  /* Room for the two-line caption, with a little air under it. */
+  --stage-height: calc(var(--stage-h) - 3rem);
 }
 
 /* On a phone the caption is one small line under the stage, out of the words' way. */
@@ -353,6 +356,7 @@
     margin: 0;
     overflow: visible;
     background: none;
+    box-shadow: none;
     --stage-height: min(80svh, 46rem);
   }
 
@@ -392,5 +396,17 @@
     content: "";
     display: block;
     height: calc(var(--w) / 100 * var(--scroll));
+  }
+}
+
+/* Wider still: the itinerary is read at body size (about 38rem tall). */
+@media (min-width: 75rem) {
+  .theatre {
+    --line: calc(var(--inset-top) + clamp(1rem, (100svh - var(--inset-top) - 38rem) / 2, 10rem));
+  }
+
+  .stops p {
+    font-size: var(--step-0);
+    line-height: 1.5;
   }
 }
