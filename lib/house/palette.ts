@@ -13,7 +13,7 @@
  * left-facing tone of wood) and every rule is scoped under the SVG's own
  * class, so several drawings can sit inline on one page.
  */
-import type { AreaKind, Theme } from "./types";
+import type { AreaKind, Outfit, Theme } from "./types";
 
 export type Tone = 0 | 1 | 2;
 
@@ -138,13 +138,39 @@ export function mix(from: string, to: string, t: number): string {
   return hex([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]);
 }
 
-export function tones(material: Material, theme: "day" | "evening"): readonly [string, string, string] {
+/**
+ * A material's three tones. The paper outfit sets its faces closer together (half the model's mix), as
+ * sheets of one paper folded, not blocks lit hard.
+ */
+export function tones(material: Material, theme: "day" | "evening", outfit: Outfit = "model"): readonly [string, string, string] {
   const set = theme === "day" ? material.dayTones : material.eveningTones;
   if (set) return set;
   const base = theme === "day" ? material.day : material.evening;
+  const k = outfit === "paper" ? 0.5 : 1;
   return theme === "day"
-    ? [base, mix(base, DAY_SHADE, 0.1), mix(base, DAY_SHADE, 0.22)]
-    : [base, mix(base, EVENING_SHADE, 0.16), mix(base, EVENING_SHADE, 0.32)];
+    ? [base, mix(base, DAY_SHADE, 0.1 * k), mix(base, DAY_SHADE, 0.22 * k)]
+    : [base, mix(base, EVENING_SHADE, 0.16 * k), mix(base, EVENING_SHADE, 0.32 * k)];
+}
+
+/** The lamplight the paper outfit's Evening card edges catch (lamplight, from public/art/house.svg). */
+const LAMPLIGHT = "#eed079";
+
+/**
+ * The paper outfit's far paper, the site's --paper-far (stone into rice by day, night-raised into night by
+ * Evening): the back planes (the cutaway's party and back walls) mix a quarter of the way toward it, so they
+ * recede like the back sheets of a paper theatre. Their classes carry an "f" ("pl1f").
+ */
+const PAPER_FAR = { day: "#ebe3d6", evening: "#271a10" } as const;
+const FAR_MIX = 0.25;
+/** A faded floor in the paper outfit (Floor 2, not yet photographed) is pale, not see-through: its tones ("wd1g") and its ink this far toward the far paper. */
+const PALE_MIX = 0.58;
+
+/**
+ * A material's card edge in the paper outfit: by day the next darker tone (the sheet's thickness, in its
+ * shadow); by Evening a lamplight rim, the edge catching the light from behind.
+ */
+export function edgeTone(material: Material, theme: "day" | "evening"): string {
+  return theme === "day" ? mix(material.day, DAY_SHADE, 0.34) : mix(material.evening, LAMPLIGHT, 0.5);
 }
 
 /** The class of a material's tone: "wd0" (top), "wd1" (left-facing), "wd2" (right-facing). */
@@ -211,37 +237,79 @@ const ROLES: Record<string, { day: string; evening?: string }> = {
   ln: { day: "fill:#4a2f1b;font-size:10px;font-weight:600", evening: "fill:#f1e4cf" },
 };
 
+/**
+ * The paper outfit's roles, over the model's (lib/house/render.ts draws with the same classes; the pen in
+ * paperClass below maps them). Nothing is stroked unless a role says so: the root has no stroke.
+ * - sl: the silhouette, on a <use> of a thing's group drawn just before it: its every shape stroked 3 px wide
+ *   in ink, under the thing itself, so 1.5 px of ink shows around its outside and none inside.
+ * - id: inner detail (window bars, cords, curtain folds), 1 px of ink at 60%.
+ * - sk: a stick (a leg, a rod, a handle): a 1.5 px line of ink.
+ * - ce: a card edge, the outline repeated behind a big plane, moved down and right by day (the sheet's
+ *   thickness) and up by Evening (a lamplight rim); its colour is its material's edge tone (e + code).
+ */
+const PAPER_ROLES: Record<string, { day: string; evening?: string }> = {
+  sl: { day: `stroke:${INK.day};stroke-width:3`, evening: `stroke:${INK.evening}` },
+  id: { day: `fill:none;stroke:${INK.day};stroke-width:1;stroke-opacity:.6`, evening: `stroke:${INK.evening}` },
+  sk: { day: `fill:none;stroke:${INK.day};stroke-width:1.1`, evening: `stroke:${INK.evening}` },
+  ce: { day: "transform:translate(1.5px,1.5px)", evening: "transform:translate(0,-1.5px)" },
+  // A faded floor is not see-through: its classes are pale (see PALE_MIX), and so is its ink (paperDimRules).
+  dim: { day: "opacity:1" },
+  // The awning's roof: thin paper, the shopfront showing through.
+  gh: { day: "fill-opacity:.42" },
+  // A label: a square paper tag with a hairline of ink.
+  lb: { day: `fill:#fffaf2;stroke:${INK.day};stroke-width:1`, evening: `fill:#2c1e13;stroke:${INK.evening}` },
+  ld: { day: `fill:none;stroke:${INK.day};stroke-width:1`, evening: `stroke:${INK.evening}` },
+  hu: { day: "fill:none;stroke:#fffaf2;stroke-width:7", evening: "stroke:#2c1e13" },
+};
+
+/** The role table of an outfit. */
+function rolesOf(outfit: Outfit): Record<string, { day: string; evening?: string }> {
+  return outfit === "paper" ? { ...ROLES, ...PAPER_ROLES } : ROLES;
+}
+
 export interface CssOptions {
   readonly theme: Theme;
   /** The root class every rule is scoped under. */
   readonly scope: string;
   /** Every class the drawing uses: only those get a rule. */
   readonly used: ReadonlySet<string>;
+  /** The paper outfit's stylesheet (closer tones, no stroke but where a role sets one). Default "model". */
+  readonly outfit?: Outfit;
 }
 
 const byCode = new Map<string, Material>(Object.values(materials).map((m) => [m.code, m]));
 const kinds = Object.keys(kindTints) as AreaKind[];
 
 /** Role rules: the day declarations carry the structure (widths, dashes), the evening ones only recolour. */
-function roleRules(scope: string, used: readonly string[], which: "day" | "evening"): string {
+function roleRules(scope: string, used: readonly string[], which: "day" | "evening", outfit: Outfit = "model"): string {
+  const roles = rolesOf(outfit);
   let out = "";
   for (const cls of used) {
-    const role = ROLES[cls];
+    const role = roles[cls];
     const decl = role && (which === "day" ? role.day : role.evening);
     if (decl) out += `.${scope} .${cls}{${decl}}`;
   }
   return out;
 }
 
-/** Colour rules for material tones, stroke colours and plan tints. */
-function colourRules(scope: string, used: readonly string[], theme: "day" | "evening"): string {
+/** Colour rules for material tones, stroke colours and plan tints (and the paper outfit's edge tones). */
+function colourRules(scope: string, used: readonly string[], theme: "day" | "evening", outfit: Outfit = "model"): string {
+  const roles = rolesOf(outfit);
   let out = "";
   for (const cls of used) {
-    if (ROLES[cls]) continue;
-    const tone = /^([a-z]{2})([012])$/.exec(cls);
+    if (roles[cls]) continue;
+    const tone = /^([a-z]{2})([012])([fg]?)$/.exec(cls);
     const material = tone && byCode.get(tone[1]!);
     if (tone && material) {
-      out += `.${scope} .${cls}{fill:${tones(material, theme)[Number(tone[2]) as Tone]}}`;
+      const base = tones(material, theme, outfit)[Number(tone[2]) as Tone];
+      const toward = tone[3] === "f" ? FAR_MIX : tone[3] === "g" ? PALE_MIX : 0;
+      out += `.${scope} .${cls}{fill:${toward ? mix(base, PAPER_FAR[theme], toward) : base}}`;
+      continue;
+    }
+    const edge = /^e([a-z]{2})(g?)$/.exec(cls);
+    const edged = edge && byCode.get(edge[1]!);
+    if (edged) {
+      out += `.${scope} .${cls}{fill:${edge[2] ? mix(edgeTone(edged, theme), PAPER_FAR[theme], PALE_MIX) : edgeTone(edged, theme)}}`;
       continue;
     }
     const stroke = /^k([a-z]{2})$/.exec(cls);
@@ -269,42 +337,86 @@ function ghostRules(scope: string, theme: "day" | "evening", structure: boolean)
   return (structure ? `${s} path{stroke-opacity:.3}` : "") + `${s} path:not(.n){fill:${GHOST[theme]}}`;
 }
 
-/** Every class the stylesheet can style (roles, material tones, stroke colours, plan tints): for tests. */
+/** Every class the stylesheet can style (roles, material tones, stroke colours, plan tints, paper roles and edge tones): for tests. */
 export function styledClass(cls: string): boolean {
-  if (ROLES[cls] || cls === "dg") return true;
-  const tone = /^([a-z]{2})[012]$/.exec(cls);
+  if (ROLES[cls] || PAPER_ROLES[cls] || cls === "dg") return true;
+  const tone = /^([a-z]{2})[012][fg]?$/.exec(cls);
   if (tone && byCode.has(tone[1]!)) return true;
-  const stroke = /^k([a-z]{2})$/.exec(cls);
+  if (/^e[a-z]{2}g$/.test(cls) && byCode.has(cls.slice(1, 3))) return true;
+  const stroke = /^[ke]([a-z]{2})$/.exec(cls);
   if (stroke && byCode.has(stroke[1]!)) return true;
   const kind = /^t-([a-z]+)$/.exec(cls);
   return Boolean(kind && kinds.includes(kind[1] as AreaKind));
 }
 
-/** Whether a class sets a fill (a material tone, a plan tint, or a role with a fill): for tests. */
+/** Whether a class sets a fill (a material tone, an edge tone, a plan tint, or a role with a fill): for tests. */
 export function fillingClass(cls: string): boolean {
-  const role = ROLES[cls];
+  const role = PAPER_ROLES[cls] ?? ROLES[cls];
   if (role) return /(^|;)fill:/.test(role.day);
   return styledClass(cls) && !/^k/.test(cls) && cls !== "dg";
 }
 
+/** Whether a class paints a real fill (not fill:none): a face, not a line. */
+function paintsFill(cls: string): boolean {
+  const role = ROLES[cls];
+  if (role) return /(^|;)fill:(?!none)/.test(role.day);
+  return fillingClass(cls);
+}
+
+/** The class of a material's card edge in the paper outfit ("ewd": the edge of wood). */
+export function edgeOf(material: MaterialName): string {
+  return "e" + materials[material].code;
+}
+
+/** Classes a face drops in the paper outfit: outlines and hairlines (the silhouette draws the ink), grids, dashes. */
+const FACE_DROPS = new Set(["o", "h", "ns", "tg", "sd", "dl"]);
+/** Lines the paper outfit keeps as they are. */
+const KEPT_LINES = new Set(["id", "sk", "rt", "rh", "rl", "hl", "hu", "ld"]);
+
+/**
+ * The pen of the paper outfit: the classes a path takes, or null to leave it out. Faces keep their fills
+ * and lose their outlines. Lines: a thick one (a handle, a tap) or an outlined open one (a leg, a rod)
+ * becomes a stick of ink; light cones, hairlines, grids, dashes and outlines go (the silhouette, drawn
+ * under each thing, is its only ink). On plans (`plan`), hairlines and grids (stair treads, door swings)
+ * stay as inner detail.
+ */
+export function paperClass(cls: string, line: boolean, plan = false): string | null {
+  const tokens = cls.split(" ").filter(Boolean);
+  if (tokens.includes("gw")) return null;
+  if (!line && tokens.some(paintsFill)) return tokens.filter((t) => !FACE_DROPS.has(t)).join(" ");
+  if (tokens.some((t) => KEPT_LINES.has(t))) return cls;
+  const colour = tokens.find((t) => /^k[a-z]{2}$/.test(t));
+  // A coloured line (a pod's curtain on a plan) stays, a stick in its colour.
+  if (colour && (tokens.includes("b") || tokens.includes("o"))) return `sk ${colour}`;
+  if (tokens.includes("b")) return "sk";
+  if (plan && (tokens.includes("h") || tokens.includes("tg"))) return "id";
+  if (tokens.includes("o") && !tokens.includes("n") && !tokens.includes("dl")) return "sk";
+  return null;
+}
+
 /** The SVG's whole stylesheet: base rules, then the Evening palette (under the media query for auto). */
-export function paletteCss({ theme, scope, used }: CssOptions): string {
+export function paletteCss({ theme, scope, used, outfit = "model" }: CssOptions): string {
   const s = `.${scope}`;
   const list = [...used].sort();
   const ghost = used.has("dg");
+  const paper = outfit === "paper";
   const base =
-    `${s}{stroke:${theme === "evening" ? INK.evening : INK.day};stroke-width:1;stroke-linecap:round;stroke-linejoin:round}` +
+    (paper
+      ? `${s}{stroke:none;stroke-linecap:round;stroke-linejoin:round}`
+      : `${s}{stroke:${theme === "evening" ? INK.evening : INK.day};stroke-width:1;stroke-linecap:round;stroke-linejoin:round}`) +
     `${s} path{vector-effect:non-scaling-stroke}` +
     `${s} text{stroke:none;font-family:Figtree,"Noto Sans Lao",system-ui,sans-serif}`;
-  const structure = roleRules(scope, list, "day");
-  if (theme === "day") return base + structure + colourRules(scope, list, "day") + (ghost ? ghostRules(scope, "day", true) : "");
-  const evening = roleRules(scope, list, "evening") + colourRules(scope, list, "evening");
+  const dimInk = (which: "day" | "evening") =>
+    paper && used.has("dim") ? `${s} .dim .sl,${s} .dim .id,${s} .dim .sk{stroke:${mix(INK[which], PAPER_FAR[which], PALE_MIX)}}` : "";
+  const structure = roleRules(scope, list, "day", outfit) + dimInk("day");
+  if (theme === "day") return base + structure + colourRules(scope, list, "day", outfit) + (ghost ? ghostRules(scope, "day", true) : "");
+  const evening = roleRules(scope, list, "evening", outfit) + dimInk("evening") + colourRules(scope, list, "evening", outfit);
   if (theme === "evening") return base + structure + evening + (ghost ? ghostRules(scope, "evening", true) : "");
   return (
     base +
     structure +
-    colourRules(scope, list, "day") +
+    colourRules(scope, list, "day", outfit) +
     (ghost ? ghostRules(scope, "day", true) : "") +
-    `@media (prefers-color-scheme:dark){${s}{stroke:${INK.evening}}${evening}${ghost ? ghostRules(scope, "evening", false) : ""}}`
+    `@media (prefers-color-scheme:dark){${paper ? "" : `${s}{stroke:${INK.evening}}`}${evening}${ghost ? ghostRules(scope, "evening", false) : ""}}`
   );
 }

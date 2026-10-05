@@ -22,6 +22,13 @@ export type Facing = "+x" | "-x" | "+y" | "-y";
 /** auto = day colours, with the Evening palette under prefers-color-scheme: dark. */
 export type Theme = "auto" | "day" | "evening";
 
+/**
+ * How a view is dressed: "model", the accurate drawing (every edge inked, every detail); "paper", cut
+ * paper with an ink silhouette (flat sheets in close tones, ink only around each thing, card edges on the
+ * big planes, deckled walls and slabs, simpler fixtures). See docs/HOUSE_MODEL.md.
+ */
+export type Outfit = "model" | "paper";
+
 export interface Rect {
   readonly x0: number;
   readonly x1: number;

@@ -400,6 +400,8 @@ export interface Node {
   readonly keep?: boolean;
   readonly open?: string;
   readonly close?: string;
+  /** Paper outfit: deckle this node's straight-edged shapes, seeded by this string (lib/house/deckle.ts). */
+  readonly deckle?: string;
 }
 
 const EPS = 1e-6;
@@ -518,12 +520,24 @@ export function emptyBounds(): Bounds {
 }
 
 /**
+ * How the paper outfit writes paths: the classes a path takes (null leaves it out), given whether it is a
+ * line (no closed shape) or a face; and how a deckled shape's edges are cut.
+ */
+export interface Pen {
+  readonly cls: (cls: string, line: boolean) => string | null;
+  readonly deckle: (points: readonly Vec2[], seed: string) => Vec2[];
+}
+
+/**
  * Writes paths and text, and keeps track of the classes used (for the
  * stylesheet) and of every point drawn (for the viewBox), per floor group.
+ * With a pen (the paper outfit), every path's classes go through it first.
  */
 export class Writer {
   readonly used = new Set<string>();
   bounds: Bounds = emptyBounds();
+
+  constructor(readonly pen?: Pen) {}
 
   /** Starts a new bounds record (for a floor group) and returns the previous one. */
   resetBounds(): Bounds {
@@ -576,8 +590,30 @@ export class Writer {
 
   path(cls: string, cmds: readonly Cmd[], attrs = ""): string {
     if (cmds.length === 0) return "";
+    if (this.pen) {
+      const mapped = this.pen.cls(cls, !cmds.some((cmd) => cmd[0] === "Z"));
+      if (mapped === null) return "";
+      cls = mapped;
+    }
     const c = cls ? ` class="${this.classes(cls)}"` : "";
     return `<path${c}${attrs} d="${this.d(cmds)}"/>`;
+  }
+
+  /** A paint with its straight-edged closed shapes deckled (the paper outfit's slabs and walls). */
+  private deckled(p: Paint, proj: Projection, seed: string): string {
+    const pen = this.pen!;
+    let cmds: readonly Cmd[];
+    if (p.t === "poly" && !p.open) cmds = [...p.pts.map((pt, i) => [i === 0 ? "M" : "L", ...proj.point(pt)] as Cmd), ["Z"]];
+    else if (p.t === "screen") cmds = p.build(proj);
+    else return this.paint(p, proj);
+    // Only a single closed ring of straight edges: where several rings meet (a wall's face around its
+    // openings), cutting each on its own would open hairline gaps between them.
+    const rings = cmds.filter((c) => c[0] === "M").length;
+    if (rings !== 1 || cmds[cmds.length - 1]![0] !== "Z" || cmds.some((c) => c[0] === "C" || c[0] === "Q") || cmds.length < 4) return this.path(p.cls, cmds);
+    const ring = cmds.filter((c): c is readonly ["M" | "L", number, number] => c[0] === "M" || c[0] === "L").map((c): Vec2 => [c[1], c[2]]);
+    const out: Cmd[] = [];
+    deckleRing(pen.deckle(ring, seed), out);
+    return this.path(p.cls, out);
   }
 
   /** A paint in a projection. */
@@ -642,13 +678,51 @@ export class Writer {
   /** Draws a node and its children in painter's order. */
   node(n: Node, proj: Projection, depth: number): string {
     let out = n.open ?? "";
-    for (const p of n.paint ?? []) out += this.paint(p, proj);
+    // A card edge (class "ce …") stays straight: it shows only as a sliver beside its deckled sheet.
+    for (const p of n.paint ?? []) out += this.pen && n.deckle && !p.cls.startsWith("ce ") ? this.deckled(p, proj, n.deckle) : this.paint(p, proj);
     if (n.children) {
       const kids = n.keep ? n.children : depthSort(n.children, depth);
       for (const child of kids) out += this.node(child, proj, depth);
     }
     return out + (n.close ?? "");
   }
+}
+
+function deckleRing(pts: readonly Vec2[], out: Cmd[]): void {
+  pts.forEach(([x, y], i) => out.push([i === 0 ? "M" : "L", x, y]));
+  out.push(["Z"]);
+}
+
+/** The convex hull of points (monotone chain), counter-clockwise. */
+export function convexHull(points: readonly Vec2[]): Vec2[] {
+  const pts = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o: Vec2, a: Vec2, b: Vec2) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: Vec2[] = [];
+  for (const pt of pts) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2]!, lower[lower.length - 1]!, pt) <= 0) lower.pop();
+    lower.push(pt);
+  }
+  const upper: Vec2[] = [];
+  for (const pt of [...pts].reverse()) {
+    while (upper.length >= 2 && cross(upper[upper.length - 2]!, upper[upper.length - 1]!, pt) <= 0) upper.pop();
+    upper.push(pt);
+  }
+  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
+}
+
+/** The outline of a box on screen (its silhouette: a hexagon in the isometric view), as one closed shape. */
+export function boxOutline(b: Box3, cls: string): Paint {
+  return screen(cls, (p) => {
+    const corners: Vec2[] = [];
+    for (const x of [b.x0, b.x1]) for (const y of [b.y0, b.y1]) for (const z of [b.z0, b.z1]) corners.push(p.point([x, y, z]));
+    const ring = convexHull(corners);
+    return [...ring.map(([x, y], i) => [i === 0 ? "M" : "L", x, y] as Cmd), ["Z"] as Cmd];
+  });
+}
+
+/** Many flat shapes in 3D (quads, faces) as one path of closed subpaths: one fill, one element. */
+export function shapes(list: readonly (readonly Vec3[])[], cls: string): Paint {
+  return screen(cls, (p) => list.flatMap((pts) => [...pts.map((pt, i) => [i === 0 ? "M" : "L", ...p.point(pt)] as Cmd), ["Z"] as Cmd]));
 }
 
 /** An estimate of a label's width: average Figtree advance widths by character class. */

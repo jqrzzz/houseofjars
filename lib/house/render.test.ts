@@ -23,6 +23,12 @@ const views: Record<string, () => string> = {
   "plan floor1": () => renderPlan("floor1"),
   "plan floor2": () => renderPlan("floor2", { theme: "evening" }),
   "plan outside": () => renderPlan("outside"),
+  "street, paper": () => renderStreet({ outfit: "paper", theme: "day" }),
+  "street with neighbours, paper, auto": () => renderStreet({ outfit: "paper", neighbours: true }),
+  "cutaway, paper, lifted and labelled, with a walk": () => renderCutaway({ outfit: "paper", explode: 2.5, labels: true, route: "arrival", theme: "evening" }),
+  "cutaway, paper, Floor 1 highlighted": () => renderCutaway({ outfit: "paper", highlight: ["dorm-h"], labels: true }),
+  "plan ground, paper": () => renderPlan("ground", { outfit: "paper", theme: "day" }),
+  "plan floor2, paper, auto": () => renderPlan("floor2", { outfit: "paper" }),
 };
 
 interface Parsed {

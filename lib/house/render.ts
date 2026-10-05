@@ -14,12 +14,14 @@
  * Same input, byte-identical output. Bad options throw instead of drawing a
  * wrong picture.
  */
+import { deckle } from "./deckle";
 import { type FixtureContext, type PlanMark, type StairArrow, climbOf, isoParts, planMarks, planStairs, reverse } from "./fixtures";
 import {
   type Bounds,
   type Cmd,
   type Node,
   type Paint,
+  type Pen,
   type Projection,
   type Vec2,
   type Vec3,
@@ -27,7 +29,9 @@ import {
   Writer,
   box,
   boxFaces,
+  boxOutline,
   circle,
+  convexHull,
   emptyBounds,
   escapeXml,
   isoProjection,
@@ -44,11 +48,14 @@ import {
   union,
 } from "./geometry";
 import { houseOfJars } from "./house-of-jars";
-import { type MaterialName, fill, kindFloors, paletteCss, tint } from "./palette";
-import type { Area, Box3, Fixture, Floor, FloorId, HouseModel, Rect, Route, Theme, Wall } from "./types";
+import { type MaterialName, edgeOf, fill, kindFloors, paletteCss, paperClass, tint } from "./palette";
+import { renderPaperLayer } from "./paper";
+import type { Area, Box3, Fixture, Floor, FloorId, HouseModel, Outfit, Rect, Route, Theme, Wall } from "./types";
 
 export interface StreetOptions {
   readonly theme?: Theme;
+  /** "model" (default) or "paper": cut paper with an ink silhouette (see docs/HOUSE_MODEL.md). */
+  readonly outfit?: Outfit;
   /** Draw the neighbours (low-detail, cropped): NinetyNine 99 Bar on the left, Swedish Baking on the right. */
   readonly neighbours?: boolean;
   /**
@@ -65,6 +72,8 @@ export interface StreetOptions {
 
 export interface CutawayOptions {
   readonly theme?: Theme;
+  /** "model" (default) or "paper": cut paper with an ink silhouette (see docs/HOUSE_MODEL.md). */
+  readonly outfit?: Outfit;
   /** Extra metres of gap between floors (0 = stacked). */
   readonly explode?: number;
   /**
@@ -90,6 +99,8 @@ export interface CutawayOptions {
 
 export interface PlanOptions {
   readonly theme?: Theme;
+  /** "model" (default) or "paper": cut paper with an ink silhouette (see docs/HOUSE_MODEL.md). */
+  readonly outfit?: Outfit;
   readonly labels?: boolean;
   readonly idPrefix?: string;
   readonly title?: string;
@@ -110,6 +121,73 @@ export const PARTITION_CUT = 2.2;
 /** How far back the street view draws the side wall, roof and neighbours by default. */
 export const STREET_DEPTH = 4;
 const MARGIN = 18;
+
+/**
+ * For lib/house/paper.ts, which cuts the paper stage into layers that share one frame: a fixed viewBox,
+ * which fixtures a layer holds, and how its floor is marked.
+ */
+export interface LayerOptions {
+  /** A fixed viewBox (the stage's), instead of one fitted to the drawing. */
+  readonly viewBox?: readonly [number, number, number, number];
+  /** Which fixtures to draw (default all the view draws). */
+  readonly fixtures?: (f: Fixture) => boolean;
+  /** Only the fixtures, drawn whole (not cut with the facade): the ground floor's pieces in front of it. */
+  readonly fixturesOnly?: boolean;
+  /** The floor group's id instead of floor-{id} (floor-ground-front). */
+  readonly groupId?: string;
+  /** Fade the floor (Floor 2, not yet photographed). */
+  readonly dim?: boolean;
+  /** The picture's description, when the view's own would not say what this layer holds. */
+  readonly desc?: string;
+  /**
+   * A picture served as an image, where no page can reach its hooks: fixtures keep their ids and
+   * data-confirmed, not the other data attributes.
+   */
+  readonly lean?: boolean;
+}
+
+/** The paper outfit's pens: the classes each path keeps (palette.ts paperClass), and the deckle of slabs and walls. */
+const ISO_PEN: Pen = { cls: (cls, line) => paperClass(cls, line), deckle: (pts, seed) => deckle(pts, seed) };
+const PLAN_PEN: Pen = { cls: (cls, line) => paperClass(cls, line, true), deckle: (pts, seed) => deckle(pts, seed) };
+
+/**
+ * Paper outfit: a thing as a sheet. Its group gets an id, and a <use> of the group just before it draws its
+ * silhouette (the sl role: its shapes stroked wide in ink under it, so ink shows only around its outside).
+ * A big plane also gets its card edge (behind its faces, inside its group, so the silhouette goes round
+ * it too) and its deckle.
+ */
+function sheet(n: Node, id: string, opts: { readonly edge?: Paint; readonly deckle?: string } = {}): Node {
+  const own = n.open ? /^<g id="([^"]+)"/.exec(n.open)?.[1] : undefined;
+  const ref = own ?? id;
+  const tag = own ? n.open! : n.open ? n.open.replace(/^<g/, `<g id="${escapeXml(id)}"`) : `<g id="${escapeXml(id)}">`;
+  return {
+    ...n,
+    open: `<use href="#${escapeXml(ref)}" class="sl"/>${tag}`,
+    close: n.open ? n.close : "</g>",
+    paint: opts.edge ? [opts.edge, ...(n.paint ?? [])] : n.paint,
+    deckle: opts.deckle,
+  };
+}
+
+/** A box's card edge: its silhouette, in its material's edge tone, moved by the ce role. */
+const cardEdge = (b: Box3, m: MaterialName): Paint => boxOutline(b, `ce ${edgeOf(m)}`);
+
+/** Paper: every tone and edge class in some markup, pale ("wd1" to "wd1g"), the pale classes noted as used. */
+function paleClasses(markup: string, w: Writer): string {
+  return markup.replace(/ class="([^"]+)"/g, (_, cls: string) => {
+    const pale = cls
+      .split(" ")
+      .map((t) => (/^[a-z]{2}[012]f?$/.test(t) ? `${t.slice(0, 3)}g` : /^e[a-z]{2}$/.test(t) ? `${t}g` : t))
+      .join(" ");
+    w.classes(pale);
+    return ` class="${pale}"`;
+  });
+}
+
+/** Drops the silhouette of a thing that drew nothing (a locker drawn with its stack, a dashed outline paper leaves out). */
+function dropEmptySheets(body: string): string {
+  return body.replace(/<use href="#([^"]+)" class="sl"\/>(<g id="\1"[^>]*><\/g>)/g, "$2");
+}
 
 // ---------------------------------------------------------------------------
 // Shared pieces
@@ -205,7 +283,14 @@ interface WallStyle {
  * outlines are 1.5 px; cut faces (tops in the cutaway, ends at the removed
  * right wall) are hairlines, the cut top outlined once along each run.
  */
-function wallNodes(wall: Wall, top: number, z: number, style: WallStyle, faceMaterial: { front?: MaterialName; right?: MaterialName; top?: MaterialName } = {}): Node[] {
+function wallNodes(
+  wall: Wall,
+  top: number,
+  z: number,
+  style: WallStyle,
+  faceMaterial: { front?: MaterialName; right?: MaterialName; top?: MaterialName } = {},
+  paper?: { readonly prefix: string },
+): Node[] {
   const m = wall.material;
   const alongX = wall.box.x1 - wall.box.x0 >= wall.box.y1 - wall.box.y0;
   const cutaway = style.view === "cutaway";
@@ -224,7 +309,7 @@ function wallNodes(wall: Wall, top: number, z: number, style: WallStyle, faceMat
     });
     return { box: b, paint, ...group };
   });
-  if (cutaway) {
+  if (cutaway && !paper) {
     // The cut along the top: one hairline outline per run of pieces, so no seams cross it.
     const spans = pieces
       .filter(atTop)
@@ -270,7 +355,29 @@ function wallNodes(wall: Wall, top: number, z: number, style: WallStyle, faceMat
   const zhi = Math.max(...rects.map((r) => r[3]));
   const faceBox = alongX ? box(lo, hi, plane, plane, zlo, zhi) : box(plane, plane, lo, hi, zlo, zhi);
   nodes.push({ box: faceBox, paint, ...group });
-  return nodes;
+  if (!paper) return nodes;
+  // Paper, all deckled alike. The facade's pieces stay apart, each a sheet (the door and the windows stand in
+  // its openings, between them in depth), its face with a card edge too. Any other wall is one sheet,
+  // folded: its top and its face in one silhouette, one card edge.
+  const seed = `wall-${wall.id}`;
+  const id = `${paper.prefix}wall-${wall.id}`;
+  if (wall.kind === "facade") {
+    const faceM = alongX ? (faceMaterial.front ?? m) : (faceMaterial.right ?? m);
+    return nodes.map((n, k) =>
+      sheet(n, `${id}-${k}`, { edge: k < pieces.length ? cardEdge(n.box, faceMaterial.top ?? m) : screen(`ce ${edgeOf(faceM)}`, fillCmds), deckle: seed }),
+    );
+  }
+  const whole = union(nodes.map((n) => n.box));
+  // The cutaway's outer walls behind everything (the party wall, the back wall) are back planes: far tones.
+  const far = cutaway && (wall.kind === "party" || wall.kind === "back");
+  const tone = (p: Paint): Paint => (far ? { ...p, cls: p.cls.replace(/\b([a-z]{2}[012])\b/g, "$1f") } : p);
+  return [
+    sheet(
+      { box: whole, children: nodes.map((n) => ({ box: n.box, paint: n.paint?.map(tone), deckle: seed })), open: group.open, close: group.close },
+      id,
+      { edge: cardEdge(whole, faceMaterial.top ?? m), deckle: seed },
+    ),
+  ];
 }
 
 /** The outline of a union of rectangles [a0, a1, z0, z1]: the cell edges between inside and outside, merged into runs. */
@@ -356,11 +463,15 @@ function fixtureNodes(
   include: (f: Fixture) => boolean,
   ctxFor: (f: Fixture) => FixtureContext,
   ghost?: (f: Fixture) => boolean,
+  paper = false,
+  lean = false,
 ): DrawnFixture[] {
   const list = model.fixtures.filter((f) => f.floor === floor.id && include(f));
   const ids = new Set(list.map((f) => f.id));
+  const siblings = model.fixtures.filter((f) => f.floor === floor.id);
   const make = (f: Fixture, hostGhosted: boolean): Node | null => {
-    const parts = isoParts(f, ctxFor(f), floor.ceiling);
+    const ctx = ctxFor(f);
+    const parts = isoParts(f, paper ? { ...ctx, detail: "simple", siblings } : ctx, floor.ceiling);
     const faded = !hostGhosted && Boolean(ghost?.(f));
     const children = list
       .filter((g) => g.mountedOn === f.id)
@@ -368,20 +479,25 @@ function fixtureNodes(
       .filter((n): n is Node => n !== null);
     const all = [...parts, ...children];
     if (all.length === 0) return null;
-    return {
-      box: union(all.map((n) => n.box)),
-      children: all,
-      open: `<g${attrs({
-        id: `${prefix}fx-${f.id}`,
-        class: faded ? "dg" : undefined,
-        "data-fixture": f.type,
-        "data-label": f.label,
-        "data-area": f.area,
-        "data-room": roomOf(model, f.area),
-        "data-confirmed": confirmedAttr(f),
-      })}>`,
-      close: "</g>",
-    };
+    const id = `${prefix}fx-${f.id}`;
+    const group = `<g${attrs(
+      lean
+        ? { id, "data-confirmed": confirmedAttr(f) }
+        : {
+            id,
+            class: faded ? "dg" : undefined,
+            "data-fixture": f.type,
+            "data-label": f.label,
+            "data-area": f.area,
+            "data-room": roomOf(model, f.area),
+            "data-confirmed": confirmedAttr(f),
+          },
+    )}>`;
+    const node: Node = { box: union(all.map((n) => n.box)), children: all, open: group, close: "</g>" };
+    if (!paper) return node;
+    // Paper: every fixture a sheet with its silhouette (a mounted one too, inside its host's); the pods are big planes, with card edges.
+    const b = f.box;
+    return sheet(node, id, { edge: f.type === "pod" ? cardEdge({ ...b, z0: b.z0 + floor.z, z1: b.z1 + floor.z }, "wood") : undefined });
   };
   const out: DrawnFixture[] = [];
   for (const f of list) {
@@ -408,15 +524,21 @@ function svgDocument(opts: {
   used: Set<string>;
   /** Lay the drawing on its own paper (plans: their frame text then always reads, whatever the page's theme). */
   paper?: boolean;
+  outfit?: Outfit;
+  /** A fixed viewBox (a paper stage layer's), instead of the bounds with a margin. */
+  viewBox?: readonly [number, number, number, number];
 }): string {
   const scope = `${opts.prefix}hj-${opts.theme}`;
   const { minX, minY, maxX, maxY } = opts.bounds;
-  const x = Math.floor(minX - MARGIN);
-  const y = Math.floor(minY - MARGIN);
-  const w = Math.ceil(maxX + MARGIN) - x;
-  const h = Math.ceil(maxY + MARGIN) - y;
+  const x = opts.viewBox ? opts.viewBox[0] : Math.floor(minX - MARGIN);
+  const y = opts.viewBox ? opts.viewBox[1] : Math.floor(minY - MARGIN);
+  const w = opts.viewBox ? opts.viewBox[2] : Math.ceil(maxX + MARGIN) - x;
+  const h = opts.viewBox ? opts.viewBox[3] : Math.ceil(maxY + MARGIN) - y;
+  const outfit = opts.outfit ?? "model";
+  const body = outfit === "paper" ? dropEmptySheets(opts.body) : opts.body;
   if (opts.paper) opts.used.add("pa0").add("ns");
-  const css = paletteCss({ theme: opts.theme, scope, used: opts.used });
+  if (body.includes('class="sl"')) opts.used.add("sl");
+  const css = paletteCss({ theme: opts.theme, scope, used: opts.used, outfit });
   const paper = opts.paper ? `<path class="pa0 ns" d="M${x} ${y}L${x + w} ${y}L${x + w} ${y + h}L${x} ${y + h}Z"/>` : "";
   return (
     `<svg xmlns="http://www.w3.org/2000/svg"${attrs({ class: scope, viewBox: `${x} ${y} ${w} ${h}`, width: w, height: h, role: "img", "aria-labelledby": `${opts.prefix}title ${opts.prefix}desc` })}>` +
@@ -424,7 +546,7 @@ function svgDocument(opts: {
     `<desc id="${escapeXml(opts.prefix)}desc">${escapeXml(opts.desc)}</desc>` +
     `<style>${css}</style>` +
     paper +
-    opts.body +
+    body +
     `</svg>\n`
   );
 }
@@ -467,6 +589,13 @@ function slabNodes(model: HouseModel, floor: Floor): Node[] {
     slab(box(-T, W + T, -T, hole.y0, z0, z1)),
   );
   return out.filter((n) => n.box.x1 - n.box.x0 > 1e-6 && n.box.y1 - n.box.y0 > 1e-6);
+}
+
+/** Paper: the slabs as sheets with card edges, deckled (the ground floor's second is the terrace's sides). */
+function slabSheets(model: HouseModel, floor: Floor, prefix: string): Node[] {
+  return slabNodes(model, floor).map((n, k) =>
+    sheet(n, `${prefix}slab-${floor.id}-${k}`, { edge: cardEdge(n.box, floor.level === 0 && k === 1 ? "terraceTile" : "brown"), deckle: `slab-${floor.id}` }),
+  );
 }
 
 /** The visible floor of an area: its rectangles, less the stairwell where its floor has one. */
@@ -757,7 +886,7 @@ function placeLabels(items: readonly LabelItem[], lift: number): PlacedLabel[] {
 }
 
 /** The labels of one floor, in that floor's own coordinates (its lift dy taken off), each its own group. */
-function labelMarkup(labels: readonly PlacedLabel[], dy: number, w: Writer, baseSize: number): string {
+function labelMarkup(labels: readonly PlacedLabel[], dy: number, w: Writer, baseSize: number, square = false): string {
   let out = "";
   for (const l of labels) {
     const it = l.item;
@@ -775,28 +904,11 @@ function labelMarkup(labels: readonly PlacedLabel[], dy: number, w: Writer, base
       l.leader.map(([x, y], i) => [i === 0 ? "M" : "L", x, y - dy] as const),
     );
     out += w.path("lp", circle(it.ax, it.ay - dy, 3.5 * (baseSize / 19)));
-    out += w.path(it.lit ? "lb lbh" : "lb", roundRect(l.x, l.y - dy, l.w, l.h, l.h / 2));
+    out += w.path(it.lit ? "lb lbh" : "lb", roundRect(l.x, l.y - dy, l.w, l.h, square ? 0 : l.h / 2));
     out += w.text(it.cls, l.x + l.w / 2, l.y - dy + l.h / 2 + it.size * 0.36, it.text, it.size, "middle", it.size !== natural);
     out += "</g>";
   }
   return out;
-}
-
-/** The convex hull of points (monotone chain), counter-clockwise. */
-function hull(points: readonly Vec2[]): Vec2[] {
-  const pts = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  const cross = (o: Vec2, a: Vec2, b: Vec2) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const lower: Vec2[] = [];
-  for (const pt of pts) {
-    while (lower.length >= 2 && cross(lower[lower.length - 2]!, lower[lower.length - 1]!, pt) <= 0) lower.pop();
-    lower.push(pt);
-  }
-  const upper: Vec2[] = [];
-  for (const pt of [...pts].reverse()) {
-    while (upper.length >= 2 && cross(upper[upper.length - 2]!, upper[upper.length - 1]!, pt) <= 0) upper.pop();
-    upper.push(pt);
-  }
-  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
 }
 
 /** Whether a point lies inside a convex polygon, or within `margin` pixels of it. */
@@ -828,7 +940,7 @@ function floorSilhouette(model: HouseModel, floor: Floor, p: Projection, dy: num
         const [sx, sy] = p.point([x, y, z]);
         corners.push([sx, sy + dy]);
       }
-  return hull(corners);
+  return convexHull(corners);
 }
 
 // ---------------------------------------------------------------------------
@@ -984,12 +1096,18 @@ function roofNodes(model: HouseModel, floor: Floor, prefix: string, reach: numbe
   return out;
 }
 
-export function renderStreet(opts: StreetOptions = {}): string {
+export function renderStreet(opts: StreetOptions = {}, layer: LayerOptions = {}): string {
   const model = opts.model ?? houseOfJars;
   const theme = opts.theme ?? "auto";
   const prefix = checkPrefix(opts.idPrefix ?? "");
+  const outfit = opts.outfit ?? "model";
+  const paper = outfit === "paper";
   const p = isoProjection(model.depth);
-  const w = new Writer();
+  const w = new Writer(paper ? ISO_PEN : undefined);
+  // Paper: each piece of the building a sheet; the big planes with card edges, deckled.
+  const asSheet = (n: Node, name: string, edge?: MaterialName, seed?: string): Node =>
+    paper ? sheet(n, `${prefix}${name}`, { edge: edge && cardEdge(n.box, edge), deckle: seed }) : n;
+  const wallPaper = paper ? { prefix } : undefined;
   const total = emptyBounds();
   const T = model.wall;
   const W = model.width;
@@ -1005,7 +1123,7 @@ export function renderStreet(opts: StreetOptions = {}): string {
   const node = (n: Node) => w.node(n, p, model.depth);
   if (opts.neighbours) {
     w.resetBounds();
-    body += node(neighbour("left", model, prefix, reach));
+    body += node(asSheet(neighbour("left", model, prefix, reach), "neighbour-left"));
     addBounds(total, w.bounds);
   }
 
@@ -1018,40 +1136,57 @@ export function renderStreet(opts: StreetOptions = {}): string {
       // The tiled terrace (and, in a street of neighbours, the pavement in front of all three houses).
       if (opts.neighbours) {
         const pave = box(-2.6, W + 2.7, model.terrace.y0 - 1.0, -T, -0.3, -0.2);
-        nodes.push({ box: pave, paint: boxFaces(pave, { top: `${fill("pavement", 0)} h`, front: `${fill("pavement", 1)} h`, right: `${fill("pavement", 2)} h` }) });
+        nodes.push(asSheet({ box: pave, paint: boxFaces(pave, { top: `${fill("pavement", 0)} h`, front: `${fill("pavement", 1)} h`, right: `${fill("pavement", 2)} h` }) }, "pavement"));
       }
       const t = model.terrace;
       const tb = box(t.x0, t.x1, t.y0, t.y1, -0.15, 0);
       const grid: Vec3[][] = [];
       for (let x = t.x0 + 0.4; x < t.x1 - 0.05; x += 0.4) grid.push([[x, t.y0, 0], [x, t.y1, 0]]);
       for (let y = t.y0 + 0.4; y < t.y1 - 0.05; y += 0.4) grid.push([[t.x0, y, 0], [t.x1, y, 0]]);
-      nodes.push({
-        box: tb,
-        paint: [...boxFaces(tb, { top: `${fill("terraceTile", 0)} o`, front: `${fill("terraceTile", 1)} o`, right: `${fill("terraceTile", 2)} o` }), lines(grid, "tg")],
-      });
+      nodes.push(
+        asSheet(
+          {
+            box: tb,
+            paint: [...boxFaces(tb, { top: `${fill("terraceTile", 0)} o`, front: `${fill("terraceTile", 1)} o`, right: `${fill("terraceTile", 2)} o` }), lines(grid, "tg")],
+          },
+          "terrace",
+          "terraceTile",
+          "terrace",
+        ),
+      );
       const plinth = box(-T, W + T, -T, reach, -0.2, 0);
-      nodes.push({ box: plinth, paint: croppedBox(plinth, { top: "", front: "", right: fill("stone", 2) }, cutY) });
+      nodes.push(asSheet({ box: plinth, paint: croppedBox(plinth, { top: "", front: "", right: fill("stone", 2) }, cutY) }, "plinth"));
     }
     for (const wall of model.walls) {
       if (wall.floor !== floor.id) continue;
       if (wall.kind === "facade") {
-        nodes.push(...wallNodes({ ...wall, box: { ...wall.box, z1: height } }, height, floor.z, { view: "street", width: W }));
+        nodes.push(...wallNodes({ ...wall, box: { ...wall.box, z1: height } }, height, floor.z, { view: "street", width: W }, {}, wallPaper));
       } else if (wall.kind === "party" && wall.box.x0 >= W - 1e-6) {
         // The right party wall, as far back as the view reaches.
         const b = box(wall.box.x0, wall.box.x1, wall.box.y0, Math.min(wall.box.y1, reach), floor.z, floor.z + height);
-        nodes.push({ box: b, paint: croppedBox(b, { top: fill("stone", 0), front: "", right: fill("stone", 2) }, cutY), open: `<g${attrs({ "data-wall": wall.id })}>`, close: "</g>" });
+        nodes.push(
+          asSheet(
+            { box: b, paint: croppedBox(b, { top: fill("stone", 0), front: "", right: fill("stone", 2) }, cutY), open: `<g${attrs({ "data-wall": wall.id })}>`, close: "</g>" },
+            `wall-${wall.id}`,
+            "stone",
+            `wall-${wall.id}`,
+          ),
+        );
       } else if (wall.kind === "back" && !cropped) {
-        nodes.push(...wallNodes({ ...wall, box: { ...wall.box, z1: height } }, height, floor.z, { view: "street", width: W }, { front: "stone", right: "stone", top: "stone" }));
+        nodes.push(...wallNodes({ ...wall, box: { ...wall.box, z1: height } }, height, floor.z, { view: "street", width: W }, { front: "stone", right: "stone", top: "stone" }, wallPaper));
       }
     }
-    nodes.push(...facadeRelief(model, floor));
-    if (!next) nodes.push(...roofNodes(model, floor, prefix, reach, cutY));
+    nodes.push(...facadeRelief(model, floor).map((n, k) => asSheet(n, `relief-${floor.id}-${k}`)));
+    if (!next) nodes.push(...roofNodes(model, floor, prefix, reach, cutY).map((n, k) => asSheet(n, `roof-${floor.id}-${k}`, k === 1 ? "stone" : undefined, k === 1 ? "roof" : undefined)));
     const fixtures = fixtureNodes(
       model,
       floor,
       prefix,
-      (f) => f.mount === "facade" || areaKind(model, f.area) === "outside",
+      (f) => (f.mount === "facade" || areaKind(model, f.area) === "outside") && (layer.fixtures?.(f) ?? true),
       () => fixtureContext(model, floor),
+      undefined,
+      paper,
+      layer.lean,
     );
     nodes.push(...fixtures.map((f) => f.node));
     const content = w.node({ box: box(0, 0, 0, 0, 0, 0), children: nodes }, p, model.depth);
@@ -1061,7 +1196,7 @@ export function renderStreet(opts: StreetOptions = {}): string {
 
   if (opts.neighbours) {
     w.resetBounds();
-    body += node(neighbour("right", model, prefix, reach));
+    body += node(asSheet(neighbour("right", model, prefix, reach), "neighbour-right"));
     addBounds(total, w.bounds);
   }
 
@@ -1069,20 +1204,26 @@ export function renderStreet(opts: StreetOptions = {}): string {
     prefix,
     theme,
     title: opts.title ?? `${model.name} from the street`,
-    desc: `The ${model.name} shophouse seen from the street at the front right: the orange-red facade with its big arch, the glass door and grid window under the wooden awning with its "hostel" sign, and the tiled terrace${opts.neighbours ? ", between NinetyNine 99 Bar and Swedish Baking" : ""}${cropped ? `; the side wall and roof are cropped ${num(depth)} m back` : ""}.`,
+    desc:
+      layer.desc ??
+      `The ${model.name} shophouse seen from the street at the front right: the orange-red facade with its big arch, the glass door and grid window under the wooden awning with its "hostel" sign, and the tiled terrace${opts.neighbours ? ", between NinetyNine 99 Bar and Swedish Baking" : ""}${cropped ? `; the side wall and roof are cropped ${num(depth)} m back` : ""}.`,
     bounds: total,
     body,
     used: w.used,
+    outfit,
+    viewBox: layer.viewBox,
   });
 }
 
 // ---------------------------------------------------------------------------
 // Cutaway
 
-export function renderCutaway(opts: CutawayOptions = {}): string {
+export function renderCutaway(opts: CutawayOptions = {}, layer: LayerOptions = {}): string {
   const model = opts.model ?? houseOfJars;
   const theme = opts.theme ?? "auto";
   const prefix = checkPrefix(opts.idPrefix ?? "");
+  const outfit = opts.outfit ?? "model";
+  const paper = outfit === "paper";
   const explode = opts.explode ?? 0;
   const fit = opts.fitExplode ?? explode;
   for (const [name, v] of [
@@ -1101,12 +1242,13 @@ export function renderCutaway(opts: CutawayOptions = {}): string {
   for (const id of opts.highlight ?? []) if (!model.areas.some((a) => a.id === id)) throw new Error(`renderCutaway: no area "${id}" to highlight`);
 
   const p = isoProjection(model.depth);
-  const w = new Writer();
+  const w = new Writer(paper ? ISO_PEN : undefined);
   const total = emptyBounds();
   const W = model.width;
   const D = model.depth;
   const lit = litAreas(model, opts.highlight ?? [], drawn);
   if (lit) w.classes("dim dg");
+  if (layer.dim) w.classes("dim");
   const drawnIds = new Set(drawn.map((f) => f.id));
   const lastDrawn = route ? route.segments.reduce((last, s, i) => (drawnIds.has(s.floor) ? i : last), -1) : -1;
   const offset = (floor: Floor) => -explode * S * floor.level;
@@ -1124,36 +1266,49 @@ export function renderCutaway(opts: CutawayOptions = {}): string {
     const floorDim = Boolean(lit && !model.areas.some((a) => a.floor === floor.id && lit.has(a.id)));
     const floorLit = lit && !floorDim ? lit : undefined;
     let content = "";
-    for (const slab of slabNodes(model, floor)) content += w.node(slab, p, D);
-    content += areaFloorsIso(model, floor, prefix, w, p, floorLit);
-
     const nodes: Node[] = [];
-    for (const wall of model.walls) {
-      if (wall.floor !== floor.id) continue;
-      if (wall.kind === "party" && wall.box.x0 >= W - 1e-6) continue; // the right wall is taken away
-      const top = wall.kind === "facade" ? FACADE_CUT : wall.kind === "partition" ? Math.min(PARTITION_CUT, wall.box.z1) : wall.box.z1;
-      const faces = wall.kind === "party" ? { front: "facade" as MaterialName } : {};
-      nodes.push(...wallNodes(wall, top, floor.z, { view: "cutaway", width: W }, faces));
+    if (!layer.fixturesOnly) {
+      for (const slab of paper ? slabSheets(model, floor, prefix) : slabNodes(model, floor)) content += w.node(slab, p, D);
+      content += areaFloorsIso(model, floor, prefix, w, p, floorLit);
+      for (const wall of model.walls) {
+        if (wall.floor !== floor.id) continue;
+        if (wall.kind === "party" && wall.box.x0 >= W - 1e-6) continue; // the right wall is taken away
+        const top = wall.kind === "facade" ? FACADE_CUT : wall.kind === "partition" ? Math.min(PARTITION_CUT, wall.box.z1) : wall.box.z1;
+        const faces = wall.kind === "party" ? { front: "facade" as MaterialName } : {};
+        nodes.push(...wallNodes(wall, top, floor.z, { view: "cutaway", width: W }, faces, paper ? { prefix } : undefined));
+      }
     }
     const fixtures = fixtureNodes(
       model,
       floor,
       prefix,
-      (f) => f.mount !== "right-wall",
+      (f) => f.mount !== "right-wall" && (layer.fixtures?.(f) ?? true),
       (f) => {
         // What stands outside or hangs on the facade is cut with it; the stairs between upper floors are cut like the partitions.
         const outside = f.mount === "facade" || areaKind(model, f.area) === "outside";
         const flight = f.type === "stairs" && floor.level > 0;
-        return fixtureContext(model, floor, outside ? cut : flight ? floor.z + PARTITION_CUT : undefined);
+        return fixtureContext(model, floor, outside && !layer.fixturesOnly ? cut : flight ? floor.z + PARTITION_CUT : undefined);
       },
       floorLit ? (f) => !floorLit.has(f.area) : undefined,
+      paper,
+      layer.lean,
     );
     nodes.push(...fixtures.map((f) => f.node));
     if (route) nodes.push(...routePieces(model, route, floor, p));
     content += w.node({ box: box(0, 0, 0, 0, 0, 0), children: nodes }, p, D);
     if (route) content += routeOverlay(route, floor, prefix, w, p, lastDrawn);
     const transform = dy !== 0 ? `translate(0,${num(dy)})` : undefined;
-    body += `<g${attrs({ id: `${prefix}floor-${floor.id}`, "data-floor": floor.id, "data-level": floor.level, "data-confirmed": confirmedAttr(floor), class: floorDim ? "dim" : undefined, transform })}>${content}</g>`;
+    // Paper: a faded floor is pale but opaque (its tones far toward the paper), so a floor lifted over it
+    // still hides what is behind it, as a sheet would; the model fades a floor with opacity.
+    if (paper && (floorDim || layer.dim)) content = paleClasses(content, w);
+    body += `<g${attrs({
+      id: `${prefix}${layer.groupId ?? `floor-${floor.id}`}`,
+      "data-floor": floor.id,
+      "data-level": floor.level,
+      "data-confirmed": confirmedAttr(floor),
+      class: floorDim || layer.dim ? "dim" : undefined,
+      transform,
+    })}>${content}</g>`;
     addBounds(total, w.bounds, dy);
     addBounds(total, w.bounds, fitOffset(floor));
 
@@ -1200,7 +1355,7 @@ export function renderCutaway(opts: CutawayOptions = {}): string {
     w.resetBounds();
     const dy = offset(floor);
     if (mine.some((l) => l.item.dim)) w.classes("dim");
-    const inner = labelMarkup(mine, dy, w, labelSize);
+    const inner = labelMarkup(mine, dy, w, labelSize, paper);
     const transform = dy !== 0 ? `translate(0,${num(dy)})` : undefined;
     body += `<g${attrs({ id: `${prefix}labels-${floor.id}`, "data-labels": "", "data-floor": floor.id, transform })}>${inner}</g>`;
     addBounds(total, w.bounds, dy);
@@ -1214,17 +1369,22 @@ export function renderCutaway(opts: CutawayOptions = {}): string {
     prefix,
     theme,
     title: opts.title ?? `${model.name}: ${explode > 0 ? "exploded" : "cutaway"} view`,
-    desc: `A dollhouse cutaway of ${model.name} from the front right, with the right wall, roof and ceilings taken away to show ${which}${explode > 0 ? ", the floors lifted apart" : ""}${routeShown ? `, and the route "${route.name}"` : ""}.`,
+    desc:
+      layer.desc ??
+      `A dollhouse cutaway of ${model.name} from the front right, with the right wall, roof and ceilings taken away to show ${which}${explode > 0 ? ", the floors lifted apart" : ""}${routeShown ? `, and the route "${route.name}"` : ""}.`,
     bounds: total,
     body,
     used: w.used,
+    outfit,
+    viewBox: layer.viewBox,
   });
 }
 
 // ---------------------------------------------------------------------------
 // Plans
 
-const PLAN_SCALE = 50;
+/** Pixels per metre in the floor plans. */
+export const PLAN_SCALE = 50;
 
 /**
  * The walls at plan height (1.2 m): solid where no opening reaches that high. A facade is broken at every
@@ -1284,12 +1444,14 @@ export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): 
   const model = opts.model ?? houseOfJars;
   const theme = opts.theme ?? "auto";
   const prefix = checkPrefix(opts.idPrefix ?? "");
+  const outfit = opts.outfit ?? "model";
+  const paper = outfit === "paper";
   const labels = opts.labels ?? true;
   const outside = which === "outside";
   const floor = floorById(model, outside ? "ground" : which);
   const scale = outside ? 84 : PLAN_SCALE;
   const p = planProjection(model.depth, scale);
-  const w = new Writer();
+  const w = new Writer(paper ? PLAN_PEN : undefined);
   const W = model.width;
   const T = model.wall;
   const D = model.depth;
@@ -1350,7 +1512,9 @@ export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): 
     const stack = f.type === "locker" ? fixtures.filter((g) => g.type === "locker" && overlapsRect(g.box, f.box)).map((g) => g.label ?? "") : [];
     const marks = planMarks(f, p, f.type === "stairs" ? { stairs: [...(under ? downOf(under) : []), ...up] } : { lockerStack: stack });
     if (marks.length === 0) continue;
-    content += `<g${attrs({ id: `${prefix}fx-${f.id}`, "data-fixture": f.type, "data-label": f.label, "data-area": f.area, "data-room": roomOf(model, f.area), "data-confirmed": confirmedAttr(f) })}>${writeMarks(marks, w)}</g>`;
+    // Paper: each symbol a sheet, its silhouette drawn by a <use> just before it.
+    const id = `${prefix}fx-${f.id}`;
+    content += `${paper ? `<use href="#${escapeXml(id)}" class="sl"/>` : ""}<g${attrs({ id, "data-fixture": f.type, "data-label": f.label, "data-area": f.area, "data-room": roomOf(model, f.area), "data-confirmed": confirmedAttr(f) })}>${writeMarks(marks, w)}</g>`;
   }
 
   content += `<g data-walls="">${writeMarks(
@@ -1377,7 +1541,7 @@ export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): 
         ]);
         labelMarks += w.path("lp", circle(ex, ey, 3));
       }
-      labelMarks += w.path("lb", roundRect(sx - tw / 2, sy - 12, tw, 24, 12));
+      labelMarks += w.path("lb", roundRect(sx - tw / 2, sy - 12, tw, 24, paper ? 0 : 12));
       labelMarks += w.text("lx", sx, sy + 5.4, area.name, size);
     }
     if (outside) {
@@ -1425,6 +1589,7 @@ export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): 
     body: bodyFloor + frame,
     used: w.used,
     paper: true,
+    outfit,
   });
 }
 
@@ -1451,4 +1616,12 @@ export const HOUSE_RENDERS: readonly { readonly file: string; readonly render: (
   { file: "plan-floor1.svg", render: () => renderPlan("floor1") },
   { file: "plan-floor2.svg", render: () => renderPlan("floor2") },
   { file: "plan-outside.svg", render: () => renderPlan("outside") },
+  // The paper outfit: the stage's layers in one shared frame (lib/house/paper.ts), and the plans, in Day and Evening.
+  ...(["day", "evening"] as const).flatMap((theme) => [
+    ...(["street", "ground", "ground-front", "floor1", "floor2"] as const).map((layer) => ({
+      file: `paper-${layer}-${theme}.svg`,
+      render: () => renderPaperLayer(layer, theme),
+    })),
+    ...(["ground", "floor1"] as const).map((floor) => ({ file: `paper-plan-${floor}-${theme}.svg`, render: () => renderPlan(floor, { outfit: "paper", theme }) })),
+  ]),
 ];
