@@ -41,6 +41,35 @@ export interface RoomType {
   readonly bookable: boolean;
   /** Null until the house sets a rate: the team then confirms the price. */
   readonly price: Price | null;
+  /** When money paid online is given back if the guest cancels; null from a Shadow that doesn't say. */
+  readonly terms: CancelTerms | null;
+  /** What is paid online for these beds (the whole total or the deposit), in the price's units; null when nothing can be. */
+  readonly pay_now: number | null;
+}
+
+/** Money paid online comes back when the guest cancels at least `cancel_days` before arrival; null: never once paid. */
+export interface CancelTerms {
+  readonly cancel_days: number | null;
+}
+
+/**
+ * How the house takes payment online: "optional" (the guest chooses) or
+ * "required" (every booking is paid when it is made). `test`: the house's
+ * bank isn't connected yet, so payments go to Shadow's test bank and no
+ * money moves.
+ */
+export interface PaymentOffer {
+  readonly online: "optional" | "required";
+  readonly charge: "full" | "deposit";
+  readonly deposit_percent: number | null;
+  /** How long the guest has to pay; the beds are held meanwhile. */
+  readonly pay_minutes: number;
+  readonly test: boolean;
+  /**
+   * The house's own QR code: the guest pays in their banking app and says so,
+   * and the team confirms the booking once they see the money (Shadow's 074).
+   */
+  readonly manual: boolean;
 }
 
 export interface BookingLimits {
@@ -64,6 +93,8 @@ export interface Availability {
   readonly hold_hours: number | null;
   readonly limits: BookingLimits;
   readonly room_types: readonly RoomType[];
+  /** Null when the guest pays at the house. */
+  readonly payment: PaymentOffer | null;
 }
 
 /** The total a guest saw for their stay: null when the page said the team confirms the price. */
@@ -93,6 +124,27 @@ export interface BookingRequest {
    */
   readonly quoted_total?: number | null;
   readonly quoted_currency?: Currency | null;
+  /** The guest pays now (when the house takes payment online). */
+  readonly pay_online?: boolean;
+  /** Where the bank sends the guest back: the website adds it, never the browser. */
+  readonly return_url?: string;
+}
+
+/** "claimed": the guest says they paid by the house's QR, and the team is checking. */
+export const PAYMENT_STATES = ["open", "claimed", "paid", "failed", "expired", "refunded"] as const;
+export type PaymentState = (typeof PAYMENT_STATES)[number];
+
+/** A booking's payment online, as Shadow says it stands. */
+export interface BookingPayment {
+  readonly status: PaymentState;
+  /** In the currency's normal units. */
+  readonly amount: number;
+  readonly currency: Currency;
+  /** The bank's page while the payment is open; null when it couldn't be opened (try again). */
+  readonly url: string | null;
+  readonly expires_at: string;
+  /** Shadow's test bank: no money moved. */
+  readonly test: boolean;
 }
 
 /** What POST /api/booking answers with 201 (or 200 when the booking was already received). */
@@ -102,6 +154,9 @@ export interface BookingConfirmation {
   readonly hold_expires_at: string | null;
   readonly total: number | null;
   readonly currency: Currency | null;
+  /** A booking paid online: Shadow's id for it (to ask where it stands and to pay again) and its payment. */
+  readonly id?: string;
+  readonly payment?: BookingPayment;
 }
 
 export interface FieldIssue {

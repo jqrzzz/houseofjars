@@ -61,6 +61,8 @@ function room(overrides: Partial<RoomType> & Pick<RoomType, "name" | "min_free" 
       { date: "2026-10-04", free: overrides.min_free + 1 },
     ],
     price: null,
+    terms: null,
+    pay_now: null,
     ...overrides,
   };
 }
@@ -73,6 +75,7 @@ function answerWith(rooms: RoomType[], overrides: Partial<Availability> = {}): A
     hold_hours: 6,
     limits: { max_guests: 6, min_nights: 1, max_nights: 30, window_days: 365 },
     room_types: rooms,
+    payment: null,
     ...overrides,
   };
 }

@@ -24,4 +24,5 @@ export const guestText = {
   arrival: "Please give a time like 15:30.",
   message: `Please keep your message under ${MAX_MESSAGE.toLocaleString("en-GB")} characters.`,
   consent: "Please agree to the privacy notice so the team can contact you.",
+  payRefused: "Paying online isn’t possible for this booking just now. Please send the team a message, or book on Booking.com or Agoda.",
 } as const;

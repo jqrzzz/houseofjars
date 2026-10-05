@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 import { identity } from "@/content/identity";
 import { NO_DATES, nightsText, type CalendarRules, type DateRange } from "@/lib/booking/calendar";
 import {
   DETAILS_FIELDS,
   STEPS,
+  cancelText,
+  fetchBookingStatus,
+  formatMoney,
   freeBedsText,
   kindLabel,
+  payNowText,
+  postPayAgain,
   priceLines,
   quoteText,
   unavailableText,
@@ -24,7 +29,9 @@ import {
   MAX_NAME,
   type BookingMode,
   type BookingProblem,
+  type BookingConfirmation,
   type FieldIssue,
+  type PaymentOffer,
   type Quote,
   type RoomType,
 } from "@/lib/booking/types";
@@ -690,6 +697,9 @@ export function ReviewStep({
   priceChange,
   sending,
   sentAs,
+  payment,
+  payOnline,
+  onPayOnline,
   onChange,
   onSend,
   children,
@@ -700,6 +710,11 @@ export function ReviewStep({
   mode: BookingMode;
   holdHours: number | null;
   replyBy: string;
+  /** How the house takes payment online, when these beds can be paid for now; null: at the house. */
+  payment: PaymentOffer | null;
+  /** The guest pays now. */
+  payOnline: boolean;
+  onPayOnline: (payNow: boolean) => void;
   /** Shadow's total changed since the beds were chosen: `now` is the one to show and send. */
   priceChange: { was: Quote; now: Quote } | null;
   sending: boolean;
@@ -713,8 +728,12 @@ export function ReviewStep({
   const lines = room.price ? priceLines(room.price, stay) : null;
   const kind = kindLabel(room);
   const contact = [details.email.trim(), details.phone.trim()].filter(Boolean);
-  const action = mode === "instant" ? "Book now" : "Send booking request";
+  const action = payOnline ? "Go to payment" : mode === "instant" ? "Book now" : "Send booking request";
   const newTotal = priceChange ? quoteText(priceChange.now) : null;
+  // A changed total pays what Shadow says now: the bank's page shows it.
+  const payNow = payment && !priceChange ? payNowText(payment, room) : null;
+  const atHouse =
+    mode === "instant" ? "Booked straight away; you pay when you arrive." : `The team confirms ${replyBy}; you pay when you arrive.`;
 
   // The new price takes focus, so the guest hears it before anything else (once per change: the flow keeps the object).
   useEffect(() => {
@@ -773,8 +792,39 @@ export function ReviewStep({
           )}
         </ReviewRow>
         <ReviewRow term="Payment">
-          At the house
-          <span className={styles.reviewNote}>Nothing to pay online.</span>
+          {payment === null ? (
+            <>
+              At the house
+              <span className={styles.reviewNote}>Nothing to pay online.</span>
+            </>
+          ) : payment.online === "required" ? (
+            <>
+              <span className="tnum">
+                {payment.manual ? "By QR now" : "Online now"}
+                {payNow ? `: ${payNow}` : ""}
+              </span>
+              <span className={styles.reviewNote}>{cancelText(room.terms)}</span>
+            </>
+          ) : (
+            <fieldset className={styles.payChoice}>
+              <legend className="visually-hidden">When you pay</legend>
+              <label className={styles.payOption} data-chosen={payOnline ? "" : undefined}>
+                <input type="radio" name="pay-when" checked={payOnline} onChange={() => onPayOnline(true)} />
+                <span className="tnum">
+                  {payment.manual ? "Pay now by QR" : "Pay now"}
+                  {payNow ? `: ${payNow}` : ""}
+                </span>
+                <span className={styles.reviewNote}>
+                  {payment.manual ? "Booked once the team sees your payment." : "Booked as soon as it’s paid."} {cancelText(room.terms)}
+                </span>
+              </label>
+              <label className={styles.payOption} data-chosen={payOnline ? undefined : ""}>
+                <input type="radio" name="pay-when" checked={!payOnline} onChange={() => onPayOnline(false)} />
+                <span>Pay at the house</span>
+                <span className={styles.reviewNote}>{atHouse}</span>
+              </label>
+            </fieldset>
+          )}
         </ReviewRow>
         <ReviewRow term="You" change="Change details" onChange={() => onChange("details")}>
           {details.name.trim()}
@@ -795,12 +845,28 @@ export function ReviewStep({
         ) : null}
       </dl>
 
-      <p className={styles.next}>
-        {mode === "instant"
-          ? "Your beds are booked as soon as you press Book now."
-          : `The team confirms your booking ${replyBy}.${holdHours ? ` While they check, your beds can be held for you for up to ${plural(holdHours, "hour")}: your confirmation will say if they are.` : ""}`}{" "}
-        Nothing to pay now: you pay at the house.
-      </p>
+      {payment && payOnline ? (
+        <>
+          <p className={styles.next}>
+            {payment.manual
+              ? `Next you see the house’s QR code: pay it with your banking app, then tap “I’ve paid”. Your beds are held for ${plural(payment.pay_minutes, "minute")} while you pay, and while the team checks your payment; they confirm your booking once they see it.`
+              : `Next you pay on the bank’s secure page: your card or QR details go only to the bank. Your beds are held for ${plural(payment.pay_minutes, "minute")} while you pay, and your booking is confirmed as soon as the payment goes through.`}
+            {payment.charge === "deposit" ? " The rest is paid at the house." : ""}
+          </p>
+          {payment.test ? (
+            <p className={styles.notice}>
+              <strong>Test payments.</strong> The house is trying payments: the bank’s page is a test one, and no real money is taken.
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <p className={styles.next}>
+          {mode === "instant"
+            ? "Your beds are booked as soon as you press Book now."
+            : `The team confirms your booking ${replyBy}.${holdHours ? ` While they check, your beds can be held for you for up to ${plural(holdHours, "hour")}: your confirmation will say if they are.` : ""}`}{" "}
+          Nothing to pay now: you pay at the house.
+        </p>
+      )}
       {sentAs ? (
         <p className={styles.notice}>
           You have already sent this request (reference {sentAs}). Sending it again won’t make a second booking.
@@ -814,7 +880,7 @@ export function ReviewStep({
           aria-disabled={sending || undefined}
           onClick={onSend}
         >
-          {sending ? "Sending…" : action}
+          {sending ? (payOnline ? "Opening the payment page…" : "Sending…") : action}
           <ArrowIcon />
         </button>
       </div>
@@ -923,18 +989,247 @@ export function Confirmation({
   );
 }
 
+/** What a booking paid online shows: the stay, when the guest booked on this device; else just the booking. */
+export interface PaidBooking {
+  readonly confirmation: BookingConfirmation;
+  readonly stay: Stay | null;
+  readonly roomName: string | null;
+  readonly replyBy: string;
+  readonly arrival: string | null;
+}
+
+/**
+ * How often, and how many times, the page asks where a payment stands: every
+ * 3 seconds for a minute after the bank sends the guest back, and every 30
+ * seconds for 10 minutes while the team checks a payment by the house's QR.
+ */
+const POLL_MS = 3_000;
+const CHECKING_POLL_MS = 30_000;
+const POLL_TRIES = 20;
+
+/**
+ * A booking paid online, after the guest is back from the bank (or the bank's
+ * page could not be opened): paid and booked, still waiting for the bank's
+ * word, or not paid, with a way to pay again while the beds are free.
+ */
+export function PaymentConfirmation({
+  booking,
+  house,
+  headingId,
+  headingRef,
+  fromBank = false,
+  onUpdate,
+  onAgain,
+}: {
+  booking: PaidBooking;
+  house: HouseNotes;
+  headingId: string;
+  headingRef: RefObject<HTMLHeadingElement | null>;
+  /** Just back from the bank: what the page kept is older than the bank's word, so ask Shadow first. */
+  fromBank?: boolean;
+  /** Shadow's newer word on the booking (kept for the tab). */
+  onUpdate: (confirmation: BookingConfirmation) => void;
+  onAgain: () => void;
+}) {
+  const { confirmation, stay } = booking;
+  const payment = confirmation.payment;
+  const [tries, setTries] = useState(0);
+  // Until Shadow first answers after the bank, the kept "pay" link may be stale: say it is checking instead.
+  const stale = fromBank && tries === 0;
+  const [again, setAgain] = useState<"idle" | "sending" | "taken" | "problem">("idle");
+  const id = confirmation.id;
+  const open = payment?.status === "open";
+  const checking = payment?.status === "claimed";
+  const update = useEffectEvent(onUpdate);
+
+  // Back from the bank, its word may still be on its way: ask again every few seconds for a minute.
+  // While the team checks a payment by QR, ask now and then, so the page shows their answer.
+  useEffect(() => {
+    if (!id || !(open || checking) || tries >= POLL_TRIES) return;
+    const timer = window.setTimeout(
+      () => {
+        void fetchBookingStatus(id).then((next) => {
+          if (next) update(next);
+          setTries((count) => count + 1);
+        });
+      },
+      tries === 0 ? 300 : open ? POLL_MS : CHECKING_POLL_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [id, open, checking, tries]);
+
+  if (!payment) return null;
+
+  function payAgain() {
+    if (!id || again === "sending") return;
+    setAgain("sending");
+    void postPayAgain(id).then((outcome) => {
+      if (outcome.ok) {
+        onUpdate(outcome.confirmation);
+        const url = outcome.confirmation.payment?.url;
+        if (url) {
+          window.location.assign(url);
+          return;
+        }
+        setAgain(outcome.confirmation.payment?.status === "paid" ? "idle" : "problem");
+        return;
+      }
+      setAgain(outcome.problem === "taken" ? "taken" : "problem");
+    });
+  }
+
+  const paid = payment.status === "paid" || payment.status === "refunded";
+  // Paid by the house's QR, and the team is checking.
+  const claimed = payment.status === "claimed";
+  const booked = paid && confirmation.status === "confirmed";
+  const amount = formatMoney(payment.amount, payment.currency);
+  const total = quoteText(confirmation);
+  const rest =
+    paid && confirmation.total !== null && confirmation.currency === payment.currency && confirmation.total > payment.amount
+      ? formatMoney(confirmation.total - payment.amount, payment.currency)
+      : null;
+  const until = formatHouseTime(payment.expires_at);
+  const title = booked
+    ? "You’re booked and paid"
+    : paid
+      ? "Payment received"
+      : claimed
+        ? "Thank you: the team is checking your payment"
+        : open
+        ? stale || !(tries >= POLL_TRIES || payment.url)
+          ? "Checking your payment…"
+          : "Waiting for your payment"
+        : "Your payment didn’t go through";
+
+  return (
+    <div className={styles.done}>
+      {/* The stamp's tick is for money received only. */}
+      {paid ? <Stamp text={booked ? "Booked" : "Paid"} className={styles.stamp} /> : null}
+      <h2 id={headingId} ref={headingRef} tabIndex={-1} className={styles.title}>
+        {title}
+      </h2>
+      <div className={styles.reference}>
+        <span className={styles.pickLabel}>Your reference</span>
+        <span className={styles.referenceCode}>{confirmation.reference}</span>
+        <CopyButton value={confirmation.reference} what="reference" />
+      </div>
+      {stay ? (
+        <p className={styles.doneStay}>
+          <span className="tnum">
+            {formatDay(stay.check_in, "long")} to {formatDay(stay.check_out, "long")}
+          </span>
+          <span>
+            {stayNightsText(stay)}, {plural(stay.guests, "guest")}
+            {booking.roomName ? `, ${booking.roomName}` : ""}
+          </span>
+        </p>
+      ) : null}
+      {payment.test ? (
+        <p className={styles.notice}>
+          <strong>Test payment.</strong> The house is trying payments: no real money was taken.
+        </p>
+      ) : null}
+
+      {claimed ? (
+        <>
+          <h3 className={styles.nextTitle}>What happens next</h3>
+          <ol className={styles.nextSteps}>
+            <li>
+              The team looks for {amount} in the house’s bank account and confirms your booking once they see it. Your beds are held
+              for you while they check.
+            </li>
+            <li>If they can’t find it, this page says so and lets you try again. Questions: message the team with your reference.</li>
+            <li>
+              Check-in is from {house.checkInFrom}
+              {booking.arrival ? `, and the team knows you plan to arrive around ${booking.arrival}` : ""}. {house.passport}
+            </li>
+          </ol>
+        </>
+      ) : paid ? (
+        <>
+          <h3 className={styles.nextTitle}>What happens next</h3>
+          <ol className={styles.nextSteps}>
+            <li>
+              {booked
+                ? "Your beds are booked. Keep your reference: it is how the team finds your booking."
+                : `The team will be in touch ${booking.replyBy} about your beds.`}
+            </li>
+            <li>
+              {rest
+                ? `You paid ${amount} online. The rest, ${rest}, you pay at the house.`
+                : `You paid ${total && total === amount ? "the whole " : ""}${amount} online: nothing more to pay for your beds.`}
+            </li>
+            <li>
+              Check-in is from {house.checkInFrom}
+              {booking.arrival ? `, and the team knows you plan to arrive around ${booking.arrival}` : ""}. {house.passport}
+            </li>
+            <li>To change or cancel, message the team with your reference.</li>
+          </ol>
+        </>
+      ) : open ? (
+        <div className={styles.stack}>
+          <p>
+            {until ? `Your beds are held for you until ${until} (Vientiane time) while you pay.` : "Your beds are held for you while you pay."}{" "}
+            {payment.url && !stale ? "" : tries < POLL_TRIES ? "Checking with the bank…" : "If you have paid, the bank will tell the house shortly."}
+          </p>
+          {stale ? null : payment.url ? (
+            <p>
+              <a href={payment.url} className={`${buttons.button} ${buttons.primary}`}>
+                Pay {amount}
+                <ArrowIcon />
+              </a>
+            </p>
+          ) : tries >= POLL_TRIES ? (
+            <p>
+              <button type="button" className={`${buttons.button} ${buttons.secondary}`} aria-disabled={again === "sending" || undefined} onClick={payAgain}>
+                {again === "sending" ? "Opening the payment page…" : "Open the payment page"}
+              </button>
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div className={styles.stack}>
+          <p>Nothing was taken and nothing is booked yet.</p>
+          {again === "taken" ? (
+            <p role="alert">Those beds have just gone. Please choose other dates or beds.</p>
+          ) : (
+            <p>
+              <button type="button" className={`${buttons.button} ${buttons.primary}`} aria-disabled={again === "sending" || undefined} onClick={payAgain}>
+                {again === "sending" ? "Opening the payment page…" : `Try paying ${amount} again`}
+                <ArrowIcon />
+              </button>
+            </p>
+          )}
+        </div>
+      )}
+      {again === "problem" ? (
+        <p role="alert">The payment page couldn’t be opened just now. Please try again in a minute, or message the team with your reference.</p>
+      ) : null}
+      <ContactDetails compact />
+      <p>
+        <button type="button" className={styles.textButton} onClick={onAgain}>
+          Book another stay
+        </button>
+      </p>
+    </div>
+  );
+}
+
 /** The summary beside the steps, and the other ways to book. `beds` and `price` once a room is chosen. */
 export function StayStub({
   stay,
   beds,
   price,
   booked = false,
+  paying = null,
 }: {
   stay: Stay | null;
   beds: string | null;
   price: string | null;
   /** The booking is made: the booking sites would only invite a second one. */
   booked?: boolean;
+  /** How the stay is paid, when online: "Paying online", "Paid online: LAK 200,000". */
+  paying?: string | null;
 }) {
   return (
     <aside className={styles.stub} aria-label="Your stay">
@@ -971,7 +1266,7 @@ export function StayStub({
       ) : (
         <p className={styles.stubText}>Choose your dates to see the free beds.</p>
       )}
-      <p className={styles.stubPay}>Nothing to pay online: you pay at the house.</p>
+      <p className={styles.stubPay}>{paying ?? "Nothing to pay online: you pay at the house."}</p>
       {booked ? null : (
         <div className={styles.stubOther}>
           <p className={styles.stubTitle}>Or book on</p>
