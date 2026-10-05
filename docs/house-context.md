@@ -8,14 +8,16 @@ Floors are named as the house names them: the Ground floor (the lobby), Floor 1 
 
 ### Café
 
-In it: 2 air-conditioners, 3 bar stools, 1 big clay jar, 1 built-in bench seat, 10 chairs, 1 dehumidifier, 1 drinks fridge, 2 low stools, 5 low tables, 7 pendant lamps, 1 plant, 1 printer, 1 space for luggage, 2 tall round tables, 1 window, 1 window ledge to sit at.
+In it: 2 air-conditioners, 3 bar stools, 1 big clay jar, 1 built-in bench seat, 3 ceiling lights, 10 chairs, 1 dehumidifier, 1 drinks fridge, 5 framed photographs, 2 low stools, 5 low tables, 7 pendant lamps, 1 plant, 1 printer, 1 space for luggage, 2 tall round tables, 1 track light, 1 window, 1 window ledge to sit at.
 
 Rules here:
 - Eat and drink in the café on the ground floor, not in the dorms. Clean dorms, with no crumbs or smells. (Food and drink belong in the café on the ground floor, never in Dorm H or Dorm J.)
 - Leaving very early? Pack your bag on the ground floor. So the dorm can sleep on. (Early leavers pack on the ground floor, where luggage waits beside the front desk, so Dorm H and Dorm J can sleep on.)
 
 Assumed:
-- Seen in photos f1-03, f1-05 and f1-08; how many there are and where they hang is approximate.
+- Seen in photos f1-03, gf-02 and gf-03; how many there are and where they hang is approximate.
+- Small downlights in the café's ceiling (gf-02, gf-03); how many there are is approximate.
+- Framed black-and-white photographs along the right wall (gf-02, gf-03, gf-15); about five, the count is approximate.
 
 #### Entrance
 
@@ -28,7 +30,7 @@ Rules here:
 
 #### Front desk
 
-In it: 1 back counter, 1 coffee machine, 1 counter, 1 set of open shelves, 1 sink.
+In it: 1 back counter, 1 coffee machine, 1 counter, 1 set of open shelves, 1 sink, 1 track light.
 
 Rules here:
 - Check-in from 14:00 until 21:00. Time to clean every bed and make it up fresh. (At the front desk, the café counter.)
@@ -40,42 +42,43 @@ Rules here:
 - Leaving before 08:00? Tell the team beforehand, so they can return your deposit. Check-out at the desk starts at 08:00. (Tell the front desk beforehand.)
 - Coming by motorbike or bicycle? Tell reception. Overnight parking outside is not allowed. (Tell the front desk: bikes may not stay outside the terrace overnight.)
 
-#### Water
-
-In it: 1 bin, 2 low stools, 1 water dispenser.
-
 ### Stairs
 
-In it: 1 clay jar, 1 flight of stairs.
+In it: 1 clay jar, 3 flights of stairs, 2 wall lamps.
 
 Rules here:
 - No outside guests upstairs: the dorm floors are for registered guests, one to a pod. Everyone sleeps among people the house knows. (Floor 1 and Floor 2 are for registered guests only; the stairs behind the counter lead up to them.)
 - No shoes upstairs, on the dorm floors. Clean floors, as in most Lao homes. (Shoes come off at the foot of the stairs on the ground floor, and guests carry them up to the cubbies on the Floor 1 landing. No shoes on Floor 1 or Floor 2.)
 
 Assumed:
-- A straight flight of terracotta-tiled steps, from y 8.8 up to Floor 1 at y 12.4.
-- Not confirmed: photo f1-12, from the foot of the flight, shows a plain plastered wall on the climber's right and the teak panel with the café floor beyond it on the left; the model has them the other way round.
-- The flight may also turn at a landing near the top.
-- The walk lists one clay jar on the stairs' landing (perhaps where the flight turns near the top, f1-12); where it stands is not known.
+- The walk lists one clay jar on the stairs' landing; where it stands is not known.
+
+#### Store
+
+In it: 2 closet doors.
+
+### Corridor
+
+In it: 2 ceiling lights, 2 clay jars, 1 cupboard, 2 fire extinguishers.
+
+#### Water
+
+In it: 1 bin, 2 low stools, 1 water dispenser.
 
 ### Toilet
 
-In it: 1 basin, 2 clay jars, 2 fire extinguishers, 1 hand dryer, 1 small sink, 1 toilet.
+In it: 1 basin, 1 hand dryer, 1 small sink, 1 toilet.
 
 Assumed:
-- Where the toilet's door is, is assumed.
-- Not confirmed: photos f1-10 and f1-11 do not pin down the plan behind the café. f1-10 shows the basin right beside the toilet's door; f1-11 shows the basin and the staff room's doorway on the same plastered, tiled wall, the teak cupboards on the other side, and the extinguishers and clay jars against a blank end wall.
+- Where the toilet's door is and how the room is laid out inside are approximate: the door opens off a small wet corner beside the corridor, the basin right outside it (f1-10, gf-09, gf-10).
 
-### Staff and kitchen
+### Staff room
 
-In it: 1 kitchen counter, 1 set of staff lockers.
+In it: 1 ceiling light, 1 electrical panel, 1 lattice door, 1 set of staff lockers, 1 shrine with offerings, 1 water tank.
 
-Assumed:
-- The staff area and kitchen (the owner's word); not photographed inside, but seen through its doorway (wooden lockers, drinking-water stock).
-- The staff room's door, in the corridor's side wall past the stairs (f1-09, f1-11).
-- Not confirmed: photos f1-10 and f1-11 do not pin down the plan behind the café. f1-10 shows the basin right beside the toilet's door; f1-11 shows the basin and the staff room's doorway on the same plastered, tiled wall, the teak cupboards on the other side, and the extinguishers and clay jars against a blank end wall.
-- Wooden lockers seen through the door; how many is unknown.
-- Assumed: the owner said the back room is the staff area and kitchen.
+#### Kitchen
+
+In it: 1 cupboard, 1 exhaust fan, 1 fridge, 2 kitchen counters, 2 low stools, 1 sink, 1 steel shelving rack.
 
 ## Floor 1
 
@@ -92,7 +95,7 @@ Rules here:
 - Check-out from 08:00 until 11:30. So beds are ready for the guests arriving that afternoon. (Pods in Dorm H and Dorm J are left by 11:30, and guests check out at the front desk.)
 
 Assumed:
-- Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight to a door in the middle.
+- Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door.
 - The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read).
 - Not confirmed: which pod carries which number.
 - Not confirmed: which stack holds which numbers.
@@ -100,14 +103,15 @@ Assumed:
 
 ### Landing
 
-In it: 1 flight of stairs, 30 shoe cubbies, 1 wall lamp.
+In it: 3 flights of stairs, 30 shoe cubbies, 1 wall lamp.
 
 Rules here:
 - No outside guests upstairs: the dorm floors are for registered guests, one to a pod. Everyone sleeps among people the house knows. (Floor 1 and Floor 2 are for registered guests only; the stairs behind the counter lead up to them.)
 - No shoes upstairs, on the dorm floors. Clean floors, as in most Lao homes. (Shoes come off at the foot of the stairs on the ground floor, and guests carry them up to the cubbies on the Floor 1 landing. No shoes on Floor 1 or Floor 2.)
 
 Assumed:
-- The flight to Floor 2 rises back toward the front over the first one (approximate).
+- Assumed the same as the ground floor's: a landing against the left wall.
+- Assumed the same as the ground floor's: back toward the passage, up to Floor 2.
 
 ### Women's bathroom
 
@@ -135,7 +139,7 @@ Rules here:
 
 Assumed:
 - Floor 2 has not been photographed: copied from Floor 1 on the owner's word ("the same layout").
-- Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight to a door in the middle.
+- Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door.
 - The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read).
 - Not confirmed: which pod carries which number.
 - Not confirmed: which stack holds which numbers.

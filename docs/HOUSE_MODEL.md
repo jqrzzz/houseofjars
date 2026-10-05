@@ -2,7 +2,7 @@
 
 One model of the real building that every picture and animation of House of Jars is drawn from: illustrated maps, the guest tour, staff cleaning guides, login screens, videos. "One skeleton, many outfits": the model in `lib/house/house-of-jars.ts` is the skeleton; each view (street, dollhouse cutaway, exploded floors, floor plans) is an outfit generated from it. When something in the house changes, one line of data changes and every picture follows.
 
-The model comes from the owner's walk of 5 October 2026 (the `place-walk` skill). **Counts are exact. Positions and sizes are approximate** (no tape measure), but the arrangement is true: what is next to what, which side, which floor. Anything assumed rather than seen carries `confirmed: false` and a note (in the SVGs, `data-confirmed="false"`).
+The model comes from the owner's walk of 5 October 2026 (the `place-walk` skill) and a second round of ground-floor photos (walls, ceilings, the stairs, the corridor, the staff room and the kitchen; `gf-01` to `gf-15` in the notes). **Counts are exact. Positions and sizes are approximate** (no tape measure), but the arrangement is true: what is next to what, which side, which floor. Anything assumed rather than seen carries `confirmed: false` and a note (in the SVGs, `data-confirmed="false"`).
 
 ## Files
 
@@ -70,7 +70,7 @@ npm run house:render   # redraws public/house/
 npx vitest run lib/house   # checks the model and that the pictures match it
 ```
 
-The tests fail while `public/house/` differs from a fresh render, so the pictures never drift from the model. They also check that ids are unique, every fixture sits inside its area (to 5 cm), no two solid fixtures share volume (unless one is `mountedOn` the other), nothing stands in a doorway, no route walks through furniture, each slab opening covers the stairs below it, and the walk's counts (12 pods and 12 lockers per dorm, 3 toilets and 2 showers per bathroom, 5 low tables and 10 chairs in the café, and so on).
+The tests fail while `public/house/` differs from a fresh render, so the pictures never drift from the model. They also check that ids are unique, every fixture sits inside its area (to 5 cm), no two solid fixtures share volume (unless one is `mountedOn` the other), nothing stands in a doorway, no route walks through furniture, each slab opening covers the stairs below it, and the walk's counts (12 pods and 12 lockers per dorm, 3 toilets and 2 showers per bathroom, one toilet on the ground floor, 5 low tables and 10 chairs in the café, and so on).
 
 Everything the pictures show comes from the model, so a copy of the model with something changed draws that change: every renderer takes `model` (default `houseOfJars`), for a what-if or a test.
 
@@ -80,20 +80,21 @@ Examples:
 - **Something new** (a second fridge): add a fixture with a unique `id`, its `type`, `area`, `box` (`centred(x, y, w, d, h, z0)` or `box(x0, x1, y0, y1, z0, z1)`), and `faces` if it has a front. Use an existing `type` when one fits; a new kind of thing also needs a builder in `fixtures.ts` (3D parts and a plan symbol).
 - **Floor 2 confirmed.** Drop `confirmed: false` from the `floor2` floor, and in `dormFloor` the `level === 2` unconfirmed marks for what the owner checked (and add the shoe cubbies if Floor 2 has them too). Update the counts test if a number changed.
 - **Which pod and locker carries which number, confirmed.** Fix the labels in `dormFloor` (the pod `columns` and the locker `stacks`) and update `POD_NOTE` and `LOCKER_NOTE`, or remove `confirmed: false` once the dorm's back end is confirmed too.
-- **The stairs moved.** Move the stairs fixtures and the upper floors' `opening` with them; the slab holes, the floors around them and the plans follow.
-- **A room that is not a rectangle.** Give its area `more` rectangles (the staff room reaches behind the stairs this way).
+- **The stairs moved.** Each flight is a `stairs` fixture: `faces` is the way it climbs and `climb` the heights it starts and ends at (relative to its floor); a landing has the variant `landing` and starts and ends at one height. Move the flights and the upper floors' `opening` with them; the slab holes, the floors around them and the plans follow. The test fails if a flight comes within 2 m of a slab without an opening over it.
+- **A room that is not a rectangle.** Give its area `more` rectangles (the café, the corridor and the toilet are drawn this way).
 - **A route.** Add it to `routes`: one segment per floor, points as `[x, y]` or `[x, y, z]` (on stairs), optional stops. The test fails if a flat stretch crosses a fixture standing on the floor.
 
 ### What is assumed today (`confirmed: false`)
 
 - **All of Floor 2** (copied from Floor 1), except its two small windows, which show in the street photo.
-- **The staff room and kitchen** inside (lockers, counter, door).
 - **Which pod and locker carries which number.** The numbers themselves are the owner's: H01 to H12 on Floor 1 and J01 to J12 on Floor 2 (the plates in the photos are too blurry to read). Their order is not known: ask the owner, one side at a time, before the labels go into a tour or a cleaning guide.
-- **The back end of the dorms.** Photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight to a door in the middle. Confirm it with the owner, then in `dormFloor`: add the crosswise column facing -y, move the dorm door to about x 2.7 to 3.6 beside a locker stack, shorten the right-hand columns to leave the way in, re-split the columns so there are still 12 pods, and update the arrival and bathroom routes.
-- **The ground floor's stairs.** Photo f1-12, from the foot of the flight, shows a plain plastered wall on the climber's right and the teak panel with the café floor beyond it on the left: the model has the sides the other way round. The flight may also turn at a landing near the top (the walk lists a clay jar on the landing; where it stands is not known). Where the stairs open to the café is assumed.
-- **The corridor behind the café.** Photos f1-10 and f1-11 do not pin down its plan: f1-10 shows the hand-wash basin right beside the toilet's door; f1-11 shows the basin and the staff room's doorway on the same plastered, tiled wall, the teak cupboards opposite, and the extinguishers and clay jars against a blank end wall. The model puts the basin and dryer beside the toilet's door, the staff door in the corridor's side wall past the stairs, and the extinguishers and jars against the blank end wall.
-- **The pendant lamps** over the café: seen in photos f1-03, f1-05 and f1-08; how many and where is approximate.
-- **The flight to Floor 2** rising back over the first one (approximate).
+- **The back end of the dorms.** Photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door. Confirm it with the owner, then in `dormFloor`: add the crosswise column facing -y beside a locker stack, shorten the right-hand columns to leave the way in, re-split the columns so there are still 12 pods, and update the arrival and bathroom routes.
+- **Inside the ground floor's toilet.** The photos show its door, off a small wet corner beside the corridor, and the basin right outside it (f1-10, gf-09, gf-10); where the toilet and its sink stand inside is assumed, and so is the wall between it and the corridor.
+- **The kitchen's door.** The photos show the staff room and the kitchen (gf-07, gf-08) but not the way between them; the model puts a doorway in the wall between them.
+- **The flights between Floor 1 and Floor 2.** Floor 1's photos show the first flight up beside the bathroom door (f2-02); the landing and the second flight are assumed to be the same as on the ground floor.
+- **The pendant lamps, downlights and framed photographs** in the café: seen in photos f1-03, gf-02 and gf-03; how many and where is approximate. So is where the clay jar on the landing stands.
+
+Seen but not known: where the staff room's teak lattice door leads, and what the tall teak cupboard in the corridor holds. Their notes say so.
 
 ## Views
 
@@ -110,13 +111,13 @@ renderPlan("ground" | "floor1" | "floor2" | "outside", { theme, labels, idPrefix
 - **Street**: the closed building: facade with the big arch (it echoes the logo), ledge band, windows, the three outdoor AC units, the awning on two posts with the "hostel" sign (white letters on orange), the hanging sign, door, grid window with its bamboo blind, the bench and two small tables on the tiled terrace. The awning's roof is drawn see-through so the shopfront under it reads. The side wall and roof are cropped `depth` metres back (default 4, so the facade leads; `depth: 16` draws the whole building), the cut edges dashed. `neighbours: true` adds NinetyNine 99 Bar (left) and Swedish Baking (right) as low-detail slices cropped the same way.
 - **Cutaway** (dollhouse): the same camera with the right wall, the roof and each floor's ceiling taken away. Conventions, so the rooms show:
   - the facade (and anything outside: the awning's posts, the terrace) is cut 1.0 m above each floor, the cut drawn in hairline; what hangs on the outside of the facade above the cut (outdoor AC units, the awning, the signs) is not drawn; what hangs on its inside (the dorms' AC units over the windows) is;
-  - inner partitions, and the flight between Floors 1 and 2, are drawn to 2.2 m (above the door heads); the outer walls and the ground floor's wooden stair enclosure keep their full height; in each bathroom the stall nearest the camera is drawn cut open at 0.7 m so one toilet shows;
+  - inner partitions (the ground floor's teak stair panelling among them) and the stairs between upper floors are drawn to 2.2 m (above the door heads); the outer walls keep their full height; in each bathroom the stall nearest the camera is drawn cut open at 0.7 m so one toilet shows;
   - what hangs on the right wall (bathroom mirrors, dryers, the rules sign) goes with it; the pods against the right wall lose their outer panels with it, so their beds show;
   - `explode` (metres) lifts each floor by `explode x S x level` pixels; `fitExplode` (metres) makes the viewBox big enough for that explode too, without moving anything (for lifting the floors at runtime); `floors` draws only some floors;
   - `labels` adds area labels with leader lines; each label takes the first clear place around its anchor (above, to a side, below), so no pill covers another or another label's dot, and a label whose anchor a floor above hides is left out; `labelSize` sets their size (default 19 px of the viewBox; use about 32 for a picture shown at phone width);
   - `highlight` (area ids) outlines those areas, with their sub-areas (the café keeps its counter, water corner and entrance), and fades the rest: a floor with nothing highlighted fades as one group; on a floor with something highlighted the other areas and their fixtures become opaque ghosts (nothing shows through), and their labels dim;
   - `route` draws a guest's path: in short pieces sorted with the walls and furniture, so whatever stands in front hides it, with the whole path again on top, faint, so the hidden stretches stay traceable; its stops are labelled; with the floors lifted apart, a dotted link joins the end of one floor's stretch to the start of the next.
-- **Plans**: on their own paper (so the frame text reads whatever the page's theme), walls as thick ink (the facade broken at every window), areas tinted by kind, fixtures as simple symbols (pods numbered, "lower"/"upper"; lockers by stack; stairs with an arrow that starts where you stand and points the way you walk, "Up" or "Down" at its tail, two half arrows split by a break line where a flight up stands over the flight down), things that hang above dashed, a "Street" marker, "Approximate, not to scale", and a floor's note when it has not been seen yet. A small area's label can sit beside it (`planAnchor`) with a short leader.
+- **Plans**: on their own paper (so the frame text reads whatever the page's theme), walls as thick ink (the facade broken at every window), areas tinted by kind, fixtures as simple symbols (pods numbered, "lower"/"upper"; lockers by stack; stairs as treads with an arrow that starts where you stand and points the way you walk: "Up" on the flight that starts on this floor, "Down" on the flight that arrives from the floor below, two half arrows split by a break line where a flight up stands over the flight down; landings and the flights in between are treads alone), things that hang above dashed, a "Street" marker, "Approximate, not to scale", and a floor's note when it has not been seen yet. A small area's label can sit beside it (`planAnchor`) with a short leader.
 
 ### The committed pictures (`public/house/`)
 
@@ -193,8 +194,8 @@ where `view.html` shows the SVG (`<img src>` or inline). For the Evening look, r
 ## Known gaps
 
 - Positions and sizes are approximate; Floor 2 is a copy of Floor 1.
-- The dorms' back end, the pod and locker numbers, the ground floor's stairs and the corridor behind the café are drawn as assumed above, against what some photos show, until the owner confirms them.
-- The stairs are approximate: a straight masonry flight on the ground floor, and the flight to Floor 2 stacked over it on the same footprint (a scissor arrangement). How the landings connect to the flights is assumed.
-- From this camera the corridor behind the café (the basin, the extinguishers, the staff room's door) is hidden behind the toilet room; the ground plan shows it. The inside of the curtains on the far side of the right-hand pods cannot be seen either.
+- The dorms' back end and the pod and locker numbers are drawn as assumed above, against what some photos show, until the owner confirms them.
+- The stairs are approximate: one U-shaped stair across the house behind the counter, the same on every floor. Its shape is read from the photos (the slope of its teak underside seen from the café, the turn at the landing against the left wall, the flight beside the bathroom door upstairs), not measured.
+- From this camera the stairs, the tall cupboard and the toilet's walls hide parts of the toilet and the corridor; the ground plan shows all of them. The inside of the curtains on the far side of the right-hand pods cannot be seen either.
 - A route's link between lifted floors is drawn for the rendered explode only.
 - The hanging "House of Jars" board under the awning is drawn as a board with the logo's arch, without its lettering (too small to read at this scale); the dorm doors' H and J plates are plain for the same reason.
