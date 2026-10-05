@@ -14,7 +14,7 @@
  * Same input, byte-identical output. Bad options throw instead of drawing a
  * wrong picture.
  */
-import { type FixtureContext, type PlanMark, type StairArrow, isoParts, planMarks, planStairs, risesToward } from "./fixtures";
+import { type FixtureContext, type PlanMark, type StairArrow, climbOf, isoParts, planMarks, planStairs, reverse } from "./fixtures";
 import {
   type Bounds,
   type Cmd,
@@ -103,8 +103,8 @@ export const FACADE_CUT = 1.0;
  * How high the cutaway draws the inner partitions (above the door heads, so
  * doors keep their lintels): full-height walls across the house would hide
  * the first metres of every room behind them from this camera. The outer
- * walls and the ground floor's wooden stair enclosure keep their full height;
- * a flight of stairs between upper floors is cut at the same height.
+ * walls keep their full height; the stairs between upper floors are cut at
+ * the same height.
  */
 export const PARTITION_CUT = 2.2;
 /** How far back the street view draws the side wall, roof and neighbours by default. */
@@ -1141,9 +1141,9 @@ export function renderCutaway(opts: CutawayOptions = {}): string {
       prefix,
       (f) => f.mount !== "right-wall",
       (f) => {
-        // What stands outside or hangs on the facade is cut with it; a flight between upper floors is cut like the partitions.
+        // What stands outside or hangs on the facade is cut with it; the stairs between upper floors are cut like the partitions.
         const outside = f.mount === "facade" || areaKind(model, f.area) === "outside";
-        const flight = f.type === "stairs" && f.variant === "flight";
+        const flight = f.type === "stairs" && floor.level > 0;
         return fixtureContext(model, floor, outside ? cut : flight ? floor.z + PARTITION_CUT : undefined);
       },
       floorLit ? (f) => !floorLit.has(f.area) : undefined,
@@ -1331,19 +1331,23 @@ export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): 
   });
   const high = (f: Fixture) => f.box.z0 > 1.6 || f.type === "awning" || f.mount === "right-wall" || f.mount === "facade-inside";
   const sortedFx = [...fixtures.filter((f) => !high(f)), ...fixtures.filter(high)];
-  // Stairs: the arrow starts where you stand and points the way you walk. A flight arriving from the floor
-  // below is the way down; where this floor's own flight up stands over it, the two share the symbol.
+  // Stairs: the arrow starts where you stand and points the way you walk. Only the flight that starts on
+  // this floor says Up, and only the flight that arrives from the floor below says Down; landings and the
+  // flights between are treads alone. A flight from below shows where none of this floor's stairs covers it.
   const below = model.floors.find((f) => f.level === floor.level - 1);
   const arriving = outside || !below ? [] : model.fixtures.filter((f) => f.floor === below.id && f.type === "stairs");
   const own = fixtures.filter((f) => f.type === "stairs");
-  const downOf = (f: Fixture): StairArrow => ({ toward: risesToward(f) > 0 ? -1 : 1, label: "Down" });
+  const startsHere = (f: Fixture) => !f.variant?.includes("landing") && (f.climb?.from ?? 0) <= 0.05;
+  const reachesHere = (f: Fixture) => !f.variant?.includes("landing") && (!f.climb || below === undefined || f.climb.to >= floor.z - below.z - 0.05);
+  const downOf = (f: Fixture): StairArrow[] => (reachesHere(f) ? [{ toward: reverse(climbOf(f)), label: "Down" }] : []);
   for (const f of arriving) {
     if (own.some((g) => overlapsRect(g.box, f.box))) continue;
-    content += `<g${attrs({ "data-stairs": "down", "data-area": f.area })}>${writeMarks(planStairs(f.box, p, [downOf(f)]), w)}</g>`;
+    content += `<g${attrs({ "data-stairs": "down", "data-area": f.area })}>${writeMarks(planStairs(f.box, p, downOf(f), f.variant?.includes("landing") ? null : climbOf(f)), w)}</g>`;
   }
   for (const f of sortedFx) {
-    const under = f.type === "stairs" ? arriving.find((g) => overlapsRect(g.box, f.box)) : undefined;
-    const marks = planMarks(f, p, under ? { stairs: [downOf(under), { toward: risesToward(f), label: "Up" }] } : {});
+    const under = f.type === "stairs" ? arriving.find((g) => reachesHere(g) && overlapsRect(g.box, f.box)) : undefined;
+    const up: StairArrow[] = startsHere(f) ? [{ toward: climbOf(f), label: "Up" }] : [];
+    const marks = planMarks(f, p, f.type === "stairs" ? { stairs: [...(under ? downOf(under) : []), ...up] } : {});
     if (marks.length === 0) continue;
     content += `<g${attrs({ id: `${prefix}fx-${f.id}`, "data-fixture": f.type, "data-label": f.label, "data-area": f.area, "data-room": roomOf(model, f.area), "data-confirmed": confirmedAttr(f) })}>${writeMarks(marks, w)}</g>`;
   }

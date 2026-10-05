@@ -35,7 +35,7 @@ import {
   union,
 } from "./geometry";
 import { type MaterialName, fill } from "./palette";
-import type { Box3, Fixture } from "./types";
+import type { Box3, Facing, Fixture } from "./types";
 
 export interface FixtureContext {
   /** The floor's height above the street-level floor. */
@@ -596,70 +596,72 @@ function windowLedge(b: Box3): Node[] {
 }
 
 /**
- * Steps, climbing to the floor above (ctx.rise). "solid": masonry from the floor (the ground floor's
- * flight); "flight": steps on a stringer, from the back (y1, at the floor) up to the front (y0). A cut
- * (ctx.cut) clips a flight like the cutaway's partitions, its cut tops in hairline.
+ * A flight of stairs, climbing toward its `faces` (see climbOf) from `climb.from` to `climb.to` (heights
+ * relative to its floor; without `climb`, from the box's bottom to the floor above). "solid": masonry from
+ * the floor (the ground floor's first flight and landing); otherwise steps on a stringer along the side the
+ * camera sees. "landing": a flat slab at the flight's height. A cut (ctx.cut) clips it like the cutaway's
+ * partitions, its cut tops in hairline.
  */
 function stairs(fx: Fixture, b: Box3, ctx: FixtureContext): Node[] {
-  const out: Node[] = [];
-  const top = b.z1;
-  const rise = 0.19;
-  const total = ctx.rise ?? b.z1 - b.z0;
-  if (fx.variant === "flight") {
-    const n = Math.round(total / rise);
-    const r = total / n;
-    const run = (b.y1 - b.y0) / (n - 1);
-    const xm = b.x0 + (b.x1 - b.x0) / 2;
-    for (let k = 1; k < n; k++) {
-      const tz = Math.min(ctx.z + k * r, top);
-      const y1 = b.y1 - (k - 1) * run;
-      const y0 = y1 - run;
-      const z0 = Math.max(b.z0, tz - 0.32);
-      if (ctx.cut !== undefined && z0 >= ctx.cut - 1e-6) continue;
-      const cut = ctx.cut !== undefined && tz > ctx.cut;
-      const z1 = cut ? ctx.cut! : tz;
-      const sb = box(b.x0, b.x1, y0, y1, z0, z1);
-      out.push(
-        part(sb, [
-          ...boxFaces(sb, { top: c("terracotta", 0, cut ? "h" : ""), front: c("terracotta", 1), right: c("terracotta", 2) }),
-          ...(cut ? [] : [line([[xm, y0, tz], [xm, y1, tz]], "tg")]),
-        ]),
-      );
-    }
-    // The stringer along the open side, under the nosings: the flight reads as one piece, not a stack of blocks.
-    const slope = r / run;
-    const noseAt = (y: number) => ctx.z + (b.y1 - y) * slope - 0.03;
-    const x = b.x1 + 0.004;
-    const stringer = clipBelow(
-      [
-        [x, b.y1, ctx.z],
-        [x, b.y0, noseAt(b.y0)],
-        [x, b.y0, noseAt(b.y0) - 0.3],
-        [x, b.y1 - 0.33 / slope, ctx.z],
-      ],
-      ctx.cut,
-    );
-    if (stringer) out.push(part(box(b.x1, x, b.y0, b.y1, ctx.z, Math.max(...stringer.map((p) => p[2]))), [poly(stringer, c("wood", 2))]));
-    return out;
+  const tokens = (fx.variant ?? "").split(" ");
+  const masonry = tokens.includes("solid");
+  const from = ctx.z + (fx.climb?.from ?? fx.box.z0);
+  const to = ctx.z + (fx.climb?.to ?? ctx.rise ?? fx.box.z1);
+  if (tokens.includes("landing")) {
+    const z0 = masonry ? b.z0 : Math.max(b.z0, to - 0.2);
+    if (ctx.cut !== undefined && z0 >= ctx.cut - 1e-6) return [];
+    const cut = ctx.cut !== undefined && to > ctx.cut;
+    const lb = box(b.x0, b.x1, b.y0, b.y1, z0, cut ? ctx.cut! : to);
+    return [part(lb, boxFaces(lb, { top: c("terracotta", 0, cut ? "h" : ""), front: c(masonry ? "plaster" : "terracotta", 1), right: c(masonry ? "plaster" : "terracotta", 2) }))];
   }
-  const n = Math.round(total / rise);
-  const r = total / n;
-  const run = (b.y1 - b.y0) / (n - 1);
+  const dir = climbOf(fx);
+  const alongX = dir === "+x" || dir === "-x";
+  const sign = dir === "+x" || dir === "+y" ? 1 : -1;
+  const lo = alongX ? b.x0 : b.y0;
+  const hi = alongX ? b.x1 : b.y1;
+  const n = Math.max(2, Math.round((to - from) / 0.19));
+  const r = (to - from) / n;
+  const run = (hi - lo) / (n - 1);
+  const start = sign > 0 ? lo : hi;
+  // A box over the run from a to e (either order), the flight's full width, between two heights.
+  const span = (a: number, e: number, z0: number, z1: number): Box3 =>
+    alongX ? box(Math.min(a, e), Math.max(a, e), b.y0, b.y1, z0, z1) : box(b.x0, b.x1, Math.min(a, e), Math.max(a, e), z0, z1);
+  // A point at run position s, a share t across the width, height z.
+  const at = (s: number, t: number, z: number): Vec3 => (alongX ? [s, b.y0 + (b.y1 - b.y0) * t, z] : [b.x0 + (b.x1 - b.x0) * t, s, z]);
+  // The risers face back down the flight; the faces along it are its sides (plaster on masonry).
+  const riser = (face: "front" | "right") => (face === "front" ? dir === "+y" : dir === "-x");
+  const side = (face: "front" | "right", tone: 1 | 2) => c(masonry && !riser(face) ? "plaster" : "terracotta", tone);
+  const out: Node[] = [];
   for (let k = 1; k < n; k++) {
-    const tz = Math.min(b.z0 + k * r, top);
-    const y0 = b.y0 + (k - 1) * run;
-    const sb = box(b.x0, b.x1, y0, y0 + run, b.z0, tz);
-    out.push(
-      decorate(solid(sb, "terracotta", "", { right: "plaster" }), [
-        lines(
-          [
-            [[b.x0 + (b.x1 - b.x0) / 3, y0, tz], [b.x0 + (b.x1 - b.x0) / 3, y0 + run, tz]],
-            [[b.x0 + (2 * (b.x1 - b.x0)) / 3, y0, tz], [b.x0 + (2 * (b.x1 - b.x0)) / 3, y0 + run, tz]],
-          ],
-          "tg",
-        ),
-      ]),
-    );
+    const tz = Math.min(from + k * r, b.z1);
+    const s0 = start + sign * (k - 1) * run;
+    const s1 = s0 + sign * run;
+    const z0 = masonry ? b.z0 : Math.max(b.z0, tz - 0.32);
+    if (ctx.cut !== undefined && z0 >= ctx.cut - 1e-6) continue;
+    const cut = ctx.cut !== undefined && tz > ctx.cut;
+    const z1 = cut ? ctx.cut! : tz;
+    const sb = span(s0, s1, z0, z1);
+    const grout = cut ? [] : [line([at(s0, 1 / 3, z1), at(s1, 1 / 3, z1)], "tg"), line([at(s0, 2 / 3, z1), at(s1, 2 / 3, z1)], "tg")];
+    out.push(part(sb, [...boxFaces(sb, { top: c("terracotta", 0, cut ? "h" : ""), front: side("front", 1), right: side("right", 2) }), ...grout]));
+  }
+  if (masonry) return out;
+  // The stringer along the side the camera sees, under the nosings: the flight reads as one piece, not a stack of blocks.
+  const slope = r / run;
+  const end = start + sign * (n - 1) * run;
+  const noseAt = (s: number) => from + Math.abs(s - start) * slope - 0.03;
+  const face = alongX ? b.y0 - 0.004 : b.x1 + 0.004;
+  const pt = (s: number, z: number): Vec3 => (alongX ? [s, face, z] : [face, s, z]);
+  const onFloor = from <= b.z0 + 0.05;
+  const outline = clipBelow(
+    onFloor
+      ? [pt(start, from), pt(end, noseAt(end)), pt(end, noseAt(end) - 0.3), pt(start + (sign * 0.33) / slope, from)]
+      : [pt(start, from), pt(end, noseAt(end)), pt(end, noseAt(end) - 0.3), pt(start, from - 0.33)],
+    ctx.cut,
+  );
+  if (outline) {
+    const zs = outline.map((q) => q[2]);
+    const sb = alongX ? box(Math.min(start, end), Math.max(start, end), face, b.y0, Math.min(...zs), Math.max(...zs)) : box(b.x1, face, Math.min(start, end), Math.max(start, end), Math.min(...zs), Math.max(...zs));
+    out.push(part(sb, [poly(outline, c("wood", alongX ? 1 : 2))]));
   }
   return out;
 }
@@ -692,14 +694,14 @@ function waterDispenser(b: Box3): Node[] {
 }
 
 function toilet(fx: Fixture, b: Box3): Node[] {
-  // Laid out facing -y, then turned for -x.
-  const alongX = fx.faces === "-x";
+  // Laid out facing -y, then turned for -x or +x.
+  const alongX = fx.faces === "-x" || fx.faces === "+x";
   const cx = (b.x0 + b.x1) / 2;
   const cy = (b.y0 + b.y1) / 2;
   const depth = alongX ? b.x1 - b.x0 : b.y1 - b.y0;
   const width = alongX ? b.y1 - b.y0 : b.x1 - b.x0;
   // In local coordinates: a runs along the width, d from the front (0) to the back (depth).
-  const at = (a: number, d: number): Vec2 => (alongX ? [b.x0 + d, cy + a] : [cx + a, b.y0 + d]);
+  const at = (a: number, d: number): Vec2 => (fx.faces === "-x" ? [b.x0 + d, cy + a] : fx.faces === "+x" ? [b.x1 - d, cy + a] : [cx + a, b.y0 + d]);
   const rect = (a0: number, a1: number, d0: number, d1: number, z0: number, z1: number): Box3 => {
     const p = at(a0, d0);
     const q = at(a1, d1);
@@ -710,7 +712,7 @@ function toilet(fx: Fixture, b: Box3): Node[] {
     const t = (2 * Math.PI * i) / 14;
     ring.push(at(Math.cos(t) * width * 0.42, depth * 0.4 + Math.sin(t) * depth * 0.32));
   }
-  if (alongX) ring.reverse();
+  if (fx.faces === "-x") ring.reverse();
   const bowlTop = b.z0 + 0.42;
   return [
     solid(rect(-width * 0.18, width * 0.18, depth * 0.25, depth * 0.62, b.z0, b.z0 + 0.25), "white"),
@@ -797,21 +799,150 @@ function bin(b: Box3): Node[] {
   return [cylinder((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, r, b.z0, b.z1, "dark")];
 }
 
-function staffLockers(b: Box3): Node[] {
+function staffLockers(fx: Fixture, b: Box3): Node[] {
+  const doors = fx.faces === "+x" ? [lines(gridRight(b.x1, b.y0, b.y1, b.z0, b.z1, (b.y1 - b.y0) / 3, (b.z1 - b.z0) / 2), "h")] : [];
+  return [decorate(solid(b, "wood"), doors)];
+}
+
+/** Cabinet doors (about 50 cm each) along a counter's or cupboard's visible face. */
+function doorLines(fx: Fixture, b: Box3, z0: number, z1: number): Paint[] {
+  if (fx.faces === "+x") {
+    const n = Math.max(1, Math.round((b.y1 - b.y0) / 0.5));
+    return [lines(gridRight(b.x1, b.y0, b.y1, z0, z1, (b.y1 - b.y0) / n, 0), "h")];
+  }
+  if (fx.faces === "-y") {
+    const n = Math.max(1, Math.round((b.x1 - b.x0) / 0.5));
+    return [lines(gridFront(b.y0, b.x0, b.x1, z0, z1, (b.x1 - b.x0) / n, 0), "h")];
+  }
+  return [];
+}
+
+/** A kitchen counter: dark wooden cabinets under a black granite top (photo gf-08). */
+function kitchenCounter(fx: Fixture, b: Box3): Node[] {
+  return [decorate(solid(b, "brown", "", { top: "dark" }), doorLines(fx, b, b.z0 + 0.1, b.z1 - 0.06))];
+}
+
+/** A closed cupboard: teak (or dark wood, variant "dark"), its doors on the face it turns to, in rows (grid.rows). */
+function cupboard(fx: Fixture, b: Box3): Node[] {
+  const m: MaterialName = fx.variant?.includes("dark") ? "brown" : "wood";
+  const paint = doorLines(fx, b, b.z0 + 0.03, b.z1 - 0.03);
+  const rows = fx.grid?.rows ?? 1;
+  for (let i = 1; i < rows; i++) {
+    const z = b.z0 + ((b.z1 - b.z0) * i) / rows;
+    if (fx.faces === "+x") paint.push(line([[b.x1, b.y0, z], [b.x1, b.y1, z]], "h"));
+    if (fx.faces === "-y") paint.push(line([[b.x0, b.y0, z], [b.x1, b.y0, z]], "h"));
+  }
+  return [decorate(solid(b, m), paint)];
+}
+
+/**
+ * A closed door, flush on a wall (a closet door): a panel on the wall's face, its handles, a small
+ * orange sign when it has a label ("Staff Only"). "double": two leaves.
+ */
+function doorPanel(fx: Fixture, b: Box3): Node[] {
+  const alongY = b.x1 - b.x0 < b.y1 - b.y0;
+  const [a0, a1] = alongY ? [b.y0, b.y1] : [b.x0, b.x1];
+  const face = (u0: number, u1: number, z0: number, z1: number) => (alongY ? onRight(b.x1, u0, u1, z0, z1) : onFront(b.y0, u0, u1, z0, z1));
+  const tone = alongY ? 2 : 1;
+  const paint: Paint[] = [poly(face(a0, a1, b.z0, b.z1), c("wood", tone, "h"))];
+  const handleZ = b.z0 + Math.min(1.0, (b.z1 - b.z0) * 0.55);
+  const handles = fx.variant?.includes("double") ? [(a0 + a1) / 2 - 0.05, (a0 + a1) / 2 + 0.02] : [a1 - 0.09];
+  if (fx.variant?.includes("double")) {
+    const m = (a0 + a1) / 2;
+    paint.push(line(alongY ? [[b.x1, m, b.z0], [b.x1, m, b.z1]] : [[m, b.y0, b.z0], [m, b.y0, b.z1]], "h"));
+  }
+  for (const u of handles) paint.push(poly(face(u, u + 0.03, handleZ, handleZ + 0.08), c("steel", tone, "ns")));
+  if (fx.label) {
+    const m = a0 + (a1 - a0) * 0.3;
+    paint.push(poly(face(m - 0.09, m + 0.09, b.z1 - 0.35, b.z1 - 0.29), c("jar", tone, "ns")));
+  }
+  return [part(b, paint)];
+}
+
+/** The kitchen's fridge: tall, plain, two doors. */
+function fridgeTall(b: Box3): Node[] {
+  return [decorate(solid(b, "steel"), [line([[b.x1, b.y0, b.z1 - 0.62], [b.x1, b.y1, b.z1 - 0.62]], "h"), line([[b.x0, b.y0, b.z1 - 0.62], [b.x1, b.y0, b.z1 - 0.62]], "h")])];
+}
+
+/** Steel shelving: four shelves on corner posts. */
+function rack(b: Box3): Node[] {
+  const out: Node[] = [];
+  for (const [x, y] of [
+    [b.x0 + 0.02, b.y0 + 0.02],
+    [b.x1 - 0.02, b.y0 + 0.02],
+    [b.x1 - 0.02, b.y1 - 0.02],
+    [b.x0 + 0.02, b.y1 - 0.02],
+  ] as const)
+    out.push(stick(x, y, b.z0, b.z1));
+  for (let i = 0; i < 4; i++) {
+    const z = b.z0 + 0.15 + (i * (b.z1 - b.z0 - 0.15)) / 3;
+    out.push(solid(box(b.x0, b.x1, b.y0, b.y1, z - 0.03, z), "steel"));
+  }
+  return out;
+}
+
+/** A ribbed plastic water tank (photo gf-07). */
+function waterTank(b: Box3): Node[] {
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
+  const r = (b.x1 - b.x0) / 2;
+  const ribs: Paint[] = [0.2, 0.4, 0.6, 0.8].map((t) =>
+    screen("tg", (p) => {
+      const [x, y] = p.point([cx, cy, b.z0 + (b.z1 - b.z0) * t]);
+      const rx = r * p.scale * 1.2247;
+      const ry = r * p.scale * 0.7071;
+      return [
+        ["M", x - rx, y],
+        ["C", x - rx, y + 0.55 * ry, x - 0.55 * rx, y + ry, x, y + ry],
+        ["C", x + 0.55 * rx, y + ry, x + rx, y + 0.55 * ry, x + rx, y],
+      ];
+    }),
+  );
+  return [decorate(cylinder(cx, cy, r, b.z0, b.z1, "bamboo"), ribs)];
+}
+
+/** A small shrine: a dark table with marigold offerings and a glass of coloured water. */
+function shrine(b: Box3): Node[] {
+  const top = b.z0 + 0.8;
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
   return [
-    decorate(solid(b, "wood"), [
-      lines(gridRight(b.x1, b.y0, b.y1, b.z0, b.z1, (b.y1 - b.y0) / 3, (b.z1 - b.z0) / 2), "h"),
+    stick(b.x0 + 0.04, b.y0 + 0.04, b.z0, top - 0.04),
+    stick(b.x1 - 0.04, b.y0 + 0.04, b.z0, top - 0.04),
+    stick(b.x1 - 0.04, b.y1 - 0.04, b.z0, top - 0.04),
+    solid(box(b.x0, b.x1, b.y0, b.y1, top - 0.04, top), "dark"),
+    cylinder(cx, cy - 0.12, 0.06, top, Math.min(b.z1, top + 0.3), "jar"),
+    cylinder(cx, cy + 0.12, 0.06, top, Math.min(b.z1, top + 0.24), "jar"),
+    cylinder(cx + 0.05, cy, 0.035, top, top + 0.12, "sage"),
+  ];
+}
+
+/** A teak lattice door, on a wall facing the street (the staff room's back door, photo gf-07). */
+function latticeDoor(b: Box3): Node[] {
+  return [
+    part(b, [
+      poly(onFront(b.y0, b.x0, b.x1, b.z0, b.z1), c("wood", 1)),
+      lines(gridFront(b.y0, b.x0 + 0.04, b.x1 - 0.04, b.z0 + 0.04, b.z1 - 0.04, (b.x1 - b.x0 - 0.08) / 6, (b.z1 - b.z0 - 0.08) / 9), "h"),
     ]),
   ];
 }
 
-function kitchenCounter(b: Box3): Node[] {
-  return [
-    decorate(solid(b, "stone", "", { top: "white" }), [
-      lines(gridFront(b.y0, b.x0, b.x1, b.z0 + 0.1, b.z1 - 0.06, (b.x1 - b.x0) / 5, 0), "h"),
-      poly(onTop(b.z1, b.x0 + 0.5, b.x0 + 1.0, b.y0 + 0.12, b.y1 - 0.12), c("steel", 2)),
-    ]),
-  ];
+/** A light in the ceiling: a round downlight, or a strip light (variant "tube"). */
+function ceilingLight(fx: Fixture, b: Box3): Node[] {
+  if (fx.variant === "tube") return [solid(b, "white", "", { front: "lamp", right: "lamp" })];
+  return [cylinder((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, (b.x1 - b.x0) / 2, b.z0, b.z1, "lamp")];
+}
+
+/** A track light: a dark rail under the ceiling with two spots hanging from it. */
+function trackLight(b: Box3): Node[] {
+  const alongX = b.x1 - b.x0 >= b.y1 - b.y0;
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
+  const rail = alongX ? box(b.x0, b.x1, cy - 0.02, cy + 0.02, b.z1 - 0.04, b.z1) : box(cx - 0.02, cx + 0.02, b.y0, b.y1, b.z1 - 0.04, b.z1);
+  const spots = [0.25, 0.75].map((t) =>
+    cylinder(alongX ? b.x0 + (b.x1 - b.x0) * t : cx, alongX ? cy : b.y0 + (b.y1 - b.y0) * t, 0.04, b.z0, b.z1 - 0.04, "dark", "lamp"),
+  );
+  return [solid(rail, "dark"), ...spots];
 }
 
 // ---------------------------------------------------------------------------
@@ -987,10 +1118,22 @@ function shoeCubbies(fx: Fixture, b: Box3): Node[] {
   return [decorate(solid(b, "dormPlaster"), paint)];
 }
 
-function wallLamp(b: Box3): Node[] {
-  const yc = (b.y0 + b.y1) / 2;
+function wallLamp(fx: Fixture, b: Box3): Node[] {
   const zc = (b.z0 + b.z1) / 2;
   const glow: Vec3[] = [];
+  if (fx.faces === "-y") {
+    // On a wall facing the street: the wall is at y1, the lamp stands out toward -y.
+    const xc = (b.x0 + b.x1) / 2;
+    for (let i = 0; i < 16; i++) {
+      const t = (2 * Math.PI * i) / 16;
+      glow.push([xc + Math.cos(t) * 0.55, b.y1 - 0.005, zc + Math.sin(t) * 0.42]);
+    }
+    return [
+      part(box(xc - 0.55, xc + 0.55, b.y1 - 0.005, b.y1, zc - 0.42, zc + 0.42), [poly(glow, "gw")]),
+      decorate(solid(box(b.x0, b.x1, b.y0, b.y1 - 0.005, b.z0, b.z1), "dark"), [poly(onFront(b.y0, b.x0 + 0.04, b.x1 - 0.04, b.z0 + 0.06, b.z1 - 0.06), c("lamp", 1))]),
+    ];
+  }
+  const yc = (b.y0 + b.y1) / 2;
   for (let i = 0; i < 16; i++) {
     const t = (2 * Math.PI * i) / 16;
     glow.push([b.x0 + 0.005, yc + Math.cos(t) * 0.55, zc + Math.sin(t) * 0.42]);
@@ -1217,9 +1360,9 @@ export function isoParts(fx: Fixture, ctx: FixtureContext, ceiling: number): Nod
     case "extinguisher":
       return extinguisher(b);
     case "staff-lockers":
-      return staffLockers(b);
+      return staffLockers(fx, b);
     case "kitchen-counter":
-      return kitchenCounter(b);
+      return kitchenCounter(fx, b);
     case "door-leaf":
       return doorLeaf(fx, b);
     case "pod":
@@ -1236,7 +1379,28 @@ export function isoParts(fx: Fixture, ctx: FixtureContext, ceiling: number): Nod
     case "shoe-cubbies":
       return shoeCubbies(fx, b);
     case "wall-lamp":
-      return wallLamp(b);
+      return wallLamp(fx, b);
+    case "cupboard":
+      return cupboard(fx, b);
+    case "door-panel":
+      return doorPanel(fx, b);
+    case "fridge":
+      return fridgeTall(b);
+    case "rack":
+      return rack(b);
+    case "water-tank":
+      return waterTank(b);
+    case "fuse-box":
+    case "picture-frame":
+      return wallBox(b, fx.type === "fuse-box" ? "white" : "wood", fx.faces);
+    case "shrine":
+      return shrine(b);
+    case "lattice-door":
+      return latticeDoor(b);
+    case "ceiling-light":
+      return ceilingLight(fx, b);
+    case "track-light":
+      return trackLight(b);
     case "vanity":
       return vanity(b);
     case "ladder-wall":
@@ -1311,14 +1475,19 @@ export function swing(p: Projection, hinge: readonly [number, number], a: readon
   ];
 }
 
-/** Which way a flight rises along y: the ground floor's masonry flight toward the back, the flight above it toward the front. */
-export function risesToward(fx: Fixture): 1 | -1 {
-  return fx.variant === "flight" ? -1 : 1;
+/** The way a flight climbs: its `faces`; without one, a "flight" climbs toward the front and other stairs toward the back. */
+export function climbOf(fx: Fixture): Facing {
+  return fx.faces ?? (fx.variant === "flight" ? "-y" : "+y");
 }
 
-/** One arrow on a flight in plan: the way you walk (toward +y or -y), and "Up" or "Down". */
+/** The opposite way (a flight's way down). */
+export function reverse(d: Facing): Facing {
+  return ({ "+x": "-x", "-x": "+x", "+y": "-y", "-y": "+y" } as const)[d];
+}
+
+/** One arrow on a flight in plan: the way you walk, and "Up" or "Down". */
 export interface StairArrow {
-  readonly toward: 1 | -1;
+  readonly toward: Facing;
   readonly label: string;
 }
 
@@ -1327,28 +1496,33 @@ export interface StairArrow {
  * walk, its label at the tail. Two arrows (a flight up over the flight down, as on Floor 1) share the
  * width, split by a diagonal break line.
  */
-export function planStairs(b: Box3, p: Projection, arrows: readonly StairArrow[]): PlanMark[] {
+/** A flight in plan: its treads across the way it climbs (`climb`; none for a landing) and its arrows. */
+export function planStairs(b: Box3, p: Projection, arrows: readonly StairArrow[], climb: Facing | null = arrows[0]?.toward ?? "+y"): PlanMark[] {
   const out: PlanMark[] = [mark(c("terracotta", 0), planRect(p, b.x0, b.x1, b.y0, b.y1))];
+  if (climb === null) return out;
+  // Laid out along y (the run) and x (the width), then turned for a flight along x.
+  const alongX = climb === "+x" || climb === "-x";
+  const [r0, r1, w0, w1] = alongX ? [b.x0, b.x1, b.y0, b.y1] : [b.y0, b.y1, b.x0, b.x1];
+  const pt = (run: number, across: number): [number, number] => (alongX ? [run, across] : [across, run]);
   const treads: [number, number][][] = [];
-  for (let y = b.y0 + 0.19; y < b.y1 - 0.05; y += 0.19)
-    treads.push([
-      [b.x0, y],
-      [b.x1, y],
-    ]);
+  for (let s = r0 + 0.19; s < r1 - 0.05; s += 0.19) treads.push([pt(s, w0), pt(s, w1)]);
   out.push(mark("tg", treads.flatMap((t) => planLine(p, t))));
-  const width = (b.x1 - b.x0) / arrows.length;
+  if (arrows.length === 0) return out;
+  const width = (w1 - w0) / arrows.length;
   arrows.forEach(({ toward, label }, i) => {
-    const cx = b.x0 + width * (i + 0.5);
-    const from = toward > 0 ? b.y0 + 0.4 : b.y1 - 0.4;
-    const to = toward > 0 ? b.y1 - 0.4 : b.y0 + 0.4;
+    const sign = toward === "+x" || toward === "+y" ? 1 : -1;
+    const cw = w0 + width * (i + 0.5);
+    const from = sign > 0 ? r0 + 0.4 : r1 - 0.4;
+    const to = sign > 0 ? r1 - 0.4 : r0 + 0.4;
     const head = Math.min(0.18, width * 0.3);
-    out.push(mark("b n", planLine(p, [[cx, from + toward * 0.55], [cx, to]])));
-    out.push(mark("b n", planLine(p, [[cx - head, to - toward * 0.25], [cx, to], [cx + head, to - toward * 0.25]])));
-    out.push(planText(p, cx, from + toward * 0.2, label, 11, "ls"));
+    out.push(mark("b n", planLine(p, [pt(from + sign * 0.55, cw), pt(to, cw)])));
+    out.push(mark("b n", planLine(p, [pt(to - sign * 0.25, cw - head), pt(to, cw), pt(to - sign * 0.25, cw + head)])));
+    const [lx, ly] = pt(from + sign * 0.2, cw);
+    out.push(planText(p, lx, ly, label, 11, "ls"));
   });
   if (arrows.length > 1) {
-    const ym = (b.y0 + b.y1) / 2;
-    out.push(mark("h n", planLine(p, [[b.x0, ym - 0.35], [b.x1, ym + 0.35]])));
+    const m = (r0 + r1) / 2;
+    out.push(mark("h n", planLine(p, [pt(m - 0.35, w0), pt(m + 0.35, w1)])));
   }
   return out;
 }
@@ -1447,9 +1621,9 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
     case "water-dispenser":
       return [rect(c("steel", 0)), mark(c("bamboo", 0), planCircle(p, cx, cy, r * 0.8))];
     case "toilet": {
-      const alongX = fx.faces === "-x";
-      const tank = alongX ? planRect(p, b.x1 - 0.18, b.x1, b.y0, b.y1) : planRect(p, b.x0, b.x1, b.y1 - 0.18, b.y1);
-      const bowl = alongX ? planEllipse(p, b.x0 + 0.26, cy, 0.24, 0.17) : planEllipse(p, cx, b.y0 + 0.26, 0.17, 0.24);
+      const f = fx.faces;
+      const tank = f === "-x" ? planRect(p, b.x1 - 0.18, b.x1, b.y0, b.y1) : f === "+x" ? planRect(p, b.x0, b.x0 + 0.18, b.y0, b.y1) : planRect(p, b.x0, b.x1, b.y1 - 0.18, b.y1);
+      const bowl = f === "-x" ? planEllipse(p, b.x0 + 0.26, cy, 0.24, 0.17) : f === "+x" ? planEllipse(p, b.x1 - 0.26, cy, 0.24, 0.17) : planEllipse(p, cx, b.y0 + 0.26, 0.17, 0.24);
       return [mark(c("white", 0), tank), mark(c("white", 0), bowl)];
     }
     case "shower":
@@ -1466,7 +1640,9 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
         mark("h n", swing(p, [b.x0 + 0.08, b.y0], [0.7, 0], [0, 0.7])),
       ];
     case "stairs":
-      return planStairs(b, p, opts.stairs ?? [{ toward: risesToward(fx), label: "Up" }]);
+      return fx.variant?.includes("landing")
+        ? planStairs(b, p, [], null)
+        : planStairs(b, p, opts.stairs ?? [{ toward: climbOf(fx), label: "Up" }], climbOf(fx));
     case "shoe-cubbies": {
       const cols = fx.grid?.cols ?? 5;
       const cells: [number, number][][] = [];
@@ -1518,6 +1694,26 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
       return [mark("dl", planCircle(p, cx, cy, r * 0.8))];
     case "printer":
       return [rect(c("wood", 0)), mark(c("dark", 0), planRect(p, b.x0 + 0.04, b.x1 - 0.04, b.y0 + 0.02, b.y1 - 0.02))];
+    case "cupboard":
+      return [rect(c(fx.variant?.includes("dark") ? "brown" : "wood", 0))];
+    case "door-panel":
+    case "lattice-door":
+    case "picture-frame":
+      return [rect(c("woodDark", 0))];
+    case "fridge":
+      return [rect(c("steel", 0))];
+    case "rack":
+      return [rect(c("steel", 0)), mark("tg", planLine(p, [[b.x0, b.y0], [b.x1, b.y1]]))];
+    case "water-tank":
+      return [mark(c("bamboo", 0), planCircle(p, cx, cy, r))];
+    case "fuse-box":
+      return [rect(c("white", 0))];
+    case "shrine":
+      return [rect(c("dark", 0)), mark(c("jar", 0), planCircle(p, cx, cy, Math.min(r, 0.08)))];
+    case "ceiling-light":
+      return fx.variant === "tube" ? [rect("dl")] : [mark("dl", planCircle(p, cx, cy, r))];
+    case "track-light":
+      return [rect("dl")];
     case "window":
       return fx.variant === "shopfront" ? [mark(c("glass", 0), planRect(p, b.x0, b.x1, -0.1, -0.05))] : [mark(c("glass", 0), planRect(p, b.x0, b.x1, -0.11, -0.05))];
   }

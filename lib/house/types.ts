@@ -89,35 +89,44 @@ export type FixtureType =
   | "bench-seat"
   | "bin"
   | "chair"
+  | "ceiling-light"
   | "coffee-machine"
+  | "cupboard"
   | "counter"
   | "dehumidifier"
   | "door"
   | "door-leaf"
+  | "door-panel"
   | "doormat"
   | "extinguisher"
   | "fan"
   | "fan-ceiling"
   | "fan-exhaust"
   | "fridge-drinks"
+  | "fridge"
+  | "fuse-box"
   | "hair-dryer"
   | "hand-dryer"
   | "jar-big"
   | "jar-clay"
   | "kitchen-counter"
+  | "lattice-door"
   | "ladder"
   | "ladder-wall"
   | "locker"
   | "luggage-space"
   | "mirror"
   | "pendant-lamp"
+  | "picture-frame"
   | "plant"
   | "pod"
   | "post"
   | "printer"
+  | "rack"
   | "shelves"
   | "shoe-cubbies"
   | "shower"
+  | "shrine"
   | "sign-hanging"
   | "sign-hostel"
   | "sign-plate"
@@ -132,9 +141,11 @@ export type FixtureType =
   | "table-tall-round"
   | "toilet"
   | "toilet-stall"
+  | "track-light"
   | "vanity"
   | "wall-lamp"
   | "water-dispenser"
+  | "water-tank"
   | "window"
   | "window-ledge";
 
@@ -170,6 +181,12 @@ export interface Fixture extends Certainty {
   readonly grid?: { readonly cols: number; readonly rows: number };
   /** A drawing variant: a pod's "lower"/"upper", a curtain drawn "open", a door's swing. */
   readonly variant?: string;
+  /**
+   * For a flight of stairs: the heights (relative to its floor) where it starts and ends; it climbs
+   * toward `faces`. The top step may stand above the box (the flight that reaches the floor above
+   * ends at that floor's height, past this floor's ceiling). A landing starts and ends at one height.
+   */
+  readonly climb?: { readonly from: number; readonly to: number };
 }
 
 export type WallKind = "facade" | "party" | "back" | "partition" | "enclosure" | "parapet";

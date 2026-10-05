@@ -66,7 +66,7 @@ describe("the House of Jars model: integrity", () => {
     }
   });
 
-  it("leaves an opening in each upper floor's slab over the stairs that come up from the floor below", () => {
+  it("leaves an opening in each upper floor's slab wherever the stairs below come within 2 m of it", () => {
     for (const fl of model.floors) {
       const below = model.floors.find((f) => f.level === fl.level - 1);
       const flights = model.fixtures.filter((f) => f.type === "stairs" && f.floor === below?.id);
@@ -74,7 +74,23 @@ describe("the House of Jars model: integrity", () => {
         expect(fl.opening, fl.id).toBeUndefined();
         continue;
       }
-      for (const s of flights) expect(fl.opening && insideRect(s.box, fl.opening, 1e-9), `${s.id} under ${fl.id}`).toBe(true);
+      // The underside of this floor's slab, measured from the floor below.
+      const slab = fl.z - below!.z - model.slab;
+      for (const s of flights) {
+        const from = s.climb?.from ?? s.box.z0;
+        const to = s.climb?.to ?? fl.z - below!.z;
+        const dir = s.faces ?? "+y";
+        const alongX = dir === "+x" || dir === "-x";
+        const [lo, hi] = alongX ? [s.box.x0, s.box.x1] : [s.box.y0, s.box.y1];
+        for (let t = 0; t <= 1 + 1e-9; t += 0.05) {
+          // The step height a share t of the way up, and where along the run that is.
+          const h = from + (to - from) * t;
+          if (slab - h >= 2.0) continue;
+          const at = dir === "+x" || dir === "+y" ? lo + (hi - lo) * t : hi - (hi - lo) * t;
+          const slice = alongX ? { x0: at, x1: at, y0: s.box.y0, y1: s.box.y1 } : { x0: s.box.x0, x1: s.box.x1, y0: at, y1: at };
+          expect(fl.opening && insideRect(slice, fl.opening, 1e-9), `${s.id} at ${at.toFixed(2)} under ${fl.id}`).toBe(true);
+        }
+      }
     }
   });
 
@@ -160,14 +176,12 @@ describe("the House of Jars model: integrity", () => {
     }
   });
 
-  it("marks what was not seen as unconfirmed: all of Floor 2, the staff room, the pods and lockers, the dorms' back end, the stairs, the corridor", () => {
+  it("marks what was not seen as unconfirmed: all of Floor 2, the pods' and lockers' order, the dorms' back end, the toilet's inside, the kitchen's door", () => {
     expect(floor("floor2").confirmed).toBe(false);
     expect(floor("floor2").note).toBeTruthy();
     for (const a of model.areas.filter((x) => x.floor === "floor2")) expect(a.confirmed, a.id).toBe(false);
     // Floor 2's two small windows are seen from the street (f1-01); everything else up there is a copy of Floor 1.
     for (const f of model.fixtures.filter((x) => x.floor === "floor2")) expect(f.confirmed, f.id).toBe(f.type === "window" ? undefined : false);
-    expect(area("staff-kitchen").confirmed).toBe(false);
-    for (const f of model.fixtures.filter((x) => x.area === "staff-kitchen")) expect(f.confirmed, f.id).toBe(false);
     // The numbers are the owner's (H01 to H12, J01 to J12); which pod or locker carries which number is open.
     for (const f of model.fixtures.filter((x) => x.type === "pod" || x.type === "locker")) {
       expect(f.confirmed, f.id).toBe(false);
@@ -177,9 +191,9 @@ describe("the House of Jars model: integrity", () => {
     // Photos f2-04, f2-05 and f2-08 show the dorm's back end differently from the model.
     for (const id of ["dorm-h", "dorm-j"]) expect(area(id).note, id).toMatch(/f2-04, f2-05 and f2-08/);
     for (const id of ["floor1-dorm-partition", "floor2-dorm-partition"]) expect(model.walls.find((w) => w.id === id)!.confirmed, id).toBe(false);
-    // Photo f1-12 shows the stair flight's sides the other way round; f1-10 and f1-11 do not pin down the corridor.
-    for (const id of ["stairs-up", "basin-corridor", "hand-dryer-ground", "door-toilet", "door-staff"]) expect(model.fixtures.find((f) => f.id === id)!.confirmed, id).toBe(false);
-    for (const id of ["stair-front", "stair-side", "stair-back", "toilet-room", "staff-door-wall"]) expect(model.walls.find((w) => w.id === id)!.confirmed, id).toBe(false);
+    // The ground floor's back half is photographed (gf-01 to gf-15), but the toilet's inside and the way into the kitchen are not pinned down.
+    for (const id of ["toilet-ground", "sink-toilet"]) expect(model.fixtures.find((f) => f.id === id)!.confirmed, id).toBe(false);
+    for (const id of ["toilet-wall", "kitchen-wall"]) expect(model.walls.find((w) => w.id === id)!.confirmed, id).toBe(false);
     for (const thing of [...model.floors, ...model.areas, ...model.fixtures, ...model.walls]) {
       if (thing.confirmed === false) expect(thing.note, thing.id).toBeTruthy();
     }
@@ -254,10 +268,12 @@ describe("the House of Jars model: counts from the walk", () => {
     expect(count("printer")).toBe(1);
   });
 
-  it("has one toilet on the ground floor, two extinguishers, and the terrace's bench and two small tables", () => {
+  it("has one toilet on the ground floor, two extinguishers and two clay jars at the corridor's end, and the terrace's bench and two small tables", () => {
     expect(count("toilet", (f) => f.floor === "ground")).toBe(1);
+    expect(count("toilet", inArea("toilet-ground"))).toBe(1);
+    expect(count("extinguisher", inArea("corridor"))).toBe(2);
     expect(count("extinguisher")).toBe(2);
-    expect(count("jar-clay", inArea("toilet-ground"))).toBe(2);
+    expect(count("jar-clay", inArea("corridor"))).toBe(2);
     // And the one on the stairs (a-stairs1).
     expect(count("jar-clay", inArea("stairs-ground"))).toBe(1);
     expect(count("bench", inArea("terrace"))).toBe(1);
@@ -279,6 +295,28 @@ describe("the House of Jars model: counts from the walk", () => {
     expect(cubbies[0]!.floor).toBe("floor1");
     expect(cubbies[0]!.grid).toEqual({ cols: 5, rows: 6 });
     expect(cubbies[0]!.grid!.cols * cubbies[0]!.grid!.rows).toBe(30);
+  });
+
+  it("has the back of the ground floor from the photos: the U-shaped stairs, the store under them, the staff room and the kitchen", () => {
+    // One U-shaped stair: a flight toward the left wall, a landing, a flight back up to Floor 1.
+    const stairs = model.fixtures.filter((f) => f.type === "stairs" && f.floor === "ground");
+    expect(stairs.map((f) => [f.id, f.faces ?? null])).toEqual([
+      ["stairs-up", "-x"],
+      ["stairs-landing", null],
+      ["stairs-up-2", "+x"],
+    ]);
+    expect(stairs[2]!.climb!.to).toBeCloseTo(floor("floor1").z, 6);
+    // The store's two doors in the stairs' teak front: a small Staff Only door and a pair.
+    expect(model.fixtures.filter((f) => f.area === "store-stairs").map((f) => f.variant ?? f.label)).toEqual(["Staff Only", "double"]);
+    // The toilet is on the left, behind the stairs; the corridor runs along the right wall.
+    expect(area("toilet-ground").rect.x0).toBe(0);
+    expect(area("corridor").rect.x1).toBe(model.width);
+    expect(count("water-dispenser", inArea("water"))).toBe(1);
+    expect(count("staff-lockers", inArea("staff-kitchen"))).toBe(1);
+    expect(count("fuse-box", inArea("staff-kitchen"))).toBe(1);
+    expect(count("water-tank", inArea("staff-kitchen"))).toBe(1);
+    expect(count("fridge", inArea("kitchen"))).toBe(1);
+    expect(count("sink", inArea("kitchen"))).toBe(1);
   });
 
   it("puts the door on the left of the front and the big window to its right", () => {

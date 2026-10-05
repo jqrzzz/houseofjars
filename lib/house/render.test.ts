@@ -323,10 +323,13 @@ describe("the id and data-attribute contract", () => {
     expect(svg).toMatch(/<g data-label-area="dorm-h"[^>]*><path class="ld"[^>]*\/><path class="lp"[^>]*\/><path class="lb lbh"/);
   });
 
-  it("highlights a room with its sub-areas: the café keeps its counter, water corner and entrance", () => {
+  it("highlights a room with its sub-areas: the café keeps its counter and entrance, the corridor its water corner", () => {
     const svg = renderCutaway({ highlight: ["cafe"] });
-    for (const id of ["counter", "back-counter", "water-dispenser", "door-front", "table-1"]) expect(svg, id).toMatch(new RegExp(`<g id="fx-${id}" data-fixture`));
-    for (const id of ["desk", "water", "entrance"]) expect(svg, id).toContain(`<g id="area-${id}" data-area`);
+    for (const id of ["counter", "back-counter", "door-front", "table-1"]) expect(svg, id).toMatch(new RegExp(`<g id="fx-${id}" data-fixture`));
+    for (const id of ["desk", "entrance"]) expect(svg, id).toContain(`<g id="area-${id}" data-area`);
+    const corridor = renderCutaway({ highlight: ["corridor"] });
+    expect(corridor).toMatch(/<g id="fx-water-dispenser" data-fixture/);
+    expect(corridor).toContain('<g id="area-water" data-area');
     expect(svg).toContain('<g id="area-terrace" class="dg"');
     // A mounted fixture in a faded host is not faded twice.
     const hl = renderCutaway({ highlight: ["dorm-h"] });
@@ -412,7 +415,8 @@ describe("drawn from the model, not from constants in the renderer", () => {
   it("shows Floor 2's small windows on its plan although both miss the plan's cut height", () => {
     expect(renderPlan("floor2")).toMatch(/<g id="fx-window-j-low" data-fixture="window"/);
     const pieces = (svg: string) => (/<g data-walls="">([\s\S]*?)<\/g>/.exec(svg)![1]!.match(/<path/g) ?? []).length;
-    expect(pieces(renderPlan("floor2"))).toBe(pieces(renderPlan("floor1")));
+    // Floor 2 adds one wall piece: the parapet beside the first flight's hole (no stairs go on up from the top floor).
+    expect(pieces(renderPlan("floor2"))).toBe(pieces(renderPlan("floor1")) + 1);
   });
 });
 
