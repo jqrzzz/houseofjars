@@ -277,8 +277,9 @@ function encode(input: string, out: string, film: string, rec: Recording, second
   const run = (...a: string[]) => execFileSync(ffmpeg, ["-hide_banner", "-loglevel", "error", "-y", ...a], { stdio: "inherit" });
   const frames = ["-framerate", String(FPS), "-i", join(input, "%05d.png")];
   const scale = (size: readonly [number, number]) => ["-vf", `scale=${size[0]}:${size[1]}:flags=lanczos`];
-  run(...frames, ...scale(rec.size), "-c:v", "libvpx-vp9", "-crf", "34", "-b:v", "0", "-row-mt", "1", "-pix_fmt", "yuv420p", "-an", join(out, `${film}.webm`));
-  run(...frames, ...scale(rec.size), "-c:v", "libx264", "-crf", "23", "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", join(out, `${film}.mp4`));
+  // Flat paper compresses well: these qualities keep a 35 s walk near 1 MB with no visible loss.
+  run(...frames, ...scale(rec.size), "-c:v", "libvpx-vp9", "-crf", "39", "-b:v", "0", "-row-mt", "1", "-pix_fmt", "yuv420p", "-an", join(out, `${film}.webm`));
+  run(...frames, ...scale(rec.size), "-c:v", "libx264", "-crf", "26", "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", join(out, `${film}.mp4`));
   // The cut for WhatsApp: a bitrate that keeps the whole film under 1 MB.
   const kbps = Math.floor((0.92 * 8 * 1000) / seconds);
   run(...frames, ...scale(rec.shareSize), "-c:v", "libx264", "-b:v", `${kbps}k`, "-maxrate", `${Math.floor(kbps * 1.4)}k`, "-bufsize", `${kbps * 2}k`, "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", join(out, `${film}-share.mp4`));

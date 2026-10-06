@@ -13,7 +13,10 @@ export interface FilmEntry {
   readonly seconds: number;
 }
 
-export const films: readonly FilmEntry[] = [];
+export const films: readonly FilmEntry[] = [
+  // The arrival walk on the home page's house story, 9:16, recorded with `npm run film` (scripts/film.ts).
+  { id: "arrival", title: "From the terrace to your pod", width: 720, height: 1280, seconds: 34 },
+];
 
 /** Where a film's files are, by the names scripts/film.ts writes. */
 export function filmFiles(id: string) {
