@@ -67,8 +67,8 @@ export function BookingCard() {
                         Find a bed for your dates.
                       </h2>
                       <p className={styles.text}>
-                        See which beds are free on your dates and book directly with the house. Nothing to pay online: you
-                        pay when you arrive. {policies.directPrice.value}
+                        See which beds are free on your dates and book directly with the house: pay when you arrive, or
+                        online where your booking offers it. {policies.directPrice.value}
                       </p>
                       {morning}
                       <div className={styles.fields}>

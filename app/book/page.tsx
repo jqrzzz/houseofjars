@@ -67,7 +67,7 @@ export default function BookPage() {
             eyebrow="Book"
             morph="book"
             title="Book a bed"
-            lede={`Choose your dates to see the free beds, and book directly with the house. There is nothing to pay online: you pay when you arrive. ${policies.directPrice.value}`}
+            lede={`Choose your dates to see the free beds, and book directly with the house: pay when you arrive, or online where your booking offers it. ${policies.directPrice.value}`}
           />
           <OnlineBooking house={house} />
           {photosBlock}
@@ -110,7 +110,7 @@ export default function BookPage() {
       </Block>
 
       {/* The booking sites come after the house's own ways to book. */}
-      <Block id="online" title="Also on Booking.com and Agoda" aside="Live prices and free beds. Both open in a new tab; there is no payment on this website.">
+      <Block id="online" title="Also on Booking.com and Agoda" aside="Live prices and free beds. Both open in a new tab.">
         <ul role="list" className={styles.platforms}>
           {platforms.map((platform) => (
             <li key={platform.name}>

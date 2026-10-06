@@ -88,7 +88,7 @@ function bookingLines(siteUrl: string, url: (path: string) => string, onlineBook
         ]
       : []),
     onlineBooking
-      ? `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. There is no payment on this website.`
+      ? `- [Message the team](${url(`${pages.book.path}#message`)}): the team replies by email or WhatsApp. ${bookingLinkTemplate(siteUrl)} opens the form with the dates and number of guests filled in; the guest still writes and sends the message, and sending it does not book a bed. Guests pay at the house, or online where the booking page offers it.`
       : `- [Book direct](${url(`${pages.book.path}#message`)}): the guest sends their dates to the team on WhatsApp (${whatsappUrl()}) or by email, and the team replies with what is free; nothing is booked until the team confirms. ${policies.directPrice.value} ${bookingLinkTemplate(siteUrl)} opens the page with the dates and number of guests filled in, written out ready to send. There is no payment on this website.`,
     `- [Booking.com](${identity.links.booking.value}): also on Booking.com, with live prices and free beds`,
     `- [Agoda](${identity.links.agoda.value}): also on Agoda, with live prices and free beds`,

@@ -161,7 +161,7 @@ export const faq: readonly FaqGroup[] = [
         online: [
           "Choose your dates on the ",
           { text: "booking page", href: "/book" },
-          ` and book directly with the house: there is nothing to pay online, and you pay when you arrive. ${policies.directPrice.value} You can also book on Booking.com or Agoda, or send the team a message from the same page.`,
+          ` and book directly with the house: you pay when you arrive, or online where your booking offers it. ${policies.directPrice.value} You can also book on Booking.com or Agoda, or send the team a message from the same page.`,
         ],
       },
       {
