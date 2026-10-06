@@ -120,12 +120,16 @@
    * The walks scroll in their own box beside the stage; at its end the wheel
    * carries on down the page (no overscroll containment), so the floors go on
    * lifting. The box's foot fades over its padding: a cut-off line reads as
-   * more below, and at the end the fade falls on the padding alone.
+   * more below, and at the end the fade falls on the padding alone. A walk
+   * reached with Tab scrolls in above the fade, and the box reaches a little
+   * into the gap on its left, so no focus ring is cut at its edges.
    */
   .side {
     max-height: calc(100svh - 4.5rem - 2rem);
     overflow-y: auto;
-    padding: 0 var(--space-2xs) var(--space-xl) 0;
+    margin-left: calc(-1 * var(--space-xs));
+    padding: 0 var(--space-2xs) var(--space-xl) var(--space-xs);
+    scroll-padding: var(--space-xs) 0 var(--space-xl);
     -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-xl)), transparent);
     mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-xl)), transparent);
   }
