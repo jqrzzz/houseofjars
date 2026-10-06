@@ -302,7 +302,8 @@ async function main() {
   });
   // No splash, the chosen theme, and no header or Ask Shadow dock over the film. Written as a string: a function
   // compiled by tsx would carry its helpers into the page.
-  const hide = '[data-site-header],div:has(> button[aria-label^="Ask Shadow"]){visibility:hidden!important}html{scroll-behavior:auto!important}';
+  const hide =
+    '[data-site-header],aside[aria-label="Ask Shadow"],div:has(> button[aria-label^="Ask Shadow"]){visibility:hidden!important}html{scroll-behavior:auto!important}';
   await context.addInitScript(`(() => {
     try { sessionStorage.setItem("hoj-splash", "1"); localStorage.setItem("hoj-theme", ${JSON.stringify(theme === "evening" ? "dark" : "light")}); } catch {}
     const style = document.createElement("style");
