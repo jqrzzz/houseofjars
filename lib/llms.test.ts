@@ -6,7 +6,8 @@ import { faq } from "@/content/faq";
 import { guideList, guidePath } from "@/content/guides";
 import { identity } from "@/content/identity";
 import { openQuestions } from "@/content/open-questions";
-import { rules, times } from "@/content/stay";
+import { ratings } from "@/content/reviews";
+import { beds, rules, staff, times } from "@/content/stay";
 import { collectFacts, factsMentionedIn } from "./content-audit";
 import { bookingLinkTemplate, buildLlmsFullTxt, buildLlmsTxt, credited, onlineBookingLinkTemplate } from "./llms";
 import { allPages } from "./pages";
@@ -75,6 +76,23 @@ describe("llms-full.txt", () => {
   it("never leaves a relative link or a placeholder", () => {
     expect(full).not.toMatch(/\(\/[^)]*\)|\]\(\//);
     expect(full).not.toMatch(/undefined|\[object Object\]|NaN/);
+  });
+
+  it("counts the floors as the house has them, and gives the dorms, bed numbers and round the house confirmed", () => {
+    expect(full).toContain("- Two floors of pod dorms above a café on the ground floor\n");
+    expect(full).not.toMatch(/\b\d+ floors\b/);
+    expect(full).toContain(`- Each dorm has ${beds.podsPerDorm.value} pods\n`);
+    expect(full).toContain("- There is no pod 4, 13 or 14, so no guest is given an unlucky bed\n");
+    expect(full).toContain(`the team looks over and cleans the house ${staff.housekeepingRound.value}`);
+    expect(full).not.toContain("14-bed dorm");
+  });
+
+  it("says so where a rating has no link to follow yet", () => {
+    for (const { value: rating } of ratings) {
+      const lines = full.split("\n").filter((line) => line.startsWith(`- ${rating.platform}: ${rating.score}`));
+      expect(lines.length).toBeGreaterThan(0);
+      for (const line of lines) expect(line).toContain(rating.url ?? "link to come");
+    }
   });
 });
 

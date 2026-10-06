@@ -8,7 +8,7 @@ import { inlineToTextWithUrls } from "@/content/inline";
 import { openQuestions } from "@/content/open-questions";
 import { honestNotes, praise, ratings } from "@/content/reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, policies, rules, staff, times } from "@/content/stay";
-import { joinList, lowerFirst } from "@/content/text";
+import { countWord, joinList, lowerFirst, orList } from "@/content/text";
 import { collectFacts, factsMentionedIn } from "./content-audit";
 import { metaTitle, sitePages } from "./pages";
 import { pages } from "./site";
@@ -189,7 +189,7 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
       `Run by its own team, on site day and night`,
       `Address: ${formatAddress()}`,
       `Neighbourhood: ${location.neighbourhood.value}`,
-      `${building.floors.value} floors; ${lowerFirst(building.cafe.value)}`,
+      `${countWord(building.floors.value)} floors of pod dorms above ${lowerFirst(building.cafe.value)}`,
       `Atmosphere: ${atmosphere.summary.value}`,
     ]),
     "",
@@ -206,13 +206,15 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
       beds.style.value,
       `Every bed has ${joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`))}`,
       `Room types listed for booking: ${joinList(beds.roomTypes.value)}`,
-      `The dorms include ${joinList(beds.dorms.value)}`,
+      `Each dorm has ${beds.podsPerDorm.value} pods`,
+      `There is no pod ${orList(beds.numbering.value.skipped)}, ${beds.numbering.value.why}`,
     ]),
     "",
     "## Bathrooms, breakfast and amenities",
     ...bullets([
       `Bathrooms: shared, with hot showers`,
       `Bathroom cleaning: ${bathrooms.cleaning.value}`,
+      `Housekeeping: the team looks over and cleans the house ${staff.housekeepingRound.value}`,
       `Breakfast: included, in the café on the ground floor`,
       `Breakfast has: ${joinList(breakfast.items.value.map((item) => item.toLowerCase()))}`,
       `Breakfast is served: ${breakfast.hours.value}`,
@@ -255,7 +257,7 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
     ...bullets(
       ratings.map(
         ({ value: rating }) =>
-          `${rating.platform}: ${rating.score}${rating.outOf ? ` out of ${rating.outOf}` : ""}, ${rating.context} (as of ${rating.asOf})${rating.url ? `: ${rating.url}` : ""}`,
+          `${rating.platform}: ${rating.score}${rating.outOf ? ` out of ${rating.outOf}` : ""}, ${rating.context} (as of ${rating.asOf}${rating.url ? "" : "; link to come"})${rating.url ? `: ${rating.url}` : ""}`,
       ),
     ),
     "",

@@ -1,5 +1,6 @@
 import { fact } from "./fact";
 import { SEEN_ON, sources } from "./sources";
+import { beds } from "./stay";
 
 export interface Rating {
   readonly platform: string;
@@ -72,8 +73,7 @@ export const honestNotes = [
     "Lockers suit a day pack better than a big backpack, so keep valuables in a small bag.",
     sources.reviews,
   ),
-  fact(
-    "The 14-bed dorm can feel full. If you prefer fewer people around you, ask us what is free.",
-    sources.reviews,
-  ),
+  fact(`The dorms have ${beds.podsPerDorm.value} pods each and can feel full.`, sources.reviews, {
+    note: "Guests say the dorm can feel full. The number of pods is the owner's (beds.podsPerDorm).",
+  }),
 ] as const;

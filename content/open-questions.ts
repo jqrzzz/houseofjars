@@ -22,10 +22,7 @@ export const openQuestions: readonly OpenQuestion[] = [
     ask: "Other places guests often walk to from the house, with walking times (for the guide to what is nearby).",
     guestTopic: "walking times to places the website doesn't list",
   },
-  {
-    ask: "Whether there is a female-only dorm, and which other dorm sizes exist.",
-    guestTopic: "whether there is a female-only dorm, and dorm sizes other than the 14-bed dorm",
-  },
+  { ask: "Whether there is a female-only dorm.", guestTopic: "whether there is a female-only dorm" },
   { ask: "Whether there are private rooms.", guestTopic: "private rooms" },
   { ask: "Late check-out: possible or not, and on what terms.", guestTopic: "late check-out" },
   {

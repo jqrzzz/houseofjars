@@ -17,8 +17,9 @@ export const sources = {
   facebook: `Facebook page, seen ${SEEN_ON}`,
   reviews: `Guest reviews on Booking.com and Tripadvisor, seen ${SEEN_ON}`,
   oneReview: `A single listing or review, seen ${SEEN_ON}`,
-  signs: "The house's own signs and menus, photographed by the team on 2026-10-04 (photos/signs, photos/menus)",
-  team: "Told by the house's team, 2026-10-04",
+  // The photographs are in the repository, in photos/signs and photos/menus.
+  signs: "The house’s own signs and menus, photographed by the team on 2026-10-04",
+  team: "Told by the house’s team, 2026-10-04",
   immigration: `Lao Department of Immigration website, seen ${SEEN_ON}`,
   unesco: "UNESCO World Heritage List (inscribed 2019)",
   laoLaw: "General practice for guesthouses in Laos",

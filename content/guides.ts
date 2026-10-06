@@ -94,6 +94,7 @@ function rule(list: readonly Fact<{ rule: string }>[], start: string) {
 }
 
 const noSmoking = rule(rules.house, "No smoking");
+const smokeOutside = rule(rules.house, "Smoke out past the terrace");
 const calmNights = rule(rules.house, "Keep your voice down");
 const noParties = rule(rules.house, "No hen or stag parties");
 const earlyCheckIn = rule(rules.stay, "Early check-in");
@@ -361,7 +362,7 @@ const quietStay: Guide = {
         ? { term: "Nights", value: `Quiet hours ${times.quietHours.value}` }
         : { term: "Nights", value: "Calm and quiet", note: "From guest reviews. Ask the team about set quiet hours." },
       { term: "Parties", value: "No hen or stag parties" },
-      { term: "Smoking", value: "Not anywhere in the house" },
+      { term: "Smoking", value: "Outside only, past the terrace", note: "Not in the house or on the terrace: smoke drifts into the café." },
       { term: "Reception", value: staff.hours.value.summary },
       { term: "Bathrooms", value: bathrooms.cleaning.value, note: "From guest reviews. Shared, with hot showers." },
       { term: "Air-conditioning", value: "Strong", note: "From guest reviews." },
@@ -381,7 +382,7 @@ const quietStay: Guide = {
       title: "Ratings on other sites",
       aside: "As each site showed them on the date given; follow the links for today’s figures.",
       items: ratings.map(({ value: rating }) => [
-        `${rating.platform}: ${rating.score}${rating.outOf ? ` out of ${rating.outOf}` : ""}, ${rating.context} (as of ${formatDate(rating.asOf)}).`,
+        `${rating.platform}: ${rating.score}${rating.outOf ? ` out of ${rating.outOf}` : ""}, ${rating.context} (as of ${formatDate(rating.asOf)}${rating.url ? "" : "; link to come"}).`,
         ...(rating.url ? [" ", { text: `See it on ${rating.platform}`, href: rating.url }] : []),
       ]),
     },
@@ -398,9 +399,11 @@ const quietStay: Guide = {
     identity.name,
     atmosphere.summary,
     noSmoking,
+    smokeOutside,
     calmNights,
     noParties,
     beds.perBed,
+    beds.podsPerDorm,
     ...(times.quietHours ? [times.quietHours] : []),
     staff.hours,
     bathrooms.shared,
@@ -411,7 +414,7 @@ const quietStay: Guide = {
     ...ratings,
     ...honestNotes,
   ],
-  reviewed: "2026-09-26",
+  reviewed: "2026-10-06",
 };
 
 

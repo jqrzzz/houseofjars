@@ -66,7 +66,7 @@ export default function TheHousePage() {
           </p>
           <TickList numbered items={beds.perBed.value} />
           <p>
-            The dorms include {joinList(beds.dorms.value)}.{" "}
+            Each dorm has {beds.podsPerDorm.value} pods.{" "}
             {onlineBookingConfigured() ? (
               <>
                 To see which beds are free on your dates, see the{" "}

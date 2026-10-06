@@ -70,7 +70,7 @@ export const faq: readonly FaqGroup[] = [
         id: "airport",
         question: "How far is the airport, and can you arrange transport?",
         answer: [
-          `${airport.value.place} is ${lowerFirst(airport.value.distance)} from the house. ${airportTransport.value} Message them with your arrival time. `,
+          `${airport.value.place} is ${lowerFirst(airport.value.distance)} from the house. Guests say ${lowerFirst(airportTransport.value)} Message them with your arrival time. `,
           { text: "From the airport, step by step", href: "/guides/from-wattay-airport" },
           ".",
         ],
@@ -98,7 +98,7 @@ export const faq: readonly FaqGroup[] = [
         id: "dorms",
         question: "What kind of dorms do you have?",
         answer: [
-          `All the beds are pods, and the dorms include ${joinList(beds.dorms.value)}. To see which beds are free on your dates, check Booking.com or Agoda, or `,
+          `All the beds are pods, and each dorm has ${beds.podsPerDorm.value} of them. Booking.com lists the beds as ${joinList(beds.roomTypes.value.map((type) => `a ${lowerFirst(type)}`))}. To see which beds are free on your dates, check Booking.com or Agoda, or `,
           { text: "ask us", href: "/book" },
           ".",
         ],
@@ -114,19 +114,19 @@ export const faq: readonly FaqGroup[] = [
         id: "bathrooms",
         question: "Are the bathrooms shared?",
         answer: [
-          `Yes. The bathrooms are shared, with hot showers, and they are ${lowerFirst(bathrooms.cleaning.value)}.`,
+          `Yes. The bathrooms are shared, with hot showers, and guests say they are ${lowerFirst(bathrooms.cleaning.value)}.`,
         ],
       },
       {
         id: "comfort",
         question: "Is there air-conditioning and Wi-Fi?",
-        answer: ["Yes: strong air-conditioning and free Wi-Fi."],
+        answer: ["Yes: free Wi-Fi, and guests praise the strong air-conditioning."],
       },
       {
         id: "quiet",
         question: "Is it a party hostel?",
         answer: [
-          `No. ${atmosphere.summary.value} Hen and stag parties are not accepted, and there is no smoking anywhere in the house. `,
+          `No. ${atmosphere.summary.value} Hen and stag parties are not accepted, and there is no smoking in the house or on the terrace (smokers go out past it, to the small jar for cigarette butts). `,
           { text: "A quiet stay, in brief", href: "/guides/quiet-hostel-vientiane" },
           ".",
         ],

@@ -190,7 +190,7 @@ Assumed:
 - No outside food or drink in the house. So the house stays clean and fresh. (Anywhere in the house, from the front door in.)
 - No strong-smelling food, such as durian or kimchi. A smell carries through a whole shared house. (Anywhere in the house.)
 - No pets. The house is shared, and the dorms are for sleeping. (Anywhere in the house.)
-- No drugs, weapons, flammable items or chemicals. For everyone's safety. (Anywhere in the house.)
+- No drugs, weapons, flammable items or chemicals. For everyone’s safety. (Anywhere in the house.)
 - Keep your voice down at all times. Most guests come here to sleep well. (Everywhere, and above all in Dorm H and Dorm J.)
 
 ## Rules about the stay

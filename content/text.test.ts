@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countWord, joinList, laoNumeral, lowerFirst } from "./text";
+import { countWord, joinList, laoNumeral, lowerFirst, orList } from "./text";
 
 describe("text helpers", () => {
   it("writes Lao digits", () => {
@@ -11,6 +11,8 @@ describe("text helpers", () => {
 
   it("joins lists and counts in words", () => {
     expect(joinList(["a", "b", "c"])).toBe("a, b and c");
+    expect(orList([4, 13, 14])).toBe("4, 13 or 14");
+    expect(orList(["a"])).toBe("a");
     expect(countWord(2)).toBe("Two");
     expect(lowerFirst("Cleaned")).toBe("cleaned");
   });
