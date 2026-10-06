@@ -257,10 +257,10 @@ For guests.
 
 For the team. About every hour.
 
-1. Café: Look over the tables, the counter and the floor; clean what needs it, then take a photo to compare with the standard.
-2. Toilet: The toilet, its sink and the corridor basin: clean, refill, photo.
+1. Café: Look over the tables, the counter and the floor; clean what needs it.
+2. Toilet: The toilet, its sink and the corridor basin: clean and refill.
 3. Landing: Tidy the shoe cubbies and sweep the landing. (rules: no shoes upstairs)
-4. Bathroom, Women's bathroom: Toilets, showers, basins and floor: clean, refill, photo.
+4. Bathroom, Women's bathroom: Toilets, showers, basins and floor: clean and refill.
 5. Dorm H: Quietly: the aisle, the floor and the bins; pods made up fresh after check-out. (rules: quiet)
-6. Bathroom, Men's bathroom: Toilets, showers, basins and floor: clean, refill, photo.
+6. Bathroom, Men's bathroom: Toilets, showers, basins and floor: clean and refill.
 7. Dorm J: Quietly: the aisle, the floor and the bins; pods made up fresh after check-out. (rules: quiet)
