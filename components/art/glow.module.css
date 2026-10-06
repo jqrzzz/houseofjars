@@ -72,7 +72,7 @@
   }
 
   :global(:root:not([data-motion="still"])) :global([data-played]) .glow::before {
-    animation: lights-on-day 600ms var(--ease-lamp) min(calc(var(--i, 0) * 40ms), 1800ms) both;
+    animation: lights-on-day 960ms var(--ease-lamp) min(calc(var(--i, 0) * 60ms), 2880ms) both;
   }
 
   :global(:root[data-theme="dark"]:not([data-motion="still"])) :global([data-played]) .glow::before {

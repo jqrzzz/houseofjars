@@ -34,7 +34,7 @@
   width: 1.5rem;
   height: 1.5rem;
   color: var(--accent-text);
-  transition: transform 200ms var(--ease-out);
+  transition: transform 320ms var(--ease-out);
 }
 
 .platform:hover .platformName {

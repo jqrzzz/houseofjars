@@ -668,19 +668,19 @@
    * each ring settling as the thread reaches it, the bead riding along.
    */
   :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-thread] :global(:is(.th, .thc)) {
-    animation: walk-draw calc((var(--b) - var(--a)) * 2.4s) linear calc(var(--a) * 2.4s) both;
+    animation: walk-draw calc((var(--b) - var(--a)) * 3.84s) linear calc(var(--a) * 3.84s) both;
     animation-timeline: auto;
     animation-range: normal;
   }
 
   :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-rings] > span {
-    animation: ring-settle var(--dur-section) var(--ease-out) calc(var(--at) * 2.4s - 200ms) both;
+    animation: ring-settle var(--dur-section) var(--ease-out) calc(var(--at) * 3.84s - 320ms) both;
     animation-timeline: auto;
     animation-range: normal;
   }
 
   :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-bead] {
-    animation: bead-walk calc((var(--b) - var(--a)) * 2.4s) linear calc(var(--a) * 2.4s) both;
+    animation: bead-walk calc((var(--b) - var(--a)) * 3.84s) linear calc(var(--a) * 3.84s) both;
     animation-timeline: auto;
     animation-range: normal;
   }
@@ -696,7 +696,7 @@
   }
 
   :global(:root:not([data-motion="still"])) .stage[data-lift="static"][data-played] .tag {
-    animation: tag-swing var(--dur-hinge) var(--ease-out) calc(var(--k, 0) * 80ms + 500ms) both;
+    animation: tag-swing var(--dur-hinge) var(--ease-out) calc(var(--k, 0) * 130ms + 800ms) both;
   }
 
   /*
@@ -724,15 +724,15 @@
 
   /* At the front desk a wisp of warm air rises from the big jar, with a few motes, once (StageDirector plays it on scroll stages). */
   .wisp {
-    --wisp-delay: 200ms;
+    --wisp-delay: 320ms;
   }
 
   .stage[data-lift="static"] .wisp {
-    --wisp-delay: 1400ms;
+    --wisp-delay: 2240ms;
   }
 
   .stage[data-lift="static"] .motes {
-    --delay: 900ms;
+    --delay: 1440ms;
   }
 }
 
@@ -746,7 +746,7 @@
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .stage[data-lift="static"][data-played] [data-sign],
   :global(:root:not([data-motion="still"])) .stage [data-sign][data-play] {
-    animation: sign-breath 1600ms var(--ease-sway) both;
+    animation: sign-breath 2560ms var(--ease-sway) both;
   }
 }
 

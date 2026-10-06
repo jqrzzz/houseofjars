@@ -5,7 +5,7 @@ import styles from "./Motes.module.css";
 /**
  * Lamp motes (docs/DESIGN.md §10.1): as a lamp lights, warm specks
  * (lamplight discs at the top of the brief's 4–6 px) rise near the top of its
- * 24–40 px and fade, all within 3 s, once. A scene sends up three to five in
+ * 24–40 px and fade, slowly, all within 5 s, once. A scene sends up three to five in
  * all: a stage's air its own few, a row of lamps one each, so `count` may be
  * one. Their rest frame is gone, so Still, reduced motion and screenshots
  * never show them.
@@ -37,8 +37,8 @@ export function Motes({
       "--dx": `${Math.round((random() - 0.5) * 12)}px`,
       "--dy": `${-Math.round(32 + random() * 8)}px`,
       "--s": `${(5.5 + random() * 0.5).toFixed(1)}px`,
-      "--w": `${Math.round(k * 140 + random() * 120)}ms`,
-      "--d": `${Math.round(1900 + random() * 400)}ms`,
+      "--w": `${Math.round(k * 220 + random() * 190)}ms`,
+      "--d": `${Math.round(3000 + random() * 640)}ms`,
     } as CSSProperties;
     return <i key={k} style={style} />;
   });

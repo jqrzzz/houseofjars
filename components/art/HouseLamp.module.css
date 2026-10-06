@@ -9,7 +9,7 @@
   --ink-line: #4a2f1b;
   --ink-hair: rgb(74 47 27 / 0.6);
   /* When the Lamplighting starts: 300 ms after load, or after the splash's curtain. */
-  --t0: 300ms;
+  --t0: 480ms;
   position: relative;
   display: block;
   width: 32px;
@@ -18,9 +18,9 @@
   pointer-events: none;
 }
 
-/* Under the splash, as the curtain clears the top of the screen (Splash.module.css lifts it from 1000 to 1700 ms). */
+/* Under the splash, as the curtain clears the top of the screen (Splash.module.css lifts it from 1600 to 2720 ms). */
 :global(html.splash) .lamp {
-  --t0: 1450ms;
+  --t0: 2320ms;
 }
 
 :global(:root[data-theme="dark"]) .lamp {
@@ -92,7 +92,7 @@
 
 /* Motes rise from the shade as it lights; by Day the lamps stay unlit, so there are none. */
 .motes {
-  --delay: calc(var(--t0) + 420ms + var(--i) * 140ms);
+  --delay: calc(var(--t0) + 670ms + var(--i) * 220ms);
   --motes-y: calc(100% - 20px);
   display: none;
 }
@@ -109,44 +109,45 @@
 
 /*
  * Lamplighting (§4.3), as phrases that end on the rest frame:
- *   drop   12 px into place, 700 ms on --ease-paper, 90 ms apart;
+ *   drop   12 px into place, 1120 ms on --ease-paper, 140 ms apart;
  *   light  the shade warms and its halo opens .9 to 1.03 to 1 (one 3% catch),
- *          600 ms on --ease-lamp, 140 ms apart, left to right;
- *   sway   ±1.5° once over 2.4 s, every lamp first to the right, 120 ms apart,
+ *          960 ms on --ease-lamp, 220 ms apart, left to right;
+ *   sway   ±1° once over 3.84 s, every lamp first to the right, 190 ms apart,
  *          like one breeze.
- * They start 300 ms after load, or 1450 ms under the splash, and the last ends
- * by 4.7 s (before the boot script lifts html.splash at 5 s).
+ * They start 480 ms after load, or 2320 ms under the splash, and the last ends
+ * by 7.5 s (before the boot script lifts html.splash at 8 s). The pace is the
+ * site's unhurried one (docs/DESIGN.md §10.6).
  *
  * The light is Evening's only: by Day the shade stays stone and the halo dark,
  * so only the drop and the sway run. Switching to Evening adds the light, so
  * the lamps light again, left to right, with their motes, once the theme's
- * 450 ms cross-fade is done (it is held while the fade runs, so it never plays
+ * 720 ms cross-fade is done (it is held while the fade runs, so it never plays
  * inside it). The drop and the sway don't replay.
  */
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .lamp {
     animation:
-      lamp-drop 700ms var(--ease-paper) calc(var(--t0) + var(--i) * 90ms) both,
-      lamp-sway 2400ms var(--ease-sway) calc(var(--t0) + 600ms + var(--i) * 120ms) both;
+      lamp-drop 1120ms var(--ease-paper) calc(var(--t0) + var(--i) * 140ms) both,
+      lamp-sway 3840ms var(--ease-sway) calc(var(--t0) + 960ms + var(--i) * 190ms) both;
   }
 
   /* On the drawing, whose fill the shade inherits (the edge's copy has its own). */
   :global(:root[data-theme="dark"]:not([data-motion="still"])) .lamp svg {
-    animation: lamp-light 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+    animation: lamp-light 960ms var(--ease-lamp) calc(var(--t0) + 670ms + var(--i) * 220ms) both;
   }
 
   :global(:root[data-theme="dark"]:not([data-motion="still"])) .halo {
-    animation: lamp-halo 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+    animation: lamp-halo 960ms var(--ease-lamp) calc(var(--t0) + 670ms + var(--i) * 220ms) both;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) and (prefers-color-scheme: dark) {
   :global(:root:not([data-theme="light"]):not([data-motion="still"])) .lamp svg {
-    animation: lamp-light 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+    animation: lamp-light 960ms var(--ease-lamp) calc(var(--t0) + 670ms + var(--i) * 220ms) both;
   }
 
   :global(:root:not([data-theme="light"]):not([data-motion="still"])) .halo {
-    animation: lamp-halo 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+    animation: lamp-halo 960ms var(--ease-lamp) calc(var(--t0) + 670ms + var(--i) * 220ms) both;
   }
 }
 
@@ -172,11 +173,11 @@
 
 @keyframes lamp-sway {
   25% {
-    rotate: -1.5deg;
+    rotate: -1deg;
   }
 
   75% {
-    rotate: 1.5deg;
+    rotate: 1deg;
   }
 }
 

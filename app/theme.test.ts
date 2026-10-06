@@ -135,10 +135,10 @@ describe("the boot script", () => {
     expect(still.seen).toBe(true);
   });
 
-  it("takes the splash class off after 5000 ms, once the curtain and the hero have finished", () => {
+  it("takes the splash class off after 8000 ms, once the curtain and the hero have finished", () => {
     const first = boot({});
-    expect(SPLASH_MS).toBe(5000);
-    expect(first.timers.map((timer) => timer.ms)).toEqual([5000]);
+    expect(SPLASH_MS).toBe(8000);
+    expect(first.timers.map((timer) => timer.ms)).toEqual([8000]);
     first.timers[0]!.run();
     expect(first.classes.has("splash")).toBe(false);
   });

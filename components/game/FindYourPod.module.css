@@ -459,15 +459,15 @@
 
   /* The lamps light in walking order (no more than four at once), then the curtain closes behind them. */
   :root:not([data-motion="still"]) .light {
-    animation: light-up var(--dur-section) var(--ease-lamp) calc(var(--i) * 140ms) both;
+    animation: light-up var(--dur-section) var(--ease-lamp) calc(var(--i) * 220ms) both;
   }
 
   :root:not([data-motion="still"]) .curtain {
-    animation: curtain-close var(--dur-scene) var(--ease-paper) 1.6s both;
+    animation: curtain-close var(--dur-scene) var(--ease-paper) 2.56s both;
   }
 
   :root:not([data-motion="still"]) .sleepTag {
-    animation: tag-swing var(--dur-hinge) var(--ease-out) 2.6s both;
+    animation: tag-swing var(--dur-hinge) var(--ease-out) 4.16s both;
   }
 }
 

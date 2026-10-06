@@ -121,7 +121,7 @@
 
 .image {
   object-fit: cover;
-  transition: scale 1400ms var(--ease-out);
+  transition: scale 2240ms var(--ease-out);
 }
 
 /*
@@ -146,7 +146,7 @@
 
   @media (hover: hover) {
     .figure:hover .image {
-      scale: 1.035;
+      scale: 1.02;
     }
   }
 }

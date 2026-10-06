@@ -22,11 +22,11 @@ export function Splash() {
     <div className={styles.splash} aria-hidden="true">
       <div className={styles.stage}>
         <svg className={styles.mark} viewBox={MARK_VIEWBOX} focusable="false">
-          <path d={leftPillar} className={`${styles.part} ${styles.rise}`} style={{ animationDelay: "60ms" }} />
-          <path d={rightPillar} className={`${styles.part} ${styles.rise}`} style={{ animationDelay: "160ms" }} />
-          <path d={topBlock} className={`${styles.part} ${styles.drop}`} style={{ animationDelay: "320ms" }} />
-          <path d={middleBlock} className={`${styles.part} ${styles.drop}`} style={{ animationDelay: "400ms" }} />
-          <path d={bottomBlock} className={`${styles.part} ${styles.drop}`} style={{ animationDelay: "480ms" }} />
+          <path d={leftPillar} className={`${styles.part} ${styles.rise}`} style={{ animationDelay: "100ms" }} />
+          <path d={rightPillar} className={`${styles.part} ${styles.rise}`} style={{ animationDelay: "260ms" }} />
+          <path d={topBlock} className={`${styles.part} ${styles.drop}`} style={{ animationDelay: "510ms" }} />
+          <path d={middleBlock} className={`${styles.part} ${styles.drop}`} style={{ animationDelay: "640ms" }} />
+          <path d={bottomBlock} className={`${styles.part} ${styles.drop}`} style={{ animationDelay: "770ms" }} />
         </svg>
         <p className={styles.name}>{identity.name.value}</p>
         <p className={styles.greeting} lang="lo">

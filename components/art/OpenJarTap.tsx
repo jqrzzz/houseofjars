@@ -13,7 +13,7 @@ const shown: CSSProperties = { fontSize: "var(--step--1)", color: "var(--text-so
 
 /**
  * The 404 jar as a button: a tap, a click or Enter wobbles it ±3° about its
- * foot (420 ms) and sends one arch wisp up from its mouth. Each press plays
+ * foot (680 ms) and sends one arch wisp up from its mouth. Each press plays
  * once more. With Still or reduced motion it stays put and answers in words
  * under it instead: "Nothing in here but air." Screen readers hear that line
  * on every press, whatever the motion.
@@ -29,7 +29,7 @@ export function OpenJarTap({ className, children }: { className?: string; childr
     if (!moving) return;
     drawing.current?.animate(
       [{ rotate: "0deg" }, { rotate: "3deg" }, { rotate: "-3deg" }, { rotate: "1.5deg" }, { rotate: "0deg" }],
-      { duration: 420, easing: "cubic-bezier(0.37, 0, 0.63, 1)" },
+      { duration: 680, easing: "cubic-bezier(0.37, 0, 0.63, 1)" },
     );
     setWisps((n) => n + 1);
   };

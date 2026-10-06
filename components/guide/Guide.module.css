@@ -109,7 +109,7 @@
   width: 1.25rem;
   height: 1.25rem;
   color: var(--accent-text);
-  transition: transform 200ms var(--ease-out);
+  transition: transform 320ms var(--ease-out);
 }
 
 .card:hover .cardArrow {
@@ -235,7 +235,7 @@
   aspect-ratio: 1;
   translate: -50% -50%;
   opacity: 0;
-  transition: opacity 480ms var(--ease-lamp);
+  transition: opacity 770ms var(--ease-lamp);
 }
 
 .guide:is(:hover, :has(.cardLink:focus-visible)) .nicheGlow {

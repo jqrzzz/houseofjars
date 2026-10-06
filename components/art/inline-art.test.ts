@@ -75,7 +75,7 @@ describe("motes", () => {
     expect(html(createElement(Motes, { seed: 2 }))).not.toBe(html(createElement(Motes, { seed: 3 })));
   });
 
-  it("rise 24–40 px, 4–6 px wide, all gone within 3 s", () => {
+  it("rise 24–40 px, 4–6 px wide, all gone within 5 s, at the site's unhurried pace", () => {
     const markup = html(createElement(Motes, { count: 5, seed: 7 }));
     const rises = [...markup.matchAll(/--dy:-(\d+)px/g)].map((m) => Number(m[1]));
     const sizes = [...markup.matchAll(/--s:([\d.]+)px/g)].map((m) => Number(m[1]));
@@ -86,7 +86,7 @@ describe("motes", () => {
     expect(Math.max(...sizes)).toBeLessThanOrEqual(6);
     const waits = [...markup.matchAll(/--w:(\d+)ms/g)].map((m) => Number(m[1]));
     const runs = [...markup.matchAll(/--d:(\d+)ms/g)].map((m) => Number(m[1]));
-    waits.forEach((wait, k) => expect(wait + runs[k]!).toBeLessThanOrEqual(3000));
+    waits.forEach((wait, k) => expect(wait + runs[k]!).toBeLessThanOrEqual(5000));
   });
 });
 

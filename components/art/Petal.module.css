@@ -30,7 +30,7 @@
 @media (prefers-reduced-motion: no-preference) {
   @supports (offset-path: shape(from 0 0, line to 1px 1px)) {
     :global(:root:not([data-motion="still"])) :global(:is([data-played], [data-play])) .petal i {
-      animation: petal-cross 4.8s var(--ease-sway) var(--delay, 300ms) both;
+      animation: petal-cross 7.68s var(--ease-sway) var(--delay, 480ms) both;
     }
   }
 }

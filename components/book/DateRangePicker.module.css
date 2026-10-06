@@ -96,7 +96,7 @@
   font-size: 0.95rem;
   font-weight: 500;
   font-variant-numeric: tabular-nums lining-nums;
-  transition: background-color 120ms ease;
+  transition: background-color 190ms ease;
 }
 
 .day:hover {

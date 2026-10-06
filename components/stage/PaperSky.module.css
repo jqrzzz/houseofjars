@@ -143,21 +143,21 @@
   }
 
   :global(:root[data-theme="dark"]:not([data-motion="still"])) :global([data-played]) .night {
-    animation: night-in-evening 1600ms var(--ease-lamp) 400ms both;
+    animation: night-in-evening 2560ms var(--ease-lamp) 640ms both;
   }
 
   :global(:root[data-theme="dark"]:not([data-motion="still"])) :global([data-played]) .late {
-    animation: night-in-evening 1600ms var(--ease-lamp) 1100ms both;
+    animation: night-in-evening 2560ms var(--ease-lamp) 1760ms both;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) and (prefers-color-scheme: dark) {
   :global(:root:not([data-theme="light"]):not([data-motion="still"])) :global([data-played]) .night {
-    animation: night-in-evening 1600ms var(--ease-lamp) 400ms both;
+    animation: night-in-evening 2560ms var(--ease-lamp) 640ms both;
   }
 
   :global(:root:not([data-theme="light"]):not([data-motion="still"])) :global([data-played]) .late {
-    animation: night-in-evening 1600ms var(--ease-lamp) 1100ms both;
+    animation: night-in-evening 2560ms var(--ease-lamp) 1760ms both;
   }
 }
 

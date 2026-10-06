@@ -24,9 +24,9 @@
   backdrop-filter: var(--glass-blur);
   box-shadow: var(--dock-shadow);
   transition:
-    transform 240ms var(--ease-out),
-    opacity 240ms ease,
-    visibility 240ms;
+    transform 380ms var(--ease-out),
+    opacity 380ms ease,
+    visibility 380ms;
 }
 
 /*
@@ -83,10 +83,10 @@
   font-weight: 600;
   font-size: 0.975rem;
   transition:
-    transform 220ms var(--ease-out),
-    box-shadow 220ms ease,
-    opacity 240ms ease,
-    visibility 240ms;
+    transform 350ms var(--ease-out),
+    box-shadow 350ms ease,
+    opacity 380ms ease,
+    visibility 380ms;
 }
 
 .launcher:focus-visible {

@@ -98,7 +98,7 @@
   text-decoration-thickness: 1px;
   text-underline-offset: var(--underline-offset);
   cursor: pointer;
-  transition: text-decoration-color 160ms ease;
+  transition: text-decoration-color 260ms ease;
 }
 
 .base {

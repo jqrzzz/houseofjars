@@ -14,11 +14,11 @@
 /* Arriving: the cars glide in from the left and ease to a stop (900 ms), once, as the page opens. */
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .train[data-arrive] .cars {
-    animation: train-arrive 900ms var(--ease-out) var(--arrive-delay, 200ms) both;
+    animation: train-arrive 1440ms var(--ease-out) var(--arrive-delay, 320ms) both;
   }
 
   :global(html.splash:not([data-motion="still"])) .train[data-arrive] .cars {
-    --arrive-delay: 1150ms;
+    --arrive-delay: 1840ms;
   }
 }
 

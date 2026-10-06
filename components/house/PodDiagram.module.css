@@ -162,11 +162,11 @@
   }
 
   :global(:root:not([data-motion="still"])) .figure[data-played] .cloth {
-    animation: curtain-open 1100ms var(--ease-in-out) 350ms both;
+    animation: curtain-open 1760ms var(--ease-in-out) 560ms both;
   }
 
   :global(:root:not([data-motion="still"])) .figure[data-played] .tag {
-    animation: tag-swing var(--dur-hinge) var(--ease-out) calc(1200ms + var(--k) * 80ms) both;
+    animation: tag-swing var(--dur-hinge) var(--ease-out) calc(1920ms + var(--k) * 130ms) both;
   }
 }
 

@@ -178,20 +178,27 @@
   --glow-strength: 0.45;
   --glow-ring: var(--teak);
   --thread: var(--jar-orange);
-  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
-  /* Motion: durations and easings for the lantern theatre. Springs are for time-based moves only, never scroll-linked ones. */
-  --dur-press: 120ms;
-  --dur-hover: 200ms;
-  --dur-ui: 320ms;
-  --dur-hinge: 420ms;
-  --dur-section: 600ms;
-  --dur-scene: 900ms;
-  --dur-lamps: 2400ms;
-  --dur-phrase: 5s;
+  /* A long, soft landing: things arrive quickly, then take their time to settle. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /*
+   * Motion: durations and easings for the lantern theatre, at an unhurried,
+   * premium pace (docs/DESIGN.md §10.6): slow, soft and never bouncy. A press
+   * still answers at once. Springs are for time-based moves only, never
+   * scroll-linked ones.
+   */
+  --dur-press: 160ms;
+  --dur-hover: 320ms;
+  --dur-ui: 520ms;
+  --dur-hinge: 680ms;
+  --dur-section: 960ms;
+  --dur-scene: 1440ms;
+  --dur-lamps: 3840ms;
+  --dur-phrase: 8s;
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* the splash curve */
   --ease-lamp: cubic-bezier(0.3, 0, 0.1, 1); /* a filament warming */
   --ease-sway: cubic-bezier(0.37, 0, 0.63, 1);
-  --ease-paper: linear(0, 0.24 8%, 0.62 20%, 0.9 33%, 1.025 47%, 1.01 62%, 1);
+  /* Paper settling into place: a long glide with no overshoot. */
+  --ease-paper: linear(0, 0.2 8%, 0.52 20%, 0.77 33%, 0.91 47%, 0.975 62%, 0.995 80%, 1);
   /* One underline offset for every link. */
   --underline-offset: 0.22em;
 }
@@ -444,7 +451,7 @@ a {
   text-decoration-thickness: 1px;
   text-underline-offset: var(--underline-offset);
   text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-  transition: text-decoration-color 160ms ease, color 160ms ease;
+  transition: text-decoration-color var(--dur-hover) ease, color var(--dur-hover) ease;
 }
 
 a:hover {
@@ -539,7 +546,7 @@ strong {
 }
 
 ::view-transition-group(*) {
-  animation-duration: 300ms;
+  animation-duration: 480ms;
   animation-timing-function: var(--ease-out);
 }
 
@@ -558,7 +565,7 @@ strong {
 
 /* Switching Day and Evening: the whole page, header included, cross-fades (theme-store.ts). */
 :root[data-theme-fade]::view-transition-group(*) {
-  animation-duration: 450ms;
+  animation-duration: 720ms;
 }
 
 :root[data-theme-fade]::view-transition-old(site-header) {
@@ -729,19 +736,19 @@ strong {
 }
 
 ::view-transition-old(.page-forward) {
-  animation: 200ms var(--ease-out) both page-drop-out;
+  animation: 340ms var(--ease-out) both page-drop-out;
 }
 
 ::view-transition-new(.page-forward) {
-  animation: 360ms var(--ease-out) both page-lower-in;
+  animation: 640ms var(--ease-out) both page-lower-in;
 }
 
 ::view-transition-old(.page-back) {
-  animation: 200ms var(--ease-out) both page-rise-out;
+  animation: 340ms var(--ease-out) both page-rise-out;
 }
 
 ::view-transition-new(.page-back) {
-  animation: 360ms var(--ease-out) both page-lift-in;
+  animation: 640ms var(--ease-out) both page-lift-in;
 }
 
 @media (prefers-reduced-motion: reduce) {

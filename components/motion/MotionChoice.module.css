@@ -25,7 +25,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .option:hover .wave {
-    animation: thread-run 1200ms var(--ease-sway);
+    animation: thread-run 1920ms var(--ease-sway);
   }
 }
 

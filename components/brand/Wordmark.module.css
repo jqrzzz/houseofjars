@@ -27,7 +27,7 @@
   filter: drop-shadow(0 0 0 transparent);
   transition:
     translate var(--dur-ui) var(--ease-out),
-    filter 400ms var(--ease-lamp);
+    filter 640ms var(--ease-lamp);
 }
 
 .wordmark:is(:hover, :focus-visible) .mark {
