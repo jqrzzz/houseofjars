@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
 import walks from "../../public/house/walks.json";
-import { actAt, actRanges, arriveFrames, beadFrames, keyframes, lightName, shareAlong, shareAt, stageKeyframes, threadFrames, walkClock } from "./acts";
+import {
+  HOLD,
+  LIGHT_LEAD,
+  RING_LEAD,
+  actAt,
+  actRanges,
+  arriveFrames,
+  beadFrames,
+  keyframes,
+  lightName,
+  shareAlong,
+  shareAt,
+  stageKeyframes,
+  threadFrames,
+  walkClock,
+} from "./acts";
 
 const arrival = walks.routes.arrival.stops;
 
@@ -27,6 +42,14 @@ describe("walkClock", () => {
     for (const stop of arrival.slice(0, -1)) {
       expect(shareAt(clock, stop.at + 0.02)).toBeCloseTo(stop.at, 6);
     }
+  });
+
+  it("rests long enough to be seen: its full hold wherever the next stop leaves room", () => {
+    expect(HOLD).toBeGreaterThanOrEqual(0.06);
+    arrival.slice(0, -1).forEach((stop, k) => {
+      const rest = Math.min(HOLD, (arrival[k + 1]!.at - stop.at) * 0.4);
+      expect(shareAt(clock, stop.at + rest - 1e-6)).toBeCloseTo(stop.at, 6);
+    });
   });
 
   it("refuses stops out of walking order", () => {
@@ -136,6 +159,15 @@ describe("stageKeyframes", () => {
     const css = stageKeyframes("s-", clock);
     const names = [...css.matchAll(/@keyframes ([\w-]+)\{/g)].map((m) => m[1]);
     expect(names).toEqual(["s-t-ground", "s-b-ground", "s-t-floor1", "s-b-floor1", "s-r0", "s-r1", "s-r2", "s-l10", "s-l55", "s-l100"]);
+  });
+
+  it("warms a light and settles a ring over a stretch of the act, not in a blink", () => {
+    expect(LIGHT_LEAD).toBeGreaterThanOrEqual(0.06);
+    expect(RING_LEAD).toBeGreaterThanOrEqual(0.05);
+    const css = stageKeyframes("s-", clock);
+    const light = new RegExp(`@keyframes ${lightName("s-", 0.55)}\\{([^@]*)\\}`).exec(css)?.[1] ?? "";
+    const offsets = [...light.matchAll(/([\d.]+)%/g)].map((m) => Number(m[1]));
+    expect(Math.max(...offsets) - offsets.filter((o) => o > 0).sort((a, b) => a - b)[0]!).toBeCloseTo(LIGHT_LEAD * 100, 1);
   });
 
   it("names a light's keyframes as its disc does", () => {

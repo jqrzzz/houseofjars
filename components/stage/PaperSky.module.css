@@ -6,10 +6,11 @@
  * palette. Each sheet carries the card edge (a drop shadow on its <svg>).
  */
 .sky {
-  --sky-1: color-mix(in oklab, var(--lamplight) 9%, var(--paper-near));
+  --sky-1: color-mix(in oklab, var(--lamplight) 14%, var(--paper-near));
   --sky-2: color-mix(in oklab, var(--lamplight) 17%, var(--rice));
   --sky-3: color-mix(in oklab, var(--stone) 26%, var(--rice));
-  --cloud: var(--paper-near);
+  /* White paper clouds on a warm sky, so by Day they read as sheets, not as their edges alone. */
+  --cloud: var(--white);
   --is-night: 0;
   position: absolute;
   inset: 0;
@@ -63,6 +64,11 @@
   opacity: var(--is-night);
 }
 
+.moonRise {
+  position: absolute;
+  inset: 0;
+}
+
 .moon {
   fill: color-mix(in oklab, var(--rice) 82%, var(--lamplight));
 }
@@ -87,15 +93,20 @@
 }
 
 /*
- * The clouds drift with the stage's timeline, the nearer the further, but
- * never far: within 16 px. Linear, because the reader holds the clock. Where
- * the stage has no timeline they rest where they are drawn.
+ * The clouds drift with the stage's timeline while the stage stands still
+ * (its contain range), the nearer the further: up to 40 px either way.
+ * Linear, because the reader holds the clock. Where the stage has no
+ * timeline they rest where they are drawn.
+ *
+ * By Evening the moon rises 32 px behind the house over the walk (Act C), as
+ * the walk climbs the stairs; at rest it has risen.
  */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     :global(:root:not([data-motion="still"])) .cloud {
       animation: drift-near linear both;
       animation-timeline: var(--stage-timeline, none);
+      animation-range: contain 0% contain 100%;
     }
 
     :global(:root:not([data-motion="still"])) .far {
@@ -105,53 +116,95 @@
     :global(:root:not([data-motion="still"])) .low {
       animation-name: drift-low;
     }
+
+    :global(:root[data-theme="dark"]:not([data-motion="still"])) .moonRise {
+      animation: moon-rise linear both;
+      animation-timeline: var(--stage-timeline, none);
+      animation-range: var(--act-c, normal);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :global(:root:not([data-theme="light"]):not([data-motion="still"])) .moonRise {
+        animation: moon-rise linear both;
+        animation-timeline: var(--stage-timeline, none);
+        animation-range: var(--act-c, normal);
+      }
+    }
   }
 
-  /* The moon and stars come out once, the first time the sky is seen. */
+  /*
+   * The moon and stars come out as a phrase by Evening only: the first time
+   * the sky is seen, and again after each switch to Evening (the animation
+   * exists only by Evening, so the switch starts it), held while the theme's
+   * cross-fade runs. By Day nothing plays.
+   */
   :global(:root[data-life]:not([data-motion="still"])) :global([data-phrase]:not([data-played])) .night {
     opacity: 0;
   }
 
-  :global(:root:not([data-motion="still"])) :global([data-played]) .night {
-    animation: night-in 1600ms var(--ease-lamp) 400ms both;
+  :global(:root[data-theme="dark"]:not([data-motion="still"])) :global([data-played]) .night {
+    animation: night-in-evening 1600ms var(--ease-lamp) 400ms both;
   }
 
-  :global(:root:not([data-motion="still"])) :global([data-played]) .late {
-    animation: night-in 1600ms var(--ease-lamp) 1100ms both;
+  :global(:root[data-theme="dark"]:not([data-motion="still"])) :global([data-played]) .late {
+    animation: night-in-evening 1600ms var(--ease-lamp) 1100ms both;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"]):not([data-motion="still"])) :global([data-played]) .night {
+    animation: night-in-evening 1600ms var(--ease-lamp) 400ms both;
+  }
+
+  :global(:root:not([data-theme="light"]):not([data-motion="still"])) :global([data-played]) .late {
+    animation: night-in-evening 1600ms var(--ease-lamp) 1100ms both;
+  }
+}
+
+/* After the shorthands above, and as specific, so it wins. */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root[data-theme-fade]:not([data-motion="still"])) :global([data-played]) :is(.night, .late) {
+    animation-play-state: paused;
   }
 }
 
 @keyframes drift-near {
   from {
-    translate: -16px 0;
+    translate: -40px 0;
   }
 
   to {
-    translate: 16px 0;
+    translate: 40px 0;
   }
 }
 
 @keyframes drift-far {
   from {
-    translate: -7px 0;
+    translate: -18px 0;
   }
 
   to {
-    translate: 7px 0;
+    translate: 18px 0;
   }
 }
 
 @keyframes drift-low {
   from {
-    translate: 12px 0;
+    translate: 30px 0;
   }
 
   to {
-    translate: -12px 0;
+    translate: -30px 0;
   }
 }
 
-@keyframes night-in {
+@keyframes moon-rise {
+  from {
+    translate: 0 32px;
+  }
+}
+
+@keyframes night-in-evening {
   from {
     opacity: 0;
     translate: 0 3px;

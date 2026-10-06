@@ -5,25 +5,31 @@
  *   A  0 → --a1      the street front opens
  *   B  --a1 → --c0   Floor 1 lifts, the tags swing in
  *   C  --c0 → --c1   the thread walks; stop k is reached at c0 + (c1 − c0) × at
- *   D  --c1 → 100    the curtain closes
+ *   D  --c1 → 100    the curtain closes, and by Evening the house goes to bed
  * --scroll is the distance that range takes: the section's height less the
  * screen, give or take the page's scroll padding (which a view timeline takes
  * as its inset). Each step of the words beside the stage is placed so that it
- * reaches its line (--line) as its act or stop begins, and keeps to that line
- * (sticky) until the next one arrives: nothing lags the stage. The figures
- * here are the rest of the arithmetic; change one and the rest follow.
+ * reaches its line (--line) as its act or stop begins. With motion, an act's
+ * words then keep to that line (sticky, taking no room of their own) for the
+ * whole act, and only the current act's words show: the next fades in as the
+ * last fades away, so nothing lags the stage and nothing runs over it. Under
+ * Still, reduced motion or without JavaScript the words simply read down the
+ * page. The figures here are the rest of the arithmetic; change one and the
+ * rest follow.
  */
 .theatre {
   /*
    * Phones: the walk gets more of the scroll, and the scroll is a fixed
-   * length (one screen plus 1950px), so every stop's words, which are as long
+   * length (one screen plus 2200px), so every stop's words, which are as long
    * on a short phone as on a tall one, have the room they need under the stage.
+   * The curtain gets about 350px of it, so the story's ending is not over in
+   * a flick.
    */
-  --a1: 18;
-  --c0: 33;
-  --c1: 95;
+  --a1: 16;
+  --c0: 29.4;
+  --c1: 84.7;
   --w: calc(var(--c1) - var(--c0));
-  --h: calc(100svh + 1950px);
+  --h: calc(100svh + 2200px);
   --inset-top: var(--space-xl);
   --inset-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   --stage-top: 0px;
@@ -110,6 +116,13 @@
   grid-row: 2;
 }
 
+/* A link in the words, reached by keyboard, comes to rest under the stage on phones and tablets, not behind it. */
+@media (max-width: 59.99rem) {
+  .steps a {
+    scroll-margin-top: calc(var(--line) + var(--space-m));
+  }
+}
+
 .act,
 .stops > li {
   position: relative;
@@ -188,7 +201,8 @@
 /*
  * The walk's stops, on a thread like the stage's: each stop has its ring, and
  * the thread runs from ring to ring. The current stop's ring becomes the bead
- * (lamplight in a teak ring) and the others step back to --text-soft.
+ * (lamplight in a teak ring, warming like a lamp) and the others step back to
+ * --text-soft.
  */
 .stops > li {
   padding-left: 2.1rem;
@@ -219,8 +233,8 @@
   background: var(--paper-near);
   box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
   transition:
-    background-color var(--dur-ui) var(--ease-out),
-    border-color var(--dur-ui) var(--ease-out);
+    background-color var(--dur-section) var(--ease-lamp),
+    border-color var(--dur-section) var(--ease-lamp);
 }
 
 .stops h3 {
@@ -258,25 +272,50 @@
   margin-top: var(--space-l);
 }
 
-/* The current stop (StageDirector names it on the stage): others step back, its ring takes the bead. */
+/*
+ * StageDirector marks the words with the current act (data-act on .steps)
+ * and stop (data-current on its item), so a step restyles only the words.
+ * The current stop: the others step back, its ring takes the bead.
+ */
 @media (prefers-reduced-motion: no-preference) {
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="0"]) .stops > li:not([data-stop="0"]),
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="1"]) .stops > li:not([data-stop="1"]),
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="2"]) .stops > li:not([data-stop="2"]),
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="3"]) .stops > li:not([data-stop="3"]),
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="4"]) .stops > li:not([data-stop="4"]),
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="5"]) .stops > li:not([data-stop="5"]) {
+  :global(:root:not([data-motion="still"])) .steps:is([data-act="c"], [data-act="d"]) .stops > li:not([data-current]) {
     color: var(--text-soft);
   }
 
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="0"]) .stops > li[data-stop="0"] .body::before,
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="1"]) .stops > li[data-stop="1"] .body::before,
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="2"]) .stops > li[data-stop="2"] .body::before,
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="3"]) .stops > li[data-stop="3"] .body::before,
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="4"]) .stops > li[data-stop="4"] .body::before,
-  :global(:root:not([data-motion="still"])) .theatre:has([data-stage][data-step="5"]) .stops > li[data-stop="5"] .body::before {
+  :global(:root:not([data-motion="still"])) .stops > li[data-current] .body::before {
     border-color: var(--teak);
     background: var(--lamplight);
+  }
+
+  /*
+   * Each act's words hold their line for the whole act: Acts A and B take no
+   * room of their own, so they keep to the line (sticky) until their act's
+   * last moment. Only the current act's words show, so the next never runs
+   * over the last: the act just gone lifts away, the next settles in. Before
+   * StageDirector has named an act, and under Still, reduced motion or
+   * without JavaScript, every word shows and the words read straight down.
+   */
+  :global(:root[data-life]:not([data-motion="still"])) .act:is([data-act="a"], [data-act="b"]) > .body {
+    height: 0;
+    padding-block: 0;
+  }
+
+  :global(:root[data-life]:not([data-motion="still"])) .act > .body,
+  :global(:root[data-life]:not([data-motion="still"])) .steps .stops {
+    transition:
+      opacity var(--dur-section) var(--ease-out),
+      translate var(--dur-section) var(--ease-out);
+  }
+
+  :global(:root[data-life]:not([data-motion="still"])) .steps:is([data-act="b"], [data-act="c"], [data-act="d"]) .act[data-act="a"] > .body,
+  :global(:root[data-life]:not([data-motion="still"])) .steps:is([data-act="c"], [data-act="d"]) .act[data-act="b"] > .body {
+    opacity: 0;
+    translate: 0 -0.75rem;
+  }
+
+  :global(:root[data-life]:not([data-motion="still"])) .steps[data-act="a"] .act[data-act="b"] > .body {
+    opacity: 0;
+    translate: 0 0.75rem;
   }
 }
 
@@ -326,10 +365,11 @@
  */
 @media (min-width: 60rem) {
   .theatre {
-    --a1: 20;
-    --c0: 45;
-    --c1: 95;
-    --h: 260svh;
+    /* Acts A to C as long as ever; the curtain gets about 350px of scroll. */
+    --a1: 17;
+    --c0: 38.3;
+    --c1: 80.9;
+    --h: 290svh;
     /*
      * The words stand level with the middle of the stage: the itinerary (about
      * 34rem tall) is centred in the screen below the header, and no lower
@@ -396,6 +436,28 @@
     content: "";
     display: block;
     height: calc(var(--w) / 100 * var(--scroll));
+  }
+
+  /*
+   * With motion, it waits for the walk: it comes in as Act B's phrases go.
+   * As the curtain closes (Act D) the stops already walked fade, and the last
+   * one rises with the closing lines, so nothing slides under the header.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(:root[data-life]:not([data-motion="still"])) .steps:is([data-act="none"], [data-act="a"], [data-act="b"]) .stops {
+      opacity: 0;
+      translate: 0 0.75rem;
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .stops > li {
+      transition:
+        color var(--dur-ui) var(--ease-out),
+        opacity var(--dur-section) var(--ease-out);
+    }
+
+    :global(:root[data-life]:not([data-motion="still"])) .steps[data-act="d"] .stops > li:not([data-current]) {
+      opacity: 0;
+    }
   }
 }
 

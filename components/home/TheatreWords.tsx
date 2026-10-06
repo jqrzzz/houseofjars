@@ -10,9 +10,22 @@ import styles from "./HouseTheatre.module.css";
 type Vars = CSSProperties & Record<`--${string}`, string | number>;
 
 /**
+ * The skip link jumps at once rather than gliding (the page scrolls smoothly
+ * otherwise), so the story does not play past at speed; the browser still
+ * follows the link itself, so the next Tab starts after the story.
+ */
+const jump = () => {
+  const root = document.documentElement;
+  root.style.scrollBehavior = "auto";
+  // The browser scrolls to the link's target a little after the click, so the page keeps it until then.
+  window.setTimeout(() => root.style.removeProperty("scroll-behavior"), 400);
+};
+
+/**
  * The words of the house story (HouseTheatre.tsx), beside the stage: the
  * intro (Act A), the three phrases (Act B), the five stops of the arrival walk
- * (Act C) and the closing lines (Act D); then StageDirector's cues. The server
+ * (Act C) and the closing lines (Act D), which StageDirector marks with the
+ * current act and stop; then StageDirector's cues. The server
  * reads every word from content/ and the house model and passes them; this
  * side draws them. It sits on the client side of the boundary only so the
  * page carries its markup once (the HTML is still rendered on the server,
@@ -34,10 +47,10 @@ export function TheatreWords({
 }) {
   return (
     <>
-      <a href="#after-house-story" className={styles.skip}>
+      <a href="#after-house-story" className={styles.skip} onClick={jump}>
         Skip the house story
       </a>
-      <div className={styles.steps}>
+      <div id="theatre-words" className={styles.steps}>
         <div className={styles.act} data-act="a">
           <div className={styles.body}>
             <Eyebrow number={1} morph="the-house">

@@ -14,7 +14,9 @@ const round = (v: number) => Math.round(v * 1000) / 1000;
  * stage's floor layer, cut around the area where the photo was taken, with
  * one of the house's lights glowing in it (or a glow where the photo was
  * taken, if no light falls inside). It reuses the stage's own layer images,
- * Day and Evening twins, so it costs no new drawing. Decorative.
+ * Day and Evening twins, so it costs no new drawing. Its light comes on as
+ * the tile is first seen and after each theme switch (Lights on, a phrase).
+ * Decorative.
  */
 export function PhotoTwin({ area, className }: { area: string; className?: string }) {
   const anchor = anchorOf(`area-${area}`);
@@ -34,7 +36,7 @@ export function PhotoTwin({ area, className }: { area: string; className?: strin
     top: `${round(((vy - y0) / SPAN) * 100)}%`,
   } as CSSProperties;
   return (
-    <span className={[styles.twin, className].filter(Boolean).join(" ")} aria-hidden="true">
+    <span className={[styles.twin, className].filter(Boolean).join(" ")} data-phrase="" aria-hidden="true">
       <span className={styles.sheet} style={sheet}>
         {layers.map((layer) =>
           (["day", "evening"] as const).map((theme) => (

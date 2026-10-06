@@ -5,7 +5,7 @@
  * A walk's thread is drawn over one act of a scroll timeline (the home
  * theatre's Act C). The thread reaches stop k when the act is at its `at`
  * (the share of the walk's drawn length), so stop k lights at
- * c0 + (c1 - c0) * at: 45 + 50 * at in the home theatre. After each stop it
+ * c0 + (c1 - c0) * at (HouseTheatre.module.css sets c0 and c1). After each stop it
  * rests a moment, then walks on to the next.
  */
 
@@ -21,8 +21,20 @@ export interface ClockPoint {
   readonly p: number;
 }
 
-/** How long the thread rests at a stop, as a share of the act: at most this, and never more than 40% of the way to the next stop. */
-export const HOLD = 0.04;
+/**
+ * How long the thread rests at a stop, as a share of the act: at most this,
+ * and never more than 40% of the way to the next stop. In the home theatre
+ * that is 50 to 90px of scroll, so the walk visibly stops.
+ */
+export const HOLD = 0.07;
+
+/**
+ * How early, as a share of the act, a stop's ring starts to settle and a lamp
+ * starts to warm before the thread reaches it: 45 to 100px of scroll in the
+ * home theatre, so a light warms like a filament rather than popping on.
+ */
+export const RING_LEAD = 0.06;
+export const LIGHT_LEAD = 0.08;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const round = (v: number, places = 2) => {
@@ -191,7 +203,7 @@ export function beadFrames(clock: readonly ClockPoint[], share: readonly [number
  */
 export function arriveFrames(clock: readonly ClockPoint[], p: number, o: { wait: string; rest: string; lead?: number; ahead?: string }): Frame[] {
   const u = actAt(clock, p);
-  const start = Math.max(0, u - (o.lead ?? 0.025));
+  const start = Math.max(0, u - (o.lead ?? RING_LEAD));
   const frames: Frame[] = [{ at: 0, css: o.wait }];
   if (o.ahead) frames.push({ at: Math.min(4, start * 100), css: o.ahead });
   frames.push({ at: start * 100, css: o.ahead ?? o.wait }, { at: u * 100, css: o.rest });
@@ -260,7 +272,7 @@ export function stageKeyframes(p: string, c: StageClock): string {
     if (named.has(name)) continue;
     named.add(name);
     const at = Math.round(share * 100) / 100;
-    css += keyframes(name, arriveFrames(clock, at, { wait: "opacity:0;scale:.9", rest: "opacity:1;scale:1", lead: 0.03 }));
+    css += keyframes(name, arriveFrames(clock, at, { wait: "opacity:0;scale:.9", rest: "opacity:1;scale:1", lead: LIGHT_LEAD }));
   }
   return css;
 }

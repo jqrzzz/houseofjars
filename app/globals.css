@@ -682,9 +682,14 @@ strong {
   animation-name: none !important;
 }
 
-/* Ambient phrases (.amb) wait while their stage is off screen or the tab is hidden (components/motion/StageLife.tsx). */
-[data-stage]:not([data-live]) .amb {
-  animation-play-state: paused;
+/*
+ * Ambient phrases (.amb) wait while their stage is off screen or the tab is
+ * hidden (components/motion/StageLife.tsx). Play state is not inherited, so
+ * the parts of a phrase (a wisp's path, each mote) wait with it; and the
+ * phrases' own animation shorthands reset it, hence !important.
+ */
+[data-stage]:not([data-live]) :is(.amb, .amb *) {
+  animation-play-state: paused !important;
 }
 
 /*

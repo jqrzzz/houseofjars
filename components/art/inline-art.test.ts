@@ -68,9 +68,9 @@ describe("the arch wisp", () => {
 });
 
 describe("motes", () => {
-  it("are three to five, the same on every build", () => {
+  it("are one to five, the same on every build", () => {
     const count = (n: number) => (html(createElement(Motes, { count: n })).match(/<i /g) ?? []).length;
-    expect([count(1), count(4), count(9)]).toEqual([3, 4, 5]);
+    expect([count(0), count(1), count(4), count(9)]).toEqual([1, 1, 4, 5]);
     expect(html(createElement(Motes, { seed: 2 }))).toBe(html(createElement(Motes, { seed: 2 })));
     expect(html(createElement(Motes, { seed: 2 }))).not.toBe(html(createElement(Motes, { seed: 3 })));
   });

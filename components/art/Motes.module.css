@@ -22,6 +22,17 @@
   opacity: 0;
 }
 
+/* By Evening each speck carries a soft ring of its own light, so it reads as a mote, not a dot. */
+:global(:root[data-theme="dark"]) .motes i {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamplight) 30%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .motes i {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamplight) 30%, transparent);
+  }
+}
+
 /* Each speck rises and fades within its own 1.9–2.3 s, the last gone by 3 s. */
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) :is(.motes[data-on="load"], :global(:is([data-played], [data-play])) .motes) i {

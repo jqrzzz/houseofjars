@@ -56,15 +56,17 @@ export function HouseTheatre() {
           open
           curtain="pod-H01"
           lift="scroll"
+          // Each plate clear of what the story ends on: Dorm H's pin on a pod in its middle row, away from H01 and
+          // its curtain; the stairs' plate hung on to the right of its pin, off the climb it names.
           labels={[
             { text: phrases[0], anchor: "area-desk" },
-            { text: phrases[1], anchor: "area-dorm-h" },
-            { text: phrases[2], anchor: "area-stairs-ground" },
+            { text: phrases[1], anchor: "fx-pod-H10" },
+            { text: phrases[2], anchor: "area-stairs-ground", side: "start" },
           ]}
           caption={CAPTION}
         />
       </div>
-      <StageDirector stage="theatre" steps="theatre-cues" line={0.5} />
+      <StageDirector stage="theatre" steps="theatre-cues" marks="theatre-words" line={0.5} />
     </section>
   );
 }

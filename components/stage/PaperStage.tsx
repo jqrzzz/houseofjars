@@ -24,6 +24,12 @@ export interface StageLabel {
   readonly text: string;
   /** "area-…" or "fx-…", as lib/house/paper's anchorOf() takes. */
   readonly anchor: string;
+  /**
+   * Which way the plate hangs from its pin, named like a note's side: "start"
+   * runs it on to the right (the pin near its start), "end" back to the left.
+   * Centred on the pin when not given.
+   */
+  readonly side?: "start" | "end";
 }
 
 export interface StageSpot {
@@ -59,6 +65,12 @@ export interface PaperStageProps {
    * on once as it comes into view.
    */
   lift: "scroll" | "static";
+  /**
+   * A scroll stage whose lights should still come on as it is first seen and
+   * after each theme switch (Lights on, §4.3), as a static stage's do. The
+   * home theatre leaves it off: there the discs follow Act C instead.
+   */
+  phrase?: boolean;
   labels?: readonly StageLabel[];
   spots?: readonly StageSpot[];
   hotspots?: readonly StageHotspot[];
@@ -169,14 +181,16 @@ function endFloor(thread: ThreadLayer | undefined, floors: readonly FloorId[]): 
  * dots on solid paper (text never sits on the art). A paper sky stands behind.
  *
  * Every element's base style is the stage's rest frame: floors lifted, thread
- * drawn, labels shown, curtain closed, lamps lit by Evening. That is what
+ * drawn, labels shown, curtain closed, lamps lit by Evening (and, with a
+ * curtain, the house dimmed for the night around its glowing pod). That is what
  * Still, reduced motion, browsers without scroll timelines and screenshots
  * see. With `lift="scroll"` the acts play on the ancestor's timeline:
  *   --stage-timeline  the named timeline (the theatre's view-timeline)
  *   --act-a           Open the house: the street front fades and slides off
  *   --act-b           Floor lift, and the label tags swing in
  *   --act-c           Thread walk, rings and lights in walking order
- *   --act-d           Curtain close; by Evening the pod's lamp lights
+ *   --act-d           Curtain close; by Evening, as the act begins, the pod's
+ *                     lamp warms and the house dims (timed, on data-act)
  * (animation-range values, such as "contain 0% contain 20%"). Without scroll
  * timelines StageDirector sets data-act, data-step and --walk on the figure
  * and CSS transitions play the same states.
@@ -185,12 +199,12 @@ function endFloor(thread: ThreadLayer | undefined, floors: readonly FloorId[]): 
  * ancestor sets it (a sticky stage), the house fitted and centred. The home
  * theatre, for example:
  *   <section id="the-house-story" style="view-timeline: --theatre;
- *     --stage-timeline: --theatre; --act-a: contain 0% contain 20%;
- *     --act-b: contain 20% contain 45%; --act-c: contain 45% contain 95%;
- *     --act-d: contain 95% contain 100%">
+ *     --stage-timeline: --theatre; --act-a: contain 0% contain 17%;
+ *     --act-b: contain 17% contain 38.3%; --act-c: contain 38.3% contain 80.9%;
+ *     --act-d: contain 80.9% contain 100%">
  *     …the words, and a track of cues, each with data-act (and data-stop)…
  *     <PaperStage id="theatre" floors={["ground", "floor1"]} route="arrival" open curtain="pod-H01" lift="scroll" labels={…} caption="…" />
- *     <StageDirector stage="theatre" steps="theatre-cues" line={0.5} />
+ *     <StageDirector stage="theatre" steps="theatre-cues" marks="theatre-words" line={0.5} />
  *   </section>
  * (components/home/HouseTheatre.tsx). The server works out every place from
  * the house model and hands StageArt the figures, and StageKeyframes the
@@ -203,6 +217,7 @@ export function PaperStage({
   open = false,
   curtain,
   lift,
+  phrase = false,
   labels = [],
   spots = [],
   hotspots = [],
@@ -281,7 +296,7 @@ export function PaperStage({
               podLamp: [
                 px(lamp[4] + lamp[0] * 0.5 + lamp[2] * 0.3),
                 py(lamp[5] + lamp[1] * 0.5 + lamp[3] * 0.3),
-                round((15 / vw) * 100),
+                round((30 / vw) * 100),
               ] as const,
             }
           : {}),
@@ -291,7 +306,7 @@ export function PaperStage({
         last: floor === lastFloor,
         rings: (thread?.stops ?? []).flatMap((s, k) => (s.floor === floor ? [[k, px(s.x), py(s.y), s.at] as const] : [])),
         ...(jar && floor === "ground" ? { air: [px(jar.x), py(jar.y), deskStop] as const } : {}),
-        tags: byFloor(tags, floor).map((t) => [t.text, px(t.x), py(t.y), tags.indexOf(t)] as const),
+        tags: byFloor(tags, floor).map((t) => [t.text, px(t.x), py(t.y), tags.indexOf(t), t.side ?? ""] as const),
         notes: byFloor(notes, floor).map(
           (n) => [n.id, n.title, n.text, px(n.x), py(n.y), n.x - vx < vw * 0.4 ? "start" : n.x - vx > vw * 0.7 ? "end" : "middle"] as const,
         ),
@@ -309,7 +324,7 @@ export function PaperStage({
       id={id}
       className={styles.stage}
       data-stage=""
-      data-phrase={scroll ? undefined : ""}
+      data-phrase={scroll && !phrase ? undefined : ""}
       data-lift={lift}
       data-open={open ? "" : undefined}
       style={{ "--stage-aspect": `${cw} / ${ch}` } as Vars}
