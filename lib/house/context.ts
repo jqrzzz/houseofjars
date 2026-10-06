@@ -207,7 +207,9 @@ export function describeHouse(model: HouseModel = houseOfJars): string {
     steps.forEach((step, i) => {
       const where = step.area ? model.areas.find((a) => a.id === step.area)?.name : undefined;
       const rules = step.rules?.length ? ` (rules: ${step.rules.map((id) => id.replaceAll("-", " ")).join(", ")})` : "";
-      lines.push(`${i + 1}. ${step.label}${where && where !== step.label ? `, ${where}` : ""}: ${step.does ?? ""}${rules}`.replace(/: $/, "."));
+      // The step's label may name its area already, whichever apostrophe it is written with.
+      const named = where !== undefined && where.replace(/’/g, "'") === step.label.replace(/’/g, "'");
+      lines.push(`${i + 1}. ${step.label}${where && !named ? `, ${where}` : ""}: ${step.does ?? ""}${rules}`.replace(/: $/, "."));
     });
   }
   return `${lines.join("\n")}\n`;

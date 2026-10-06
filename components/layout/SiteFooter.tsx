@@ -4,6 +4,7 @@ import { bookingLabel } from "@/lib/booking/config";
 import { pages, primaryNav, teamSignInUrl } from "@/lib/site";
 import { Wordmark } from "../brand/Wordmark";
 import { WovenBand } from "../brand/WovenBand";
+import { AskShadowButton } from "../concierge/AskShadowButton";
 import { MotionChoice } from "../motion/MotionChoice";
 import { ShareButton } from "../ui/ShareButton";
 import { ThemeChoices } from "./ThemeSwitch";
@@ -56,6 +57,15 @@ export function SiteFooter() {
             </li>
             <li>
               <a href={`mailto:${email.value}`}>{email.value}</a>
+            </li>
+            {/*
+              Shadow on every page, for keyboards too: the floating button comes last on the page, and by the time
+              focus has passed the footer it has stepped aside, so this one is always there to reach.
+            */}
+            <li>
+              <AskShadowButton className={styles.ask}>
+                Ask Shadow<span className="visually-hidden">, our AI concierge</span>
+              </AskShadowButton>
             </li>
           </ul>
         </div>

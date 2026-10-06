@@ -26,7 +26,7 @@
   pointer-events: none;
 }
 
-/* A lantern's body: a sheet of orange paper with its ink outline. */
+/* A lantern's body: a sheet of clay paper with its ink outline. */
 .lantern {
   stroke: var(--ink-line);
   stroke-width: 1.5;

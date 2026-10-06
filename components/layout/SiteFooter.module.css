@@ -76,13 +76,29 @@
   margin: 0;
 }
 
-.list a {
+.list a,
+.ask {
   color: var(--deep-text);
   text-decoration-color: rgb(251 246 238 / 0.3);
 }
 
-.list a:hover {
+.list a:hover,
+.ask:hover {
   text-decoration-color: currentColor;
+}
+
+/* Ask Shadow opens the chat window, so it is a button, dressed as the links around it. */
+.ask {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: start;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: var(--underline-offset);
+  cursor: pointer;
+  transition: text-decoration-color 260ms ease;
 }
 
 .base {

@@ -418,6 +418,16 @@ describe("drawn from the model, not from constants in the renderer", () => {
     expect(renderPlan("floor2")).toMatch(/<g id="labels-floor2" data-labels="" data-floor="floor2">/);
   });
 
+  it("writes no locker numbers on a plan while where the stacks stand is assumed", () => {
+    for (const svg of [renderPlan("floor1"), renderPlan("floor2"), renderPlan("floor1", { outfit: "paper", theme: "day" })]) {
+      expect(svg).toMatch(/data-fixture="locker"/);
+      expect(svg).not.toMatch(/>[HJ]\d\d–[HJ]\d\d</);
+    }
+    // A stack the house has confirmed is labelled from its lowest number to its highest.
+    const confirmed = { ...model, fixtures: model.fixtures.map((f) => (f.type === "locker" ? { ...f, confirmed: true } : f)) };
+    expect(renderPlan("floor1", { model: confirmed })).toContain(">H01–H03<");
+  });
+
   it("shows Floor 2's small windows on its plan although both miss the plan's cut height", () => {
     expect(renderPlan("floor2")).toMatch(/<g id="fx-window-j-low" data-fixture="window"/);
     const pieces = (svg: string) => (/<g data-walls="">([\s\S]*?)<\/g>/.exec(svg)![1]!.match(/<path/g) ?? []).length;

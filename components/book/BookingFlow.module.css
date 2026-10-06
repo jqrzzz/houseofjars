@@ -351,8 +351,8 @@
   background: var(--page);
   cursor: pointer;
   transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+    border-color 260ms ease,
+    box-shadow 260ms ease;
 }
 
 .room:hover {
@@ -683,7 +683,7 @@
 .lamp.lamp {
   --shade: var(--lamplight);
   --lit: 1;
-  --t0: 900ms;
+  --t0: 1440ms;
   /* Lit by Day as well, its light a little stronger than a stage's so it reads on paper. */
   --glow-strength: 0.8;
 }

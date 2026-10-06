@@ -25,7 +25,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .option:hover .wave {
-    animation: thread-run 1200ms var(--ease-sway);
+    animation: thread-run 1920ms var(--ease-sway);
   }
 }
 
@@ -33,4 +33,16 @@
   to {
     stroke-dashoffset: -9.6;
   }
+}
+
+/* A device that asks for less motion: Full can't be chosen just now, and the line under the plates says why. */
+.option:has(input:disabled) {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.note {
+  margin-top: var(--space-xs);
+  font-size: var(--step--1);
+  color: var(--text-soft);
 }

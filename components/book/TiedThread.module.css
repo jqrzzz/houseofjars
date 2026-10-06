@@ -26,11 +26,11 @@
 
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .tail {
-    animation: tie-tail 1200ms linear backwards;
+    animation: tie-tail 1920ms linear backwards;
   }
 
   :global(:root:not([data-motion="still"])) .loop {
-    animation: tie-loop 1200ms linear backwards;
+    animation: tie-loop 1920ms linear backwards;
   }
 }
 

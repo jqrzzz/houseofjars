@@ -111,7 +111,7 @@ export const bookOnlinePage = {
   nav: pages.book.nav,
   title: "Book a bed",
   description:
-    "See the free beds for your dates and book directly with House of Jars: nothing to pay online, you pay when you arrive. Or book on Booking.com or Agoda.",
+    "See the free beds for your dates and book directly with House of Jars: pay on arrival, or online where your booking offers it. Or book on Booking.com or Agoda.",
   teaser: "The free beds for your dates, booked directly with the house.",
 } as const satisfies PageInfo;
 

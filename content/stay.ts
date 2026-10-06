@@ -55,7 +55,10 @@ export const services = {
 } as const;
 
 export const building = {
-  floors: fact(2, sources.booking),
+  /** The floors of pod dorms, above the café: written as "Two floors of pod dorms above …". */
+  floors: fact(2, sources.booking, {
+    note: 'Counts the dorm floors above the café on the ground floor, so three storeys in all. The house rules board puts the dorms on the "2nd & 3rd floor", counting the ground floor as the 1st.',
+  }),
   cafe: fact("A café on the ground floor", sources.booking),
   cafeDrinks: fact("08:00–19:00", sources.signs, {
     note: 'Café menu: "Coffee & Tea is served from 8.00 AM till 7.00 PM." Breakfast menu: guests are welcome to relax or work in the café after breakfast hours.',
@@ -71,16 +74,17 @@ export const beds = {
     ["Privacy curtain", "Reading light", "Personal power socket", "Locker or safe"] as const,
     sources.booking,
   ),
-  /** Written to follow "The dorms include …". */
-  dorms: fact(["a mixed dorm", "a 14-bed dorm"] as const, sources.booking, {
-    note: "A mixed dorm is listed and a 14-bed dorm is mentioned (they may be the same dorm). Other dorm types and sizes are not published.",
+  /** How many pods each dorm has: written as "Each dorm has 14 pods". */
+  podsPerDorm: fact(14, sources.team, {
+    confirmed: true,
+    note: "The owner's bed register, 2026-10-05: each dorm has 14 pods.",
   }),
   /**
    * The room types guests can book, by name. Search engines read them from
    * the structured data, so list only rooms that certainly exist.
    */
   roomTypes: fact(["Mixed dorm"] as const, sources.booking, {
-    note: "The listing shows a mixed dorm (the 14-bed dorm in beds.dorms may be the same room, so it is not listed separately). Add a female-only dorm or private rooms only once the house confirms them.",
+    note: "The listing shows a mixed dorm. Add a female-only dorm or private rooms only once the house confirms them.",
   }),
   /** The bed numbers the house skips, and why: written to follow "There is no pod 4, 13 or 14: …". */
   numbering: fact({ skipped: [4, 13, 14] as const, why: "so no guest is given an unlucky bed" }, sources.team, {
@@ -190,7 +194,7 @@ export const rules = {
     ),
     fact<HouseRule>({ rule: "No pets.", why: "The house is shared, and the dorms are for sleeping." }, sources.signs),
     fact<HouseRule>(
-      { rule: "No drugs, weapons, flammable items or chemicals.", why: "For everyone's safety." },
+      { rule: "No drugs, weapons, flammable items or chemicals.", why: "For everyone’s safety." },
       sources.signs,
       { note: 'House rules board: "Prohibited drugs, weapons, flammable items & chemicals" are not allowed.' },
     ),

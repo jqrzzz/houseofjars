@@ -4,7 +4,6 @@ import { PhotoFrame } from "@/components/PhotoFrame";
 import { FindYourPodPoster } from "@/components/game/FindYourPodPoster";
 import { HOUSE_PHOTOS, HouseStage } from "@/components/house/HouseStage";
 import { PodDiagram } from "@/components/house/PodDiagram";
-import { PhotoTwin } from "@/components/stage/PhotoTwin";
 import { cameraNumber, type PhotoKey } from "@/components/stage/places";
 import { isFirm } from "@/content/certainty";
 import { photos } from "@/content/photos";
@@ -30,11 +29,22 @@ const lookInside: readonly PhotoKey[] = ["dormFan", "podCurtain", "podLadder", "
 /** Links deeper into the site play the forward page transition. */
 const FORWARD = ["nav-forward"];
 
-/** Where a photo was taken, in the house model's words: "Dorm H, Floor 1". */
+/** Places you stand on rather than in. */
+const ON = new Set(["landing", "stairs", "terrace"]);
+
+/**
+ * Where a view of the house is, in the house model's words, to follow "Seen":
+ * "in Dorm H, Floor 1" for a named room, "on the landing, Floor 1" for a
+ * plain place.
+ */
 function placeName(area: string): string | undefined {
   const found = houseOfJars.areas.find((a) => a.id === area);
   const floor = houseOfJars.floors.find((f) => f.id === found?.floor);
-  return found && floor ? `${found.name}, ${floor.name}` : undefined;
+  if (!found || !floor) return undefined;
+  // A room with a name of its own ends in its letter (Dorm H); any other place is "the" landing, café, …
+  const named = / [A-Z0-9]+$/.test(found.name);
+  const name = named ? found.name : found.name.toLowerCase();
+  return `${!named && ON.has(name) ? "on" : "in"} ${named ? name : `the ${name}`}, ${floor.name}`;
 }
 
 export default function TheHousePage() {
@@ -55,7 +65,7 @@ export default function TheHousePage() {
           </p>
           <TickList numbered items={beds.perBed.value} />
           <p>
-            The dorms include {joinList(beds.dorms.value)}.{" "}
+            Each dorm has {beds.podsPerDorm.value} pods.{" "}
             {onlineBookingConfigured() ? (
               <>
                 To see which beds are free on your dates, see the{" "}
@@ -93,16 +103,14 @@ export default function TheHousePage() {
             A look inside
           </h2>
           <ul role="list" className={styles.gallery}>
-            {lookInside.map((key, index) => {
+            {lookInside.map((key) => {
               const photo = photos[key];
               const n = cameraNumber(HOUSE_PHOTOS, key);
               const area = photo.place?.area;
               const where = area ? placeName(area) : undefined;
               const placed = n !== undefined && area !== undefined && where !== undefined;
-              // One paper twin per place: photos taken in the same area would show the same tile.
-              const twin = placed && !lookInside.slice(0, index).some((k) => photos[k].place?.area === area);
               return (
-                <li key={key} id={`photo-${key}`} className={twin ? `${styles.photo} ${styles.placed}` : styles.photo} data-reveal="">
+                <li key={key} id={`photo-${key}`} className={styles.photo} data-reveal="">
                   <div className={styles.stack}>
                     <PhotoFrame
                       caption={photo.caption}
@@ -116,12 +124,11 @@ export default function TheHousePage() {
                         <span className={styles.number} aria-hidden="true">
                           {n}
                         </span>
-                        <span className="visually-hidden">Photo {n}: </span>
-                        Taken in {where}
+                        <span className="visually-hidden">View {n}: </span>
+                        Seen {where}
                       </a>
                     ) : null}
                   </div>
-                  {twin ? <PhotoTwin area={area} className={styles.twin} /> : null}
                 </li>
               );
             })}
@@ -189,8 +196,8 @@ export default function TheHousePage() {
         <Prose>
           <p>
             Practise the walk before you come. Three errands on the house’s own plans: arriving, back late and leaving
-            early. You are a small lamp light. Keep to the house rules on the way and earn up to nine lamps; miss one and
-            Shadow holds it up for you, so you can’t lose.
+            early. You play a small lamp light. Keep to the house rules on the way and earn up to nine lamps. Miss a rule
+            and Shadow shows it to you. You can’t lose.
           </p>
         </Prose>
         <FindYourPodPoster />

@@ -61,7 +61,7 @@
   position: absolute;
   left: 0;
   top: -12px;
-  --wisp-delay: 1000ms;
+  --wisp-delay: 1600ms;
 }
 
 /*
@@ -73,8 +73,8 @@
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .piece {
     transition:
-      translate 520ms var(--ease-out) var(--delay),
-      opacity 320ms ease var(--delay);
+      translate 830ms var(--ease-out) var(--delay),
+      opacity 510ms ease var(--delay);
   }
 
   :global(:root[data-life]:not([data-motion="still"])) .markScene:not([data-played]) .rise {

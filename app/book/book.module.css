@@ -34,7 +34,7 @@
   width: 1.5rem;
   height: 1.5rem;
   color: var(--accent-text);
-  transition: transform 200ms var(--ease-out);
+  transition: transform 320ms var(--ease-out);
 }
 
 .platform:hover .platformName {
@@ -59,6 +59,16 @@
   display: grid;
   font-style: normal;
   font-size: var(--step-1);
+}
+
+/*
+ * Booking direct follows the page's header closely (the header's own space
+ * below it is the gap), so the form and its Send buttons come up on a phone's
+ * first screen, and on a desktop they stay there once a date brings the
+ * stay's rail.
+ */
+:global(#message):has(.ticket) {
+  padding-top: 0;
 }
 
 /*
@@ -90,11 +100,11 @@
 }
 
 .request {
-  padding: var(--space-l) var(--space-m) var(--space-xl);
+  padding: var(--space-m) var(--space-m) var(--space-xl);
 }
 
 @media (min-width: 40rem) {
   .request {
-    padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+    padding: var(--space-l) var(--space-xl) var(--space-2xl);
   }
 }

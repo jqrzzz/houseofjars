@@ -18,7 +18,7 @@ const WALKS: readonly { route: string; label: string; firm?: boolean }[] = [
   { route: "leaving-early", label: "Leaving early" },
   { route: "smoke", label: "A smoke" },
   { route: "water", label: "Water" },
-  { route: "bathroom-women", label: "Bathroom" },
+  { route: "bathroom-women", label: "Women’s bathroom" },
   { route: "housekeeping-round", label: "The team’s round", firm: isFirm(staff.housekeepingRound) },
 ];
 
@@ -49,7 +49,7 @@ const NOTES: readonly StageHotspot[] = [
   },
 ];
 
-/** The photos of "A look inside" that have a place in the house, in the gallery's order: their camera dots carry these numbers. */
+/** The views of "A look inside" that have a place in the house, in the gallery's order: their dots carry these numbers. */
 export const HOUSE_PHOTOS: readonly PhotoKey[] = ["dormFan", "podCurtain", "podLadder", "stairsJar"];
 
 /**
@@ -59,13 +59,14 @@ export const HOUSE_PHOTOS: readonly PhotoKey[] = ["dormFan", "podCurtain", "podL
  * draws itself; on phones the stage is a still, lifted. Chips choose a walk
  * (WalkPicker), and each walk's stops are listed beside the stage; without
  * JavaScript every walk is listed, in <details>. Notes on the house open
- * where they belong, and numbered camera dots link to the photos taken there.
+ * where they belong, and numbered dots link to the views drawn there.
  */
 export function HouseStage({ photos = HOUSE_PHOTOS }: { photos?: readonly PhotoKey[] }) {
   const walks = WALKS.filter((w) => w.firm !== false).map((w) => {
     const route = houseOfJars.routes.find((r) => r.id === w.route);
     const thread = renderThreadLayer(w.route, { idPrefix: `${ID}-${w.route}-` });
-    const place = route?.name.split(": ")[1];
+    // "Arriving: from the terrace to pod H01" gives "From the terrace to pod H01"; a name without a colon is the place itself.
+    const place = route ? (route.name.split(": ")[1] ?? route.name) : undefined;
     return { ...w, place: place ? place[0]!.toUpperCase() + place.slice(1) : undefined, when: route?.when, stops: thread.stops };
   });
   const last = walks[0]!.stops.length - 1;

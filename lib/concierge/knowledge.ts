@@ -1,13 +1,27 @@
 import { airportTransport, immigration, location, plainOfJars } from "@/content/area";
+import { creditFor } from "@/content/certainty";
+import type { Fact } from "@/content/fact";
 import { faqFor } from "@/content/faq";
 import { guideList, guidePath } from "@/content/guides";
 import { formatAddress, identity } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
 import { openQuestions } from "@/content/open-questions";
 import { honestNotes, praise, ratings } from "@/content/reviews";
-import { joinList, lowerFirst } from "@/content/text";
+import { countWord, joinList, lowerFirst, orList } from "@/content/text";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, services, staff, times } from "@/content/stay";
 import { pages } from "../site";
+
+/**
+ * A line about a fact, with who says so in brackets when the fact isn't firm
+ * (content/certainty.ts), so Shadow passes the credit on: "Night food market:
+ * Next door (from guest reviews)".
+ */
+function said(fact: Fact<unknown>, line: string): string {
+  const credit = creditFor(fact);
+  if (!credit) return line;
+  const stop = /[.!?]$/.test(line) ? line.slice(-1) : "";
+  return `${line.slice(0, line.length - stop.length)} (${credit})${stop}`;
+}
 
 export interface KnowledgeOptions {
   /** The site takes booking requests on /book (lib/booking/config.ts), and Shadow has check_availability. */
@@ -29,7 +43,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
   const url = (path: string) => new URL(path, `${siteUrl}/`).toString();
   const bullet = (items: readonly string[]) => items.map((item) => `- ${item}`).join("\n");
   const { phone, email } = identity.contact;
-  const nearby = Object.values(location.nearby).map((f) => `${f.value.place}: ${f.value.distance}`);
+  const nearby = Object.values(location.nearby).map((f) => said(f, `${f.value.place}: ${f.value.distance}`));
   const book = bookingPageLinks(siteUrl);
 
   const sections: [string, string][] = [
@@ -40,7 +54,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
         `Run by its own team, on site day and night. The house speaks as a brand: if asked who owns it, say the team runs it and offer to pass the question on; never name or describe an owner.`,
         `Address: ${formatAddress()}.`,
         `Neighbourhood: ${location.neighbourhood.value}.`,
-        `${building.floors.value} floors. ${building.cafe.value}.`,
+        `${countWord(building.floors.value)} floors of pod dorms, above ${lowerFirst(building.cafe.value)}.`,
         `Atmosphere: ${atmosphere.summary.value}`,
       ]),
     ],
@@ -52,21 +66,28 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
         options.onlineBooking
           ? `Booking page, with the free beds, booking requests and a message form: ${book.page}`
           : `Booking page, with links to Booking.com and Agoda and the team's contact details: ${url(pages.book.path)}`,
-        `Staff: ${staff.hours.value.summary}. Reception speaks ${joinList(staff.languages.value)}. ${staff.replies.value}.`,
+        `Staff: ${staff.hours.value.summary}. Reception speaks ${joinList(staff.languages.value)}. ${said(staff.replies, `${staff.replies.value}.`)}`,
         `Trains, buses and tours: ${lowerFirst(services.bookingHelp.value)}. Guests send their trip from ${url(pages.trips.path)} (it opens WhatsApp or email with the request written out), or ask at the desk.`,
       ]),
     ],
     [
       "Beds and dorms",
-      bullet([beds.style.value + ".", `Every bed has: ${joinList(beds.perBed.value.map((i) => i.toLowerCase()))}.`, `The dorms include ${joinList(beds.dorms.value)}.`]),
+      bullet([
+        beds.style.value + ".",
+        `Every bed has: ${joinList(beds.perBed.value.map((i) => i.toLowerCase()))}.`,
+        `Each dorm has ${beds.podsPerDorm.value} pods.`,
+        `There is no pod ${orList(beds.numbering.value.skipped)}, ${beds.numbering.value.why}.`,
+        `Room types listed for booking: ${joinList(beds.roomTypes.value)}.`,
+      ]),
     ],
     [
       "Bathrooms, breakfast and amenities",
       bullet([
-        `Shared bathrooms with hot showers, ${bathrooms.cleaning.value.toLowerCase()}.`,
+        `Shared bathrooms with hot showers, ${said(bathrooms.cleaning, `${lowerFirst(bathrooms.cleaning.value)}.`)}`,
+        said(staff.housekeepingRound, `The team looks over and cleans the house ${staff.housekeepingRound.value}.`),
         `Breakfast is included, served ${breakfast.hours.value} in the café on the ground floor: ${joinList(breakfast.items.value.map((i) => i.toLowerCase()))}. Other drinks with breakfast cost extra.`,
         `Coffee and tea are served in the café ${building.cafeDrinks.value}; after breakfast, guests are welcome to relax or work there.`,
-        `Amenities: ${amenities.map((a) => a.value.name).join("; ")}.`,
+        `Amenities: ${amenities.map((a) => said(a, a.value.name)).join("; ")}.`,
       ]),
     ],
     [
@@ -85,7 +106,7 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
     ],
     [
       "Getting here and nearby",
-      bullet([...nearby, airportTransport.value]),
+      bullet([...nearby, said(airportTransport, airportTransport.value)]),
     ],
     [
       "Before arriving in Laos",

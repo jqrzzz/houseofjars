@@ -8,8 +8,9 @@ import type { PageInfo } from "./site";
 
 /*
  * Open Graph images, drawn at build time with the house's own brand
- * (brand/README.md): the arch mark, Figtree, jar orange on rice, and a real
- * photograph of the dorms framed in the arch.
+ * (brand/README.md): the arch mark, Figtree, jar orange on rice, and the
+ * dorms framed in the arch, drawn from the house's photograph, as the site
+ * shows them (docs/DESIGN.md §10.5).
  */
 
 export const ogSize = { width: 1200, height: 630 };
@@ -29,7 +30,8 @@ const figtree = (weight: 500 | 700) =>
   readFile(join(process.cwd(), `node_modules/@fontsource/figtree/files/figtree-latin-${weight}-normal.woff`));
 const fontBold = figtree(700);
 const fontMedium = figtree(500);
-const dormPhoto = readFile(join(process.cwd(), "public/photos/dorm-corridor-pods-and-window.jpg"));
+// The hero's drawing in its Day colours (an image in an image reads no colour scheme, so the night rules never apply).
+const dormDrawing = readFile(join(process.cwd(), "public/art/dorm-corridor.svg"));
 
 const svgData = (svg: string) => `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
@@ -37,9 +39,9 @@ function markSvg(fill: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${MARK_VIEWBOX}"><path d="${MARK_PATH}" fill="${fill}"/></svg>`;
 }
 
-/** A photograph cropped to fill a 2:3 arch, like the website's ArchPhoto. */
-function archPhotoSvg(jpeg: Buffer): string {
-  const href = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+/** A picture cropped to fill a 2:3 arch, like the website's arch frames. */
+function archPictureSvg(svg: Buffer): string {
+  const href = `data:image/svg+xml;base64,${svg.toString("base64")}`;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 600 900">` +
     `<defs><clipPath id="a" clipPathUnits="objectBoundingBox"><path d="${ARCH_OUTLINE}"/></clipPath></defs>` +
@@ -93,7 +95,7 @@ export async function renderOgImage(page: PageInfo, options: { eyebrow?: string 
         </div>
 
         <img
-          src={svgData(archPhotoSvg(await dormPhoto))}
+          src={svgData(archPictureSvg(await dormDrawing))}
           width={ARCH.width}
           height={ARCH.height}
           alt=""

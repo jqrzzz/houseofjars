@@ -31,6 +31,7 @@ import type { RouteStop } from "../lib/house/types";
 
 interface Recording {
   readonly title: string;
+  /** The length of a film without captions. A walk film takes as long as its captions need to be read. */
   readonly seconds: number;
   /** The page's CSS size and pixel ratio: the frames are viewport × ratio. */
   readonly viewport: { readonly width: number; readonly height: number };
@@ -58,8 +59,9 @@ const RECORDINGS: Readonly<Record<string, Recording>> = {
   "arrival-square": {
     title: "From the terrace to your pod",
     seconds: 20,
-    viewport: { width: 640, height: 640 },
-    ratio: 2,
+    // Wide enough for the desktop theatre: the stage stands beside its words instead of a strip above them.
+    viewport: { width: 1080, height: 1080 },
+    ratio: 1.5,
     size: [720, 720],
     shareSize: [480, 480],
     captions: true,
@@ -91,8 +93,9 @@ function args() {
   const film = list.find((a, i) => !a.startsWith("--") && !list[i - 1]?.startsWith("--")) ?? "arrival";
   const recording = RECORDINGS[film];
   if (!recording) throw new Error(`No film "${film}". Films: ${Object.keys(RECORDINGS).join(", ")}.`);
-  const seconds = Number(named("--seconds") ?? recording.seconds);
-  if (!(seconds > 0)) throw new Error("--seconds must be a positive number.");
+  const given = named("--seconds");
+  const seconds = given === undefined ? undefined : Number(given);
+  if (seconds !== undefined && !(seconds > 0)) throw new Error("--seconds must be a positive number.");
   const theme = named("--theme") ?? "day";
   if (theme !== "day" && theme !== "evening") throw new Error("--theme is day or evening.");
   return {
@@ -106,16 +109,15 @@ function args() {
 }
 
 // ---------------------------------------------------------------------------
-// Captions: the arrival walk's steps, timed as the house story lights them (step i at 45% + 50% × its share of
-// the walk, through the story's scroll).
+// Captions: the arrival walk's steps, each shown from the moment the thread reaches its stop.
 
 /** Each stop's share of the walk, 0 to 1: from public/house/walks.json when it exists, else measured along the model's route. */
 function arrivalStops(): { label: string; does: string; at: number }[] {
   const walks = join(process.cwd(), "public/house/walks.json");
   if (existsSync(walks)) {
     try {
-      const data = JSON.parse(readFileSync(walks, "utf8")) as Record<string, { stops?: { label: string; does?: string; at: number }[] }>;
-      const stops = data.arrival?.stops;
+      const data = JSON.parse(readFileSync(walks, "utf8")) as { routes?: Record<string, { stops?: { label: string; does?: string; at: number }[] }> };
+      const stops = data.routes?.arrival?.stops;
       if (stops?.every((s) => typeof s.at === "number" && s.does)) return stops.map((s) => ({ label: s.label, does: s.does!, at: s.at }));
     } catch {
       // Fall back to the model below.
@@ -157,15 +159,24 @@ const stamp = (seconds: number) => {
   return `${hh}:${mm}:${ss}.${String(ms % 1000).padStart(3, "0")}`;
 };
 
-/** WebVTT for the walk's steps, given when (in film seconds) the scroll reaches each share of the story. */
-function captions(timeAt: (progress: number) => number, seconds: number): string {
-  const stops = arrivalStops();
-  const starts = stops.map((s) => timeAt(0.45 + 0.5 * s.at));
-  // Each step shows until the next one lights, so no two cues overlap.
+/** A caption's words: the stop's name and the first sentence of what you do there (up to its colon when that
+ * sentence is long). The name is left out when the sentence already starts with it ("Check in at the café…"). The
+ * page beside the stage carries the rest. */
+function captionText(stop: { label: string; does: string }): string {
+  let first = stop.does.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? stop.does;
+  if (first.length > 90 && first.includes(":")) first = `${first.slice(0, first.indexOf(":"))}.`;
+  return first.toLowerCase().startsWith(stop.label.toLowerCase()) ? first : `${stop.label}: ${first}`;
+}
+
+/** How long a caption stays up: about 16 characters a second, never under 2.5 s or over 4.5 s. */
+const readFor = (text: string) => Math.min(4.5, Math.max(2.5, text.length / 16));
+
+/** WebVTT for the walk's steps: each from the moment the thread reaches its stop until it reaches the next. */
+function captions(stops: readonly { label: string; does: string }[], arrivals: readonly number[], seconds: number): string {
   const cues = stops.map((s, i) => {
-    const from = Math.min(starts[i]!, seconds - 0.1);
-    const to = Math.max(from + 0.1, Math.min(i + 1 < stops.length ? starts[i + 1]! : seconds, seconds));
-    return `${i + 1}\n${stamp(from)} --> ${stamp(to)}\n${s.label}: ${s.does}\n`;
+    const from = Math.min(arrivals[i]!, seconds - 0.1);
+    const to = Math.max(from + 0.1, Math.min(arrivals[i + 1] ?? seconds, seconds));
+    return `${i + 1}\n${stamp(from)} --> ${stamp(to)}\n${captionText(s)}\n`;
   });
   return `WEBVTT\n\n${cues.join("\n")}`;
 }
@@ -173,30 +184,71 @@ function captions(timeAt: (progress: number) => number, seconds: number): string
 // ---------------------------------------------------------------------------
 // Recording
 
-/** Scroll progress at a film time: a short hold on the first frame, an eased scroll, a longer hold on the rest frame. */
-function progressAt(t: number, seconds: number): number {
-  const hold = Math.min(0.75, seconds * 0.1);
-  const rest = Math.min(1.5, seconds * 0.15);
-  const x = Math.max(0, Math.min(1, (t - hold) / Math.max(seconds - hold - rest, 1e-6)));
-  return x * x * (3 - 2 * x);
+/** A beat of the film: at film time t (seconds) the scroll has reached share p of the story. */
+interface Beat {
+  readonly t: number;
+  readonly p: number;
 }
 
-/** The inverse, for captions: the first film time at which the scroll reaches a progress. */
-function timeAtProgress(p: number, seconds: number): number {
-  for (let i = 0; i <= seconds * FPS; i++) if (progressAt(i / FPS, seconds) >= p) return i / FPS;
-  return seconds;
+/**
+ * The film's beats. A walk film holds on its first frame, opens the house (the street front, the lift), then
+ * pauses at each stop for as long as its caption takes to read, closes the curtain and rests on the last frame:
+ * stop k lights at c0 + (c1 − c0) × its share of the walk, the theatre's Act C (HouseTheatre.module.css). A film
+ * without captions is one eased scroll; a held film stays on the rest frame. --seconds rescales the beats.
+ */
+function score(rec: Recording, act: { c0: number; c1: number }, stops: readonly { label: string; does: string; at: number }[], seconds?: number): { beats: Beat[]; arrivals: number[] } {
+  const beats: Beat[] = [{ t: 0, p: 0 }];
+  const arrivals: number[] = [];
+  const add = (dt: number, p: number) => beats.push({ t: beats.at(-1)!.t + dt, p });
+  add(0.75, 0);
+  if (rec.captions && stops.length) {
+    let p = 0;
+    stops.forEach((stop, k) => {
+      const next = act.c0 + (act.c1 - act.c0) * stop.at;
+      // The opening (Acts A and B) gets time to be seen; between stops the thread walks at a steady pace.
+      add(k === 0 ? Math.min(7, Math.max(4, 12 * next)) : Math.max(1, 7 * (next - p)), next);
+      arrivals.push(beats.at(-1)!.t);
+      add(readFor(captionText(stop)), next);
+      p = next;
+    });
+    add(Math.max(1.5, 6 * (1 - p)), 1);
+    add(2, 1);
+  } else {
+    const total = seconds ?? rec.seconds;
+    add(Math.max(0.1, total - 0.75 - Math.min(1.5, total * 0.15)), 1);
+    add(Math.min(1.5, total * 0.15), 1);
+  }
+  const natural = beats.at(-1)!.t;
+  const k = seconds ? seconds / natural : 1;
+  return { beats: beats.map((b) => ({ t: b.t * k, p: b.p })), arrivals: arrivals.map((t) => t * k) };
 }
 
-async function stage(page: Page): Promise<{ from: number; to: number; story: boolean }> {
+/** Scroll progress at a film time: eased from beat to beat. */
+function progressAt(t: number, beats: readonly Beat[]): number {
+  const i = beats.findIndex((b) => b.t > t);
+  if (i <= 0) return i === 0 ? beats[0]!.p : beats.at(-1)!.p;
+  const a = beats[i - 1]!;
+  const b = beats[i]!;
+  const x = (t - a.t) / (b.t - a.t);
+  return a.p + (b.p - a.p) * x * x * (3 - 2 * x);
+}
+
+async function stage(page: Page): Promise<{ from: number; to: number; story: boolean; act: { c0: number; c1: number } }> {
   return page.evaluate(() => {
     const story = document.getElementById("the-house-story");
     const vh = window.innerHeight;
     const max = document.documentElement.scrollHeight - vh;
     if (story) {
       const top = story.getBoundingClientRect().top + window.scrollY;
-      return { from: Math.max(0, top), to: Math.min(max, top + story.offsetHeight - vh), story: true };
+      // The walk's act, as the theatre sets it for this width (a share of the story's scroll). No named functions in
+      // here: tsx would wrap them in a helper the browser doesn't have.
+      const css = getComputedStyle(story);
+      const c0 = Number.parseFloat(css.getPropertyValue("--c0"));
+      const c1 = Number.parseFloat(css.getPropertyValue("--c1"));
+      const act = { c0: Number.isFinite(c0) ? c0 / 100 : 0.45, c1: Number.isFinite(c1) ? c1 / 100 : 0.95 };
+      return { from: Math.max(0, top), to: Math.min(max, top + story.offsetHeight - vh), story: true, act };
     }
-    return { from: 0, to: Math.min(max, 4 * vh), story: false };
+    return { from: 0, to: Math.min(max, 4 * vh), story: false, act: { c0: 0.45, c1: 0.95 } };
   });
 }
 
@@ -225,8 +277,9 @@ function encode(input: string, out: string, film: string, rec: Recording, second
   const run = (...a: string[]) => execFileSync(ffmpeg, ["-hide_banner", "-loglevel", "error", "-y", ...a], { stdio: "inherit" });
   const frames = ["-framerate", String(FPS), "-i", join(input, "%05d.png")];
   const scale = (size: readonly [number, number]) => ["-vf", `scale=${size[0]}:${size[1]}:flags=lanczos`];
-  run(...frames, ...scale(rec.size), "-c:v", "libvpx-vp9", "-crf", "34", "-b:v", "0", "-row-mt", "1", "-pix_fmt", "yuv420p", "-an", join(out, `${film}.webm`));
-  run(...frames, ...scale(rec.size), "-c:v", "libx264", "-crf", "23", "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", join(out, `${film}.mp4`));
+  // Flat paper compresses well: these qualities keep a 35 s walk near 1 MB with no visible loss.
+  run(...frames, ...scale(rec.size), "-c:v", "libvpx-vp9", "-crf", "39", "-b:v", "0", "-row-mt", "1", "-pix_fmt", "yuv420p", "-an", join(out, `${film}.webm`));
+  run(...frames, ...scale(rec.size), "-c:v", "libx264", "-crf", "26", "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", join(out, `${film}.mp4`));
   // The cut for WhatsApp: a bitrate that keeps the whole film under 1 MB.
   const kbps = Math.floor((0.92 * 8 * 1000) / seconds);
   run(...frames, ...scale(rec.shareSize), "-c:v", "libx264", "-b:v", `${kbps}k`, "-maxrate", `${Math.floor(kbps * 1.4)}k`, "-bufsize", `${kbps * 2}k`, "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", join(out, `${film}-share.mp4`));
@@ -235,7 +288,7 @@ function encode(input: string, out: string, film: string, rec: Recording, second
 }
 
 async function main() {
-  const { film, recording: rec, seconds, theme, out, frames } = args();
+  const { film, recording: rec, seconds: wanted, theme, out, frames } = args();
   rmSync(frames, { recursive: true, force: true });
   mkdirSync(frames, { recursive: true });
   mkdirSync(out, { recursive: true });
@@ -249,7 +302,8 @@ async function main() {
   });
   // No splash, the chosen theme, and no header or Ask Shadow dock over the film. Written as a string: a function
   // compiled by tsx would carry its helpers into the page.
-  const hide = '[data-site-header],div:has(> button[aria-label^="Ask Shadow"]){visibility:hidden!important}html{scroll-behavior:auto!important}';
+  const hide =
+    '[data-site-header],aside[aria-label="Ask Shadow"],div:has(> button[aria-label^="Ask Shadow"]){visibility:hidden!important}html{scroll-behavior:auto!important}';
   await context.addInitScript(`(() => {
     try { sessionStorage.setItem("hoj-splash", "1"); localStorage.setItem("hoj-theme", ${JSON.stringify(theme === "evening" ? "dark" : "light")}); } catch {}
     const style = document.createElement("style");
@@ -262,14 +316,17 @@ async function main() {
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(`${base}/`, { waitUntil: "networkidle" });
   await page.evaluate(() => document.fonts.ready);
-  const { from, to, story } = await stage(page);
-  console.log(`${film}: ${story ? "the house story" : "no #the-house-story yet, so the home page's first screens"}, scroll ${from}–${to} px`);
+  const { from, to, story, act } = await stage(page);
+  const stops = rec.captions ? arrivalStops() : [];
+  const { beats, arrivals } = score(rec, act, stops, wanted);
+  const seconds = beats.at(-1)!.t;
+  console.log(`${film}: ${story ? "the house story" : "no #the-house-story yet, so the home page's first screens"}, scroll ${from}–${to} px, ${seconds.toFixed(1)} s`);
 
   const total = Math.max(1, Math.round(seconds * FPS));
   let lit: boolean | null = null;
   for (let i = 0; i < total; i++) {
     const t = i / FPS;
-    const y = rec.hold ? to : Math.round(from + (to - from) * progressAt(t, seconds));
+    const y = rec.hold ? to : Math.round(from + (to - from) * progressAt(t, beats));
     const evening = rec.evening === undefined ? null : t >= rec.evening;
     // The pictures that follow the device's colours switch with the site.
     if (evening !== null && evening !== lit) await page.emulateMedia({ colorScheme: evening ? "dark" : "light" });
@@ -282,11 +339,11 @@ async function main() {
   if (errors.length) console.warn(`page errors while filming:\n  ${errors.join("\n  ")}`);
 
   encode(frames, out, film, rec, seconds);
-  if (rec.captions) writeFileSync(join(out, `${film}.en.vtt`), captions((p) => timeAtProgress(p, seconds), seconds));
+  if (rec.captions) writeFileSync(join(out, `${film}.en.vtt`), captions(stops, arrivals, seconds));
   for (const file of readdirSync(out).filter((f) => f.startsWith(`${film}.`) || f.startsWith(`${film}-`))) {
     console.log(`wrote    ${join(out, file)}  ${(statSync(join(out, file)).size / 1024).toFixed(0)} kB`);
   }
-  console.log(`\nList it in components/film/films.ts once committed: { id: "${film}", title: "${rec.title}", width: ${rec.size[0]}, height: ${rec.size[1]} }`);
+  console.log(`\nList it in components/film/films.ts once committed: { id: "${film}", title: "${rec.title}", width: ${rec.size[0]}, height: ${rec.size[1]}, seconds: ${Math.round(seconds)} }`);
 }
 
 main().catch((error: unknown) => {

@@ -144,8 +144,8 @@
 
   :global(:root:not([data-motion="still"])) .halo {
     transition:
-      opacity var(--dur-section) var(--ease-lamp) 80ms,
-      scale var(--dur-scene) var(--ease-paper) 80ms;
+      opacity var(--dur-section) var(--ease-lamp) 130ms,
+      scale var(--dur-scene) var(--ease-paper) 130ms;
   }
 
   :global(:root:not([data-motion="still"])) .hang {
@@ -153,7 +153,7 @@
   }
 
   :global(:root:not([data-motion="still"])) .toggle:hover .hang {
-    animation: lamp-nudge 1600ms var(--ease-sway);
+    animation: lamp-nudge 2560ms var(--ease-sway);
   }
 
   :global(:root:not([data-motion="still"])) .toggle:active .hang {
@@ -215,8 +215,8 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    background-color 160ms ease,
-    color 160ms ease;
+    background-color 260ms ease,
+    color 260ms ease;
 }
 
 .option:hover {

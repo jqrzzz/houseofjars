@@ -52,7 +52,10 @@ export function RatingTagsView({ ratings, praise }: { ratings: readonly RatingTa
                   <ExternalIcon />
                   <span className="visually-hidden"> (opens in a new tab)</span>
                 </a>
-              ) : null}
+              ) : (
+                // No public page recorded yet (content/reviews.ts): say so where the link would be.
+                <p className={styles.soon}>Link to come</p>
+              )}
             </li>
           ))}
         </ul>

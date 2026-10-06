@@ -24,19 +24,19 @@
   backdrop-filter: var(--glass-blur);
   box-shadow: var(--dock-shadow);
   transition:
-    transform 240ms var(--ease-out),
-    opacity 240ms ease,
-    visibility 240ms;
+    transform 380ms var(--ease-out),
+    opacity 380ms ease,
+    visibility 380ms;
 }
 
 /*
- * Out of the way while something that offers Shadow itself, or asks for the
- * guest's attention (a booking form), reaches into the bottom of the screen
- * (and until that has been checked); while the guest is typing in a form, so
- * it never covers a field or sits on the keyboard; and while the phone menu
- * is open.
+ * Out of the way while something that asks for the guest's attention (a
+ * booking form, the home hero) reaches into the bottom of the screen (and
+ * until that has been checked); while the guest is typing in a form, so it
+ * never covers a field or sits on the keyboard; and while the phone menu is
+ * open.
  */
-:global(body:has([data-hides-launcher])) .dock:not([data-hidden="false"]),
+:global(body:has([data-hides-launcher])) .dock:not([data-hidden="false"]):not([data-hidden="ask"]),
 :global(body:has(main :is(input, select, textarea):focus)) .dock,
 :global(body:has(header details[open])) .dock,
 .dock[data-hidden="true"] {
@@ -44,6 +44,22 @@
   visibility: hidden;
   transform: var(--away);
   pointer-events: none;
+}
+
+/*
+ * An inline Ask Shadow button there offers Shadow himself, so on phones only
+ * the dock's Ask Shadow steps aside: Book direct stays, at the right.
+ */
+@media (max-width: 47.99rem) {
+  .dock[data-hidden="ask"] .launcher {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.book {
+  margin-inline-start: auto;
 }
 
 /* Phones: the dock comes up once the header, with its own Book button, has scrolled away (and not before that is known). */
@@ -67,8 +83,10 @@
   font-weight: 600;
   font-size: 0.975rem;
   transition:
-    transform 220ms var(--ease-out),
-    box-shadow 220ms ease;
+    transform 350ms var(--ease-out),
+    box-shadow 350ms ease,
+    opacity 380ms ease,
+    visibility 380ms;
 }
 
 .launcher:focus-visible {
@@ -113,6 +131,14 @@
 
   .book {
     display: none;
+  }
+
+  /* With no Book button beside it, the floating button steps aside for an inline Ask Shadow too. */
+  .dock[data-hidden="ask"] {
+    opacity: var(--away-opacity);
+    visibility: hidden;
+    transform: var(--away);
+    pointer-events: none;
   }
 
   .launcher {

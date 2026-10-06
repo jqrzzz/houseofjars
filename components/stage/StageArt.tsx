@@ -31,8 +31,8 @@ export interface ArtFloor {
   readonly rings: readonly (readonly [k: number, x: number, y: number, at: number])[];
   /** The air over the big jar at the front desk: x, y and the stop it rises at. */
   readonly air?: readonly [x: number, y: number, at: number];
-  /** Label tags: text, x, y and their order. */
-  readonly tags: readonly (readonly [text: string, x: number, y: number, k: number])[];
+  /** Label tags: text, x, y, their order and which way the plate hangs from its pin ("start", "end" or "" for centred). */
+  readonly tags: readonly (readonly [text: string, x: number, y: number, k: number, side: string])[];
   /** Notes on the house: id, title, text, x, y and which way the tip opens. */
   readonly notes: readonly (readonly [id: string, title: string, text: string, x: number, y: number, side: string])[];
   /** Camera dots: the photo's number, key, caption, x, y and its nudge in a row. */
@@ -84,22 +84,30 @@ export function StageArt({ art }: { art: StageArtData }) {
               {layer(l)}
               {sign && sign.after === l[0] ? (
                 // The hanging sign, a copy of its own sheet cut to the board: the breath of wind turns it.
-                <div data-sign="" data-play-act={scroll ? "b" : undefined} style={{ clipPath: sign.clip, transformOrigin: sign.origin }}>
+                <div className="amb" data-sign="" data-play-act={scroll ? "b" : undefined} style={{ clipPath: sign.clip, transformOrigin: sign.origin }}>
                   <LayerTwins day={sign.day} evening={sign.evening} width={vw} height={vh} />
                 </div>
               ) : null}
             </Fragment>
           ))}
+          {/* Bedtime by Evening: the paper house dims under its lights as the curtain closes (Act D), and H01's lamp glows on. */}
+          {floors.some((f) => f.podLamp) ? (
+            <span
+              className={styles.hush}
+              style={{ "--hush-mask": layers.map(([, level, , evening]) => `url(${evening}) 0 ${level ? `calc(var(--u) * ${-90 * level})` : "0"} / 100% 100% no-repeat`).join(", ") } as Vars}
+            />
+          ) : null}
           <div data-link="" dangerouslySetInnerHTML={{ __html: link }} />
           {floors.map((f) => (
             <div key={f.floor} data-ov={f.floor} data-level={f.level || undefined}>
               <StageLights p={p} scroll={scroll} lights={f.lights} />
-              {f.podLamp ? <i className={`${glow.disc} ${styles.podLamp}`} style={{ ...at(f.podLamp[0], f.podLamp[1]), "--r": `${f.podLamp[2]}%` } as Vars} /> : null}
               <div
                 data-thread={f.floor}
                 style={{ "--a": f.share?.[0] ?? 0, "--b": f.share?.[1] ?? 1, "--kf": `${p}t-${f.floor}` } as Vars}
                 dangerouslySetInnerHTML={{ __html: f.thread }}
               />
+              {/* The pod's lamp glows through its closed curtain, so it lies over the cloth. */}
+              {f.podLamp ? <i className={`${glow.disc} ${styles.podLamp}`} style={{ ...at(f.podLamp[0], f.podLamp[1]), "--r": `${f.podLamp[2]}%` } as Vars} /> : null}
               <svg data-beads="" viewBox={`${vx} ${vy} ${vw} ${vh}`} aria-hidden="true" focusable="false">
                 <g
                   data-bead={f.floor}
@@ -125,14 +133,14 @@ export function StageArt({ art }: { art: StageArtData }) {
                 }}
               />
               {f.air ? (
-                <span className={styles.air} data-play-at={f.air[2] >= 0 ? f.air[2] : undefined} style={at(f.air[0], f.air[1])}>
+                <span className={`${styles.air} amb`} data-play-at={f.air[2] >= 0 ? f.air[2] : undefined} style={at(f.air[0], f.air[1])}>
                   <ArchWisp size={40} className={styles.wisp} />
-                  <Motes count={4} seed={3} className={styles.motes} />
+                  <Motes count={3} seed={3} className={styles.motes} />
                 </span>
               ) : null}
-              {f.tags.map(([text, x, y, k]) => (
+              {f.tags.map(([text, x, y, k, side]) => (
                 // The words beside the stage say the same: the tags are for the eye.
-                <span key={text} className={styles.tag} data-k={k} style={{ ...at(x, y), "--k": k } as Vars} aria-hidden="true">
+                <span key={text} className={styles.tag} data-k={k} data-side={side || undefined} style={{ ...at(x, y), "--k": k } as Vars} aria-hidden="true">
                   <span className={styles.plate}>{text}</span>
                 </span>
               ))}
@@ -148,7 +156,7 @@ export function StageArt({ art }: { art: StageArtData }) {
                 <a key={key} className={styles.camera} href={`#photo-${key}`} style={{ ...at(x, y), "--nudge": nudge } as Vars}>
                   <span aria-hidden="true">{n}</span>
                   <span className="visually-hidden">
-                    Photo {n}: {caption}
+                    View {n}: {caption}
                   </span>
                 </a>
               ))}

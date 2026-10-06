@@ -251,7 +251,15 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
           <ul role="list" className={styles.starters} aria-label="Example questions">
             {starters.map((question) => (
               <li key={question}>
-                <button type="button" className={styles.starter} onClick={() => void send(question)}>
+                <button
+                  type="button"
+                  className={styles.starter}
+                  onClick={() => {
+                    // The questions go once one is sent: focus moves to the message box first, so it stays in the window.
+                    inputRef.current?.focus();
+                    void send(question);
+                  }}
+                >
                   {question}
                 </button>
               </li>

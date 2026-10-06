@@ -10,11 +10,12 @@ interface AskShadowButtonProps {
 /**
  * Opens the concierge. The click is handled by ConciergeLauncher (one
  * listener for the whole page), so this stays a server component. While it
- * sits in the floating button's corner, the floating one steps aside.
+ * sits in the floating button's corner, the floating one steps aside; on
+ * phones the dock's Book direct stays ("ask").
  */
 export function AskShadowButton({ children, question = "", className }: AskShadowButtonProps) {
   return (
-    <button type="button" className={className} data-ask-shadow={question} data-hides-launcher="" aria-haspopup="dialog">
+    <button type="button" className={className} data-ask-shadow={question} data-hides-launcher="ask" aria-haspopup="dialog">
       {children}
     </button>
   );

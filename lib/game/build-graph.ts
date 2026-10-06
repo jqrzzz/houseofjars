@@ -48,9 +48,15 @@ const FLOOR_NAMES: Readonly<Record<FloorKey, string>> = { ground: "Ground floor"
 /** Room between the two floors on the board, and above them for their names. */
 const GAP = 24;
 const NAME_BAND = 40;
-/** Plan pixels kept beside the outer walls, and the depth (in metres from the street) where the board's top edge cuts the plans. */
+/** Plan pixels kept beside the outer walls. */
 const SIDE = 14;
-const TOP = 13.45;
+/**
+ * The depth (in metres from the street) where the board's top edge cuts each plan: along the wall across the back
+ * of the part that is played, never through a room's fixtures. On the ground floor that is the partition behind
+ * the toilet and the corridor (13.2 to 13.3 m), on Floor 1 the one between the landing and the women's bathroom
+ * (12.6 to 12.7 m). No place on the board lies deeper.
+ */
+export const BOARD_TOP: Readonly<Record<FloorKey, number>> = { ground: 13.25, floor1: 12.65 };
 
 /** Reads a plan picture's viewBox from public/. */
 export function planViewBox(src: string, root = process.cwd()): [number, number, number, number] {
@@ -155,15 +161,17 @@ export function buildGameGraph(model: HouseModel = houseOfJars, root = process.c
   }
   const x0 = -SIDE;
   const width = model.width * PLAN_SCALE + 2 * SIDE;
-  const y0 = Math.floor(project.point([0, TOP, 0])[1]);
+  const top = (id: FloorKey) => Math.floor(project.point([0, BOARD_TOP[id], 0])[1]);
+  // The sheet cut deepest sets the board's top; a sheet cut shallower starts lower, so the two floors stay level.
+  const y0 = Math.min(top("ground"), top("floor1"));
   // Each sheet runs down to the bottom of its own plan, where the street and the plan's caption are.
   const floors: GameFloor[] = (["ground", "floor1"] as const).map((id, i) => ({
     id,
     name: FLOOR_NAMES[id],
     src: { ...PLAN_IMAGES[id] },
     viewBox: boxes[id],
-    crop: [x0, y0, width, boxes[id][1] + boxes[id][3] - y0],
-    at: [i * (width + GAP), NAME_BAND],
+    crop: [x0, top(id), width, boxes[id][1] + boxes[id][3] - top(id)],
+    at: [i * (width + GAP), NAME_BAND + top(id) - y0],
   }));
   const toBoard = (floor: FloorKey, [x, y]: Spot): [number, number] => {
     const { at, crop } = floors.find((f) => f.id === floor)!;
@@ -270,7 +278,7 @@ export function buildGameGraph(model: HouseModel = houseOfJars, root = process.c
 
   return {
     v: 1,
-    board: [2 * width + GAP, NAME_BAND + Math.max(...floors.map((f) => f.crop[3]))],
+    board: [2 * width + GAP, Math.max(...floors.map((f) => f.at[1] + f.crop[3]))],
     floors,
     nodes,
     edges,

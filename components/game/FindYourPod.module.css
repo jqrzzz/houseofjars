@@ -228,15 +228,33 @@
 
 /* ------------------------------------------------------------------ board */
 
+/* The plans above, their caption below; the plans fit what is left. */
 .boardWrap {
   position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.4rem;
   flex: 0 0 auto;
   height: max(15rem, 50svh);
   min-width: 0;
-  padding: 0.75rem;
-  container-type: size;
+  padding: 0.75rem 0.75rem 0.5rem;
   background: var(--paper-far);
   outline-offset: -3px;
+}
+
+.boardBox {
+  min-width: 0;
+  min-height: 0;
+  container-type: size;
+}
+
+.boardCaption {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: var(--step--2);
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: balance;
 }
 
 @media (min-width: 48rem) {
@@ -441,15 +459,15 @@
 
   /* The lamps light in walking order (no more than four at once), then the curtain closes behind them. */
   :root:not([data-motion="still"]) .light {
-    animation: light-up var(--dur-section) var(--ease-lamp) calc(var(--i) * 140ms) both;
+    animation: light-up var(--dur-section) var(--ease-lamp) calc(var(--i) * 220ms) both;
   }
 
   :root:not([data-motion="still"]) .curtain {
-    animation: curtain-close var(--dur-scene) var(--ease-paper) 1.6s both;
+    animation: curtain-close var(--dur-scene) var(--ease-paper) 2.56s both;
   }
 
   :root:not([data-motion="still"]) .sleepTag {
-    animation: tag-swing var(--dur-hinge) var(--ease-out) 2.6s both;
+    animation: tag-swing var(--dur-hinge) var(--ease-out) 4.16s both;
   }
 }
 

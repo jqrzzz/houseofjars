@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { rules } from "@/content/stay";
 import { describeHouse } from "./context";
 import { houseOfJars as model } from "./house-of-jars";
-import { placedHouseRules, placedRules, rulesAt } from "./rules";
+import { concerns, placedHouseRules, placedRules, rulesAt } from "./rules";
 
 describe("the house rules, placed in the house", () => {
   const placed = placedHouseRules();
@@ -24,11 +24,23 @@ describe("the house rules, placed in the house", () => {
     const floors = new Set(model.floors.map((f) => f.id));
     const fixtures = new Set(model.fixtures.map((f) => f.id));
     for (const r of placedRules) {
-      for (const place of r.places) {
+      for (const place of concerns(r)) {
         if ("area" in place) expect(areas.has(place.area), `${r.id}: ${place.area}`).toBe(true);
         else if ("floor" in place) expect(floors.has(place.floor), `${r.id}: ${place.floor}`).toBe(true);
         else expect(fixtures.has(place.fixture), `${r.id}: ${place.fixture}`).toBe(true);
       }
+    }
+  });
+
+  it("keeps the places a rule forbids apart from where it happens, so a plan never lights them", () => {
+    const rule = (id: string) => placedRules.find((r) => r.id === id)!;
+    for (const id of ["eat-in-the-cafe", "pack-downstairs"]) {
+      expect(rule(id).avoid, id).toEqual([{ area: "dorm-h" }, { area: "dorm-j" }]);
+      expect(rule(id).places, id).not.toEqual(expect.arrayContaining([{ area: "dorm-h" }]));
+    }
+    // A place a rule keeps something out of is never also where it happens.
+    for (const r of placedRules) {
+      for (const place of r.avoid ?? []) expect(r.places, r.id).not.toContainEqual(place);
     }
   });
 

@@ -18,12 +18,13 @@ const CLOUDS = [
 /**
  * The sky behind the paper stage (docs/DESIGN.md §10.1): a back plane that
  * does not move (rate 0), in three paper bands, with three cut-paper clouds
- * that drift a little as the reader scrolls the stage's timeline (parallax,
- * never a loop). By Evening a paper moon and pin-prick stars fade in once, the
- * first time the sky is seen (`phrase` makes it a [data-phrase]; otherwise an
- * ancestor's phrase plays it). At rest the clouds sit where they are drawn
- * and, by Evening, the moon and stars are out. Every sheet has its card edge.
- * Decorative.
+ * that drift as the reader scrolls the stage's timeline (parallax, never a
+ * loop). By Evening a paper moon and pin-prick stars fade in once, the first
+ * time the sky is seen and again after a switch to Evening (`phrase` makes it
+ * a [data-phrase]; otherwise an ancestor's phrase plays it), and the moon
+ * rises behind the house while the walk climbs (Act C). At rest the clouds
+ * sit where they are drawn and, by Evening, the moon and stars are out, the
+ * moon risen. Every sheet has its card edge. Decorative.
  */
 export function PaperSky({ phrase }: { phrase?: boolean }) {
   // A square sky, cut to the frame from its top: whatever the frame's shape, the moon stays in it.
@@ -34,9 +35,14 @@ export function PaperSky({ phrase }: { phrase?: boolean }) {
         <path className={styles.band2} d="M-50 160Q40 150 150 157T350 152V300H-50Z" />
         <path className={styles.band3} d="M-50 226Q50 218 150 224T350 220V300H-50Z" />
       </svg>
-      <svg {...plane} className={`${styles.plane} ${styles.night}`}>
-        <circle className={styles.moon} cx="58" cy="40" r="14" />
-        <path className={styles.crater} d="M51 35a3 3 0 1 0 .1 0ZM62 46a2.1 2.1 0 1 0 .1 0ZM65 32a1.4 1.4 0 1 0 .1 0Z" />
+      {/* The moon on its own sheet, so it can rise whole (its craters with it) while the stars keep still. */}
+      <div className={styles.moonRise}>
+        <svg {...plane} className={`${styles.plane} ${styles.night} amb`}>
+          <circle className={styles.moon} cx="58" cy="40" r="14" />
+          <path className={styles.crater} d="M51 35a3 3 0 1 0 .1 0ZM62 46a2.1 2.1 0 1 0 .1 0ZM65 32a1.4 1.4 0 1 0 .1 0Z" />
+        </svg>
+      </div>
+      <svg {...plane} className={`${styles.plane} ${styles.night} amb`}>
         <path className={styles.stars} d={STARS[0]} />
         <path className={`${styles.stars} ${styles.late}`} d={STARS[1]} />
       </svg>

@@ -13,7 +13,8 @@ type PageHeaderProps = {
    * - "tile" (default): a drawing beside the title on wide screens, and on
    *   phones a 6rem paper tile above the eyebrow;
    * - "scene": a small scene that is its own card (a Diorama), a little wider
-   *   beside the title, and 8rem wide above the eyebrow on phones;
+   *   beside the title, 8rem wide above the eyebrow on tablets, and across
+   *   the top on phones, so what moves in it can be seen;
    * - "band": a long, low picture (a train on its line) along the foot of the
    *   header on wide screens, and across its top on phones.
    */

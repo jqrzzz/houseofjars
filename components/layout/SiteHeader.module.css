@@ -78,7 +78,7 @@
   font-size: 0.975rem;
   font-weight: 500;
   text-decoration: none;
-  transition: color 160ms ease;
+  transition: color 260ms ease;
 }
 
 /*
@@ -129,12 +129,16 @@
   position: static;
 }
 
-/* Small phones have room for the wordmark, Book and the menu only: the theme choice is in the menu there. */
+/*
+ * The lamp that switches Day and Evening sits beside Book from 375 px wide.
+ * Phones narrower than 375 px have room for the wordmark, Book and the menu
+ * only: the theme choice is in the menu there.
+ */
 .actions .themeToggle {
   display: none;
 }
 
-@media (min-width: 30rem) {
+@media (min-width: 23.4rem) {
   .actions .themeToggle {
     display: grid;
   }

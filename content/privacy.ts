@@ -14,4 +14,4 @@ export const privacy = {
 } as const;
 
 /** Date the privacy notice was last changed. */
-export const PRIVACY_UPDATED = "2026-09-27";
+export const PRIVACY_UPDATED = "2026-10-06";

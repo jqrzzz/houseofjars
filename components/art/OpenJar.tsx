@@ -22,7 +22,7 @@ const SPEC = {
 /**
  * "This jar is empty": a stone jar standing open, in cut paper, for the 404
  * page. The drawing is server-rendered; a tap or Enter wobbles it (±3°,
- * 420 ms) and sends one arch wisp up from its mouth (OpenJarTap, a small
+ * 680 ms) and sends one arch wisp up from its mouth (OpenJarTap, a small
  * client island), unless the guest has chosen Still or prefers reduced motion.
  */
 export function OpenJar({ className }: { className?: string }) {

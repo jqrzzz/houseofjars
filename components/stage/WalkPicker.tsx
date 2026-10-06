@@ -80,6 +80,40 @@ function stage(figure: HTMLElement, data: Walks, route: string) {
   figure.setAttribute("data-replay", route);
 }
 
+/** The nearest ancestor that scrolls on its own (the column of walks beside a sticky stage), if any. */
+function scrollBox(element: HTMLElement): HTMLElement | null {
+  for (let e = element.parentElement; e && e !== document.body; e = e.parentElement) {
+    const { overflowY } = getComputedStyle(e);
+    if (overflowY === "auto" || overflowY === "scroll") return e;
+  }
+  return null;
+}
+
+/**
+ * Brings a chosen walk into view without losing the reader. Where the walks
+ * scroll in their own box beside the stage (wide screens), that box scrolls
+ * to the walk's list, but never so far that the chosen chip leaves it, and
+ * the page stays put (its scroll drives the stage). Where the list runs on
+ * below the stage (phones), a tap brings the stage into view instead, so the
+ * walk replays where it is seen; a choice made with the arrow keys moves
+ * nothing there, so the focused chip stays on screen.
+ */
+function reveal(details: HTMLElement, chip: HTMLElement | null, figure: HTMLElement | null, pointer: boolean) {
+  const box = scrollBox(details);
+  if (!box) {
+    if (pointer) figure?.scrollIntoView({ block: "nearest", behavior: "instant" });
+    return;
+  }
+  const area = box.getBoundingClientRect();
+  // The box's foot fades over its padding (HouseStage.module.css): the list should end above it.
+  const end = area.bottom - parseFloat(getComputedStyle(box).paddingBottom);
+  const { top, bottom } = details.getBoundingClientRect();
+  let by = top < area.top ? top - area.top : bottom > end ? Math.min(bottom - end, top - area.top) : 0;
+  // The chip keeps a little room above it, for its focus ring.
+  if (by > 0 && chip) by = Math.min(by, Math.max(0, chip.getBoundingClientRect().top - area.top - 8));
+  if (by !== 0) box.scrollTop += by;
+}
+
 /**
  * The walk chips beside a paper stage (docs/DESIGN.md §5.2): a radio group of
  * the house's walks. Choosing one fetches /house/walks.json (once), swaps the
@@ -101,6 +135,9 @@ export function WalkPicker({
 }) {
   const [chosen, setChosen] = useState(initial);
   const current = useRef(initial);
+  const fieldset = useRef<HTMLFieldSetElement>(null);
+  // Whether the chip was chosen by pointer (a tap or a click) rather than the arrow keys.
+  const viaPointer = useRef(false);
 
   const choose = (route: string, open: boolean) => {
     if (route === current.current) return;
@@ -110,7 +147,8 @@ export function WalkPicker({
       const details = document.getElementById(list)?.querySelector<HTMLDetailsElement>(`details[data-walk="${CSS.escape(route)}"]`);
       if (details) {
         details.open = true;
-        details.scrollIntoView({ block: "nearest" });
+        const chip = fieldset.current?.querySelector<HTMLInputElement>(`input[value="${CSS.escape(route)}"]`)?.closest("label") ?? null;
+        reveal(details, chip, document.getElementById(stageId), viaPointer.current);
       }
     }
     loadWalks().then(
@@ -141,14 +179,30 @@ export function WalkPicker({
 
   return (
     <fieldset
+      ref={fieldset}
       className={styles.chips}
       onPointerEnter={() => void loadWalks().catch(() => undefined)}
       onFocus={() => void loadWalks().catch(() => undefined)}
+      onPointerDown={() => {
+        viaPointer.current = true;
+      }}
+      onKeyDown={() => {
+        viaPointer.current = false;
+      }}
     >
       <legend className={styles.legend}>Follow a walk</legend>
       {chips.map((chip) => (
         <label key={chip.route} className={styles.chip}>
-          <input type="radio" name={`${stageId}-walk`} value={chip.route} checked={chosen === chip.route} onChange={() => choose(chip.route, true)} />
+          <input
+            type="radio"
+            name={`${stageId}-walk`}
+            value={chip.route}
+            checked={chosen === chip.route}
+            onChange={() => {
+              choose(chip.route, true);
+              viaPointer.current = false;
+            }}
+          />
           <span>{chip.label}</span>
         </label>
       ))}

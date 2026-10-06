@@ -12,21 +12,32 @@
   overflow: hidden;
 }
 
-/* The photograph behind the paper: blurred to light and colour, faded into the page at top and bottom. */
-.backdrop {
-  z-index: -2;
-  object-fit: cover;
-  filter: blur(26px) saturate(1.2);
-  transform: scale(1.2);
-  opacity: 0.5;
-}
-
-.section::before {
+/*
+ * The wall behind the front desk: far paper with its fibre, and by Evening a
+ * little lantern light on it behind the ticket (none by Day). Drawn on the
+ * section's own layers, so it covers the section's tone; no photograph.
+ */
+.section::before,
+.section::after {
   content: "";
   position: absolute;
   inset: 0;
+  pointer-events: none;
+}
+
+.section::before {
+  z-index: -2;
+  background:
+    radial-gradient(60% 55% at 50% 45%, var(--lantern), transparent 75%),
+    var(--paper-far);
+}
+
+.section::after {
   z-index: -1;
-  background: linear-gradient(var(--page), transparent 30%, transparent 70%, var(--page));
+  background: var(--text);
+  -webkit-mask: url(/art/paper-fibre.svg) repeat;
+  mask: url(/art/paper-fibre.svg) repeat;
+  opacity: 0.6;
 }
 
 /* The ticket and its slot. */

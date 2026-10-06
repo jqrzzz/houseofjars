@@ -37,6 +37,16 @@
  * Against a real Shadow Check-in nothing is sent (no test bookings or
  * inquiries reach the team). Screenshots are saved to ./screenshots.
  *
+ * It also takes the acceptance evidence of docs/DESIGN.md §1, so a reviewer
+ * can check the screenshots against it: the home page's HTML and script
+ * budgets; the hero's first screen at 390 x 844, 1440 x 900 and a laptop's
+ * 1366 x 768 (hero-*.png); the house story's shots, placed by its own cues,
+ * from the street front to the curtain closed at the very end, which must
+ * match the rest frame (theatre-*.png); every page with Motion: Still, with
+ * no splash and nothing animating (still-*.png); and every page with the
+ * site's theme chosen against the device's (light-on-dark-*.png,
+ * dark-on-light-*.png).
+ *
  * Start the site afresh for each run against the fake: the site's own limits
  * (per server instance, 10 booking requests at once, then one every 6
  * minutes) would still count the last run's bookings.
@@ -45,16 +55,22 @@
  * and never downloads a browser.
  */
 import { mkdir } from "node:fs/promises";
-import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
+import { gzipSync } from "node:zlib";
+import { chromium, type Browser, type BrowserContext, type Locator, type Page } from "playwright-core";
+import sharp from "sharp";
 import { content } from "../content";
 import { isFirm } from "../content/certainty";
+import { photos } from "../content/photos";
+import { policies } from "../content/stay";
 import { formatMoney } from "../lib/booking/flow";
 import { encodeEvent, type AvailabilityCard, type ConciergeEvent } from "../lib/concierge/protocol";
 import { addDays, formatDay, houseToday, nightsBetween } from "../lib/dates";
 import { dateWindow } from "../lib/inquiry/dates";
 import { collectFacts, factsMentionedIn } from "../lib/content-audit";
+import { MOTION_KEY } from "../lib/motion/prefs";
 import { metaTitle, sitePages } from "../lib/pages";
 import { siteUrl } from "../lib/site";
+import { SPLASH_KEY, THEME_KEY, themeColor } from "../lib/theme";
 import { FAKE_ROOMS, FAKE_SHADOW_KEY, startFakeShadow, type FakeRoom, type FakeShadow } from "../test/fake-shadow";
 import { typesOf, isA, validateJsonLd } from "../test/schema-org";
 
@@ -63,13 +79,23 @@ const executablePath = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
 const outDir = "screenshots";
 const fakeShadowPort = process.env.FAKE_SHADOW_PORT ? Number(process.env.FAKE_SHADOW_PORT) : null;
 
+interface Viewport {
+  readonly name: string;
+  readonly width: number;
+  readonly height: number;
+}
 const viewports = [
   { name: "phone", width: 390, height: 844 },
   { name: "desktop", width: 1440, height: 900 },
-] as const;
-type Viewport = (typeof viewports)[number];
+] as const satisfies readonly Viewport[];
+/** A common laptop screen, shorter than the desktop's: the hero's first screen must hold there too. */
+const laptop: Viewport = { name: "laptop", width: 1366, height: 768 };
 const schemes = ["light", "dark"] as const;
 type Scheme = (typeof schemes)[number];
+
+/** Acceptance budgets (docs/DESIGN.md §1.6), in bytes: the home page's HTML as served, and its scripts gzipped. */
+const HOME_HTML_BUDGET = 150_000;
+const HOME_JS_BUDGET = 200_000;
 
 /** Every page as the running build names it: /book is named for online booking when the build has it. */
 function routesFor(online: boolean) {
@@ -98,19 +124,42 @@ const trimSlash = (url: string | null) => url?.replace(/\/+$/, "") ?? null;
 
 let visitor = 0;
 
+/** A visitor's own choices, kept in their browser as the site keeps them (lib/theme.ts, lib/motion/prefs.ts). */
+interface Choices {
+  /** Day or Evening chosen on the site, whatever the device's colour scheme. */
+  theme?: Scheme;
+  /** Motion: Still. */
+  still?: boolean;
+  /** Past the visit's first page, so no logo splash. */
+  skipSplash?: boolean;
+}
+
 /**
  * Opens a page and records console errors, except responses the test expects
  * (e.g. a 503 from an API). Each visitor comes from its own address (the site
  * reads X-Forwarded-For when no proxy sets it), so the site's limits per
  * client apply to each walk on its own.
  */
-async function open(browser: Browser, viewport: Viewport, scheme: Scheme) {
+async function open(browser: Browser, viewport: Viewport, scheme: Scheme, choices: Choices = {}) {
   visitor += 1;
   const context = await browser.newContext({
-    viewport,
+    viewport: { width: viewport.width, height: viewport.height },
     colorScheme: scheme,
     extraHTTPHeaders: { "x-forwarded-for": `198.51.${100 + Math.floor(visitor / 250)}.${visitor % 250}` },
   });
+  // Before any of the site's scripts run, as if the visitor had chosen these on an earlier page.
+  await context.addInitScript(
+    ({ keys, theme, still, skipSplash }) => {
+      try {
+        if (theme) localStorage.setItem(keys.theme, theme);
+        if (still) localStorage.setItem(keys.motion, "still");
+        if (skipSplash) sessionStorage.setItem(keys.splash, "1");
+      } catch {
+        // Storage blocked: the site falls back to Auto, Full and its splash.
+      }
+    },
+    { keys: { theme: THEME_KEY, motion: MOTION_KEY, splash: SPLASH_KEY }, ...choices },
+  );
   const page = await context.newPage();
   const errors: string[] = [];
   page.on("console", (message) => {
@@ -156,6 +205,8 @@ async function visit(browser: Browser, route: Route, viewport: Viewport, scheme:
     overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     canonical: document.querySelector('link[rel="canonical"]')?.getAttribute("href") ?? null,
     ogImage: document.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? null,
+    // The house's real photographs (public/photos/), however the image optimiser spells their address.
+    realPhotos: [...document.images].filter((image) => /(^|\/|%2F)photos(\/|%2F)/.test(image.currentSrc || image.src)).length,
   }));
 
   // The browser logs the 404 response of the not-found page itself.
@@ -163,6 +214,9 @@ async function visit(browser: Browser, route: Route, viewport: Viewport, scheme:
   check(unexpected.length === 0, `${label}: console errors: ${unexpected.join(" | ")}`);
   check(found.h1 === 1, `${label}: ${found.h1} h1 elements, expected 1`);
   check(found.overflow <= 0, `${label}: scrolls sideways by ${found.overflow}px`);
+  // Every page shows the house drawn; only the booking page shows its real photographs (docs/DESIGN.md §10.5).
+  if (route.path === "/book") check(found.realPhotos >= 9, `${label}: ${found.realPhotos} real photographs, expected the 9 of "Real photos"`);
+  else check(found.realPhotos === 0, `${label}: ${found.realPhotos} real photographs on a page that should show only drawings`);
   if (route.status === 200) {
     const expected = trimSlash(new URL(route.path, `${siteUrl}/`).toString());
     check(found.title === route.title, `${label}: title "${found.title}", expected "${route.title}"`);
@@ -761,6 +815,279 @@ async function bookingClosedAndBusy(browser: Browser, fake: FakeShadow) {
   await context.close();
 }
 
+const kB = (bytes: number) => `${(bytes / 1000).toFixed(1)} kB`;
+
+/**
+ * The budgets (docs/DESIGN.md §1.6): the home page's HTML as served, and the
+ * scripts it loads, gzipped as a server sends them. The house's two longest
+ * pages are reported against the same HTML figure, as warnings.
+ */
+async function budgets(context: BrowserContext) {
+  const html = await (await context.request.get(`${base}/`)).body();
+  const scripts = [...html.toString("utf8").matchAll(/<script\b[^>]*>/g)]
+    .map(([tag]) => tag)
+    .filter((tag) => !/\snomodule\b/i.test(tag))
+    .flatMap((tag) => /\ssrc="([^"]+)"/.exec(tag)?.[1]?.replaceAll("&amp;", "&") ?? []);
+  let js = 0;
+  for (const src of new Set(scripts)) js += gzipSync(await (await context.request.get(new URL(src, `${base}/`).toString())).body()).length;
+  check(html.length <= HOME_HTML_BUDGET, `/: the HTML is ${html.length} bytes, over its budget of ${HOME_HTML_BUDGET}`);
+  check(js <= HOME_JS_BUDGET, `/: its ${new Set(scripts).size} scripts are ${js} bytes gzipped, over their budget of ${HOME_JS_BUDGET}`);
+  console.log(`Budgets: / HTML ${kB(html.length)} of ${kB(HOME_HTML_BUDGET)}; its scripts ${kB(js)} gzipped of ${kB(HOME_JS_BUDGET)}.`);
+  for (const path of ["/the-house", "/house-rules"]) {
+    const size = (await (await context.request.get(base + path)).body()).length;
+    const over = size > HOME_HTML_BUDGET;
+    console.log(`${over ? "Warning: " : ""}${path} HTML is ${kB(size)}${over ? `, more than the home page's budget of ${kB(HOME_HTML_BUDGET)}` : ""}.`);
+  }
+}
+
+/**
+ * The hero's first screen (docs/DESIGN.md §1.1, §10.5): in every viewport,
+ * the h1, why to book direct, Book and Ask Shadow are on it; beside them on
+ * wide screens the whole dorm drawing, down to its foot, and on phones its
+ * top, under the words. The drawing is the largest paint. Seen at rest
+ * (Still), where the lamps have dropped into place, and saved as
+ * hero-{size}-{scheme}.png.
+ */
+async function hero(browser: Browser, viewport: Viewport, scheme: Scheme) {
+  const { context, page, errors } = await open(browser, viewport, scheme, { theme: scheme, still: true, skipSplash: true });
+  const label = `hero (${viewport.width}x${viewport.height}, ${scheme})`;
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  const section = page.locator('section[aria-labelledby="hero-title"]');
+  const onFirstScreen = async (name: string, locator: Locator, whole = true) => {
+    const box = await locator.boundingBox();
+    const [top, bottom] = box ? [Math.round(box.y), Math.round(box.y + box.height)] : [NaN, NaN];
+    check(
+      top >= 0 && (whole ? bottom <= viewport.height : top < viewport.height),
+      `${label}: ${name} is ${whole ? "not all" : "not"} on the first screen (${box ? `y ${top} to ${bottom} of ${viewport.height}` : "not found"})`,
+    );
+  };
+  await onFirstScreen("the h1", section.locator("h1"));
+  await onFirstScreen(`"${policies.directPriceShort.value}"`, section.getByText(policies.directPriceShort.value, { exact: true }));
+  await onFirstScreen("Book", section.getByRole("link", { name: /^Book/ }));
+  await onFirstScreen("Ask Shadow", section.getByRole("button", { name: "Ask Shadow" }));
+  // The hero sets the words beside the photo from 60rem (960 px) up.
+  // Day and Evening twins share the alt text; the theme shows one of them.
+  const dorm = section.getByAltText(photos.dormCorridor.drawnAlt, { exact: true }).locator("visible=true");
+  await onFirstScreen("the dorm drawing", dorm, viewport.width >= 960);
+  const largest = await page.evaluate(
+    () =>
+      new Promise<string>((resolve) => {
+        new PerformanceObserver((list) => {
+          const element = (list.getEntries().at(-1) as (PerformanceEntry & { element?: Element | null }) | undefined)?.element;
+          resolve(element instanceof HTMLImageElement ? element.alt : (element?.tagName.toLowerCase() ?? "unknown"));
+        }).observe({ type: "largest-contentful-paint", buffered: true });
+        setTimeout(() => resolve("not reported"), 3_000);
+      }),
+  );
+  check(largest === photos.dormCorridor.drawnAlt, `${label}: the largest paint is "${largest}", not the dorm drawing`);
+  check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
+  await page.screenshot({ path: `${outDir}/hero-${viewport.width}x${viewport.height}-${scheme}.png` });
+  await context.close();
+}
+
+/**
+ * Two shots of one stage, compared in 4 px cells, each cell's colours
+ * averaged: the hair's-breadth differences in how a moving layer's edges are
+ * drawn even out, while anything a reader would see (a curtain half open, a
+ * tag gone, the thread not drawn) leaves cells whose colour differs by more
+ * than 96 of 255. Those are marked in red on a copy of the first shot.
+ */
+async function differingCells(first: string, second: string, marked: string) {
+  const [a, b] = await Promise.all([first, second].map((path) => sharp(path).removeAlpha().raw().toBuffer({ resolveWithObject: true })));
+  const { width, height } = a!.info;
+  if (width !== b!.info.width || height !== b!.info.height) return { cells: 1, where: `${width}x${height} against ${b!.info.width}x${b!.info.height}` };
+  const cell = 4;
+  const found: [number, number][] = [];
+  for (let top = 0; top + cell <= height; top += cell) {
+    for (let left = 0; left + cell <= width; left += cell) {
+      let worst = 0;
+      for (let channel = 0; channel < 3; channel++) {
+        let sum = 0;
+        for (let y = top; y < top + cell; y++) {
+          for (let x = left; x < left + cell; x++) sum += a!.data[(y * width + x) * 3 + channel]! - b!.data[(y * width + x) * 3 + channel]!;
+        }
+        worst = Math.max(worst, Math.abs(sum) / (cell * cell));
+      }
+      if (worst > 96) found.push([left, top]);
+    }
+  }
+  if (found.length === 0) return { cells: 0, where: "" };
+  const red = { create: { width: cell, height: cell, channels: 4 as const, background: { r: 255, g: 0, b: 0, alpha: 0.85 } } };
+  await sharp(first)
+    .composite(found.map(([left, top]) => ({ input: red, left, top })))
+    .toFile(marked);
+  const [xs, ys] = [found.map(([x]) => x), found.map(([, y]) => y)];
+  return { cells: found.length, where: `x ${Math.min(...xs)} to ${Math.max(...xs) + cell}, y ${Math.min(...ys)} to ${Math.max(...ys) + cell}` };
+}
+
+/**
+ * The house story's shots (docs/DESIGN.md §1.2), saved as
+ * theatre-{width}-{scheme}-{shot}.png. Each is placed by StageDirector's own
+ * cues (#theatre-cues, HouseTheatre.tsx), whose tops cross the middle of the
+ * screen as their act or stop begins: the street front as Act A begins, the
+ * front half gone, Floor 1 lifted with its tags as Act B ends, the thread at
+ * each stop of the walk, and the end. The end is where the section's view
+ * timeline ends, which takes the page's scroll padding as its inset (4.5rem
+ * on phones), not where the section's foot meets the screen's. There the
+ * curtain must be closed, and the end frame must match the rest frame, which
+ * Still shows at the same place.
+ */
+async function theatre(browser: Browser, viewport: Viewport, scheme: Scheme) {
+  const label = `theatre (${viewport.name}, ${scheme})`;
+  const file = (shot: string) => `${outDir}/theatre-${viewport.width}-${scheme}-${shot}.png`;
+  // A clip of the screen, not the element's own screenshot, which scrolls the sticky stage clear of the scroll padding first.
+  const shoot = async (page: Page, shot: string) => {
+    const box = await page.locator("#theatre").boundingBox();
+    if (box) await page.screenshot({ path: file(shot), clip: box });
+    return box !== null;
+  };
+  const scrollTo = (page: Page, y: number) => page.evaluate((top) => window.scrollTo({ top, behavior: "instant" }), y);
+  const curtain = (page: Page) =>
+    page.evaluate(() => {
+      const cloth = document.querySelector("#theatre [data-cloth]");
+      const transform = cloth ? getComputedStyle(cloth).transform : null;
+      return transform === "none" ? "matrix(1, 0, 0, 1, 0, 0)" : transform;
+    });
+
+  const { context, page, errors } = await open(browser, viewport, scheme, { theme: scheme, skipSplash: true });
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  const shots = await page.evaluate(() => {
+    const section = document.getElementById("the-house-story");
+    const cues = [...document.querySelectorAll<HTMLElement>("#theatre-cues > span")];
+    if (!section || cues.length === 0) return null;
+    const at = cues.map((cue) => ({
+      act: cue.dataset.act ?? "",
+      stop: Number(cue.dataset.stop ?? -1),
+      y: cue.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2,
+    }));
+    const stops = [...section.querySelectorAll("[data-stop] h3")].map((heading) => heading.textContent?.trim() ?? "");
+    const a = at.find((cue) => cue.act === "a")?.y ?? 0;
+    const b = at.find((cue) => cue.act === "b")?.y ?? a;
+    const walk = at.filter((cue) => cue.act === "c");
+    // The view timeline's end inset: the page's scroll padding while the section leaves it at auto.
+    const inset = getComputedStyle(section).getPropertyValue("view-timeline-inset").trim().split(/\s+/).at(-1) ?? "auto";
+    const padding = inset === "auto" || inset === "" ? getComputedStyle(document.documentElement).scrollPaddingBottom : inset;
+    const end = section.getBoundingClientRect().bottom + window.scrollY - window.innerHeight + (parseFloat(padding) || 0);
+    return [
+      { shot: "1-street-front", y: a },
+      // Three quarters through Act A: the front holds for its first half, so here it is half gone.
+      { shot: "2-opening", y: a + (b - a) * 0.75 },
+      { shot: "3-floor-1-lifted", y: (walk[0]?.y ?? b) - 2 },
+      ...walk.map((cue, k) => ({
+        shot: `${k + 4}-${(stops[cue.stop] ?? `stop ${cue.stop}`).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        y: cue.y + 40,
+      })),
+      // A pixel past it, as scrolling stops on whole pixels and the section rarely ends on one.
+      { shot: "end", y: Math.ceil(end) + 1 },
+    ];
+  });
+  if (!shots) {
+    check(false, `${label}: no #the-house-story with StageDirector's cues`);
+    await context.close();
+    return;
+  }
+  for (const { shot, y } of shots) {
+    await scrollTo(page, y);
+    await page.waitForTimeout(600);
+    if (shot === "end") {
+      // Let the stage's phrases (lights, motes, a breath of wind) finish first.
+      await page
+        .waitForFunction(
+          () =>
+            document
+              .getAnimations()
+              .every(
+                (animation) =>
+                  animation.timeline !== document.timeline ||
+                  animation.playState !== "running" ||
+                  !(animation.effect as KeyframeEffect | null)?.target?.closest("#theatre"),
+              ),
+          undefined,
+          { timeout: 8_000 },
+        )
+        .catch(() => check(false, `${label}: the stage's phrases are still playing 8 s after the story's end`));
+    }
+    check(await shoot(page, shot), `${label}: no #theatre to photograph at ${shot}`);
+  }
+  const closed = await curtain(page);
+  check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
+  await context.close();
+
+  // The rest frame, at the same place.
+  const end = shots.at(-1)!.y;
+  const still = await open(browser, viewport, scheme, { theme: scheme, still: true, skipSplash: true });
+  await still.page.goto(`${base}/`, { waitUntil: "networkidle" });
+  await scrollTo(still.page, end);
+  await still.page.waitForTimeout(600);
+  await shoot(still.page, "still");
+  const resting = await curtain(still.page);
+  check(closed !== null && closed === resting, `${label}: at the story's end the curtain is ${closed ?? "missing"}, at rest ${resting ?? "missing"}`);
+  const differ = await differingCells(file("end"), file("still"), file("end-against-still"));
+  check(differ.cells === 0, `${label}: the end frame and the rest frame (Still) differ in ${differ.cells} places (${differ.where}): see ${file("end-against-still")}`);
+  await still.context.close();
+}
+
+/**
+ * Motion: Still (docs/DESIGN.md §1.4, §4.5), on every page, each the first page
+ * of a visit (a new tab): no splash, and nothing animating one second after
+ * load, nor once the page has been scrolled through. Saved as
+ * still-{page}-{width}.png.
+ */
+async function stillPages(browser: Browser, routes: readonly Route[], viewport: Viewport) {
+  const { context, page: first } = await open(browser, viewport, "light", { still: true });
+  await first.close();
+  for (const route of routes) {
+    const page = await context.newPage();
+    const label = `${route.path} (${viewport.name}, Still)`;
+    await page.goto(base + route.path, { waitUntil: "load" });
+    await page.waitForTimeout(1_000);
+    const atLoad = await page.evaluate(() => ({
+      splash: document.documentElement.classList.contains("splash"),
+      moving: document.getAnimations().map((animation) => (animation as CSSAnimation).animationName ?? animation.constructor.name),
+    }));
+    check(!atLoad.splash, `${label}: the splash shows`);
+    check(atLoad.moving.length === 0, `${label}: ${atLoad.moving.length} animations one second after load: ${atLoad.moving.slice(0, 6).join(", ")}`);
+    await settle(page);
+    const moving = await page.evaluate(() => document.getAnimations().length);
+    check(moving === 0, `${label}: ${moving} animations once the page has been scrolled through`);
+    await page.screenshot({ path: `${outDir}/still-${route.name}-${viewport.width}.png`, fullPage: true });
+    await page.close();
+  }
+  await context.close();
+}
+
+/**
+ * The theme chosen on the site wins over the device's (docs/DESIGN.md §1.3):
+ * Day on a device in dark mode, and Evening on one in light mode. Every page
+ * takes the chosen theme's colours, and no art of the other theme shows (the
+ * stage's layers, the drawings and the game's plans come in .for-day and
+ * .for-evening twins). Saved as {theme}-on-{device}-{page}.png.
+ */
+async function chosenTheme(browser: Browser, routes: readonly Route[]) {
+  for (const [theme, device] of [["light", "dark"], ["dark", "light"]] as const) {
+    const { context, page: first } = await open(browser, viewports[1], device, { theme, still: true, skipSplash: true });
+    await first.close();
+    const [r, g, b] = [1, 3, 5].map((k) => parseInt(themeColor[theme].slice(k, k + 2), 16));
+    for (const route of routes) {
+      const page = await context.newPage();
+      const label = `${route.path} (${theme === "light" ? "Day" : "Evening"} chosen, device ${device})`;
+      await page.goto(base + route.path, { waitUntil: "networkidle" });
+      await settle(page);
+      const found = await page.evaluate((other) => ({
+        page: getComputedStyle(document.body).backgroundColor,
+        wrong: [...document.querySelectorAll(other)]
+          .filter((element) => element.checkVisibility())
+          .map((element) => element.getAttribute("src") ?? element.getAttribute("href") ?? element.tagName.toLowerCase()),
+      }), theme === "light" ? ".for-evening" : ".for-day");
+      check(found.page === `rgb(${r}, ${g}, ${b})`, `${label}: the page is ${found.page}, not ${themeColor[theme]}`);
+      check(found.wrong.length === 0, `${label}: the other theme's art shows: ${found.wrong.slice(0, 4).join(", ")}`);
+      await page.screenshot({ path: `${outDir}/${theme}-on-${device}-${route.name}.png`, fullPage: true });
+      await page.close();
+    }
+    await context.close();
+  }
+}
+
 async function files(context: BrowserContext) {
   // The same paths with or without online booking.
   const allPages = sitePages(false);
@@ -837,6 +1164,7 @@ async function main() {
     const context = await browser.newContext();
     await files(context);
     await security(context);
+    await budgets(context);
     const mode = await bookingMode(context, fake);
     console.log(
       {
@@ -847,11 +1175,21 @@ async function main() {
     );
     await context.close();
 
-    for (const route of routesFor(mode !== "off")) {
+    const routes = routesFor(mode !== "off");
+    for (const route of routes) {
       for (const viewport of viewports) {
         for (const scheme of schemes) await visit(browser, route, viewport, scheme);
       }
     }
+    // The acceptance shots and checks (docs/DESIGN.md §1).
+    for (const viewport of [...viewports, laptop]) {
+      for (const scheme of schemes) await hero(browser, viewport, scheme);
+    }
+    for (const viewport of viewports) {
+      for (const scheme of schemes) await theatre(browser, viewport, scheme);
+    }
+    for (const viewport of viewports) await stillPages(browser, routes, viewport);
+    await chosenTheme(browser, routes);
     await skipLink(browser);
     await bookingLink(browser, mode);
     await concierge(browser, viewports[0], "light");

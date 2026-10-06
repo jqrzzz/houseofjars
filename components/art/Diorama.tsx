@@ -106,8 +106,8 @@ const PALMS = [palm(298, 40), palm(546, 34)];
  * clouds drift, the planes move at their depths (back 0, middle 0.15, front
  * 0.35) and the tuk-tuk crosses from the left edge to 55%; at rest it is
  * parked at 40%.
- * "vientiane": a 4:3 header picture; the tuk-tuk rolls in once (900 ms) as
- * the page opens.
+ * "vientiane": a 4:3 header picture, 16:5 across the top on phones; the
+ * tuk-tuk rolls in once (900 ms) as the page opens.
  *
  * By Evening the windows and shops are lit, and a paper moon and pin-prick
  * stars fade in once when the scene first comes into view (it is a

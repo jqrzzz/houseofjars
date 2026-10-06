@@ -117,8 +117,8 @@
   border-radius: 50%;
   background: var(--paper-near);
   transition:
-    background-color 480ms var(--ease-lamp),
-    box-shadow 480ms var(--ease-lamp);
+    background-color 770ms var(--ease-lamp),
+    box-shadow 770ms var(--ease-lamp);
 }
 
 .whereLabel {

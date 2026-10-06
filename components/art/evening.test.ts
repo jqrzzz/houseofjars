@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { photos } from "@/content/photos";
 import { eveningTwin } from "../../scripts/art-evening";
 import { Drawing } from "./Drawing";
 import { drawings, type DrawingName } from "./drawings";
@@ -40,6 +41,13 @@ describe("the Evening twins", () => {
   });
 });
 
+/**
+ * The photographs' drawings (content/photos.ts) fill a whole frame, as the
+ * photographs did, so they may weigh more than the set's small objects: still
+ * a fraction of the photographs they stand in for.
+ */
+const scenes = new Set<string>(Object.values(photos).map((photo) => photo.drawing));
+
 describe("the paper set", () => {
   for (const [name, drawing] of Object.entries(drawings)) {
     it(`${name}: cut paper made of flat shapes: a fibre pattern, no gradients, small enough to inline-load`, () => {
@@ -47,7 +55,7 @@ describe("the paper set", () => {
       expect(svg).toContain('<pattern id="f"');
       expect(svg).not.toMatch(/<(linear|radial)Gradient/);
       expect(svg).not.toContain("<image");
-      expect(Buffer.byteLength(svg)).toBeLessThan(16_000);
+      expect(Buffer.byteLength(svg)).toBeLessThan(scenes.has(name) ? 32_000 : 16_000);
     });
   }
 
@@ -95,10 +103,20 @@ describe("Drawing", () => {
     }
   });
 
-  it("loads both twins lazily, or both at once when preloaded", () => {
-    for (const img of images(render({ name: "pod" }))) expect(attr(img, "loading")).toBe("lazy");
-    for (const img of images(render({ name: "pod", preload: true }))) expect(attr(img, "loading")).toBe("eager");
+  it("loads both twins lazily, so the hidden twin is never fetched, even when preloaded", () => {
+    for (const img of images(render({ name: "pod" }))) {
+      expect(attr(img, "loading")).toBe("lazy");
+      expect(attr(img, "fetchPriority")).toBeUndefined();
+    }
+    // Preloaded: still lazy (an eager twin would load while hidden), and the one on show is fetched first.
+    for (const img of images(render({ name: "pod", preload: true }))) {
+      expect(attr(img, "loading")).toBe("lazy");
+      expect(attr(img, "fetchPriority")).toBe("high");
+    }
     // The deprecated priority still works, so older callers keep compiling.
-    for (const img of images(render({ name: "pod", priority: true }))) expect(attr(img, "loading")).toBe("eager");
+    for (const img of images(render({ name: "pod", priority: true }))) {
+      expect(attr(img, "loading")).toBe("lazy");
+      expect(attr(img, "fetchPriority")).toBe("high");
+    }
   });
 });

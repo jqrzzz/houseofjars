@@ -13,12 +13,19 @@
  * rings, each adding 7% of the light, all scaled by --glow-strength (0.45 by
  * Day, 1 by Evening). By Day lamplight does not read on rice, so the core gets
  * a 1 px --glow-ring outline (teak); by Evening the ring is transparent.
+ *
+ * A .glow's light is drawn on its ::before, so Lights on (on the ::before)
+ * and whatever the disc itself does (a stage's scroll keyframes) compose.
  */
 .glow,
 .disc {
   --a: calc(var(--glow-strength) * 7%);
   border-radius: 50%;
   pointer-events: none;
+}
+
+.disc,
+.glow::before {
   background:
     radial-gradient(closest-side, transparent calc(34% - 1px), var(--glow-ring) calc(34% - 1px) 34%, transparent 34%),
     radial-gradient(
@@ -41,6 +48,13 @@
   translate: -50% -50%;
 }
 
+.glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
 /*
  * Lights on: the discs light in walking order (600 ms each, 40 ms apart, all
  * within --dur-lamps), with one 3% catch, as their scene first comes into view
@@ -48,31 +62,34 @@
  * switch: the animation's name differs by theme, so changing theme restarts
  * it, held while the theme's 450 ms cross-fade runs. The base style is the
  * rest frame, lit, so Still, reduced motion and pages without JavaScript simply
- * show the lights on.
+ * show the lights on. It plays on the disc's ::before, so on a stage whose
+ * discs also follow the walk (/the-house) they still re-warm after a switch.
  */
 @media (prefers-reduced-motion: no-preference) {
-  :global(:root[data-life]:not([data-motion="still"])) :global([data-phrase]:not([data-played])) .glow {
+  :global(:root[data-life]:not([data-motion="still"])) :global([data-phrase]:not([data-played])) .glow::before {
     opacity: 0;
     scale: 0.9;
   }
 
-  :global(:root:not([data-motion="still"])) :global([data-played]) .glow {
-    animation: lights-on-day 600ms var(--ease-lamp) min(calc(var(--i, 0) * 40ms), 1800ms) both;
+  :global(:root:not([data-motion="still"])) :global([data-played]) .glow::before {
+    animation: lights-on-day 960ms var(--ease-lamp) min(calc(var(--i, 0) * 60ms), 2880ms) both;
   }
 
-  :global(:root[data-theme="dark"]:not([data-motion="still"])) :global([data-played]) .glow {
+  :global(:root[data-theme="dark"]:not([data-motion="still"])) :global([data-played]) .glow::before {
     animation-name: lights-on-evening;
-  }
-
-  /* After the shorthand above, and as specific, so it wins. */
-  :global(:root[data-theme-fade]:not([data-motion="still"])) :global([data-played]) .glow {
-    animation-play-state: paused;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) and (prefers-color-scheme: dark) {
-  :global(:root:not([data-theme="light"]):not([data-motion="still"])) :global([data-played]) .glow {
+  :global(:root:not([data-theme="light"]):not([data-motion="still"])) :global([data-played]) .glow::before {
     animation-name: lights-on-evening;
+  }
+}
+
+/* After the rules above, and as specific, so it wins: nothing lights inside the theme's cross-fade. */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root[data-theme-fade]:not([data-motion="still"])) :global([data-played]) .glow::before {
+    animation-play-state: paused;
   }
 }
 

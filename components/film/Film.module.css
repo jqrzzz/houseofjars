@@ -13,6 +13,33 @@
   box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
 }
 
+/* Until the film is asked for: its poster, in the player's box, with Play on a card over its middle. */
+.facade {
+  display: grid;
+  max-width: 24rem;
+}
+
+.facade > * {
+  grid-area: 1 / 1;
+}
+
+/* Two classes, so these win over the shared button's own whatever order the stylesheets load in. */
+.facade .play {
+  --button-bg: var(--paper-near);
+  --button-border: var(--rule-strong);
+  place-self: center;
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+.facade .play:hover {
+  --button-border: var(--text);
+}
+
+.facade .play svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .caption {
   color: var(--text-soft);
   font-size: var(--step--1);

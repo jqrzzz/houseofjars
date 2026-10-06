@@ -10,7 +10,7 @@
 import { S, type Vec2, type Vec3, escapeXml, isoProjection, num } from "./geometry";
 import { PAPER_POD } from "./fixtures";
 import { houseOfJars } from "./house-of-jars";
-import { FACADE_CUT, PLAN_SCALE, STREET_DEPTH, areaRects, renderCutaway, renderPlan, renderStreet } from "./render";
+import { FACADE_CUT, PLAN_SCALE, STREET_DEPTH, areaRects, planLabelAnchor, renderCutaway, renderPlan, renderStreet } from "./render";
 import type { Box3, Fixture, Floor, FloorId, Route } from "./types";
 
 export type PaperLayerId = "street" | "ground" | "ground-front" | "floor1" | "floor2";
@@ -476,24 +476,34 @@ export function faceMatrix(fixtureId: string, face: "front" | "right"): readonly
 
 const planCache = new Map<string, string>();
 
+/** An area of a paper plan, in the plan's own coordinates: its outline, and its name where the plan writes it. */
+export interface PlanArea {
+  readonly id: string;
+  readonly d: string;
+  readonly name: string;
+  /** The point the plan centres the area's name on (planLabelAnchor), so a tag laid there covers the drawn one. */
+  readonly label: readonly [number, number];
+}
+
 /** A paper plan's frame and its areas' shapes, in its own coordinates, for laying highlights and the game over it. */
-export function planOverlay(floor: "ground" | "floor1"): { viewBox: readonly [number, number, number, number]; areas: readonly { id: string; d: string }[] } {
+export function planOverlay(floor: "ground" | "floor1"): { viewBox: readonly [number, number, number, number]; areas: readonly PlanArea[] } {
   const svg = planCache.get(floor) ?? renderPlan(floor, { outfit: "paper", theme: "day" });
   planCache.set(floor, svg);
   const s = PLAN_SCALE;
   const at = (x: number, y: number) => [x * s, (model.depth - y) * s] as const;
   const areas = model.areas
     .filter((a) => a.floor === floor)
-    .map((a) => ({
-      id: a.id,
-      d: areaRects(a)
+    .map((a): PlanArea => {
+      const anchor = planLabelAnchor(a);
+      const d = areaRects(a)
         .map((r) => {
           const [x0, y1] = at(r.x0, r.y0);
           const [x1, y0] = at(r.x1, r.y1);
           return `M${num(x0)} ${num(y0)}L${num(x1)} ${num(y0)}L${num(x1)} ${num(y1)}L${num(x0)} ${num(y1)}Z`;
         })
-        .join(""),
-    }));
+        .join("");
+      return { id: a.id, d, name: a.name, label: at(anchor.x, anchor.y) };
+    });
   return { viewBox: viewBoxOf(svg), areas };
 }
 

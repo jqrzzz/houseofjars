@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { photos } from "@/content/photos";
+import { houseOfJars as model } from "@/lib/house/house-of-jars";
 import { placedHouseRules } from "@/lib/house/rules";
 import { anchorOf, planOverlay } from "@/lib/house/paper";
 import { cameraNumber, cameraSpots, placesOf, walkStops } from "./places";
@@ -26,20 +27,30 @@ describe("cameraSpots", () => {
 });
 
 describe("placesOf", () => {
-  it("names a rule's areas, a floor's areas and a fixture's area", () => {
-    const shoes = placesOf(rule("no-shoes-upstairs")).split(" ");
-    expect(shoes).toEqual(expect.arrayContaining(["stairs-ground", "landing-1", "dorm-h", "bath-women", "dorm-j"]));
+  it("names a rule's areas, the area of a fixture it names, and the floors it names whole", () => {
+    expect(placesOf(rule("no-shoes-upstairs"))).toBe("stairs-ground landing-1 floor:floor1 floor:floor2");
+    expect(placesOf(rule("registered-guests-upstairs"))).toBe("stairs-ground floor:floor1 floor:floor2");
     expect(placesOf(rule("smoke-past-the-terrace"))).toBe("terrace");
     expect(placesOf(rule("check-in-hours"))).toBe("desk");
     expect(placesOf(rule("no-smoking"))).toBe("");
   });
 
-  it("names only areas the rule plans can light", () => {
+  it("names the places a rule keeps something out of apart, with not:", () => {
+    expect(placesOf(rule("eat-in-the-cafe"))).toBe("cafe not:dorm-h not:dorm-j");
+    expect(placesOf(rule("pack-downstairs"))).toBe("cafe not:dorm-h not:dorm-j");
+    expect(placesOf(rule("quiet"))).toBe("dorm-h dorm-j");
+  });
+
+  it("names only areas the rule plans can light, and floors of the house", () => {
     const planned = new Set([...planOverlay("ground").areas, ...planOverlay("floor1").areas].map((a) => a.id));
+    const floors = new Set<string>(model.floors.map((f) => f.id));
     for (const r of placedHouseRules()) {
-      const named = placesOf(r).split(" ").filter(Boolean);
-      // Floor 2's areas have no plan here; every other area named does.
-      for (const id of named.filter((a) => !["dorm-j", "landing-2", "bath-men"].includes(a))) expect(planned.has(id), `${r.id}: ${id}`).toBe(true);
+      for (const token of placesOf(r).split(" ").filter(Boolean)) {
+        const place = token.replace(/^not:/, "");
+        if (place.startsWith("floor:")) expect(floors.has(place.slice("floor:".length)), `${r.id}: ${token}`).toBe(true);
+        // Floor 2's areas have no plan here; every other area named does.
+        else if (!["dorm-j", "landing-2", "bath-men"].includes(place)) expect(planned.has(place), `${r.id}: ${token}`).toBe(true);
+      }
     }
   });
 });

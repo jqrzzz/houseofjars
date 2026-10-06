@@ -7,6 +7,7 @@ import { ShadowFigure } from "../shadow/ShadowFigure";
 import buttons from "../ui/button.module.css";
 import styles from "./ConciergeLauncher.module.css";
 import type { ConciergePanelProps } from "./ConciergePanel";
+import { dockHidden, type DockHidden } from "./dock-state";
 
 // The chat window's code loads on first interaction, never on page load.
 let panelModule: Promise<ComponentType<ConciergePanelProps>> | null = null;
@@ -24,16 +25,22 @@ function loadPanel() {
  *
  * On phones the dock waits until the site header (which has its own Book
  * button) has scrolled away. While an element marked `data-hides-launcher`
- * (the home hero, the booking forms, every inline Ask Shadow button) reaches
- * into the bottom of the screen, the button steps aside. Elements that arrive
- * later (the booking form loads its own code) are picked up as they appear.
- * CSS hides the button until the first check, so it never flashes.
+ * (the home hero, the booking forms) reaches into the bottom of the screen,
+ * the button steps aside, and on phones the dock with it. An inline Ask Shadow
+ * button (`data-hides-launcher="ask"`) offers Shadow itself, so for one of
+ * those only the button steps aside: Book direct stays in the dock. A booking
+ * form counts from its fields (`data-launcher-cue`), not from its top edge:
+ * until they come up into the screen, the dock and its Book button stay.
+ * Elements that arrive later (the booking form loads its own code) are picked
+ * up as they appear. CSS hides the button until the first check, so it never
+ * flashes.
  */
 export function ConciergeLauncher() {
   const [Panel, setPanel] = useState<ComponentType<ConciergePanelProps> | null>(null);
   const [open, setOpen] = useState(false);
   const [prefill, setPrefill] = useState<{ text: string; id: number } | null>(null);
-  const [covered, setCovered] = useState<boolean | undefined>(undefined);
+  // Undefined until the first check (components/concierge/dock-state.ts).
+  const [hidden, setHidden] = useState<DockHidden | undefined>(undefined);
   const [headerInView, setHeaderInView] = useState<boolean | undefined>(undefined);
   const pathname = usePathname();
 
@@ -50,35 +57,68 @@ export function ConciergeLauncher() {
   useEffect(() => {
     const inCorner = new Set<Element>();
     const watched = new Set<Element>();
+    // Each booking form's fields, which it counts from.
+    const cues = new Map<Element, Element>();
+    // Nothing is decided before the band has reported, so the button never shows for a moment by mistake.
+    let reported = false;
+    const update = () => {
+      if (!reported) return;
+      const kinds: (string | null)[] = [];
+      for (const element of inCorner) {
+        // A booking form whose fields are still below the screen doesn't count yet.
+        const cue = cues.get(element);
+        if (cue && cue.getBoundingClientRect().top >= window.innerHeight) continue;
+        kinds.push(element.getAttribute("data-hides-launcher"));
+      }
+      setHidden(dockHidden(kinds));
+    };
     const intersection = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) inCorner.add(entry.target);
           else inCorner.delete(entry.target);
         }
-        setCovered(inCorner.size > 0);
+        reported = true;
+        update();
       },
       // The button's band of the screen: the bottom fifth.
       { rootMargin: "-80% 0px 0px 0px" },
     );
+    // A form's fields coming up into the screen (or going back down out of it) check the band again.
+    const arrival = new IntersectionObserver(update);
     let queued = 0;
     const scan = () => {
       queued = 0;
+      let changed = false;
       const present = new Set(document.querySelectorAll("[data-hides-launcher]"));
       for (const element of present) {
         if (!watched.has(element)) {
           watched.add(element);
           intersection.observe(element);
         }
+        // A form's fields can be drawn afresh inside it (the booking form reads its link once in the browser).
+        const cue = element.querySelector("[data-launcher-cue]");
+        const known = cues.get(element);
+        if (cue === (known ?? null)) continue;
+        if (known) arrival.unobserve(known);
+        if (cue) {
+          cues.set(element, cue);
+          arrival.observe(cue);
+        } else cues.delete(element);
+        changed ||= inCorner.has(element);
       }
       for (const element of watched) {
         if (!present.has(element)) {
           watched.delete(element);
-          inCorner.delete(element);
+          if (inCorner.delete(element)) changed = true;
           intersection.unobserve(element);
+          const cue = cues.get(element);
+          if (cue) arrival.unobserve(cue);
+          cues.delete(element);
         }
       }
-      if (present.size === 0) setCovered(false);
+      if (present.size === 0) setHidden("false");
+      else if (changed) update();
     };
     scan();
     const mutation = new MutationObserver(() => {
@@ -88,8 +128,9 @@ export function ConciergeLauncher() {
     return () => {
       mutation.disconnect();
       intersection.disconnect();
+      arrival.disconnect();
       cancelAnimationFrame(queued);
-      setCovered(undefined);
+      setHidden(undefined);
     };
   }, [pathname]);
 
@@ -113,9 +154,11 @@ export function ConciergeLauncher() {
 
   return (
     <>
-      <div
+      {/* A landmark of its own: it comes after the footer, outside the page's other regions. */}
+      <aside
+        aria-label="Ask Shadow"
         className={styles.dock}
-        data-hidden={covered === undefined ? undefined : String(covered)}
+        data-hidden={hidden}
         data-header={headerInView === undefined ? undefined : String(headerInView)}
       >
         <button
@@ -140,7 +183,7 @@ export function ConciergeLauncher() {
             Book direct
           </Link>
         )}
-      </div>
+      </aside>
       {Panel ? <Panel open={open} prefill={prefill} onClose={() => setOpen(false)} /> : null}
     </>
   );

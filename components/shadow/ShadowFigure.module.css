@@ -54,7 +54,7 @@
   stroke-linejoin: round;
   transform-box: fill-box;
   transform-origin: center;
-  transition: transform 240ms var(--ease-out);
+  transition: transform 380ms var(--ease-out);
 }
 
 /* Whatever button or link he stands in, he straightens his bow tie when you point at it. */

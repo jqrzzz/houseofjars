@@ -241,7 +241,7 @@
 
 /* ------------------------------------------------------------- the lights */
 
-/* The pod's own lamp, behind its closed curtain: lit by Evening only. */
+/* The pod's own lamp, glowing through its closed curtain: lit by Evening only. */
 .podLamp {
   position: absolute;
   left: var(--x);
@@ -262,6 +262,33 @@
   }
 }
 
+/*
+ * Bedtime (Evening only): a veil of the night over the paper itself, cut to
+ * the sheets by their own outlines (--hush-mask, from StageArt), so the sky
+ * and its moon stay clear. It lies under every overlay, so the lights, the
+ * thread and H01's glowing curtain stay bright while the house goes quiet.
+ * The rest frame is dimmed; by Day there is none.
+ */
+.hush {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: color-mix(in oklab, var(--night) 40%, transparent);
+  -webkit-mask: var(--hush-mask);
+  mask: var(--hush-mask);
+  pointer-events: none;
+}
+
+:global(:root[data-theme="dark"]) .hush {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .hush {
+    display: block;
+  }
+}
+
 /* The air over the big jar: a wisp and a few motes, gone at rest. */
 .air {
   position: absolute;
@@ -275,10 +302,13 @@
   position: absolute;
   left: -12.5px;
   top: -42px;
+  /* The air is a point (no width), and the global max-width: 100% would squash the wisp to nothing. */
+  max-width: none;
 }
 
+/* The motes rise beside the thread, not on it. */
 .motes {
-  --motes-x: 0;
+  --motes-x: 14px;
   --motes-y: -4px;
 }
 
@@ -306,9 +336,21 @@
   }
 }
 
-/* A label tag hangs on a short cord from a pin at its anchor; it swings about the pin. */
+/* A short stage (a phone held sideways, a zoomed page): no room for the tags; the words beside the stage say the same. */
+@container (max-height: 15rem) {
+  .tag {
+    display: none;
+  }
+}
+
+/*
+ * A label tag hangs on a short cord from a pin at its anchor; it swings about
+ * the pin. Tags stand above every floor's overlay (an upper floor's thread
+ * and rings never cross a lower floor's words), below an open note.
+ */
 .tag {
   position: absolute;
+  z-index: 1;
   left: var(--x);
   top: var(--y);
   width: 0;
@@ -341,6 +383,15 @@
   left: 0;
   bottom: 1rem;
   translate: -50% 0;
+}
+
+/* A plate can hang to one side of its pin, clear of what the pin marks: on to the right ("start") or back to the left ("end"). */
+.tag[data-side="start"] .plate {
+  translate: -0.75rem 0;
+}
+
+.tag[data-side="end"] .plate {
+  translate: calc(-100% + 0.75rem) 0;
 }
 
 /* A note on the house: a tag with a plus that opens a short line beside it. */
@@ -509,9 +560,13 @@
       animation-name: tag-in-3;
     }
 
-    /* Notes and camera dots come out once the floors stand apart (never while focused). */
+    /*
+     * Notes and camera dots swing about their pins as the floors start to part,
+     * readable from the first (never hidden: they are links), and are still by
+     * the first third of the lift (never while focused).
+     */
     :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] :is(.note, .camera):not(:focus-within, :focus-visible) {
-      animation: link-in linear both;
+      animation: plate-in linear both;
       animation-timeline: var(--stage-timeline, none);
       animation-range: var(--act-b, normal);
     }
@@ -535,12 +590,6 @@
       animation-range: var(--act-d, normal);
     }
 
-    :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .podLamp {
-      animation: pod-lamp linear both;
-      animation-timeline: var(--stage-timeline, none);
-      animation-range: var(--act-d, normal);
-    }
-
     /* Layers get ready to move only while their act runs (StageDirector names the act). */
     :global(:root:not([data-motion="still"]))
       .stage[data-lift="scroll"]:is([data-act="a"], [data-act="b"])
@@ -558,7 +607,7 @@
   @supports not (animation-timeline: view()) {
     :global(:root[data-life]:not([data-motion="still"]))
       .stage[data-lift="scroll"][data-act]
-      :is(.house, [data-layer], [data-ov], [data-link], .tag, [data-rings] > span, [data-ov] > i, .podLamp),
+      :is(.house, [data-layer], [data-ov], [data-link], .tag, [data-rings] > span, [data-ov] > i),
     :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act] [data-thread] :global(:is(.th, .thc, [data-cloth])) {
       transition:
         transform var(--dur-scene) var(--ease-out),
@@ -608,10 +657,6 @@
       transform: scaleX(0.15);
     }
 
-    :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act]:not([data-act="d"]) .podLamp {
-      opacity: 0;
-    }
-
     :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act] [data-bead] {
       visibility: hidden;
     }
@@ -623,19 +668,19 @@
    * each ring settling as the thread reaches it, the bead riding along.
    */
   :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-thread] :global(:is(.th, .thc)) {
-    animation: walk-draw calc((var(--b) - var(--a)) * 2.4s) linear calc(var(--a) * 2.4s) both;
+    animation: walk-draw calc((var(--b) - var(--a)) * 3.84s) linear calc(var(--a) * 3.84s) both;
     animation-timeline: auto;
     animation-range: normal;
   }
 
   :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-rings] > span {
-    animation: ring-settle var(--dur-section) var(--ease-out) calc(var(--at) * 2.4s - 200ms) both;
+    animation: ring-settle var(--dur-section) var(--ease-out) calc(var(--at) * 3.84s - 320ms) both;
     animation-timeline: auto;
     animation-range: normal;
   }
 
   :global(:root:not([data-motion="still"])) .stage[data-replay][data-lift] [data-bead] {
-    animation: bead-walk calc((var(--b) - var(--a)) * 2.4s) linear calc(var(--a) * 2.4s) both;
+    animation: bead-walk calc((var(--b) - var(--a)) * 3.84s) linear calc(var(--a) * 3.84s) both;
     animation-timeline: auto;
     animation-range: normal;
   }
@@ -651,20 +696,43 @@
   }
 
   :global(:root:not([data-motion="still"])) .stage[data-lift="static"][data-played] .tag {
-    animation: tag-swing var(--dur-hinge) var(--ease-out) calc(var(--k, 0) * 80ms + 500ms) both;
+    animation: tag-swing var(--dur-hinge) var(--ease-out) calc(var(--k, 0) * 130ms + 800ms) both;
+  }
+
+  /*
+   * Goodnight (Act D, in every browser: StageDirector names the act): as the
+   * curtain closes, by Evening the pod's lamp warms behind it and the house
+   * dims around it, each over its own time (a light never changes in under
+   * 400 ms, however fast the scroll), and back as the reader returns.
+   */
+  :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .podLamp {
+    transition: opacity var(--dur-section) var(--ease-lamp);
+  }
+
+  :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .hush {
+    transition: opacity var(--dur-scene) var(--ease-lamp);
+  }
+
+  :global(:root[data-life]:not([data-motion="still"])) .stage[data-lift="scroll"][data-act]:not([data-act="d"]) :is(.podLamp, .hush) {
+    opacity: 0;
+  }
+
+  /* On a scroll stage the air waits for its own stop (data-play), even when the stage's lights play as a phrase. */
+  :global(:root:not([data-motion="still"])) .stage[data-lift="scroll"] .air:not([data-play]) :is(svg, path, i) {
+    animation: none;
   }
 
   /* At the front desk a wisp of warm air rises from the big jar, with a few motes, once (StageDirector plays it on scroll stages). */
   .wisp {
-    --wisp-delay: 200ms;
+    --wisp-delay: 320ms;
   }
 
   .stage[data-lift="static"] .wisp {
-    --wisp-delay: 1400ms;
+    --wisp-delay: 2240ms;
   }
 
   .stage[data-lift="static"] .motes {
-    --delay: 900ms;
+    --delay: 1440ms;
   }
 }
 
@@ -672,26 +740,23 @@
  * A breath of wind (§10.1): once, as the scene first comes into view (a
  * static stage) or the house first opens (a scroll stage: StageDirector sets
  * data-play at Act B), the hanging sign swings up to 2° about the top of its
- * hangers and settles. Its rest is where the layer draws it.
+ * hangers and settles within 1.6 s, before the walk reaches the desk. Its
+ * rest is where the layer draws it.
  */
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .stage[data-lift="static"][data-played] [data-sign],
   :global(:root:not([data-motion="still"])) .stage [data-sign][data-play] {
-    animation: sign-breath 2600ms var(--ease-sway) 250ms both;
+    animation: sign-breath 2560ms var(--ease-sway) both;
   }
 }
 
 @keyframes sign-breath {
-  24% {
+  30% {
     rotate: 2deg;
   }
 
-  54% {
-    rotate: -1.2deg;
-  }
-
-  80% {
-    rotate: 0.45deg;
+  65% {
+    rotate: -1deg;
   }
 }
 
@@ -724,6 +789,19 @@
   0%,
   80% {
     opacity: 0;
+  }
+}
+
+@keyframes plate-in {
+  0% {
+    opacity: 0.4;
+    rotate: -4deg;
+  }
+
+  30%,
+  100% {
+    opacity: 1;
+    rotate: 0deg;
   }
 }
 
@@ -778,13 +856,6 @@
 @keyframes curtain-close {
   from {
     transform: scaleX(0.15);
-  }
-}
-
-@keyframes pod-lamp {
-  0%,
-  70% {
-    opacity: 0;
   }
 }
 
