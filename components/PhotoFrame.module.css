@@ -170,6 +170,14 @@
   }
 }
 
+/* A photograph's drawing fills its frame, as the photograph did. */
+.scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 /* A drawing sits inside the frame with room around it. */
 .drawn {
   display: grid;

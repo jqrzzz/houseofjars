@@ -4,7 +4,6 @@ import { PhotoFrame } from "@/components/PhotoFrame";
 import { FindYourPodPoster } from "@/components/game/FindYourPodPoster";
 import { HOUSE_PHOTOS, HouseStage } from "@/components/house/HouseStage";
 import { PodDiagram } from "@/components/house/PodDiagram";
-import { PhotoTwin } from "@/components/stage/PhotoTwin";
 import { cameraNumber, type PhotoKey } from "@/components/stage/places";
 import { isFirm } from "@/content/certainty";
 import { photos } from "@/content/photos";
@@ -34,7 +33,7 @@ const FORWARD = ["nav-forward"];
 const ON = new Set(["landing", "stairs", "terrace"]);
 
 /**
- * Where a photo was taken, in the house model's words, to follow "Taken":
+ * Where a view of the house is, in the house model's words, to follow "Seen":
  * "in Dorm H, Floor 1" for a named room, "on the landing, Floor 1" for a
  * plain place.
  */
@@ -104,16 +103,14 @@ export default function TheHousePage() {
             A look inside
           </h2>
           <ul role="list" className={styles.gallery}>
-            {lookInside.map((key, index) => {
+            {lookInside.map((key) => {
               const photo = photos[key];
               const n = cameraNumber(HOUSE_PHOTOS, key);
               const area = photo.place?.area;
               const where = area ? placeName(area) : undefined;
               const placed = n !== undefined && area !== undefined && where !== undefined;
-              // One paper twin per place: photos taken in the same area would show the same tile.
-              const twin = placed && !lookInside.slice(0, index).some((k) => photos[k].place?.area === area);
               return (
-                <li key={key} id={`photo-${key}`} className={twin ? `${styles.photo} ${styles.placed}` : styles.photo} data-reveal="">
+                <li key={key} id={`photo-${key}`} className={styles.photo} data-reveal="">
                   <div className={styles.stack}>
                     <PhotoFrame
                       caption={photo.caption}
@@ -127,12 +124,11 @@ export default function TheHousePage() {
                         <span className={styles.number} aria-hidden="true">
                           {n}
                         </span>
-                        <span className="visually-hidden">Photo {n}: </span>
-                        Taken {where}
+                        <span className="visually-hidden">View {n}: </span>
+                        Seen {where}
                       </a>
                     ) : null}
                   </div>
-                  {twin ? <PhotoTwin area={area} className={styles.twin} /> : null}
                 </li>
               );
             })}

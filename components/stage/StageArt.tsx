@@ -156,7 +156,7 @@ export function StageArt({ art }: { art: StageArtData }) {
                 <a key={key} className={styles.camera} href={`#photo-${key}`} style={{ ...at(x, y), "--nudge": nudge } as Vars}>
                   <span aria-hidden="true">{n}</span>
                   <span className="visually-hidden">
-                    Photo {n}: {caption}
+                    View {n}: {caption}
                   </span>
                 </a>
               ))}

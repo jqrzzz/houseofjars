@@ -14,15 +14,40 @@ describe("PhotoFrame", () => {
     expect(frame({ mat: false })).not.toContain("_mat_");
   });
 
-  it("loads first with preload, and with priority, its old name", () => {
-    expect(frame({ preload: true })).toContain('rel="preload"');
-    expect(frame({ priority: true })).toContain('rel="preload"');
-    expect(frame({})).not.toContain('rel="preload"');
-    expect(frame({})).toContain('loading="lazy"');
+  it("shows a photograph's drawing, not the photograph, unless the page asks for the real one", () => {
+    const drawn = frame({});
+    expect(drawn).toContain('src="/art/dorm-corridor.svg"');
+    expect(drawn).toContain('src="/art/evening/dorm-corridor.svg"');
+    expect(drawn).not.toContain("/photos/");
+    expect(drawn).not.toContain("photos%2F");
+    const real = frame({ real: true });
+    expect(real).toMatch(/photos(%2F|\/)dorm-corridor-pods-and-window\.jpg/);
+    expect(real).not.toContain("/art/");
   });
 
-  it("keeps the alt text and the caption", () => {
+  it("gives the drawing its own alt text and keeps the photograph's caption", () => {
     const markup = frame({});
+    expect(markup).toContain(`alt="${photos.dormCorridor.drawnAlt}"`);
+    expect(markup).not.toContain('aria-hidden="true"');
+    expect(markup).toContain("<figcaption");
+    expect(markup).toContain("The dorms");
+  });
+
+  it("fetches the drawing first with preload, and with priority, its old name", () => {
+    expect(frame({ preload: true })).toContain('fetchPriority="high"');
+    expect(frame({ priority: true })).toContain('fetchPriority="high"');
+    expect(frame({})).not.toContain('fetchPriority="high"');
+  });
+
+  it("loads the real photograph first with preload, and with priority, its old name", () => {
+    expect(frame({ real: true, preload: true })).toContain('rel="preload"');
+    expect(frame({ real: true, priority: true })).toContain('rel="preload"');
+    expect(frame({ real: true })).not.toContain('rel="preload"');
+    expect(frame({ real: true })).toContain('loading="lazy"');
+  });
+
+  it("keeps the real photograph's alt text and caption", () => {
+    const markup = frame({ real: true });
     expect(markup).toContain(`alt="${photos.dormCorridor.alt}"`);
     expect(markup).toContain("<figcaption");
   });
@@ -36,7 +61,7 @@ describe("PhotoFrame", () => {
 
   it("asks for as many pixels as the photograph is drawn across", () => {
     // A 3:2 photograph in a 2:3 arch is cropped to its middle: drawn 2.25 times the frame's width, then settled at 1.08.
-    expect(frame({ shape: "arch", aspect: "2 / 3", sizes: "(min-width: 60rem) 26rem, 80vw" })).toContain(
+    expect(frame({ real: true, shape: "arch", aspect: "2 / 3", sizes: "(min-width: 60rem) 26rem, 80vw" })).toContain(
       'sizes="(min-width: 60rem) calc(2.44 * 26rem), calc(2.44 * 80vw)"',
     );
   });

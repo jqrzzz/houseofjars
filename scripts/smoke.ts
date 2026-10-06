@@ -205,6 +205,8 @@ async function visit(browser: Browser, route: Route, viewport: Viewport, scheme:
     overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     canonical: document.querySelector('link[rel="canonical"]')?.getAttribute("href") ?? null,
     ogImage: document.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? null,
+    // The house's real photographs (public/photos/), however the image optimiser spells their address.
+    realPhotos: [...document.images].filter((image) => /(^|\/|%2F)photos(\/|%2F)/.test(image.currentSrc || image.src)).length,
   }));
 
   // The browser logs the 404 response of the not-found page itself.
@@ -212,6 +214,9 @@ async function visit(browser: Browser, route: Route, viewport: Viewport, scheme:
   check(unexpected.length === 0, `${label}: console errors: ${unexpected.join(" | ")}`);
   check(found.h1 === 1, `${label}: ${found.h1} h1 elements, expected 1`);
   check(found.overflow <= 0, `${label}: scrolls sideways by ${found.overflow}px`);
+  // Every page shows the house drawn; only the booking page shows its real photographs (docs/DESIGN.md §10.5).
+  if (route.path === "/book") check(found.realPhotos >= 9, `${label}: ${found.realPhotos} real photographs, expected the 9 of "Real photos"`);
+  else check(found.realPhotos === 0, `${label}: ${found.realPhotos} real photographs on a page that should show only drawings`);
   if (route.status === 200) {
     const expected = trimSlash(new URL(route.path, `${siteUrl}/`).toString());
     check(found.title === route.title, `${label}: title "${found.title}", expected "${route.title}"`);
@@ -836,11 +841,12 @@ async function budgets(context: BrowserContext) {
 }
 
 /**
- * The hero's first screen (docs/DESIGN.md §1.1): in every viewport, the h1,
- * why to book direct, Book and Ask Shadow are on it; beside them on wide
- * screens the whole dorm photo, down to its foot, and on phones its top,
- * under the words. The photo is the largest paint. Seen at rest (Still), where
- * the lamps have dropped into place, and saved as hero-{size}-{scheme}.png.
+ * The hero's first screen (docs/DESIGN.md §1.1, §10.5): in every viewport,
+ * the h1, why to book direct, Book and Ask Shadow are on it; beside them on
+ * wide screens the whole dorm drawing, down to its foot, and on phones its
+ * top, under the words. The drawing is the largest paint. Seen at rest
+ * (Still), where the lamps have dropped into place, and saved as
+ * hero-{size}-{scheme}.png.
  */
 async function hero(browser: Browser, viewport: Viewport, scheme: Scheme) {
   const { context, page, errors } = await open(browser, viewport, scheme, { theme: scheme, still: true, skipSplash: true });
@@ -860,7 +866,9 @@ async function hero(browser: Browser, viewport: Viewport, scheme: Scheme) {
   await onFirstScreen("Book", section.getByRole("link", { name: /^Book/ }));
   await onFirstScreen("Ask Shadow", section.getByRole("button", { name: "Ask Shadow" }));
   // The hero sets the words beside the photo from 60rem (960 px) up.
-  await onFirstScreen("the dorm photo", section.getByAltText(photos.dormCorridor.alt, { exact: true }), viewport.width >= 960);
+  // Day and Evening twins share the alt text; the theme shows one of them.
+  const dorm = section.getByAltText(photos.dormCorridor.drawnAlt, { exact: true }).locator("visible=true");
+  await onFirstScreen("the dorm drawing", dorm, viewport.width >= 960);
   const largest = await page.evaluate(
     () =>
       new Promise<string>((resolve) => {
@@ -871,7 +879,7 @@ async function hero(browser: Browser, viewport: Viewport, scheme: Scheme) {
         setTimeout(() => resolve("not reported"), 3_000);
       }),
   );
-  check(largest === photos.dormCorridor.alt, `${label}: the largest paint is "${largest}", not the dorm photo`);
+  check(largest === photos.dormCorridor.drawnAlt, `${label}: the largest paint is "${largest}", not the dorm drawing`);
   check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
   await page.screenshot({ path: `${outDir}/hero-${viewport.width}x${viewport.height}-${scheme}.png` });
   await context.close();

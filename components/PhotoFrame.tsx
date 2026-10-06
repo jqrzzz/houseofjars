@@ -5,12 +5,20 @@ import type { DrawingName } from "./art/drawings";
 import styles from "./PhotoFrame.module.css";
 
 export interface Photo {
-  readonly src: StaticImageData | string;
+  /** The photograph itself; a page that only shows its drawing need not carry it. */
+  readonly src?: StaticImageData | string;
   readonly alt: string;
   /** Which part of the photograph stays in view when the frame crops it (CSS object-position). */
   readonly focus?: string;
   /** The photograph's size in pixels, so the frame can ask for enough of it (coverSizes). */
   readonly size?: readonly [width: number, height: number];
+  /**
+   * The photograph redrawn in the house's paper style (public/art/): what the
+   * site shows in its place everywhere but the booking page (see `real`).
+   */
+  readonly drawing?: DrawingName;
+  /** What the drawing shows, for screen readers. */
+  readonly drawnAlt?: string;
 }
 
 /** How much larger than its frame a photograph is drawn at rest: the settled scale (PhotoFrame.module.css). */
@@ -98,19 +106,28 @@ interface PhotoFrameProps {
    * photograph.
    */
   plate?: ReactNode;
+  /**
+   * Show the photograph itself. Off by default: a photograph with a drawing
+   * shows its drawing, so the real photographs appear only where a page asks
+   * for them (the booking page, docs/DESIGN.md §10.5).
+   */
+  real?: boolean;
   /** @deprecated Use `preload`: next/image renamed it in Next 16. Kept so older callers still compile. */
   priority?: boolean;
   className?: string;
 }
 
 /**
- * A frame for a photograph of the house, drawn until the photograph exists;
- * photos swap in through the same frame.
+ * A frame for a view of the house. It shows, in order of preference:
+ * - the photograph itself, only when the page asks for it (`real`);
+ * - else the photograph's drawing, filling the frame as the photograph did,
+ *   with the photograph's caption and its own alt text;
+ * - else, with no photograph, a decorative drawing set inside the frame.
  *
  * By default the frame sits in a cut-paper mat (docs/DESIGN.md §2.4): a
  * --paper-near ground 1.25rem wide with a card edge. By Evening the mat is
- * washed with lamplight behind the photograph, never over it. Nothing drawn
- * crosses into the picture.
+ * washed with lamplight behind the picture, never over it. Nothing drawn
+ * crosses into a photograph.
  */
 export function PhotoFrame({
   caption,
@@ -123,6 +140,7 @@ export function PhotoFrame({
   preload,
   priority,
   plate,
+  real = false,
   className,
 }: PhotoFrameProps) {
   const figureClass = [styles.figure, plate ? styles.plated : null, className].filter(Boolean).join(" ");
@@ -148,6 +166,29 @@ export function PhotoFrame({
       </figure>
     );
   }
+
+  if (photo.drawing && (!real || !photo.src)) {
+    // The photograph's drawing fills the frame and settles in it as the photograph would.
+    return (
+      <figure className={figureClass}>
+        {inMat(
+          <div className={frameClass} style={{ aspectRatio: aspect }}>
+            <Drawing
+              name={photo.drawing}
+              alt={photo.drawnAlt ?? photo.alt}
+              className={`${styles.image} ${styles.scene}`}
+              sizes={sizes}
+              preload={preload ?? priority}
+            />
+          </div>,
+        )}
+        {plate ? <div className={styles.plate}>{plate}</div> : null}
+        <figcaption className={styles.caption}>{caption}</figcaption>
+      </figure>
+    );
+  }
+
+  if (!photo.src) return null;
 
   return (
     <figure className={figureClass}>

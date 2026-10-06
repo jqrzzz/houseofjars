@@ -49,7 +49,7 @@ const NOTES: readonly StageHotspot[] = [
   },
 ];
 
-/** The photos of "A look inside" that have a place in the house, in the gallery's order: their camera dots carry these numbers. */
+/** The views of "A look inside" that have a place in the house, in the gallery's order: their dots carry these numbers. */
 export const HOUSE_PHOTOS: readonly PhotoKey[] = ["dormFan", "podCurtain", "podLadder", "stairsJar"];
 
 /**
@@ -59,7 +59,7 @@ export const HOUSE_PHOTOS: readonly PhotoKey[] = ["dormFan", "podCurtain", "podL
  * draws itself; on phones the stage is a still, lifted. Chips choose a walk
  * (WalkPicker), and each walk's stops are listed beside the stage; without
  * JavaScript every walk is listed, in <details>. Notes on the house open
- * where they belong, and numbered camera dots link to the photos taken there.
+ * where they belong, and numbered dots link to the views drawn there.
  */
 export function HouseStage({ photos = HOUSE_PHOTOS }: { photos?: readonly PhotoKey[] }) {
   const walks = WALKS.filter((w) => w.firm !== false).map((w) => {

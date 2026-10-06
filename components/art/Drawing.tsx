@@ -13,17 +13,24 @@ const DAY = { colorScheme: "light" } as const;
  * are fetched at high priority, so only the twin on show loads, and first.
  * The Day twin is pinned to a light colour scheme, because an image reads
  * prefers-color-scheme from its <img>: with the device in dark mode and Day
- * chosen on the site, it still draws in Day colours. Decorative: the words
- * around it carry the facts.
+ * chosen on the site, it still draws in Day colours. Decorative unless given
+ * an alt: the words around it carry the facts.
  */
 export function Drawing({
   name,
+  alt = "",
   className,
   sizes,
   preload,
   priority,
 }: {
   name: DrawingName;
+  /**
+   * What the drawing shows, when it stands in for a photograph (PhotoFrame).
+   * Empty, so decorative, by default. Both twins carry it; the hidden one is
+   * display:none, so a screen reader meets it once.
+   */
+  alt?: string;
   className?: string;
   sizes?: string;
   /** Load first: the drawing is at the top of the page (a page header's art). */
@@ -42,7 +49,7 @@ export function Drawing({
         src={src}
         width={width}
         height={height}
-        alt=""
+        alt={alt}
         sizes={sizes}
         unoptimized
         loading="lazy"
@@ -54,7 +61,7 @@ export function Drawing({
         src={evening}
         width={width}
         height={height}
-        alt=""
+        alt={alt}
         sizes={sizes}
         unoptimized
         loading="lazy"

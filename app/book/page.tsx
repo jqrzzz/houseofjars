@@ -3,6 +3,7 @@ import type { HouseNotes } from "@/components/book/BookingSteps";
 import { DirectRequest } from "@/components/book/DirectRequest";
 import { InquiryForm } from "@/components/book/InquiryForm";
 import { OnlineBooking } from "@/components/book/OnlineBooking";
+import { RealPhotos } from "@/components/book/RealPhotos";
 import { WovenBand } from "@/components/brand/WovenBand";
 import { ContactDetails } from "@/components/contact/ContactDetails";
 import { Block, Prose } from "@/components/page/Block";
@@ -47,10 +48,17 @@ const house: HouseNotes = {
  * Either way the booking sits on a paper ticket, the same as the booking
  * card's: following a link here from the card, the card's ticket glides into
  * it (the "booking-ticket" morph). Once dates are chosen, the stay's rail
- * appears on it: check-in, breakfast, check-out.
+ * appears on it: check-in, breakfast, check-out. Right after the booking come
+ * the house's real photographs, which no other page shows.
  */
 export default function BookPage() {
   const online = onlineBookingConfigured();
+  // The real photographs, right after the booking itself: the only page that shows them (the rest of the site shows them drawn).
+  const photosBlock = (
+    <Block id="photos" title="Real photos" aside="The house as it is. Every drawing on this site is drawn from these photos.">
+      <RealPhotos />
+    </Block>
+  );
   return (
     <>
       {online ? (
@@ -62,6 +70,7 @@ export default function BookPage() {
             lede={`Choose your dates to see the free beds, and book directly with the house. There is nothing to pay online: you pay when you arrive. ${policies.directPrice.value}`}
           />
           <OnlineBooking house={house} />
+          {photosBlock}
           <Block id="message" title="Send the team a message" aside="For dates, questions or anything you need before you arrive.">
             <InquiryForm labelledBy="message-title" />
           </Block>
@@ -84,6 +93,7 @@ export default function BookPage() {
               </div>
             </ViewTransition>
           </Block>
+          {photosBlock}
         </>
       )}
 

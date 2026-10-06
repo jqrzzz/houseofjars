@@ -1,0 +1,20 @@
+/* The real photographs: two across on phones, three on wide screens; each keeps its own shape. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-l) var(--space-m);
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 60rem) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Shown whole: these photographs neither settle nor drift in their frames, so no edge is ever cropped away. */
+.grid img {
+  animation: none;
+}

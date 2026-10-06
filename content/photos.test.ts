@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
+import { drawings } from "@/components/art/drawings";
 import { photos } from "./photos";
 
 /** A JPEG's width and height, from its start-of-frame segment. */
@@ -48,5 +49,40 @@ describe("photo places", () => {
 describe("photo sizes", () => {
   it.each(Object.entries(photos))("%s gives the web copy's real size", (_, photo) => {
     expect(jpegSize(photo.src)).toEqual(photo.size);
+  });
+});
+
+describe("photo drawings", () => {
+  it.each(Object.entries(photos))("%s has its own drawing, Day and Evening, described for screen readers", (_, photo) => {
+    const drawing = drawings[photo.drawing];
+    expect(drawing).toBeDefined();
+    expect(existsSync(join(process.cwd(), "public", drawing.src))).toBe(true);
+    expect(existsSync(join(process.cwd(), "public", drawing.evening))).toBe(true);
+    expect(photo.drawnAlt).toMatch(/^Drawing of /);
+  });
+
+  it("are each drawn once", () => {
+    const names = Object.values(photos).map((photo) => photo.drawing);
+    expect(new Set(names).size).toBe(names.length);
+  });
+});
+
+/** Every .tsx file under a folder. */
+function tsxFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return tsxFiles(path);
+    return name.endsWith(".tsx") ? [path] : [];
+  });
+}
+
+describe("real photographs", () => {
+  it("are asked for only by the booking page's gallery", () => {
+    const root = process.cwd();
+    const asking = ["app", "components"]
+      .flatMap((dir) => tsxFiles(join(root, dir)))
+      .filter((file) => /<PhotoFrame\b[^>]*\sreal(?=[\s/>=])/.test(readFileSync(file, "utf8")))
+      .map((file) => relative(root, file));
+    expect(asking).toEqual(["components/book/RealPhotos.tsx"]);
   });
 });

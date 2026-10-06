@@ -73,7 +73,7 @@ export function HeroView({
       <div className={styles.photoWrap}>
         {/*
           Three of the house's lamps hang above the arch, behind its mat, so their light never falls on the
-          photograph. They drop into place and light up once (HouseLamp), and rise a little as the hero leaves.
+          picture. They drop into place and light up once (HouseLamp), and rise a little as the hero leaves.
         */}
         <HeroLamps />
         <PhotoFrame
