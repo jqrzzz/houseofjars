@@ -175,9 +175,15 @@ export function FindYourPod({ open, onClose }: FindYourPodProps) {
   );
 }
 
-/** Puts the keyboard on the button that matters (Start, Carry on, the next errand), else on the first move. */
+/**
+ * Puts the keyboard on the button that matters (Start, Carry on, the next errand), else on the first move that
+ * isn't the way back, so pressing Enter again carries on rather than undoing the step.
+ */
 function focusFirst(within: HTMLElement): boolean {
-  const target = within.querySelector<HTMLElement>("[data-autofocus]") ?? within.querySelector<HTMLElement>("[data-option]");
+  const target =
+    within.querySelector<HTMLElement>("[data-autofocus]") ??
+    within.querySelector<HTMLElement>("[data-option]:not([data-back])") ??
+    within.querySelector<HTMLElement>("[data-option]");
   target?.focus();
   return Boolean(target);
 }
@@ -332,57 +338,61 @@ function Board({
       data-night={night ? "" : undefined}
       data-phase={phase}
     >
-      <div className={styles.boardFrame} style={frame}>
-        <svg className={styles.board} viewBox={box.join(" ")} aria-hidden="true" focusable="false">
-          <defs>
-            <pattern id={`${id}weave`} width="26" height="10" patternUnits="userSpaceOnUse">
-              <rect className={styles.weave} width="26" height="10" />
-              <rect className={styles.weaveFold} width="9" height="10" />
-              <rect className={styles.weaveThread} x="15" width="3" height="10" />
-              <rect className={styles.weaveThread} x="21" width="1" height="10" />
-            </pattern>
-          </defs>
-          {graph.floors.map((floor) => {
-            const [vx, vy, vw, vh] = floor.viewBox;
-            const [x, y] = floor.at;
-            const twin = floor.src.day !== floor.src.evening;
-            return (
-              <g key={floor.id}>
-                <rect className={styles.sheetEdge} x={x} y={y} width={floor.crop[2]} height={floor.crop[3]} />
-                <svg x={x} y={y} width={floor.crop[2]} height={floor.crop[3]} viewBox={floor.crop.join(" ")}>
-                  <image href={floor.src.day} x={vx} y={vy} width={vw} height={vh} className={twin ? "for-day" : undefined} />
-                  {twin ? <image href={floor.src.evening} x={vx} y={vy} width={vw} height={vh} className="for-evening" /> : null}
-                </svg>
-                <rect className={styles.dusk} x={x} y={y} width={floor.crop[2]} height={floor.crop[3]} />
-              </g>
-            );
-          })}
-          <Thread nodes={trail} turn={session.turn} />
-          {next.map(({ node, via }) => (
-            <path key={`hint-${node.id}`} className={styles.hint} d={hop(here, node, via === "stairs")} />
-          ))}
-          {next.map(({ node }) => (
-            <g key={node.id} className={styles.spot} transform={`translate(${node.x} ${node.y})`} onClick={() => onGo(node.id)}>
-              <circle className={styles.spotHit} r="26" />
-              <circle className={styles.spotRing} r="9" />
-            </g>
-          ))}
-          {won ? null : (
-            <g className={styles.lamp} style={{ transform: `translate(${here.x}px, ${here.y}px)` }}>
-              <Halo big />
-            </g>
-          )}
-          {won ? <Finale graph={graph} weave={`url(#${id}weave)`} /> : null}
-        </svg>
-        {won
-          ? null
-          : graph.floors.map((floor) => (
-          <span key={floor.id} className={styles.floorTag} style={{ left: pct(floor.at[0], w), bottom: pct(h - floor.at[1], h) }}>
-            {floor.name}
-          </span>
+      <div className={styles.boardBox}>
+        <div className={styles.boardFrame} style={frame}>
+          <svg className={styles.board} viewBox={box.join(" ")} aria-hidden="true" focusable="false">
+            <defs>
+              <pattern id={`${id}weave`} width="26" height="10" patternUnits="userSpaceOnUse">
+                <rect className={styles.weave} width="26" height="10" />
+                <rect className={styles.weaveFold} width="9" height="10" />
+                <rect className={styles.weaveThread} x="15" width="3" height="10" />
+                <rect className={styles.weaveThread} x="21" width="1" height="10" />
+              </pattern>
+            </defs>
+            {graph.floors.map((floor) => {
+              const [vx, vy, vw, vh] = floor.viewBox;
+              const [x, y] = floor.at;
+              const twin = floor.src.day !== floor.src.evening;
+              return (
+                <g key={floor.id}>
+                  <rect className={styles.sheetEdge} x={x} y={y} width={floor.crop[2]} height={floor.crop[3]} />
+                  <svg x={x} y={y} width={floor.crop[2]} height={floor.crop[3]} viewBox={floor.crop.join(" ")}>
+                    <image href={floor.src.day} x={vx} y={vy} width={vw} height={vh} className={twin ? "for-day" : undefined} />
+                    {twin ? <image href={floor.src.evening} x={vx} y={vy} width={vw} height={vh} className="for-evening" /> : null}
+                  </svg>
+                  <rect className={styles.dusk} x={x} y={y} width={floor.crop[2]} height={floor.crop[3]} />
+                </g>
+              );
+            })}
+            <Thread nodes={trail} turn={session.turn} />
+            {next.map(({ node, via }) => (
+              <path key={`hint-${node.id}`} className={styles.hint} d={hop(here, node, via === "stairs")} />
             ))}
-        {won ? <span className={styles.sleepTag}>Sleep well</span> : null}
+            {next.map(({ node }) => (
+              <g key={node.id} className={styles.spot} transform={`translate(${node.x} ${node.y})`} onClick={() => onGo(node.id)}>
+                <circle className={styles.spotHit} r="26" />
+                <circle className={styles.spotRing} r="9" />
+              </g>
+            ))}
+            {won ? null : (
+              <g className={styles.lamp} style={{ transform: `translate(${here.x}px, ${here.y}px)` }}>
+                <Halo big />
+              </g>
+            )}
+            {won ? <Finale graph={graph} weave={`url(#${id}weave)`} /> : null}
+          </svg>
+          {won
+            ? null
+            : graph.floors.map((floor) => (
+                <span key={floor.id} className={styles.floorTag} style={{ left: pct(floor.at[0], w), bottom: pct(h - floor.at[1], h) }}>
+                  {floor.name}
+                </span>
+              ))}
+          {won ? <span className={styles.sleepTag}>Sleep well</span> : null}
+        </div>
       </div>
+      {/* The plans are drawn from the walk through the house, so they carry its caption, as every house drawing does. */}
+      <p className={styles.boardCaption}>Drawn from our walk through the house: positions are approximate.</p>
     </div>
   );
 }
@@ -486,8 +496,8 @@ function Intro({ onBegin }: { onBegin: () => void }) {
       <p className={styles.eyebrow}>Practise the walk</p>
       <h3 className={styles.heading}>Walk the house as a small lamp light.</h3>
       <p className={styles.lede}>
-        Three errands: arriving, back late and leaving early. Keep to the house rules on the way and earn up to nine lamps. Miss one and
-        Shadow holds it up for you, then you carry on: you can’t lose.
+        Three errands: arriving, back late and leaving early. Keep to the house rules on the way and earn up to nine lamps. Miss a rule
+        and Shadow holds it up for you, then you carry on: you can’t lose.
       </p>
       <p className={`${styles.keys} ${styles.forKeys}`}>
         <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> move the lamp. Every move is in
@@ -508,6 +518,8 @@ function Playing({ session, all, onMove }: { session: Session; all: readonly Gam
   const walk = all.filter((o) => o.move.kind === "go");
   const list = steps(state);
   const current = list.findIndex((s) => !s.done);
+  // The place the lamp has just come from: its move is the way back.
+  const from = [...state.trail].reverse().find((node) => node !== state.node);
   return (
     <>
       <section className={styles.errand} aria-label={`Errand ${round + 1} of ${ERRAND_ORDER.length}`}>
@@ -546,7 +558,13 @@ function Playing({ session, all, onMove }: { session: Session; all: readonly Gam
         <ul className={styles.options}>
           {walk.map((option) => (
             <li key={option.key}>
-              <button type="button" className={styles.option} data-option="" onClick={() => onMove(option.move)}>
+              <button
+                type="button"
+                className={styles.option}
+                data-option=""
+                data-back={option.move.kind === "go" && option.move.to === from ? "" : undefined}
+                onClick={() => onMove(option.move)}
+              >
                 {option.dir ? (
                   <kbd className={styles.arrow} aria-hidden="true">
                     {ARROWS[option.dir]}

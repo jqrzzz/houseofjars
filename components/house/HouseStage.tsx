@@ -18,7 +18,7 @@ const WALKS: readonly { route: string; label: string; firm?: boolean }[] = [
   { route: "leaving-early", label: "Leaving early" },
   { route: "smoke", label: "A smoke" },
   { route: "water", label: "Water" },
-  { route: "bathroom-women", label: "Bathroom" },
+  { route: "bathroom-women", label: "Women’s bathroom" },
   { route: "housekeeping-round", label: "The team’s round", firm: isFirm(staff.housekeepingRound) },
 ];
 
@@ -65,7 +65,8 @@ export function HouseStage({ photos = HOUSE_PHOTOS }: { photos?: readonly PhotoK
   const walks = WALKS.filter((w) => w.firm !== false).map((w) => {
     const route = houseOfJars.routes.find((r) => r.id === w.route);
     const thread = renderThreadLayer(w.route, { idPrefix: `${ID}-${w.route}-` });
-    const place = route?.name.split(": ")[1];
+    // "Arriving: from the terrace to pod H01" gives "From the terrace to pod H01"; a name without a colon is the place itself.
+    const place = route ? (route.name.split(": ")[1] ?? route.name) : undefined;
     return { ...w, place: place ? place[0]!.toUpperCase() + place.slice(1) : undefined, when: route?.when, stops: thread.stops };
   });
   const last = walks[0]!.stops.length - 1;

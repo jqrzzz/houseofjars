@@ -30,11 +30,22 @@ const lookInside: readonly PhotoKey[] = ["dormFan", "podCurtain", "podLadder", "
 /** Links deeper into the site play the forward page transition. */
 const FORWARD = ["nav-forward"];
 
-/** Where a photo was taken, in the house model's words: "Dorm H, Floor 1". */
+/** Places you stand on rather than in. */
+const ON = new Set(["landing", "stairs", "terrace"]);
+
+/**
+ * Where a photo was taken, in the house model's words, to follow "Taken":
+ * "in Dorm H, Floor 1" for a named room, "on the landing, Floor 1" for a
+ * plain place.
+ */
 function placeName(area: string): string | undefined {
   const found = houseOfJars.areas.find((a) => a.id === area);
   const floor = houseOfJars.floors.find((f) => f.id === found?.floor);
-  return found && floor ? `${found.name}, ${floor.name}` : undefined;
+  if (!found || !floor) return undefined;
+  // A room with a name of its own ends in its letter (Dorm H); any other place is "the" landing, café, …
+  const named = / [A-Z0-9]+$/.test(found.name);
+  const name = named ? found.name : found.name.toLowerCase();
+  return `${!named && ON.has(name) ? "on" : "in"} ${named ? name : `the ${name}`}, ${floor.name}`;
 }
 
 export default function TheHousePage() {
@@ -117,7 +128,7 @@ export default function TheHousePage() {
                           {n}
                         </span>
                         <span className="visually-hidden">Photo {n}: </span>
-                        Taken in {where}
+                        Taken {where}
                       </a>
                     ) : null}
                   </div>
@@ -189,8 +200,8 @@ export default function TheHousePage() {
         <Prose>
           <p>
             Practise the walk before you come. Three errands on the house’s own plans: arriving, back late and leaving
-            early. You are a small lamp light. Keep to the house rules on the way and earn up to nine lamps; miss one and
-            Shadow holds it up for you, so you can’t lose.
+            early. You play a small lamp light. Keep to the house rules on the way and earn up to nine lamps. Miss a rule
+            and Shadow shows it to you. You can’t lose.
           </p>
         </Prose>
         <FindYourPodPoster />

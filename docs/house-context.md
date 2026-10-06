@@ -211,8 +211,8 @@ Assumed:
 
 For guests. Check-in, 14:00 to 21:00.
 
-1. Front door, Entrance: In through the glass door on the left of the shopfront. From 23:30 to 07:00 it is locked: knock, and the night staff opens it. (rules: front door locked, no outside food)
-2. Check in, Front desk: Check in at the café counter, which is also the front desk: show your passport and pay the 100,000 kip deposit for your padlock and towel. Luggage can wait beside the desk. (rules: check in hours, passport, deposit)
+1. Front door, Entrance: In through the glass door on the left of the shopfront. From 23:30 to 07:00 it is locked: knock, and the night staff open the door. (rules: front door locked, no outside food)
+2. Check in, Front desk: At the café counter, which is also the front desk, show your passport and pay the 100,000 kip deposit for your padlock and towel. Luggage can wait beside the desk. (rules: check in hours, passport, deposit)
 3. Shoes off, Stairs: Take your shoes off at the foot of the stairs and carry them up. (rules: no shoes upstairs, registered guests upstairs)
 4. Shoes, Landing: Leave your shoes in the cubbies on the Floor 1 landing. (rules: no shoes upstairs)
 5. Pod H01, Dorm H: Find your pod by its number (H01 is a top bunk, up its ladder) and the locker with the same number. Keep your voice down: someone is always asleep. (rules: quiet, eat in the cafe)
@@ -223,22 +223,22 @@ For guests. 08:00 to 10:30.
 
 1. Shoes, Landing: Take your shoes from the cubby and carry them down. (rules: no shoes upstairs)
 2. Shoes on, Stairs: Put them on at the foot of the stairs. (rules: no shoes upstairs, registered guests upstairs)
-3. Breakfast, Café: Breakfast is included, served at the counter from 08:00 to 10:30: two fried eggs, salad, baguette, fruit and coffee or tea. Eat it at a table in the café. (rules: eat in the cafe)
+3. Breakfast, Café: Included, served at the counter from 08:00 to 10:30: two fried eggs, salad, baguette, fruit and coffee or tea. Eat it at a table in the café. (rules: eat in the cafe)
 
 ### Leaving early: pack downstairs, check out
 
-For guests. Before 08:00 (check-out is open until 11:30).
+For guests. Before 08:00, when check-out at the desk starts.
 
 1. Shoes, Landing: Take your shoes and your bag; pack nothing in the dorm. (rules: pack downstairs)
 2. Pack here, Café: Pack on the ground floor, beside the luggage space by the front desk, so the dorm can sleep on. (rules: pack downstairs)
-3. Check out, Front desk: Check out at the front desk and get the 100,000 kip deposit for your padlock and towel back. Leaving before 08:00? Tell the team beforehand, so they can return your deposit. (rules: check out hours, leaving before eight, deposit)
-4. Front door, Entrance: Out through the glass door. While it is locked, the night staff opens it. (rules: front door locked)
+3. Check out, Front desk: Told the team beforehand? Hand in your padlock and towel at the front desk and get the 100,000 kip deposit back. (rules: check out hours, leaving before eight, deposit)
+4. Front door, Entrance: Out through the glass door. While it is locked, the night staff open the door. (rules: front door locked)
 
 ### Going out for a smoke
 
 For guests.
 
-1. Not here, Terrace: No smoking on the terrace or at the café's front: the smoke drifts straight inside. (rules: no smoking, smoke past the terrace)
+1. Not here, Terrace: No smoking on the terrace or at the café’s front: the smoke drifts straight inside. (rules: no smoking, smoke past the terrace)
 2. Smoke here, Terrace: A few steps further out, by the small jar for cigarette butts. (rules: smoke past the terrace)
 
 ### From the counter to the free water
@@ -247,20 +247,20 @@ For guests.
 
 1. Free water, Water: Free drinking water at the dispenser, at the start of the corridor, with glasses in the cupboard below.
 
-### From Dorm H to the women's bathroom
+### From Dorm H to the women’s bathroom
 
 For guests.
 
-1. Women's bathroom: The women's bathroom is on Floor 1, past the stairs; the men's is the same place on Floor 2.
+1. Women’s bathroom: The women’s bathroom is on Floor 1, past the stairs.
 
 ### Housekeeping round: from the café up through every floor
 
 For the team. About every hour.
 
-1. Café: Look over the tables, the counter and the floor; clean what needs it.
-2. Toilet: The toilet, its sink and the corridor basin: clean and refill.
+1. Café: Look over the tables, the counter and the floor, and clean what needs it.
+2. Toilet: The toilet, its sink and the corridor basin: cleaned and refilled.
 3. Landing: Tidy the shoe cubbies and sweep the landing. (rules: no shoes upstairs)
-4. Bathroom, Women's bathroom: Toilets, showers, basins and floor: clean and refill.
+4. Bathroom, Women's bathroom: Toilets, showers, basins and floor: cleaned and refilled.
 5. Dorm H: Quietly: the aisle, the floor and the bins; pods made up fresh after check-out. (rules: quiet)
-6. Bathroom, Men's bathroom: Toilets, showers, basins and floor: clean and refill.
+6. Bathroom, Men's bathroom: Toilets, showers, basins and floor: cleaned and refilled.
 7. Dorm J: Quietly: the aisle, the floor and the bins; pods made up fresh after check-out. (rules: quiet)

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { beds, rules } from "@/content/stay";
 import { houseOfJars } from "@/lib/house/house-of-jars";
-import { buildGameGraph, gameJson, PLAN_IMAGES, PLAN_SCALE } from "./build-graph";
+import { BOARD_TOP, buildGameGraph, gameJson, PLAN_IMAGES, PLAN_SCALE } from "./build-graph";
 import {
   ERRAND_ORDER,
   ERRANDS,
@@ -97,6 +97,22 @@ describe("Find your pod: the board", () => {
       expect(node.y, node.id).toBeGreaterThan(floor.at[1]);
       expect(node.y, node.id).toBeLessThan(floor.at[1] + floor.crop[3]);
     }
+  });
+
+  it("cuts each plan along a wall across the house, through no fixture, and keeps the two floors level", () => {
+    const floorOf = (area: string) => houseOfJars.areas.find((a) => a.id === area)?.floor;
+    for (const floor of graph.floors) {
+      const depth = BOARD_TOP[floor.id];
+      const walls = houseOfJars.walls.filter((w) => w.floor === floor.id && w.box.x0 <= 0 && w.box.x1 >= houseOfJars.width && w.box.y0 < depth && depth < w.box.y1);
+      expect(walls, floor.id).toHaveLength(1);
+      const things = houseOfJars.fixtures.filter((f) => floorOf(f.area) === floor.id && f.box.y0 < depth && depth < f.box.y1);
+      expect(things.map((f) => f.id), floor.id).toEqual([]);
+      // The sheet's top edge is that depth on the plan (the street at the bottom, 50 px to the metre).
+      expect(floor.crop[1], floor.id).toBe(Math.floor((houseOfJars.depth - depth) * PLAN_SCALE));
+    }
+    // A depth sits at the same height on both sheets: the stairs line up across the board.
+    const [ground, floor1] = graph.floors;
+    expect(ground!.at[1] - ground!.crop[1]).toBe(floor1!.at[1] - floor1!.crop[1]);
   });
 
   it("joins every place to every other, with one flight of stairs and one door", () => {

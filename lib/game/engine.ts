@@ -62,7 +62,7 @@ export const ERRANDS: Readonly<Record<ErrandId, Errand>> = {
     from: "outside",
     start: { shoes: "on", bag: "none", checkedIn: true },
     steps: [
-      ["opened", "Knock on the glass: the night staff opens up"],
+      ["opened", "Knock on the glass: the night staff open up"],
       ["in", "In through the glass door"],
       ["shoes-off", "Shoes off at the foot of the stairs"],
       ["cubby", "Shoes into a cubby on the landing"],
@@ -81,8 +81,8 @@ export const ERRANDS: Readonly<Record<ErrandId, Errand>> = {
       ["shoes", "Your shoes from the landing"],
       ["shoes-on", "Shoes on at the foot of the stairs"],
       ["packed", "Pack in the café, by the front desk"],
-      ["checked-out", "Check out: deposit back"],
-      ["opened", "The night staff opens the door"],
+      ["checked-out", "Padlock and towel in: deposit back (you told the team beforehand)"],
+      ["opened", "The night staff open the door"],
       ["out", "Out onto the terrace"],
     ],
     goal: "out",
@@ -197,7 +197,7 @@ const ACT_LABELS: Readonly<Record<Exclude<Act, "climb">, string>> = {
   knock: "Knock on the glass",
   "ask-open": "Ask the night staff to open the door",
   "check-in": "Check in: passport and deposit",
-  "check-out": "Check out: deposit back",
+  "check-out": "Hand in your padlock and towel: deposit back",
   "shoes-off": "Take your shoes off",
   "shoes-on": "Put your shoes on",
   cubby: "Leave your shoes in a cubby",
@@ -345,9 +345,9 @@ function acted(state: GameState, what: Act, pod: string | undefined, graph: Game
   const s = tick(state);
   switch (what) {
     case "knock":
-      return { state: reach({ ...s, doorOpen: true }, "opened"), say: "You knock on the glass, and the night staff opens the door." };
+      return { state: reach({ ...s, doorOpen: true }, "opened"), say: "You knock on the glass, and the night staff open the door." };
     case "ask-open":
-      return { state: reach({ ...s, doorOpen: true }, "opened"), say: "The night staff opens the glass door for you." };
+      return { state: reach({ ...s, doorOpen: true }, "opened"), say: "The night staff open the glass door for you." };
     case "check-in":
       return { state: reach({ ...s, checkedIn: true }, "checked-in"), say: graph.says["check-in"] };
     case "check-out":
@@ -406,7 +406,7 @@ export function nextTask(state: GameState, graph: GameGraph): string {
       if (state.shoes === "cubby") return "take your shoes from the cubby on the landing";
       if (state.shoes === "carried") return "put your shoes on at the foot of the stairs";
       if (state.bag === "carried") return "pack your bag by the front desk";
-      if (!state.checkedOut) return "check out at the front desk";
+      if (!state.checkedOut) return "hand in your padlock and towel at the front desk";
       if (shut) return "ask the night staff to open the glass door";
       return "go out through the glass door";
   }

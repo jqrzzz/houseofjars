@@ -50,13 +50,19 @@
   padding-right: 8.25rem;
 }
 
+/*
+ * The mat and its caption, then where it was taken. Items in a row share its
+ * height, so "Taken on/in" sits at the foot of each: the lines stay level
+ * across the row however the captions above them wrap.
+ */
 .stack {
   display: grid;
-  align-content: start;
+  grid-template-rows: auto 1fr;
 }
 
 .where {
   display: block;
+  align-self: end;
   margin-top: var(--space-xs);
   color: var(--text-soft);
   font-size: var(--step--1);
