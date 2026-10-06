@@ -24,6 +24,19 @@ export const drawings = {
   bus: { src: "/art/bus.svg", evening: "/art/evening/bus.svg", width: 480, height: 360 },
   arch: { src: "/art/arch.svg", evening: "/art/evening/arch.svg", width: 480, height: 360 },
   bridge: { src: "/art/bridge.svg", evening: "/art/evening/bridge.svg", width: 480, height: 360 },
+  /*
+   * The house's photographs, redrawn: each fills the frame its photograph
+   * filled (content/photos.ts), so each is drawn at that frame's shape.
+   */
+  "dorm-corridor": { src: "/art/dorm-corridor.svg", evening: "/art/evening/dorm-corridor.svg", width: 400, height: 600 },
+  "dorm-fan": { src: "/art/dorm-fan.svg", evening: "/art/evening/dorm-fan.svg", width: 480, height: 600 },
+  "pod-curtain": { src: "/art/pod-curtain.svg", evening: "/art/evening/pod-curtain.svg", width: 480, height: 600 },
+  "pod-ladder": { src: "/art/pod-ladder.svg", evening: "/art/evening/pod-ladder.svg", width: 480, height: 600 },
+  locker: { src: "/art/locker.svg", evening: "/art/evening/locker.svg", width: 480, height: 600 },
+  entrance: { src: "/art/entrance.svg", evening: "/art/evening/entrance.svg", width: 480, height: 600 },
+  "wall-of-jars": { src: "/art/wall-of-jars.svg", evening: "/art/evening/wall-of-jars.svg", width: 480, height: 600 },
+  "stairs-jar": { src: "/art/stairs-jar.svg", evening: "/art/evening/stairs-jar.svg", width: 480, height: 600 },
+  "wall-lamp": { src: "/art/wall-lamp.svg", evening: "/art/evening/wall-lamp.svg", width: 480, height: 600 },
 } as const;
 
 export type DrawingName = keyof typeof drawings;
