@@ -9,6 +9,71 @@ export interface Photo {
   readonly alt: string;
   /** Which part of the photograph stays in view when the frame crops it (CSS object-position). */
   readonly focus?: string;
+  /** The photograph's size in pixels, so the frame can ask for enough of it (coverSizes). */
+  readonly size?: readonly [width: number, height: number];
+}
+
+/** How much larger than its frame a photograph is drawn at rest: the settled scale (PhotoFrame.module.css). */
+const REST_SCALE = 1.08;
+
+/** A CSS aspect-ratio ("2 / 3", "1.5") as a number, width over height. */
+function ratioOf(aspect: string): number {
+  const [width, height = 1] = aspect.split("/").map((part) => Number(part.trim()));
+  return width! / height;
+}
+
+/**
+ * The sizes hint for a photograph that covers its frame: each length is
+ * scaled by how much wider than the frame the photograph is drawn, so the
+ * browser fetches enough pixels. A photograph wider than its frame is cropped
+ * at the sides and drawn as tall as the frame, so wider than it by the ratio
+ * of their aspects; every photograph is also drawn a little larger than its
+ * frame at rest (REST_SCALE). Without the photograph's size the hint is kept
+ * as it is. The factor goes first, so next/image still reads the vw lengths.
+ */
+export function coverSizes(sizes: string, aspect: string, size?: Photo["size"]): string {
+  if (!size) return sizes;
+  const factor = Math.ceil(Math.max(1, size[0] / size[1] / ratioOf(aspect)) * REST_SCALE * 100) / 100;
+  return splitTop(sizes)
+    .map((entry) => {
+      const { condition, length } = splitLength(entry.trim());
+      return `${condition}calc(${factor} * ${length})`;
+    })
+    .join(", ");
+}
+
+/** A sizes list split at its top-level commas (not those inside a calc() or min()). */
+function splitTop(list: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < list.length; i++) {
+    const char = list[i];
+    if (char === "(") depth++;
+    else if (char === ")") depth--;
+    else if (char === "," && depth === 0) {
+      parts.push(list.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(list.slice(start));
+  return parts;
+}
+
+/** One sizes entry as its media condition (with its trailing space, or "") and its length: the last token, or the last function call. */
+function splitLength(entry: string): { condition: string; length: string } {
+  let at = entry.length;
+  if (entry.endsWith(")")) {
+    let depth = 0;
+    for (at = entry.length - 1; at >= 0; at--) {
+      if (entry[at] === ")") depth++;
+      else if (entry[at] === "(" && --depth === 0) break;
+    }
+    while (at > 0 && /[\w-]/.test(entry[at - 1]!)) at--;
+  } else {
+    at = entry.lastIndexOf(" ") + 1;
+  }
+  return { condition: entry.slice(0, at), length: entry.slice(at) };
 }
 
 interface PhotoFrameProps {
@@ -27,6 +92,12 @@ interface PhotoFrameProps {
   mat?: boolean;
   /** Load first: the photograph is the page's largest image above the fold (next/image preload). */
   preload?: boolean;
+  /**
+   * A small plate tucked into the foot of the mat, beside the caption (the
+   * hero's guest score). It sits on the mat and the page, never over the
+   * photograph.
+   */
+  plate?: ReactNode;
   /** @deprecated Use `preload`: next/image renamed it in Next 16. Kept so older callers still compile. */
   priority?: boolean;
   className?: string;
@@ -51,9 +122,10 @@ export function PhotoFrame({
   mat = true,
   preload,
   priority,
+  plate,
   className,
 }: PhotoFrameProps) {
-  const figureClass = [styles.figure, className].filter(Boolean).join(" ");
+  const figureClass = [styles.figure, plate ? styles.plated : null, className].filter(Boolean).join(" ");
   const frameClass = [styles.frame, styles[shape]].join(" ");
   const inMat = (frame: ReactNode) =>
     mat ? (
@@ -85,13 +157,14 @@ export function PhotoFrame({
             src={photo.src}
             alt={photo.alt}
             fill
-            sizes={sizes}
+            sizes={coverSizes(sizes, aspect, photo.size)}
             preload={preload ?? priority ?? false}
             className={styles.image}
             style={photo.focus ? { objectPosition: photo.focus } : undefined}
           />
         </div>,
       )}
+      {plate ? <div className={styles.plate}>{plate}</div> : null}
       <figcaption className={styles.caption}>{caption}</figcaption>
     </figure>
   );

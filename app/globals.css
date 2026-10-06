@@ -567,26 +567,6 @@ strong {
 }
 
 /*
- * Glass: a frosted pane over a photograph or the page, with a hairline edge
- * and a faint shine along the top. Without backdrop-filter the pane is solid.
- */
-.glass {
-  background: var(--glass-panel);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-edge);
-  box-shadow:
-    inset 0 1px 0 var(--glass-shine),
-    var(--shadow-soft);
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass {
-    background: var(--surface);
-  }
-}
-
-/*
  * Settling into place: an element marked data-reveal rises a little as it
  * scrolls into view. Scroll-driven, so no script waits on it, and only the
  * position moves: everything is visible at rest, in screenshots and to

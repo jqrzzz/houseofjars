@@ -149,10 +149,11 @@
   }
 }
 
+/* The mark rises with the curtain and fades: paper slides, it doesn't shrink from its centre. */
 @keyframes settle {
   to {
     opacity: 0;
-    transform: translateY(-2.5rem) scale(0.96);
+    transform: translateY(-2.5rem);
   }
 }
 

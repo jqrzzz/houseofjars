@@ -48,8 +48,9 @@ export function HeroView({
         <h1 id="hero-title" className={styles.title}>
           A calm house in the heart of Vientiane.
         </h1>
+        {/* A non-breaking hyphen (&#8209;) keeps "air-conditioning" on one line. */}
         <p className={styles.lede}>
-          Curtained pod beds, strong air-conditioning, breakfast in our café downstairs, and a team that looks after every
+          Curtained pod beds, air&#8209;conditioning, breakfast in our café downstairs, and a team that looks after every
           detail, day and night.
         </p>
         <p className={styles.direct}>{direct}</p>
@@ -84,15 +85,17 @@ export function HeroView({
           sizes="(min-width: 60rem) 26rem, 80vw"
           preload
           className={styles.photo}
+          plate={
+            // The guests' score, on a paper plate tucked into the foot of the mat, beside the caption.
+            <p className={styles.score}>
+              <span className={styles.scoreValue}>
+                {score[0]}
+                {score[1] ? <span className={styles.outOf}>/{score[1]}</span> : null}
+              </span>
+              <span className={styles.scoreText}>{score[2]}</span>
+            </p>
+          }
         />
-        {/* The guests' score, on a pane of glass over the foot of the arch. */}
-        <p className={`glass ${styles.score}`}>
-          <span className={styles.scoreValue}>
-            {score[0]}
-            {score[1] ? <span className={styles.outOf}>/{score[1]}</span> : null}
-          </span>
-          <span className={styles.scoreText}>{score[2]}</span>
-        </p>
       </div>
     </div>
   );

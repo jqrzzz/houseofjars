@@ -278,8 +278,8 @@ Add these to `:root` only:
 
 | Move | What happens | Driver |
 |---|---|---|
-| **Curtain up** | The existing Splash, once per visit, re-skinned as teak fibre paper with a card-edged diamond hem. The boot script removes `html.splash` after 5000 ms, once the last hero phrase has ended (≤ 4.4 s). | time |
-| **Lamplighting** | The hero lamps drop 12 px (700 ms, `--ease-paper`, 90 ms stagger). They light left to right (600 ms, `--ease-lamp`, 140 ms stagger), and the halo scales .9 → 1.03 → 1, one 3% catch *(day)*. Then they sway ±1.5° once over 2.4 s, all starting rightward, 120 ms apart, like one breeze *(lamplit)*. It starts 300 ms after load (1150 ms under `html.splash`). | time, CSS |
+| **Curtain up** | The existing Splash, once per visit, re-skinned as teak fibre paper with a card-edged diamond hem. The boot script removes `html.splash` after 5000 ms, once the last hero phrase has ended (≤ 4.7 s). | time |
+| **Lamplighting** | The hero lamps drop 12 px (700 ms, `--ease-paper`, 90 ms stagger). They light left to right (600 ms, `--ease-lamp`, 140 ms stagger), and the halo scales .9 → 1.03 → 1, one 3% catch *(day)*. Then they sway ±1.5° once over 2.4 s, all starting rightward, 120 ms apart, like one breeze *(lamplit)*. By Day they stay unlit, so only the drop and the sway run; switching to Evening lights them again. It starts 300 ms after load (1450 ms under `html.splash`, as the curtain clears the top of the screen). | time, CSS |
 | **Open the house** *(day)* | The `street` layer fades and slides 12 units toward the viewer while the interior fades in. No zoom. | scroll |
 | **Floor lift** | The Floor 1 wrapper moves `translateY(calc(var(--u) * -90))`. The keyframes are on `transform` itself, never on an animated custom property. Its thread SVG moves with it, and the stair link fades in at the end. | scroll / IO fallback |
 | **Thread walk** | Each floor path's `stroke-dashoffset` runs 1 → 0, in segments that stop at each `at`. Each ring settles (scale .6 → 1) as the thread reaches it. The bead rides `offset-path`, inside `@supports`. | scroll |

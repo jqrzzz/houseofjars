@@ -4,6 +4,29 @@
 }
 
 /*
+ * A plate on the mat's foot (the hero's guest score): under the photograph,
+ * beside the caption. It rises into the mat's foot to 6 px under the window,
+ * so it rests on the paper and never crosses the photograph.
+ */
+.plated {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+
+.plated > :first-child {
+  grid-column: 1 / -1;
+}
+
+.plate {
+  position: relative;
+  z-index: 2;
+}
+
+.mount + .plate {
+  margin-top: calc(-1 * var(--space-s) - 1.25rem + 6px);
+}
+
+/*
  * The mat: a --paper-near ground 1.25rem wide around the window, cut from
  * card: its edge is the outline repeated at (--edge-x, --edge-y) in
  * --paper-edge (a lamplight rim by Evening). A square mat carries the edge as
@@ -167,4 +190,5 @@
 .caption {
   font-size: var(--step--1);
   color: var(--text-soft);
+  text-wrap: pretty;
 }

@@ -21,7 +21,7 @@ export function TeamView({ photo, caption, text, about }: { photo: Photo; captio
         drawing="door"
         shape="arch"
         aspect="4 / 5"
-        sizes="(min-width: 60rem) 18rem, 12rem"
+        sizes="(min-width: 48rem) calc(2.03 * 15.5rem), calc(2.03 * 13.5rem)"
         className={styles.frame}
       />
       <div className={styles.words}>

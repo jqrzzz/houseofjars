@@ -12,17 +12,17 @@ import styles from "./Hero.module.css";
  * photograph of the dorms in the house's arch, in its paper mat (the page's
  * largest image, preloaded), under three of the house's own lamps, which drop
  * into place and light up once (Lamplighting). The guests' score sits on a
- * pane of glass at the arch's foot.
+ * paper plate at the arch's foot, on the mat beside the caption.
  */
 export function Hero() {
   const [booking] = ratings;
-  const { src, alt, focus, caption } = photos.dormCorridor;
+  const { src, alt, focus, size, caption } = photos.dormCorridor;
   return (
     <section className={styles.hero} aria-labelledby="hero-title" data-hides-launcher="">
       <HeroView
         direct={policies.directPriceShort.value}
         book={bookingLabel()}
-        photo={{ src, alt, ...(focus ? { focus } : {}) }}
+        photo={{ src, alt, size, ...(focus ? { focus } : {}) }}
         caption={caption}
         score={[booking.value.score, booking.value.outOf, `${booking.value.platform}, ${booking.value.context}`]}
         lines={houseNowLines()}

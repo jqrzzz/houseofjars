@@ -1,9 +1,7 @@
 import Form from "next/form";
-import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import { identity, whatsappUrl } from "@/content/identity";
-import { photos } from "@/content/photos";
 import { breakfast, policies } from "@/content/stay";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { firstMorningText } from "@/lib/booking/stay-rail";
@@ -27,7 +25,7 @@ const platforms = [
 /**
  * The closing call to action on most pages: a paper ticket standing in a slot
  * in the front desk's teak counter, with the curtains' woven lozenges along
- * its top. As the slot comes into view the ticket slides 1.25rem up out of it
+ * its top, against the paper wall behind the desk. As the slot comes into view the ticket slides 1.25rem up out of it
  * (a phrase: its base style is the rest frame, so Still, reduced motion and
  * pages without JavaScript simply show it standing). That is the card's only
  * motion: the form, prices and buttons never move.
@@ -55,8 +53,6 @@ export function BookingCard() {
   );
   return (
     <Section space="m" labelledBy="booking-card-title" className={styles.section}>
-      {/* The dorm in lamplight, blurred behind the ticket. Decorative. */}
-      <Image src={photos.dormFan.src} alt="" fill sizes="(min-width: 60rem) 50vw, 80vw" className={styles.backdrop} />
       <div className="container">
         <div className={styles.holder}>
           <div className={styles.sleeve}>

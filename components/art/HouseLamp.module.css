@@ -18,8 +18,9 @@
   pointer-events: none;
 }
 
+/* Under the splash, as the curtain clears the top of the screen (Splash.module.css lifts it from 1000 to 1700 ms). */
 :global(html.splash) .lamp {
-  --t0: 1150ms;
+  --t0: 1450ms;
 }
 
 :global(:root[data-theme="dark"]) .lamp {
@@ -110,12 +111,17 @@
  * Lamplighting (§4.3), as phrases that end on the rest frame:
  *   drop   12 px into place, 700 ms on --ease-paper, 90 ms apart;
  *   light  the shade warms and its halo opens .9 to 1.03 to 1 (one 3% catch),
- *          600 ms on --ease-lamp, 140 ms apart, left to right (Evening only:
- *          by Day the shade stays stone and the halo dark);
+ *          600 ms on --ease-lamp, 140 ms apart, left to right;
  *   sway   ±1.5° once over 2.4 s, every lamp first to the right, 120 ms apart,
  *          like one breeze.
- * They start 300 ms after load, or 1150 ms under the splash, and the last ends
- * by 4.4 s (before the boot script lifts html.splash at 5 s).
+ * They start 300 ms after load, or 1450 ms under the splash, and the last ends
+ * by 4.7 s (before the boot script lifts html.splash at 5 s).
+ *
+ * The light is Evening's only: by Day the shade stays stone and the halo dark,
+ * so only the drop and the sway run. Switching to Evening adds the light, so
+ * the lamps light again, left to right, with their motes, once the theme's
+ * 450 ms cross-fade is done (it is held while the fade runs, so it never plays
+ * inside it). The drop and the sway don't replay.
  */
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .lamp {
@@ -125,12 +131,31 @@
   }
 
   /* On the drawing, whose fill the shade inherits (the edge's copy has its own). */
-  :global(:root:not([data-motion="still"])) .lamp svg {
+  :global(:root[data-theme="dark"]:not([data-motion="still"])) .lamp svg {
     animation: lamp-light 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
   }
 
-  :global(:root:not([data-motion="still"])) .halo {
+  :global(:root[data-theme="dark"]:not([data-motion="still"])) .halo {
     animation: lamp-halo 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"]):not([data-motion="still"])) .lamp svg {
+    animation: lamp-light 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+  }
+
+  :global(:root:not([data-theme="light"]):not([data-motion="still"])) .halo {
+    animation: lamp-halo 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+  }
+}
+
+/* Held while the theme cross-fades (theme-store.ts). After the rules above, and as specific, so it wins. */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root[data-theme-fade]:not([data-motion="still"])) .lamp svg,
+  :global(:root[data-theme-fade]:not([data-motion="still"])) .halo,
+  :global(:root[data-theme-fade]:not([data-motion="still"])) .lamp .motes i {
+    animation-play-state: paused;
   }
 }
 

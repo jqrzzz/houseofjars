@@ -15,7 +15,7 @@ export { THEME_KEY, themeColor, type ThemeChoice } from "@/components/layout/the
 
 export const SPLASH_KEY = "hoj-splash";
 
-/** How long html.splash stays: by then the curtain is up and the last hero phrase has ended (4.4 s at most). */
+/** How long html.splash stays: by then the curtain is up and the last hero phrase has ended (4.7 s at most). */
 export const SPLASH_MS = 5000;
 
 /**
