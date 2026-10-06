@@ -240,13 +240,12 @@ async function stage(page: Page): Promise<{ from: number; to: number; story: boo
     const max = document.documentElement.scrollHeight - vh;
     if (story) {
       const top = story.getBoundingClientRect().top + window.scrollY;
-      // The walk's act, as the theatre sets it for this width (a share of the story's scroll).
+      // The walk's act, as the theatre sets it for this width (a share of the story's scroll). No named functions in
+      // here: tsx would wrap them in a helper the browser doesn't have.
       const css = getComputedStyle(story);
-      const share = (name: string, fallback: number) => {
-        const v = Number.parseFloat(css.getPropertyValue(name));
-        return Number.isFinite(v) ? v / 100 : fallback;
-      };
-      const act = { c0: share("--c0", 0.45), c1: share("--c1", 0.95) };
+      const c0 = Number.parseFloat(css.getPropertyValue("--c0"));
+      const c1 = Number.parseFloat(css.getPropertyValue("--c1"));
+      const act = { c0: Number.isFinite(c0) ? c0 / 100 : 0.45, c1: Number.isFinite(c1) ? c1 / 100 : 0.95 };
       return { from: Math.max(0, top), to: Math.min(max, top + story.offsetHeight - vh), story: true, act };
     }
     return { from: 0, to: Math.min(max, 4 * vh), story: false, act: { c0: 0.45, c1: 0.95 } };
