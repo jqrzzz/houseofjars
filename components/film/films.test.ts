@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Film } from "./Film";
+import { FilmVideo } from "./FilmPlayer";
 import { filmFiles, films, type FilmEntry } from "./films";
 
 const sample: FilmEntry = { id: "arrival", title: "From the terrace to your pod", width: 720, height: 1280, seconds: 20 };
@@ -14,10 +15,23 @@ describe("Film", () => {
     expect(renderToStaticMarkup(createElement(Film, { id: "lights-on", list: [sample] }))).toBe("");
   });
 
-  it("shows a listed film with controls, its size, a poster and English captions, and never plays by itself", () => {
+  it("is only its poster, lazy, under a Play button until a visitor asks, so the page fetches none of it as it loads", () => {
     const html = renderToStaticMarkup(createElement(Film, { id: "arrival", list: [sample] }));
+    expect(html).toMatch(/<img [^>]*src="\/film\/arrival-poster.webp"/);
+    expect(html).toMatch(/<img [^>]*loading="lazy"/);
+    expect(html).toMatch(/<img [^>]*alt=""/);
+    expect(html).toContain('width="720" height="1280"');
+    expect(html).toMatch(/<button type="button"[^>]* aria-label="Play the film: From the terrace to your pod"[^>]*>.*Play the film<\/button>/);
+    expect(html).toContain("<figcaption");
+    expect(html).not.toMatch(/<video|<source|<track|\.vtt|\.webm|\.mp4/);
+  });
+
+  it("once asked for, is the player: controls, its size, the poster and English captions, and never plays by itself", () => {
+    const html = renderToStaticMarkup(
+      createElement(FilmVideo, { title: sample.title, width: sample.width, height: sample.height, files: filmFiles("arrival") }),
+    );
     expect(html).toMatch(/<video[^>]* controls=""/);
-    expect(html).toContain('preload="none"');
+    expect(html).toContain('preload="auto"');
     expect(html).toMatch(/playsinline=""/i);
     expect(html).toContain('width="720" height="1280"');
     expect(html).toContain('poster="/film/arrival-poster.webp"');

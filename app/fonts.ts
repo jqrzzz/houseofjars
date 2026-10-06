@@ -18,11 +18,21 @@ export const brandFont = localFont({
   adjustFontFallback: false,
 });
 
-// Lao script (the hero's greeting and any Lao text): Noto Sans Lao, which sits
-// beside Figtree in every stack. Not preloaded: only a few words use it. Its
-// unicode-range keeps browsers from fetching it for pages without Lao text.
+// Lao script: Noto Sans Lao, which sits beside Figtree in every stack. The site
+// writes only the greeting ສະບາຍດີ (the hero and the splash) and the Lao digits
+// of its section numbers (content/text.ts), so it carries a subset of the font
+// with just those characters, every weight still in it: about 5.6 kB instead of
+// 21.5 kB. Not preloaded: only a few words use it. Its unicode-range keeps
+// browsers from fetching it for pages without Lao text. A test
+// (fonts/lao-subset.test.ts) checks that every Lao character in the site's code
+// is in the subset. To add one, add it to --text and cut the subset again with
+// fontTools (pip install fonttools brotli). Noto's licence, the OFL, reserves
+// no font name, so the subset keeps the font's name, copyright and licence:
+//   pyftsubset node_modules/@fontsource-variable/noto-sans-lao/files/noto-sans-lao-lao-wght-normal.woff2 \
+//     --text="ສະບາຍດີ໐໑໒໓໔໕໖໗໘໙" --layout-features='*' --name-IDs='*' --name-languages='*' \
+//     --name-legacy --flavor=woff2 --output-file=app/fonts/noto-sans-lao-subset.woff2
 export const laoFont = localFont({
-  src: "../node_modules/@fontsource-variable/noto-sans-lao/files/noto-sans-lao-lao-wght-normal.woff2",
+  src: "./fonts/noto-sans-lao-subset.woff2",
   weight: "100 900",
   style: "normal",
   display: "swap",

@@ -38,6 +38,16 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" },
 ];
 
+/**
+ * Files in public/ are served with max-age=0, so every page load asks for them
+ * again. The brand's marks and woven bands, and Shadow's portrait, don't change
+ * with the house model, so browsers may keep them for an hour. The house's
+ * drawings (/house, /art) and the game's plan (/game) stay at max-age=0: their
+ * URLs carry no content hash, and they must match the HTML rendered from the
+ * same model.
+ */
+const keptAnHour = [{ key: "Cache-Control", value: "public, max-age=3600" }];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
@@ -45,7 +55,11 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      { source: "/brand/:path*", headers: keptAnHour },
+      { source: "/shadow/:path*", headers: keptAnHour },
+    ];
   },
 };
 
