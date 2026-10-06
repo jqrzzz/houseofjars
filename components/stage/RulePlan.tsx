@@ -6,7 +6,7 @@ import { planOverlay } from "@/lib/house/paper";
 import { AVOID, FLOOR } from "./places";
 import styles from "./RulePlan.module.css";
 
-/** Each plan carries its own title ("Ground floor", "Floor 1") and its street, drawn in. */
+/** Each plan carries its own title ("Ground floor", "1st floor") and its street, drawn in. */
 const PLANS = [{ floor: "ground" }, { floor: "floor1" }] as const;
 
 /** The tallest plan's height in its own units, so both plans share one scale. */
@@ -18,7 +18,7 @@ const round = (n: number) => Math.round(n * 10000) / 10000;
 
 /**
  * The house rules' paper plans (docs/DESIGN.md §5.3): the ground floor and
- * Floor 1 from above, side by side and sticky beside the rules on wide
+ * the 1st floor from above, side by side and sticky beside the rules on wide
  * screens, as two strips (street on the left) at the top on phones. A rule
  * lights the areas and floors it names when it is hovered or focused, or
  * while it crosses the middle of the screen (CurrentMarker marks it

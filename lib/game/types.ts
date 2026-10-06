@@ -4,12 +4,12 @@
  * lib/game/engine.ts. Nothing here imports lib/house or content/, so the game's client code stays small.
  */
 
-/** The two floors the game is played on. Floor 2 is not drawn from photographs yet, so it stays off the board. */
+/** The two floors the game is played on. The 2nd floor is not drawn from photographs yet, so it stays off the board. */
 export type FloorKey = "ground" | "floor1";
 
 export type Dir = "up" | "down" | "left" | "right";
 
-/** Where your shoes are: on your feet, in your hand, or in a cubby on the Floor 1 landing. */
+/** Where your shoes are: on your feet, in your hand, or in a cubby on the 1st floor landing. */
 export type Shoes = "on" | "carried" | "cubby";
 
 /** Your bag: none to think about, in your hand, still in your pod, or packed by the front desk. */

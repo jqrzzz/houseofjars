@@ -86,7 +86,7 @@ const LAYER_FLOOR: Record<PaperLayerId, FloorId> = {
   floor1: "floor1",
   floor2: "floor2",
 };
-/** Where the walk's light catches a fixture at a stop: the cubbies glow as the walk reaches the Floor 1 landing. */
+/** Where the walk's light catches a fixture at a stop: the cubbies glow as the walk reaches the 1st floor landing. */
 const STOP_GLOWS: Readonly<Record<string, string>> = { "landing-1": "fx-shoe-cubbies" };
 
 const round = (v: number, places = 2) => {

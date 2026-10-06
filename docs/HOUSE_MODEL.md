@@ -54,8 +54,8 @@ The owner approved the new drawing for the website (5 October 2026): its paper t
 | Floor (owner's name) | id | Floor `z` | Ceiling | What is there |
 | --- | --- | --- | --- | --- |
 | Ground floor (the lobby) | `ground` | 0 | 3.6 | Terrace, entrance, café with the counter that is also the front desk, stairs, water, toilet, staff room and kitchen |
-| Floor 1 | `floor1` | 3.8 | 6.7 | Dorm H (House), the landing with the shoe cubbies, the women's bathroom |
-| Floor 2 | `floor2` | 6.9 | 9.8 | Dorm J (Jars), the landing, the men's bathroom (not photographed: copied from Floor 1; the floor itself is `confirmed: false`) |
+| 1st floor | `floor1` | 3.8 | 6.7 | Dorm H (House), the landing with the shoe cubbies, the women's bathroom |
+| 2nd floor | `floor2` | 6.9 | 9.8 | Dorm J (Jars), the landing, the men's bathroom (not photographed: copied from the 1st floor; the floor itself is `confirmed: false`) |
 
 Slabs between floors are 0.2 thick; the roof slab runs from 9.8 to 10.0, with a low tiled edge at the front. Each upper floor's `opening` is the hole in its slab over the flight from the floor below; the renderers cut the slab and the floors around it.
 
@@ -80,7 +80,7 @@ Examples:
 
 - **A table moved.** Change its centre in `LOW_TABLES`; its two chairs follow.
 - **Something new** (a second fridge): add a fixture with a unique `id`, its `type`, `area`, `box` (`centred(x, y, w, d, h, z0)` or `box(x0, x1, y0, y1, z0, z1)`), and `faces` if it has a front. Use an existing `type` when one fits; a new kind of thing also needs a builder in `fixtures.ts` (3D parts and a plan symbol).
-- **Floor 2 confirmed.** Drop `confirmed: false` from the `floor2` floor, and in `dormFloor` the `level === 2` unconfirmed marks for what the owner checked (and add the shoe cubbies if Floor 2 has them too). Update the counts test if a number changed.
+- **The 2nd floor confirmed.** Drop `confirmed: false` from the `floor2` floor, and in `dormFloor` the `level === 2` unconfirmed marks for what the owner checked (and add the shoe cubbies if the 2nd floor has them too). Update the counts test if a number changed.
 - **Where a locker stack stands, confirmed.** Fix the `lockerStacks` list in `dormFloor` and update `LOCKER_NOTE`; remove `confirmed: false` from the lockers once nothing in their note is open.
 - **A custom.** Add a plain sentence to `customs` (numbers the house skips, and why): `docs/house-context.md` lists them for guides, the team and Shadow.
 - **The stairs moved.** Each flight is a `stairs` fixture: `faces` is the way it climbs and `climb` the heights it starts and ends at (relative to its floor); a landing has the variant `landing` and starts and ends at one height. Move the flights and the upper floors' `opening` with them; the slab holes, the floors around them and the plans follow. The test fails if a flight comes within 2 m of a slab without an opening over it.
@@ -89,9 +89,9 @@ Examples:
 
 ### What is assumed today (`confirmed: false`)
 
-- **All of Floor 2** (copied from Floor 1), except its two small windows, which show in the street photo.
+- **All of the 2nd floor** (copied from the 1st floor), except its two small windows, which show in the street photo.
 - **Most locker stacks.** One locker per pod, with its number (the owner's bed register). The stack beside the dorm door holds the three highest numbers (f2-04); some stacks are three high, towards the middle (the owner; photos to come). Where the others stand, and which numbers each holds, is assumed.
-- **The flights between Floor 1 and Floor 2.** Floor 1's photos show the first flight up beside the bathroom door (f2-02); the landing and the second flight are assumed to be the same as on the ground floor.
+- **The flights between the 1st and 2nd floors.** The 1st floor's photos show the first flight up beside the bathroom door (f2-02); the landing and the second flight are assumed to be the same as on the ground floor.
 - **The pendant lamps, downlights and framed photographs** in the café: seen in photos f1-03, gf-02 and gf-03; how many and where is approximate. So is where the clay jar on the landing stands.
 
 ## Walks through the house
@@ -135,7 +135,7 @@ renderPlan("ground" | "floor1" | "floor2" | "outside", { theme, outfit, labels, 
 | `cutaway.svg` | Dollhouse, floors stacked |
 | `cutaway-exploded.svg` | Dollhouse, floors lifted 2.5 m apart, labelled |
 | `cutaway-exploded-phone.svg` | The same with labels for phone width (32 px) |
-| `cutaway-arrival.svg` | Ground floor and Floor 1 lifted apart, with the arrival route |
+| `cutaway-arrival.svg` | Ground floor and the 1st floor lifted apart, with the arrival route |
 | `cutaway-ground.svg`, `cutaway-floor1.svg` | One floor each, labelled: the clearest pictures of the lobby and of a dorm floor |
 | `plan-ground.svg`, `plan-floor1.svg`, `plan-floor2.svg`, `plan-outside.svg` | Plans |
 | `paper-{street,ground,ground-front,floor1,floor2}-{day,evening}.svg` | The paper stage's layers (see "The paper stage"), in one shared frame |
@@ -152,7 +152,7 @@ The model drawings are `theme: "auto"`; the paper ones come in `day` and `evenin
 - **Silhouettes** (`sl`): each thing's group is drawn twice, first as `<use href="#its-id" class="sl"/>` with every shape stroked 3 px wide in ink, then itself on top, so 1.5 px of ink (non-scaling) shows around its outside and none inside. Inner detail (`id`: window bars, curtain folds, cords) is 1 px of ink at 60%.
 - **Card edges** (`ce` with the material's edge tone, `e` + its code): on the big planes only (slabs, walls, the pods, the facade), the outline repeated behind the sheet, moved (1.5, 1.5) by day in the next darker tone, and (0, −1.5) by Evening as a lamplight rim.
 - **Deckle** (`lib/house/deckle.ts`): the slabs' and walls' straight runs longer than 24 px wobble by up to 0.6 px, from a mulberry32 generator seeded by the element's id (and the run's two ends, so two faces that share an edge still meet). Never `Math.random`.
-- **Depth**: the cutaway's party and back walls are back planes, a quarter of the way toward the far paper (`pl1f`). A faded floor (Floor 2's layer, a floor faded by `highlight`) is pale but opaque (`wd1g`), so a floor lifted over it still hides what is behind.
+- **Depth**: the cutaway's party and back walls are back planes, a quarter of the way toward the far paper (`pl1f`). A faded floor (the 2nd floor's layer, a floor faded by `highlight`) is pale but opaque (`wd1g`), so a floor lifted over it still hides what is behind.
 - **Simple detail** (`isoParts` with `detail: "simple"`): fixtures in fewer, flatter pieces, never fewer fixtures. A pod is a teak box with its curtain (or, against the right wall, its bed) and a lamp dot; a stack of lockers is one block (the lockers above the lowest keep empty groups with their ids); legs are sticks; shelves, cubbies and the fridge's bottles are one shape each. About half the model's paths.
 
 ## The paper stage (`lib/house/paper.ts`)
@@ -164,8 +164,8 @@ The paper outfit cut into layers for a page to stack in one box, all with **one 
 | `street` | The street front (facade, awning, signs, posts, the terrace), cropped 4 m back, no neighbours. |
 | `ground` | The ground floor's cutaway, the facade cut at `FACADE_CUT`. |
 | `ground-front` | The ground floor's pieces in front of the facade that overlap the floors above (`isFrontPiece`: the awning, its posts, the signs, the jar for cigarette butts), drawn whole. It lifts with the ground floor and stacks **above** Floors 1 and 2. |
-| `floor1` | Floor 1's cutaway. |
-| `floor2` | Floor 2's cutaway, `class="dim"` (pale) and `data-confirmed="false"`. |
+| `floor1` | The 1st floor's cutaway. |
+| `floor2` | The 2nd floor's cutaway, `class="dim"` (pale) and `data-confirmed="false"`. |
 
 `PAPER_LAYERS` lists them bottom to top: `ground`, `floor1`, `floor2`, `ground-front`, `street`. The layers are static images (`paperLayerSrc(layer, theme)`: `/house/paper-floor1-day.svg`); their fixtures keep their ids and `data-confirmed`, not the other data attributes.
 
@@ -193,7 +193,7 @@ Every overlay is in viewBox units with the floors stacked:
 
 With `p` the `idPrefix` (default empty):
 
-- Each floor: `<g id="{p}floor-ground" data-floor="ground" data-level="0">` (and `data-confirmed="false"` on a floor not seen yet), drawn bottom to top. Nothing of one floor is drawn inside another floor's group. The renderer's own `explode` writes `transform="translate(0,-90)"` on it (2.5 m on Floor 1).
+- Each floor: `<g id="{p}floor-ground" data-floor="ground" data-level="0">` (and `data-confirmed="false"` on a floor not seen yet), drawn bottom to top. Nothing of one floor is drawn inside another floor's group. The renderer's own `explode` writes `transform="translate(0,-90)"` on it (2.5 m on the 1st floor).
 - Each area: `<g id="{p}area-cafe" data-area="cafe" data-kind="shared">` holds its floor; a sub-area adds `data-parent="cafe"`. Fixtures are not nested in areas (painter's order decides their order) but carry `data-area` and `data-room` (the room: the area's parent, or the area itself), so `[data-room="cafe"]` selects everything in the café, counter and water corner included.
 - Each fixture: `<g id="{p}fx-pod-H01" data-fixture="pod" data-label="H01" data-area="dorm-h" data-room="dorm-h">`; a fixture `mountedOn` another is nested in its host's group (the basins in `fx-vanity-women`). `data-confirmed="false"` marks what was not seen.
 - Walls: `<g data-wall="{wall id}">` (several pieces may share a wall id).
@@ -248,7 +248,7 @@ where `view.html` shows the SVG (`<img src>` or inline). For the Evening look, r
 
 ## Known gaps
 
-- Positions and sizes are approximate; Floor 2 is a copy of Floor 1.
+- Positions and sizes are approximate; the 2nd floor is a copy of the 1st floor.
 - The stairs are approximate: one U-shaped stair across the house behind the counter, the same on every floor. Its shape is read from the photos (the slope of its teak underside seen from the café, the turn at the landing against the left wall, the flight beside the bathroom door upstairs), not measured.
 - From this camera the stairs, the tall cupboard and the toilet's walls hide parts of the toilet and the corridor; the ground plan shows all of them. The inside of the curtains on the far side of the right-hand pods cannot be seen either.
 - A route's link between lifted floors is drawn for the rendered explode only.

@@ -26,8 +26,8 @@ describe("the House of Jars model: integrity", () => {
   it("keeps the owner's names for the floors, bottom to top", () => {
     expect(model.floors.map((f) => [f.id, f.name, f.level])).toEqual([
       ["ground", "Ground floor", 0],
-      ["floor1", "Floor 1", 1],
-      ["floor2", "Floor 2", 2],
+      ["floor1", "1st floor", 1],
+      ["floor2", "2nd floor", 2],
     ]);
     // Each floor sits on a slab above the ceiling below.
     for (let i = 1; i < model.floors.length; i++) expect(model.floors[i]!.z).toBeCloseTo(model.floors[i - 1]!.ceiling + model.slab, 6);
@@ -206,11 +206,11 @@ describe("the House of Jars model: integrity", () => {
     }
   });
 
-  it("marks what was not seen as unconfirmed: all of Floor 2, where most locker stacks stand", () => {
+  it("marks what was not seen as unconfirmed: all of the 2nd floor, where most locker stacks stand", () => {
     expect(floor("floor2").confirmed).toBe(false);
     expect(floor("floor2").note).toBeTruthy();
     for (const a of model.areas.filter((x) => x.floor === "floor2")) expect(a.confirmed, a.id).toBe(false);
-    // Floor 2's two small windows are seen from the street (f1-01); everything else up there is a copy of Floor 1.
+    // The 2nd floor's two small windows are seen from the street (f1-01); everything else up there is a copy of the 1st floor.
     for (const f of model.fixtures.filter((x) => x.floor === "floor2")) expect(f.confirmed, f.id).toBe(f.type === "window" ? undefined : false);
     // The numbers, stacks and top bunks are from the owner's bed register, confirmed by the owner on both sides.
     for (const f of model.fixtures.filter((x) => x.type === "pod" && x.floor === "floor1")) {
@@ -218,7 +218,7 @@ describe("the House of Jars model: integrity", () => {
       expect(f.note, f.id).toMatch(/the top bunk is 1 and beneath it 2"; down the left, 09 over 08/);
     }
     for (const f of model.fixtures.filter((x) => x.type === "locker")) expect(f.note, f.id).toMatch(/is assumed\.$/);
-    // Floor 1's dorm itself is seen (and drawn from the register); Floor 2's is a copy.
+    // The 1st floor's dorm itself is seen (and drawn from the register); the 2nd floor's is a copy.
     expect(area("dorm-h").confirmed).toBeUndefined();
     expect(model.walls.find((w) => w.id === "floor1-dorm-partition")!.confirmed).toBeUndefined();
     // The owner described the toilet's inside and said the kitchen is part of the staff room, with no wall between.
@@ -327,7 +327,7 @@ describe("the House of Jars model: counts from the walk", () => {
     expect(units.filter((u) => u.box.x0 >= model.width / 2)).toHaveLength(1);
   });
 
-  it("has 30 shoe cubbies (5 across, 6 high) on Floor 1 only", () => {
+  it("has 30 shoe cubbies (5 across, 6 high) on the 1st floor only", () => {
     const cubbies = model.fixtures.filter((f) => f.type === "shoe-cubbies");
     expect(cubbies).toHaveLength(1);
     expect(cubbies[0]!.floor).toBe("floor1");
@@ -336,7 +336,7 @@ describe("the House of Jars model: counts from the walk", () => {
   });
 
   it("has the back of the ground floor from the photos: the U-shaped stairs, the store under them, the staff room and the kitchen", () => {
-    // One U-shaped stair: a flight toward the left wall, a landing, a flight back up to Floor 1.
+    // One U-shaped stair: a flight toward the left wall, a landing, a flight back up to the 1st floor.
     const stairs = model.fixtures.filter((f) => f.type === "stairs" && f.floor === "ground");
     expect(stairs.map((f) => [f.id, f.faces ?? null])).toEqual([
       ["stairs-up", "-x"],

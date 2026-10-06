@@ -14,7 +14,7 @@ const views: Record<string, () => string> = {
   cutaway: () => renderCutaway(),
   "cutaway exploded 3, labelled": () => renderCutaway({ explode: 3, labels: true }),
   "cutaway with the arrival route": () => renderCutaway({ explode: 2.5, route: "arrival", labels: true }),
-  "cutaway, Floor 1 highlighted": () => renderCutaway({ highlight: ["dorm-h", "bath-women"], theme: "day" }),
+  "cutaway, 1st floor highlighted": () => renderCutaway({ highlight: ["dorm-h", "bath-women"], theme: "day" }),
   "cutaway, ground floor only": () => renderCutaway({ floors: ["ground"], route: "water" }),
   "cutaway, the café highlighted and labelled, big labels": () => renderCutaway({ explode: 1.5, highlight: ["cafe"], labels: true, labelSize: 30 }),
   "cutaway, room to explode at runtime": () => renderCutaway({ fitExplode: 2.5, labels: true }),
@@ -26,7 +26,7 @@ const views: Record<string, () => string> = {
   "street, paper": () => renderStreet({ outfit: "paper", theme: "day" }),
   "street with neighbours, paper, auto": () => renderStreet({ outfit: "paper", neighbours: true }),
   "cutaway, paper, lifted and labelled, with a walk": () => renderCutaway({ outfit: "paper", explode: 2.5, labels: true, route: "arrival", theme: "evening" }),
-  "cutaway, paper, Floor 1 highlighted": () => renderCutaway({ outfit: "paper", highlight: ["dorm-h"], labels: true }),
+  "cutaway, paper, 1st floor highlighted": () => renderCutaway({ outfit: "paper", highlight: ["dorm-h"], labels: true }),
   "plan ground, paper": () => renderPlan("ground", { outfit: "paper", theme: "day" }),
   "plan floor2, paper, auto": () => renderPlan("floor2", { outfit: "paper" }),
 };
@@ -280,7 +280,7 @@ describe("the id and data-attribute contract", () => {
     // The stops have their labels even without labels: true.
     expect(svg).toContain('data-label-stop="Check in"');
     expect(svg).toContain('data-label-stop="Shoes"');
-    // From the top of the flight to Floor 1, drawn outside the floors (it spans two).
+    // From the top of the flight to the 1st floor, drawn outside the floors (it spans two).
     expect(parents.get("route-arrival-link-ground-floor1")).toEqual([]);
     expect(renderCutaway({ route: "arrival" })).not.toContain("route-arrival-link");
     // The arrowhead ends the route on the floors drawn.
@@ -294,10 +294,10 @@ describe("the id and data-attribute contract", () => {
   });
 
   it("drops a label whose anchor a floor above hides", () => {
-    // Stacked, Floor 1 covers the stairs; lifted apart, the stairs show.
+    // Stacked, the 1st floor covers the stairs; lifted apart, the stairs show.
     expect(renderCutaway({ labels: true })).not.toContain('data-label-area="stairs-ground"');
     expect(renderCutaway({ labels: true, explode: 2.5 })).toContain('data-label-area="stairs-ground"');
-    // The café's front shows under Floor 1, past the removed right wall.
+    // The café's front shows under the 1st floor, past the removed right wall.
     expect(renderCutaway({ labels: true })).toContain('data-label-area="cafe"');
   });
 
@@ -313,7 +313,7 @@ describe("the id and data-attribute contract", () => {
 
   it("fades what is not highlighted and outlines what is", () => {
     const svg = renderCutaway({ highlight: ["dorm-h"], labels: true });
-    // Floors with nothing highlighted fade as a whole; on Floor 1 the other areas become opaque ghosts.
+    // Floors with nothing highlighted fade as a whole; on the 1st floor the other areas become opaque ghosts.
     expect(svg).toContain('<g id="floor-ground" data-floor="ground" data-level="0" class="dim"');
     expect(svg).toMatch(/<g id="floor-floor2" data-floor="floor2" data-level="2" data-confirmed="false" class="dim"/);
     expect(svg).toContain('<g id="floor-floor1" data-floor="floor1" data-level="1">');
@@ -411,10 +411,10 @@ describe("drawn from the model, not from constants in the renderer", () => {
   });
 
   it("describes a plan from the model: the dorm's pods and lockers counted, a floor not seen yet noted", () => {
-    expect(renderPlan("floor1")).toMatch(/<desc[^>]*>A plan of Floor 1 of House of Jars, street at the bottom: Dorm H \(14 pods, 14 lockers\), Landing \(the shoe cubbies\)/);
+    expect(renderPlan("floor1")).toMatch(/<desc[^>]*>A plan of the 1st floor of House of Jars, street at the bottom: Dorm H \(14 pods, 14 lockers\), Landing \(the shoe cubbies\)/);
     const floor2 = renderPlan("floor2");
     expect(floor2).toMatch(/<desc[^>]*>[^<]*Not photographed yet/);
-    expect(floor2).toContain(">Not photographed yet: copied from Floor 1 on the owner's word.</text>");
+    expect(floor2).toContain(">Not photographed yet: copied from the 1st floor on the owner's word.</text>");
     expect(renderPlan("floor2")).toMatch(/<g id="labels-floor2" data-labels="" data-floor="floor2">/);
   });
 
@@ -428,10 +428,10 @@ describe("drawn from the model, not from constants in the renderer", () => {
     expect(renderPlan("floor1", { model: confirmed })).toContain(">H01–H03<");
   });
 
-  it("shows Floor 2's small windows on its plan although both miss the plan's cut height", () => {
+  it("shows the 2nd floor's small windows on its plan although both miss the plan's cut height", () => {
     expect(renderPlan("floor2")).toMatch(/<g id="fx-window-j-low" data-fixture="window"/);
     const pieces = (svg: string) => (/<g data-walls="">([\s\S]*?)<\/g>/.exec(svg)![1]!.match(/<path/g) ?? []).length;
-    // Floor 2 adds one wall piece: the parapet beside the first flight's hole (no stairs go on up from the top floor).
+    // The 2nd floor adds one wall piece: the parapet beside the first flight's hole (no stairs go on up from the top floor).
     expect(pieces(renderPlan("floor2"))).toBe(pieces(renderPlan("floor1")) + 1);
   });
 });

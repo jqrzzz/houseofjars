@@ -398,7 +398,7 @@ export function nextTask(state: GameState, graph: GameGraph): string {
       if (outside) return "go in through the glass door";
       if (!state.checkedIn) return "check in at the front desk";
       if (state.shoes === "on") return "take your shoes off at the foot of the stairs";
-      if (state.shoes === "carried") return "leave your shoes in a cubby on the Floor 1 landing";
+      if (state.shoes === "carried") return "leave your shoes in a cubby on the 1st floor landing";
       return `find pod ${YOUR_POD} in Dorm H and climb in`;
     case "early":
       if (isDone(state)) return "safe travels";

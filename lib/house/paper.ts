@@ -154,12 +154,12 @@ const LAYER_TEXT: Record<PaperLayerId, () => { title: string; desc: string }> = 
     desc: "The pieces in front of the ground floor's facade, in paper: the wooden awning on its two posts with its \"hostel\" sign, the hanging board, and the small jar for cigarette butts.",
   }),
   floor1: () => ({
-    title: `${model.name}: Floor 1, in paper`,
-    desc: `Floor 1 cut open from the front right, in paper: ${areaNames("floor1")}, with ${pods("floor1")} pods.`,
+    title: `${model.name}: 1st floor, in paper`,
+    desc: `The 1st floor cut open from the front right, in paper: ${areaNames("floor1")}, with ${pods("floor1")} pods.`,
   }),
   floor2: () => ({
-    title: `${model.name}: Floor 2, in paper`,
-    desc: `Floor 2 cut open from the front right, in paper and faded: drawn as a copy of Floor 1, not yet photographed (${areaNames("floor2")}).`,
+    title: `${model.name}: 2nd floor, in paper`,
+    desc: `The 2nd floor cut open from the front right, in paper and faded: drawn as a copy of the 1st floor, not yet photographed (${areaNames("floor2")}).`,
   }),
 };
 

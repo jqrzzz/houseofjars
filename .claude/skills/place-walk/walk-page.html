@@ -475,7 +475,7 @@ label.btn:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
         const n = nums.length ? Math.max(...nums) + 1 : 1;
         const fid = "f" + n;
         if (S.floors.has(fid)) break;
-        // The house counts floors from the ground: Ground floor, Floor 1, Floor 2…
+        // The house counts floors from the ground: Ground floor, 1st floor, 2nd floor…
         S.floors.set(fid, { n, label: n === 1 ? "Ground floor" : "Floor " + (n - 1), hint: n === 1 ? "Street level" : "", sketch: null, order: n });
         S.cur = fid; save("floors", fid, 0); render(); break;
       }

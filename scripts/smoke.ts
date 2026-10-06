@@ -925,7 +925,7 @@ async function differingCells(first: string, second: string, marked: string) {
  * theatre-{width}-{scheme}-{shot}.png. Each is placed by StageDirector's own
  * cues (#theatre-cues, HouseTheatre.tsx), whose tops cross the middle of the
  * screen as their act or stop begins: the street front as Act A begins, the
- * front half gone, Floor 1 lifted with its tags as Act B ends, the thread at
+ * front half gone, the 1st floor lifted with its tags as Act B ends, the thread at
  * each stop of the walk, and the end. The end is where the section's view
  * timeline ends, which takes the page's scroll padding as its inset (4.5rem
  * on phones), not where the section's foot meets the screen's. There the

@@ -18,7 +18,7 @@ const orList = (items: readonly (string | number)[]) =>
  * section in which the stage stands still (sticky) while the reader scrolls,
  * and its acts play on the section's view timeline (--theatre):
  *   A  the street front opens onto the house (the intro);
- *   B  Floor 1 lifts, and three tags swing in (the same three phrases, listed);
+ *   B  The 1st floor lifts, and three tags swing in (the same three phrases, listed);
  *   C  the thread walks the arrival route, stop by stop (the five stops, from
  *      the house model's walk, each marked as the thread reaches it);
  *   D  the curtain of pod H01 closes (the closing lines and links).

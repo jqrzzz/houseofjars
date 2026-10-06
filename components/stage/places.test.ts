@@ -48,7 +48,7 @@ describe("placesOf", () => {
       for (const token of placesOf(r).split(" ").filter(Boolean)) {
         const place = token.replace(/^not:/, "");
         if (place.startsWith("floor:")) expect(floors.has(place.slice("floor:".length)), `${r.id}: ${token}`).toBe(true);
-        // Floor 2's areas have no plan here; every other area named does.
+        // The 2nd floor's areas have no plan here; every other area named does.
         else if (!["dorm-j", "landing-2", "bath-men"].includes(place)) expect(planned.has(place), `${r.id}: ${token}`).toBe(true);
       }
     }

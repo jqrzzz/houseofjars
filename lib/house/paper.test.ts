@@ -66,7 +66,7 @@ describe("the paper stage's geometry", () => {
     expect(crop[1]).toBeGreaterThanOrEqual(y);
     expect(crop[0] + crop[2]).toBeLessThanOrEqual(x + w);
     expect(crop[1] + crop[3]).toBeLessThanOrEqual(y + h);
-    // The ground floor and Floor 1 need less height than all three floors.
+    // The ground floor and the 1st floor need less height than all three floors.
     expect(crop[3]).toBeLessThan(h);
     expect(g.crop(["floor1", "ground"])).toEqual(crop);
     const lifted = viewBoxOf(renderCutaway({ outfit: "paper", explode: 2.5, floors: ["ground", "floor1"] }));
@@ -121,7 +121,7 @@ describe("the paper layers", () => {
       });
     }
 
-  it("keep street + ground + ground-front + Floor 1 within 45 kB gzipped, per theme", () => {
+  it("keep street + ground + ground-front + 1st floor within 45 kB gzipped, per theme", () => {
     for (const theme of themes) {
       const total = (["street", "ground", "ground-front", "floor1"] as PaperLayerId[]).reduce((sum, layer) => sum + gzipSync(renderPaperLayer(layer, theme)).length, 0);
       expect(total, theme).toBeLessThanOrEqual(45 * 1024);
@@ -157,7 +157,7 @@ describe("the paper layers", () => {
     expect(PAPER_LAYERS.indexOf("ground-front")).toBeGreaterThan(PAPER_LAYERS.indexOf("floor2"));
   });
 
-  it("fade Floor 2, not yet photographed: dim, data-confirmed false, pale but opaque", () => {
+  it("fade the 2nd floor, not yet photographed: dim, data-confirmed false, pale but opaque", () => {
     for (const theme of themes) {
       const svg = renderPaperLayer("floor2", theme);
       expect(svg).toMatch(/<g id="floor-floor2" data-floor="floor2" data-level="2" data-confirmed="false" class="dim">/);
@@ -315,7 +315,7 @@ describe("the thread of a walk", () => {
     expect(y1! - y2!).toBeCloseTo(90, 0);
   });
 
-  it("closes pod H01's curtain on its open side, on Floor 1 under the thread", () => {
+  it("closes pod H01's curtain on its open side, on the 1st floor under the thread", () => {
     const t = renderThreadLayer("arrival", { idPrefix: "a-", curtain: "pod-H01" });
     expect(t.floors.floor1).toMatch(/<g data-curtain="pod-H01" stroke="none" transform="matrix\([-\d. ]+\)"><rect width="1" height="1"\/><\/g><path/);
     expect(t.floors.ground).not.toContain("data-curtain");

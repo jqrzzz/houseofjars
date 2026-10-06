@@ -2,14 +2,14 @@
   "floors": {
     "f1": {
       "n": 1,
-      "label": "Floor 1",
+      "label": "1st floor",
       "hint": "Street level. Booking.com says the café is here.",
       "sketch": null,
       "order": 1
     },
     "f2": {
       "n": 2,
-      "label": "Floor 2",
+      "label": "2nd floor",
       "hint": "A dorm floor, by the house rules board.",
       "sketch": null,
       "order": 2

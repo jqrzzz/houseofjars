@@ -108,7 +108,7 @@ describe("threadFrames", () => {
     expect(atStairs?.css).toBe("stroke-dashoffset:0");
   });
 
-  it("leaves Floor 1's thread undrawn until the walk climbs, and rests at Shoes", () => {
+  it("leaves the 1st floor's thread undrawn until the walk climbs, and rests at Shoes", () => {
     const frames = threadFrames(clock, floor1);
     const before = frames.filter((f) => f.at <= floor1[0] * 100 + 1e-6);
     expect(before.every((f) => f.css === "stroke-dashoffset:1")).toBe(true);

@@ -162,7 +162,7 @@ const LAMPLIGHT = "#eed079";
  */
 const PAPER_FAR = { day: "#ebe3d6", evening: "#271a10" } as const;
 const FAR_MIX = 0.25;
-/** A faded floor in the paper outfit (Floor 2, not yet photographed) is pale, not see-through: its tones ("wd1g") and its ink this far toward the far paper. */
+/** A faded floor in the paper outfit (the 2nd floor, not yet photographed) is pale, not see-through: its tones ("wd1g") and its ink this far toward the far paper. */
 const PALE_MIX = 0.58;
 
 /**

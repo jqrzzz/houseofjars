@@ -54,7 +54,7 @@ export const HOUSE_PHOTOS: readonly PhotoKey[] = ["dormFan", "podCurtain", "podL
 
 /**
  * The house in section (docs/DESIGN.md §5.2), for /the-house#section: all
- * three floors in paper, Floor 2 dimmed. On wide screens the floors lift
+ * three floors in paper, the 2nd floor dimmed. On wide screens the floors lift
  * apart as the reader scrolls through a 160svh section and the arrival walk
  * draws itself; on phones the stage is a still, lifted. Chips choose a walk
  * (WalkPicker), and each walk's stops are listed beside the stage; without
@@ -81,7 +81,7 @@ export function HouseStage({ photos = HOUSE_PHOTOS }: { photos?: readonly PhotoK
           hotspots={NOTES}
           spots={cameraSpots(photos)}
           caption="Drawn from our walk through the house: positions are approximate."
-          note="Floor 2 is drawn as a copy of Floor 1: not yet photographed."
+          note="The 2nd floor is drawn as a copy of the 1st floor: not yet photographed."
         />
         <div className={styles.side}>
           <WalkPicker stage={ID} list={`${ID}-walks`} chips={walks.map(({ route, label }) => ({ route, label }))} initial="arrival" />

@@ -52,10 +52,10 @@ export interface Certainty {
   readonly note?: string;
 }
 
-/** A whole floor can be unconfirmed (Floor 2 has not been photographed); its note is shown on its plan. */
+/** A whole floor can be unconfirmed (the 2nd floor has not been photographed); its note is shown on its plan. */
 export interface Floor extends Certainty {
   readonly id: FloorId;
-  /** The owner's name for the floor: Ground floor, Floor 1, Floor 2. */
+  /** The owner's name for the floor: Ground floor, 1st floor, 2nd floor. */
   readonly name: string;
   /** 0 for the ground floor, 1, 2 upwards: the exploded views lift each floor by its level. */
   readonly level: number;

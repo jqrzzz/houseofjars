@@ -2,7 +2,7 @@ import { FindYourPodLauncher } from "./FindYourPodLauncher";
 import styles from "./FindYourPodPoster.module.css";
 
 /*
- * The game's still poster for /the-house#play: two paper plans side by side (the ground floor and Floor 1),
+ * The game's still poster for /the-house#play: two paper plans side by side (the ground floor and the 1st floor),
  * the thread of the arrival walk from the terrace up to a pod, and the lamp light at its end. Drawn inline,
  * so it fetches nothing; the game and its board load only when the button is used.
  */
@@ -22,7 +22,7 @@ export function FindYourPodPoster({ label }: { label?: string }) {
         <circle className={styles.wood} cx="140" cy="128" r="5" />
         <circle className={styles.wood} cx="140" cy="150" r="5" />
         <circle className={styles.wood} cx="106" cy="164" r="5" />
-        {/* Floor 1: the landing and its cubbies, Dorm H's seven stacks of pods. */}
+        {/* 1st floor: the landing and its cubbies, Dorm H's seven stacks of pods. */}
         <path className={styles.wall} d="M206 30h72v118h-72z" />
         <path className={styles.line} d="M206 70h72" />
         <path className={styles.wood} d="M270 36h6v26h-6zM210 36h40v16h-40z" />

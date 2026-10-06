@@ -2209,7 +2209,7 @@ export interface StairArrow {
 
 /**
  * Stairs in plan, the usual way: treads, and an arrow that starts where you stand and points the way you
- * walk, its label at the tail. Two arrows (a flight up over the flight down, as on Floor 1) share the
+ * walk, its label at the tail. Two arrows (a flight up over the flight down, as on the 1st floor) share the
  * width, split by a diagonal break line.
  */
 /** A flight in plan: its treads across the way it climbs (`climb`; none for a landing) and its arrows. */

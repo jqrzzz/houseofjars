@@ -30,8 +30,8 @@ export const openQuestions: readonly OpenQuestion[] = [
     guestTopic: null,
   },
   {
-    ask: "Floor 2: photos of Dorm J, its landing and the men's bathroom. The house drawing on /the-house (from lib/house) copies Floor 1 for it and says so; the photos would confirm it.",
-    guestTopic: "what Floor 2 looks like (it is drawn as a copy of Floor 1)",
+    ask: "2nd floor: photos of Dorm J, its landing and the men's bathroom. The house drawing on /the-house (from lib/house) copies the 1st floor for it and says so; the photos would confirm it.",
+    guestTopic: "what the 2nd floor looks like (it is drawn as a copy of the 1st floor)",
   },
   {
     ask: "Where the team likes to eat nearby: a few local places, what to order there, roughly what it costs and when they are open (for Shadow and a food guide).",
