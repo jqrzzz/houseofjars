@@ -6,8 +6,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 /**
  * A <details> disclosure for the phone menu: works without JavaScript. With
  * it, the menu also closes after client-side navigation, on Escape (focus
- * goes back to the menu button) and on a tap outside it. Its two bars cross
- * into a close mark, and the panel unfolds and folds away (SiteHeader.module.css).
+ * goes back to the menu button), on a tap outside it, and when keyboard focus
+ * moves on past it, so the next control is never hidden under the open panel.
+ * Its two bars cross into a close mark, and the panel unfolds and folds away
+ * (SiteHeader.module.css).
  */
 export function MobileMenu({ className, summaryClassName, children }: { className?: string; summaryClassName?: string; children: ReactNode }) {
   const pathname = usePathname();
@@ -29,11 +31,18 @@ export function MobileMenu({ className, summaryClassName, children }: { classNam
     const onPointerDown = (event: PointerEvent) => {
       if (event.target instanceof Node && !details.contains(event.target)) details.open = false;
     };
+    // Only when focus lands somewhere else on the page. Without a new target it is a tap on blank space inside the
+    // panel, or the window losing focus: the menu stays open (a tap outside is the pointerdown's job).
+    const onFocusOut = (event: FocusEvent) => {
+      if (event.relatedTarget instanceof Node && !details.contains(event.relatedTarget)) details.open = false;
+    };
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("pointerdown", onPointerDown);
+    details.addEventListener("focusout", onFocusOut);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("pointerdown", onPointerDown);
+      details.removeEventListener("focusout", onFocusOut);
     };
   }, [open]);
 

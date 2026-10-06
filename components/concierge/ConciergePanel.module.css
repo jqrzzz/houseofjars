@@ -207,29 +207,31 @@
   overscroll-behavior: contain;
 }
 
+/* Square slips of paper, like the rest of the chrome: the arch is the only curve. */
 .bubble {
   max-width: 88%;
   padding: 0.65rem 0.9rem;
-  border-radius: 1.1rem;
+  border-radius: var(--radius-s);
   font-size: var(--step-0);
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+/* Shadow's slips carry the paper's card edge (a lamplight rim by Evening). */
 .shadow {
   align-self: flex-start;
-  border-bottom-left-radius: 0.3rem;
   background: var(--surface);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
 }
 
 .user {
   align-self: flex-end;
-  border-bottom-right-radius: 0.3rem;
   background: color-mix(in srgb, var(--jar-orange) 24%, var(--page));
 }
 
 .failed {
+  box-shadow: none;
   background: transparent;
   border: 1px dashed var(--rule-strong);
   color: var(--text-soft);
@@ -426,7 +428,7 @@
   max-height: 8.5rem;
   padding: 0.6rem 0.9rem;
   border: 1px solid var(--field-border);
-  border-radius: 1.4rem;
+  border-radius: var(--radius-s);
   background: var(--page);
   color: var(--text);
   font-size: 1rem;
@@ -442,7 +444,7 @@
 
 .input:focus-visible {
   outline-offset: 1px;
-  border-radius: 1.4rem;
+  border-radius: var(--radius-s);
 }
 
 .send {

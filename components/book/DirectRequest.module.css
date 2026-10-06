@@ -7,6 +7,8 @@
 .fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* The warning comes after the date in reading order; across the row, the other fields fill in beside the date. */
+  grid-auto-flow: row dense;
   gap: var(--space-s);
 }
 
@@ -35,6 +37,20 @@
   font-weight: 500;
   letter-spacing: 0;
   font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* A day already gone: the date field says so, as the message form's fields do. */
+.field [aria-invalid="true"] {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
+
+/* Under the date on a phone, and under the whole row where the fields sit side by side. */
+.warning {
+  grid-column: 1 / -1;
+  color: var(--danger);
+  font-size: var(--step--1);
+  font-weight: 600;
 }
 
 .actions {

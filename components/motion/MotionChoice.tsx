@@ -1,10 +1,19 @@
 "use client";
 
-import { useId, type JSX } from "react";
-import { useMotionChoice } from "@/lib/motion/hooks";
-import { setMotion, type MotionChoice as Choice } from "@/lib/motion/prefs";
+import { useId, useSyncExternalStore, type JSX } from "react";
+import { subscribeMotion, useMotionChoice } from "@/lib/motion/hooks";
+import { REDUCED_MOTION_QUERY, setMotion, type MotionChoice as Choice } from "@/lib/motion/prefs";
 import plates from "../layout/ThemeSwitch.module.css";
 import styles from "./MotionChoice.module.css";
+
+/** Whether the device asks for less motion. */
+function deviceReduces(): boolean {
+  try {
+    return matchMedia(REDUCED_MOTION_QUERY).matches;
+  } catch {
+    return false;
+  }
+}
 
 /** The house's thread, drawn for this site: slack and moving (Full), or pulled taut and still (Still). */
 function ThreadIcon({ moving }: { moving: boolean }) {
@@ -28,16 +37,22 @@ const choices: { value: Choice; label: string }[] = [
 /**
  * Motion: Full or Still, for the whole site (lib/motion/prefs.ts). It sits
  * beside the theme choice in the footer and in the phone menu, on the teak
- * band ("deep") or on the page.
+ * band ("deep") or on the page. A device set to reduce motion wins whatever
+ * the choice, so then the switch shows Still, Full can't be chosen, and a line
+ * under it says why. The guest's own choice is kept for when the device
+ * setting changes.
  */
 export function MotionChoice({ tone = "deep", className }: { tone?: "deep" | "page"; className?: string }): JSX.Element {
   const choice = useMotionChoice();
+  // Not known on the server: the stored choice shows until the page is running.
+  const reduced = useSyncExternalStore(subscribeMotion, deviceReduces, () => false);
   const name = useId();
   const hint = useId();
+  const note = useId();
   return (
     <fieldset
       className={[plates.choices, tone === "page" ? plates.onPage : null, className].filter(Boolean).join(" ")}
-      aria-describedby={hint}
+      aria-describedby={reduced ? `${note} ${hint}` : hint}
     >
       <legend className={plates.legend}>Motion</legend>
       <p id={hint} className="visually-hidden">
@@ -50,7 +65,8 @@ export function MotionChoice({ tone = "deep", className }: { tone?: "deep" | "pa
               type="radio"
               name={name}
               value={value}
-              checked={choice === value}
+              checked={reduced ? value === "still" : choice === value}
+              disabled={reduced && value === "full"}
               onChange={() => setMotion(value)}
               className={plates.radio}
             />
@@ -59,6 +75,11 @@ export function MotionChoice({ tone = "deep", className }: { tone?: "deep" | "pa
           </label>
         ))}
       </div>
+      {reduced ? (
+        <p id={note} className={styles.note}>
+          Your device asks for less motion.
+        </p>
+      ) : null}
     </fieldset>
   );
 }

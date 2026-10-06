@@ -9,6 +9,7 @@ import buttons from "../ui/button.module.css";
 import { MailIcon, WhatsAppIcon } from "../ui/icons";
 import styles from "./DirectRequest.module.css";
 import { MiniRail } from "./MiniRail";
+import { stayToSend } from "./stay-to-send";
 
 const subscribeNothing = () => () => {};
 const nightOptions = Array.from({ length: DIRECT_NIGHTS }, (_, index) => index + 1);
@@ -29,6 +30,7 @@ interface DirectRequestProps extends DirectContact {
  * or one followed inside the site without a reload). The team replies there;
  * nothing is sent or booked by the site. On /book, once a date is chosen,
  * the stay's rail (check-in, breakfast, check-out) sits above the buttons.
+ * A day already gone stays out of the request, and the form says so.
  */
 export function DirectRequest(props: DirectRequestProps) {
   // The page is static: the link's query string is read only in the browser.
@@ -50,12 +52,15 @@ function Request({ whatsapp, email, className, rail, search }: DirectRequestProp
   const choose = (change: Partial<DirectStay>) => setChosen((previous) => ({ ...previous, ...change }));
   // Dates in the past make no sense: the floor, once the browser knows today's date at the house.
   const floor = useSyncExternalStore(subscribeNothing, houseToday, () => undefined);
-  const links = directLinks(stay, { whatsapp, email });
-  const shown = rail ? stayRailForNights(stay.checkIn, stay.nights, rail, { today: floor }) : null;
+  // What goes in the message: a day already gone is left out, and the warning says which day to choose from.
+  const { stay: sent, warning } = stayToSend(stay, floor);
+  const links = directLinks(sent, { whatsapp, email });
+  const shown = rail ? stayRailForNights(sent.checkIn, sent.nights, rail, { today: floor }) : null;
 
   return (
     <div className={[styles.request, className].filter(Boolean).join(" ")}>
-      <div className={styles.fields} role="group" aria-label="Your stay">
+      {/* The fields are the form's cue: Shadow's dock steps aside once they come up into the screen. */}
+      <div className={styles.fields} role="group" aria-label="Your stay" data-launcher-cue="">
         <label className={`${styles.field} ${styles.date}`} htmlFor={`${id}-check-in`}>
           <span>Check-in</span>
           <input
@@ -63,9 +68,15 @@ function Request({ whatsapp, email, className, rail, search }: DirectRequestProp
             type="date"
             min={floor}
             value={stay.checkIn ?? ""}
+            aria-invalid={warning ? true : undefined}
+            aria-describedby={warning ? `${id}-past` : undefined}
             onChange={(event) => choose({ checkIn: isIsoDate(event.target.value) ? event.target.value : null })}
           />
         </label>
+        {/* Always there, so it is read out as it changes; on screen under the date while it has something to say. */}
+        <p id={`${id}-past`} className={warning ? styles.warning : "visually-hidden"} aria-live="polite">
+          {warning}
+        </p>
         <label className={styles.field} htmlFor={`${id}-nights`}>
           <span>Nights</span>
           <select id={`${id}-nights`} value={stay.nights} onChange={(event) => choose({ nights: Number(event.target.value) })}>

@@ -457,6 +457,17 @@ a:hover {
   border-radius: 2px;
 }
 
+/*
+ * A date field's last stop is its calendar button, inside the field, where
+ * :focus-visible can't reach: the field carries the ring for it (and by
+ * Evening the browser's own ring wouldn't show on the dark field).
+ */
+input[type="date"]:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--jar-orange) 30%, transparent);
   color: inherit;
