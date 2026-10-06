@@ -1,0 +1,56 @@
+.petal {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+
+/* Orange, with a warm heart, like the dok champa beside each word of praise. At rest it has crossed and gone. */
+.petal i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle, var(--stage-light) 0 15%, var(--jar-orange) 21%);
+  -webkit-mask: url("/brand/dok-champa.svg") center / contain no-repeat;
+  mask: url("/brand/dok-champa.svg") center / contain no-repeat;
+  /* In from the left a little above the middle, up on a breath of air, down, and out to the right. */
+  offset-path: shape(
+    from -3% 34%,
+    curve to 30% 20% with 9% 18% / 18% 14%,
+    curve to 64% 52% with 44% 27% / 50% 54%,
+    curve to 103% 40% with 80% 50% / 92% 36%
+  );
+  offset-rotate: 0deg;
+  opacity: 0;
+}
+
+/* Once, over 4.8 s on --ease-sway, turning to 200°. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (offset-path: shape(from 0 0, line to 1px 1px)) {
+    :global(:root:not([data-motion="still"])) :global(:is([data-played], [data-play])) .petal i {
+      animation: petal-cross 4.8s var(--ease-sway) var(--delay, 300ms) both;
+    }
+  }
+}
+
+@keyframes petal-cross {
+  /* It turns with offset-rotate: the rotate property would turn its whole path. */
+  from {
+    offset-distance: 0%;
+    offset-rotate: 0deg;
+    opacity: 0;
+  }
+
+  5%,
+  94% {
+    opacity: 1;
+  }
+
+  to {
+    offset-distance: 100%;
+    offset-rotate: 200deg;
+    opacity: 0;
+  }
+}

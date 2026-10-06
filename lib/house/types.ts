@@ -22,6 +22,13 @@ export type Facing = "+x" | "-x" | "+y" | "-y";
 /** auto = day colours, with the Evening palette under prefers-color-scheme: dark. */
 export type Theme = "auto" | "day" | "evening";
 
+/**
+ * How a view is dressed: "model", the accurate drawing (every edge inked, every detail); "paper", cut
+ * paper with an ink silhouette (flat sheets in close tones, ink only around each thing, card edges on the
+ * big planes, deckled walls and slabs, simpler fixtures). See docs/HOUSE_MODEL.md.
+ */
+export type Outfit = "model" | "paper";
+
 export interface Rect {
   readonly x0: number;
   readonly x1: number;
@@ -221,17 +228,30 @@ export interface RouteSegment {
   readonly points: readonly RoutePoint[];
 }
 
+/** A step of a walk: where it is drawn, and what happens there for a guide, the team or Shadow. */
 export interface RouteStop {
   readonly floor: FloorId;
   readonly at: readonly [number, number];
+  /** A word or two, drawn on the picture: "Check in". */
   readonly label: string;
+  /** The area the step happens in. */
+  readonly area?: string;
+  /** What happens here, in one or two plain sentences. */
+  readonly does?: string;
+  /** The ids of the house rules (lib/house/rules.ts) that apply at this step. */
+  readonly rules?: readonly string[];
 }
 
+/** A walk through the house: a guest's (arriving, breakfast, leaving early) or the team's (a cleaning round). */
 export interface Route {
   readonly id: string;
   readonly name: string;
+  readonly who?: "guest" | "staff";
+  /** When it happens, in words: "08:00 to 10:30", "About every hour". */
+  readonly when?: string;
   /** One segment per floor, in walking order. */
   readonly segments: readonly RouteSegment[];
+  /** The steps, in walking order. */
   readonly stops?: readonly RouteStop[];
 }
 
@@ -253,6 +273,11 @@ export interface HouseModel {
   readonly routes: readonly Route[];
   /** The rectangle of the terrace in front of the facade (outside areas live here). */
   readonly terrace: Rect;
+  /**
+   * How the house is set up around its guests' cultures (numbers it skips, and why), in plain sentences
+   * for guides, the team and Shadow.
+   */
+  readonly customs?: readonly string[];
   /** Every area id of the owner's walk; each must have a model area. */
   readonly walkAreaIds: readonly string[];
 }

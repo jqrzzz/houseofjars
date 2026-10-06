@@ -1,3 +1,69 @@
 .whatsapp {
   justify-self: start;
 }
+
+/*
+ * The riverside in three planes (docs/DESIGN.md §4.1, "planes move at their
+ * depth"): the mat is the back plane and stays; the drawing inside it drifts
+ * 6px either way as the picture crosses the screen; the lanterns hung in
+ * front drift 14px. Linear: the reader holds the clock. At rest (Still,
+ * reduced motion, no scroll timelines) every plane sits where it is drawn.
+ */
+.riverside {
+  position: relative;
+  isolation: isolate;
+  padding-top: 2.25rem;
+}
+
+/* In front of the mat and its window (the window is raised inside the mat). */
+.lanterns {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: -0.75rem;
+  width: calc(100% + 1.5rem);
+  height: auto;
+  pointer-events: none;
+}
+
+/* A lantern's body: a sheet of orange paper with its ink outline. */
+.lantern {
+  stroke: var(--ink-line);
+  stroke-width: 1.5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    :global(:root:not([data-motion="still"])) .riversideFrame :global(img) {
+      animation: river-mid linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+
+    :global(:root:not([data-motion="still"])) .lanterns {
+      animation: river-front linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
+@keyframes river-mid {
+  from {
+    translate: 0 6px;
+  }
+
+  to {
+    translate: 0 -6px;
+  }
+}
+
+@keyframes river-front {
+  from {
+    translate: 0 14px;
+  }
+
+  to {
+    translate: 0 -14px;
+  }
+}

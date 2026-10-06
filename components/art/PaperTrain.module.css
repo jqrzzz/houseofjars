@@ -1,0 +1,29 @@
+/* The train runs off the left edge into the rest of its length, so the drawing clips there. */
+.train {
+  overflow: hidden;
+}
+
+/* Sleepers: short teak dashes under the rail. */
+.sleepers {
+  fill: none;
+  stroke: color-mix(in oklab, var(--teak) 70%, var(--page));
+  stroke-width: 3;
+  stroke-dasharray: 3 7;
+}
+
+/* Arriving: the cars glide in from the left and ease to a stop (900 ms), once, as the page opens. */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .train[data-arrive] .cars {
+    animation: train-arrive 900ms var(--ease-out) var(--arrive-delay, 200ms) both;
+  }
+
+  :global(html.splash:not([data-motion="still"])) .train[data-arrive] .cars {
+    --arrive-delay: 1150ms;
+  }
+}
+
+@keyframes train-arrive {
+  from {
+    translate: -180px 0;
+  }
+}

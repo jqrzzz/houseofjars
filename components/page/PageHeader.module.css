@@ -34,22 +34,101 @@
   color: var(--text-soft);
 }
 
-.art {
-  display: none;
+.text .share {
+  margin-top: var(--space-s);
 }
 
+/*
+ * The art. On phones it comes first, above the eyebrow: a drawing on a small
+ * paper tile with its card edge, a scene at 8rem, a band across the top.
+ */
+.art {
+  order: -1;
+  min-width: 0;
+  color: var(--stone-dark);
+}
+
+.art :global(img) {
+  width: 100%;
+  height: auto;
+}
+
+.tile,
+.scene,
+.band {
+  row-gap: var(--space-l);
+}
+
+.tile .art {
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  aspect-ratio: 1;
+  padding: 0.35rem;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+.scene .art {
+  width: 8rem;
+}
+
+.band .art {
+  width: 100%;
+}
+
+.band .art :global(svg) {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 40rem) {
+  .band .art {
+    width: min(100%, 26rem);
+  }
+}
+
+/* Wide screens: beside the title, at the foot of the header's text. */
 @media (min-width: 60rem) {
-  .grid {
-    grid-template-columns: minmax(0, 1fr) 13rem;
+  .tile,
+  .scene,
+  .band {
+    column-gap: var(--space-xl);
   }
 
   .art {
+    order: 0;
+  }
+
+  .tile {
+    grid-template-columns: minmax(0, 1fr) 13rem;
+  }
+
+  .tile .art {
     display: block;
     width: 100%;
-    color: var(--stone-dark);
+    aspect-ratio: auto;
+    padding: 0;
+    background: none;
+    box-shadow: none;
   }
-}
 
-.text .share {
-  margin-top: var(--space-s);
+  .scene {
+    grid-template-columns: minmax(0, 1fr) 17rem;
+  }
+
+  .scene .art {
+    width: 100%;
+  }
+
+  /* The band runs along the header's foot, level with the share line. */
+  .band {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 28rem);
+  }
+
+  .band .art {
+    width: 100%;
+    padding-bottom: 0.2rem;
+  }
 }

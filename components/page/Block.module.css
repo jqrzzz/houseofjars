@@ -131,9 +131,10 @@
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   }
 
+  /* Sticky below the site header (4.5rem, sticky from 48rem). */
   .head {
     position: sticky;
-    top: var(--space-xl);
+    top: calc(4.5rem + var(--space-xl));
     align-self: start;
   }
 }

@@ -20,10 +20,11 @@
   text-decoration: none;
   white-space: nowrap;
   transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease,
-    transform 180ms var(--ease-out);
+    background-color var(--dur-hover) ease,
+    border-color var(--dur-hover) ease,
+    color var(--dur-hover) ease,
+    box-shadow var(--dur-press) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .button:hover {
@@ -38,18 +39,28 @@
   width: 1.1rem;
   height: 1.1rem;
   flex: none;
-  transition: transform 200ms var(--ease-out);
+  transition: transform var(--dur-hover) var(--ease-out);
 }
 
 .button:hover svg[data-arrow] {
   transform: translateX(3px);
 }
 
-/* Jar orange, like the house's plates. Ink text: 5.7:1 (white would be 3.1:1). */
+/*
+ * Jar orange, like the house's plates. Ink text: 5.7:1 (white would be 3.1:1).
+ * It sits on a 2 px paper edge, a card standing on the page, and presses flat
+ * onto it.
+ */
 .primary {
   --button-bg: var(--jar-orange);
   --button-fg: var(--ink);
   --button-border: var(--jar-orange);
+  box-shadow: 0 2px 0 var(--paper-edge);
+}
+
+.primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 var(--paper-edge);
 }
 
 /* Lighter on hover, so the ink only gains contrast. */
@@ -90,7 +101,7 @@
 .textLink svg {
   width: 1.05rem;
   height: 1.05rem;
-  transition: transform 200ms var(--ease-out);
+  transition: transform var(--dur-hover) var(--ease-out);
 }
 
 .textLink:hover svg {

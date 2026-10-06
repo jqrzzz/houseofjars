@@ -59,7 +59,7 @@ In it: 2 closet doors.
 
 ### Corridor
 
-In it: 2 ceiling lights, 2 clay jars, 1 cupboard, 2 fire extinguishers.
+In it: 1 basin, 2 ceiling lights, 2 clay jars, 1 cupboard, 2 fire extinguishers, 1 hand dryer.
 
 #### Water
 
@@ -67,10 +67,7 @@ In it: 1 bin, 2 low stools, 1 water dispenser.
 
 ### Toilet
 
-In it: 1 basin, 1 hand dryer, 1 small sink, 1 toilet.
-
-Assumed:
-- Where the toilet's door is and how the room is laid out inside are approximate: the door opens off a small wet corner beside the corridor, the basin right outside it (f1-10, gf-09, gf-10).
+In it: 1 small sink, 1 toilet.
 
 ### Staff room
 
@@ -84,7 +81,7 @@ In it: 1 cupboard, 1 exhaust fan, 1 fridge, 2 kitchen counters, 2 low stools, 1 
 
 ### Dorm H
 
-In it: 1 air-conditioner, 3 ceiling fans, 1 exhaust fan, 12 lockers (H01 to H12), 12 pods (H01 to H12), 2 windows.
+In it: 1 air-conditioner, 3 ceiling fans, 1 exhaust fan, 14 lockers (H01 to H17, with no H04, H13 or H14), 14 pods (H01 to H17, with no H04, H13 or H14), 2 windows.
 
 Rules here:
 - No outside guests upstairs: the dorm floors are for registered guests, one to a pod. Everyone sleeps among people the house knows. (Floor 1 and Floor 2 are for registered guests only; the stairs behind the counter lead up to them.)
@@ -95,11 +92,8 @@ Rules here:
 - Check-out from 08:00 until 11:30. So beds are ready for the guests arriving that afternoon. (Pods in Dorm H and Dorm J are left by 11:30, and guests check out at the front desk.)
 
 Assumed:
-- Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door.
-- The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read).
-- Not confirmed: which pod carries which number.
-- Not confirmed: which stack holds which numbers.
-- A wooden door with a small orange H sign, drawn open into the dorm.
+- One locker for each pod, with the pod's number (the owner's bed register).
+- The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
 
 ### Landing
 
@@ -127,7 +121,7 @@ Not photographed yet: copied from Floor 1 on the owner's word.
 
 ### Dorm J
 
-In it: 1 air-conditioner, 3 ceiling fans, 1 exhaust fan, 12 lockers (J01 to J12), 12 pods (J01 to J12), 2 windows.
+In it: 1 air-conditioner, 3 ceiling fans, 1 exhaust fan, 14 lockers (J01 to J17, with no J04, J13 or J14), 14 pods (J01 to J17, with no J04, J13 or J14), 2 windows.
 
 Rules here:
 - No outside guests upstairs: the dorm floors are for registered guests, one to a pod. Everyone sleeps among people the house knows. (Floor 1 and Floor 2 are for registered guests only; the stairs behind the counter lead up to them.)
@@ -139,10 +133,9 @@ Rules here:
 
 Assumed:
 - Floor 2 has not been photographed: copied from Floor 1 on the owner's word ("the same layout").
-- Not confirmed: photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door.
-- The numbers are the owner's (H01 to H12 on Floor 1, J01 to J12 on Floor 2; the plates in the photos are too blurry to read).
-- Not confirmed: which pod carries which number.
-- Not confirmed: which stack holds which numbers.
+- The numbers, the stacks and which pod is on top are from the owner's bed register, as drawn: the number written on top is the top bunk (the owner: "the top bunk is 1 and beneath it 2"; down the left, 09 over 08).
+- One locker for each pod, with the pod's number (the owner's bed register).
+- The stack beside the door holds the three highest numbers (f2-04); where the other stacks stand, and which numbers each holds, is assumed.
 - A wooden door with a small orange J sign, drawn open into the dorm.
 
 ### Landing
@@ -173,14 +166,23 @@ Assumed:
 
 ### Terrace
 
-In it: 1 "hostel" sign, 1 bench, 1 hanging House of Jars sign, 1 plant, 2 small round tables.
+In it: 1 "hostel" sign, 1 bench, 1 clay jar, 1 hanging House of Jars sign, 1 plant, 2 small round tables.
 
 Rules here:
+- Smoke out past the terrace, by the small jar for cigarette butts, not on the terrace itself. Smoke from the terrace drifts straight into the café. (Not on the terrace in front of the café, where smoke drifts inside: a few steps further out, where a small jar takes the butts.)
 - Coming by motorbike or bicycle? Tell reception. Overnight parking outside is not allowed. (Tell the front desk: bikes may not stay outside the terrace overnight.)
+
+Assumed:
+- A small jar for cigarette butts, a few steps out from the café's front: smoking is not allowed on the terrace itself (the owner).
+- Where exactly it stands is assumed: by the awning's right post.
 
 ### On the front wall
 
 3 outdoor air-conditioning units, at Floor 1's height.
+
+## House customs
+
+- The pods and lockers skip the numbers 4, 13 and 14. In Chinese, 4 sounds like "death" and 14 like "will die" (4 is unlucky in Japanese and Korean too), and 13 is unlucky for many Western guests. So no guest is given an unlucky bed, and nobody at the desk has to think about it at check-in.
 
 ## Rules everywhere indoors
 
@@ -203,8 +205,62 @@ Rules here:
 - Leaving before 08:00? Tell the team beforehand, so they can return your deposit. Check-out at the desk starts at 08:00. (Tell the front desk beforehand.)
 - If you cancel your stay after paying, there is no refund. Your bed is kept for you from the moment you pay. (About the booking, not about a place.)
 
-## Routes
+## Walks through the house
 
-- Arriving: from the terrace to pod H01: Check in, then Shoes.
-- From Dorm H to the women's bathroom.
-- From the counter to the free water.
+### Arriving: from the terrace to pod H01
+
+For guests. Check-in, 14:00 to 21:00.
+
+1. Front door, Entrance: In through the glass door on the left of the shopfront. From 23:30 to 07:00 it is locked: knock, and the night staff opens it. (rules: front door locked, no outside food)
+2. Check in, Front desk: Check in at the café counter, which is also the front desk: show your passport and pay the 100,000 kip deposit for your padlock and towel. Luggage can wait beside the desk. (rules: check in hours, passport, deposit)
+3. Shoes off, Stairs: Take your shoes off at the foot of the stairs and carry them up. (rules: no shoes upstairs, registered guests upstairs)
+4. Shoes, Landing: Leave your shoes in the cubbies on the Floor 1 landing. (rules: no shoes upstairs)
+5. Pod H01, Dorm H: Find your pod by its number (H01 is a top bunk, up its ladder) and the locker with the same number. Keep your voice down: someone is always asleep. (rules: quiet, eat in the cafe)
+
+### Breakfast: from Dorm H down to the café
+
+For guests. 08:00 to 10:30.
+
+1. Shoes, Landing: Take your shoes from the cubby and carry them down. (rules: no shoes upstairs)
+2. Shoes on, Stairs: Put them on at the foot of the stairs. (rules: no shoes upstairs, registered guests upstairs)
+3. Breakfast, Café: Breakfast is included, served at the counter from 08:00 to 10:30: two fried eggs, salad, baguette, fruit and coffee or tea. Eat it at a table in the café. (rules: eat in the cafe)
+
+### Leaving early: pack downstairs, check out
+
+For guests. Before 08:00 (check-out is open until 11:30).
+
+1. Shoes, Landing: Take your shoes and your bag; pack nothing in the dorm. (rules: pack downstairs)
+2. Pack here, Café: Pack on the ground floor, beside the luggage space by the front desk, so the dorm can sleep on. (rules: pack downstairs)
+3. Check out, Front desk: Check out at the front desk and get the 100,000 kip deposit for your padlock and towel back. Leaving before 08:00? Tell the team beforehand, so they can return your deposit. (rules: check out hours, leaving before eight, deposit)
+4. Front door, Entrance: Out through the glass door. While it is locked, the night staff opens it. (rules: front door locked)
+
+### Going out for a smoke
+
+For guests.
+
+1. Not here, Terrace: No smoking on the terrace or at the café's front: the smoke drifts straight inside. (rules: no smoking, smoke past the terrace)
+2. Smoke here, Terrace: A few steps further out, by the small jar for cigarette butts. (rules: smoke past the terrace)
+
+### From the counter to the free water
+
+For guests.
+
+1. Free water, Water: Free drinking water at the dispenser, at the start of the corridor, with glasses in the cupboard below.
+
+### From Dorm H to the women's bathroom
+
+For guests.
+
+1. Women's bathroom: The women's bathroom is on Floor 1, past the stairs; the men's is the same place on Floor 2.
+
+### Housekeeping round: from the café up through every floor
+
+For the team. About every hour.
+
+1. Café: Look over the tables, the counter and the floor; clean what needs it.
+2. Toilet: The toilet, its sink and the corridor basin: clean and refill.
+3. Landing: Tidy the shoe cubbies and sweep the landing. (rules: no shoes upstairs)
+4. Bathroom, Women's bathroom: Toilets, showers, basins and floor: clean and refill.
+5. Dorm H: Quietly: the aisle, the floor and the bins; pods made up fresh after check-out. (rules: quiet)
+6. Bathroom, Men's bathroom: Toilets, showers, basins and floor: clean and refill.
+7. Dorm J: Quietly: the aisle, the floor and the bins; pods made up fresh after check-out. (rules: quiet)

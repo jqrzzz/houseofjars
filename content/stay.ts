@@ -82,6 +82,11 @@ export const beds = {
   roomTypes: fact(["Mixed dorm"] as const, sources.booking, {
     note: "The listing shows a mixed dorm (the 14-bed dorm in beds.dorms may be the same room, so it is not listed separately). Add a female-only dorm or private rooms only once the house confirms them.",
   }),
+  /** The bed numbers the house skips, and why: written to follow "There is no pod 4, 13 or 14: …". */
+  numbering: fact({ skipped: [4, 13, 14] as const, why: "so no guest is given an unlucky bed" }, sources.team, {
+    confirmed: true,
+    note: "Told by the owner on 2026-10-05, with the bed register: each dorm has 14 pods, numbered 01 to 17 without 4, 13 or 14, because many guests find those numbers unlucky.",
+  }),
 } as const;
 
 export const bathrooms = {
@@ -106,6 +111,11 @@ export const staff = {
   languages: fact(["English", "Lao", "Thai"] as const, sources.booking),
   transport: fact("Staff can arrange transport, including from the airport", sources.reviews),
   replies: fact("Quick replies to messages", sources.reviews),
+  /** Written to follow "The team looks over and cleans the house …". */
+  housekeepingRound: fact("about every hour", sources.team, {
+    confirmed: true,
+    note: "Told by the owner on 2026-10-05: housekeeping takes a look and cleans about every hour, and takes a photo after each clean.",
+  }),
 } as const;
 
 /**
@@ -143,6 +153,14 @@ export const rules = {
       { rule: "No smoking anywhere in the house.", why: "Clean air in every dorm, and beds that smell fresh." },
       sources.booking,
       { note: "The house rules board lists smoking as not allowed too." },
+    ),
+    fact<HouseRule>(
+      {
+        rule: "Smoke out past the terrace, by the small jar for cigarette butts, not on the terrace itself.",
+        why: "Smoke from the terrace drifts straight into the café.",
+      },
+      sources.team,
+      { confirmed: true, note: "Told by the owner on 2026-10-05." },
     ),
     fact<HouseRule>(
       {

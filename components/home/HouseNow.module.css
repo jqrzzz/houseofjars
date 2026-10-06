@@ -1,0 +1,45 @@
+/*
+ * The house now: one line, led by a small lamp (a lamplight bead in a teak
+ * ring, like the thread's), quiet beside the buttons. Only the line for the
+ * hour shows: the boot script sets html[data-vt-phase]; without it, the
+ * general line.
+ */
+.now {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  max-width: 36rem;
+  font-size: var(--step--1);
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.now::before {
+  content: "";
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid var(--teak);
+  border-radius: 50%;
+  background: var(--lamplight);
+  translate: 0 0.05rem;
+}
+
+.now > span {
+  display: none;
+}
+
+.now > [data-phase="default"] {
+  display: inline;
+}
+
+:global(:root[data-vt-phase]) .now > [data-phase="default"] {
+  display: none;
+}
+
+:global(:root[data-vt-phase="quiet"]) .now > [data-phase="quiet"],
+:global(:root[data-vt-phase="morning"]) .now > [data-phase="morning"],
+:global(:root[data-vt-phase="day"]) .now > [data-phase="day"],
+:global(:root[data-vt-phase="arrivals"]) .now > [data-phase="arrivals"] {
+  display: inline;
+}

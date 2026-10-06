@@ -1,0 +1,32 @@
+.launcher {
+  gap: 0.6rem;
+}
+
+.launcher .lamp {
+  width: 0.8rem;
+  height: 1.2rem;
+  overflow: visible;
+}
+
+.cord {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+
+.shade {
+  fill: var(--lamplight);
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.bulb {
+  fill: var(--lamplight);
+}
+
+.failed {
+  margin: var(--space-2xs) 0 0;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}

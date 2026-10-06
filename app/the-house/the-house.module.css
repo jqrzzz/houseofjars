@@ -1,4 +1,4 @@
-/* After the pod, the whole house: a hairline above it, as between the blocks around it. */
+/* The whole house, then its photographs: each under a hairline, as between the blocks around them. */
 .section {
   padding-bottom: clamp(2.5rem, 1.5rem + 3vw, 4rem);
 }
@@ -10,11 +10,11 @@
   font-size: var(--step-3);
 }
 
-/* A look inside: the house's photographs, two across on small screens and three on wide ones. */
+/* A look inside: the house's photographs, one across on phones, two on small screens and three on wide ones. */
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
-  gap: var(--space-xl) var(--space-l);
+  gap: var(--space-2xl) var(--space-l);
   margin: 0;
   padding: 0;
 }
@@ -23,6 +23,77 @@
   .gallery {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/*
+ * One photograph in its mat. A photo with a camera dot on the drawing above
+ * carries the dot's number and where it was taken; the first photo from each
+ * place also carries its paper twin, a 6rem tile of the drawing there,
+ * pinned over the foot of the mat (over the mat's margin only, never the
+ * photograph). The tile shares the item's one grid cell, so the item grows
+ * to hold it.
+ */
+.photo {
+  display: grid;
+  container-type: inline-size;
+  scroll-margin-top: calc(var(--space-xl) + 4.5rem);
+}
+
+.photo > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+/* The words make room for the tile beside them. */
+.placed figcaption,
+.placed .where {
+  padding-right: 8.25rem;
+}
+
+.stack {
+  display: grid;
+  align-content: start;
+}
+
+.where {
+  display: block;
+  margin-top: var(--space-xs);
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.where:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+/* The camera dot's number, as the drawing shows it. */
+.number {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.45rem;
+  border-radius: var(--radius-s);
+  background: var(--text);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--page);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  vertical-align: 0.05em;
+}
+
+/* Pinned over the mat's foot: 1rem over its 1.25rem margin, level with the photograph's right edge. */
+.twin {
+  justify-self: end;
+  align-self: start;
+  margin-top: calc((100cqw - 2.5rem) * 1.25 + 1.5rem);
+  margin-right: 1.25rem;
 }
 
 .locker {

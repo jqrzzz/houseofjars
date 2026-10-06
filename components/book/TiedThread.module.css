@@ -1,0 +1,77 @@
+/*
+ * The tied thread: 2 px of --thread, round caps. At rest it is tied tight
+ * (the paths' own d). Played once on the confirmation: the thread draws in
+ * as a loose loop (720 ms, at an even pace, the way a thread is pulled), then
+ * the knot pulls tight on the paper ease (480 ms): 1.2 s in all. The loose
+ * shapes below have the same commands as the tight ones in TiedThread.tsx,
+ * so the browser can tween between them; where `d` cannot be animated the
+ * thread simply draws in already tight.
+ */
+.thread {
+  display: block;
+  width: 12.5rem;
+  height: auto;
+  overflow: visible;
+}
+
+.thread path {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  vector-effect: non-scaling-stroke;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .tail {
+    animation: tie-tail 1200ms linear backwards;
+  }
+
+  :global(:root:not([data-motion="still"])) .loop {
+    animation: tie-loop 1200ms linear backwards;
+  }
+}
+
+/* The short tail: drawn in the first fifth of the draw, then pulled tight with the loop. */
+@keyframes tie-tail {
+  0% {
+    stroke-dashoffset: 1.01;
+    d: path("M2 30H62C71.1 30 81.5 27.4 90.7 23");
+  }
+
+  19% {
+    stroke-dashoffset: 0;
+    d: path("M2 30H62C71.1 30 81.5 27.4 90.7 23");
+  }
+
+  60% {
+    stroke-dashoffset: 0;
+    d: path("M2 30H62C71.1 30 81.5 27.4 90.7 23");
+    animation-timing-function: var(--ease-paper);
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* The loop and the running end: drawn after the tail, then the knot pulls tight. */
+@keyframes tie-loop {
+  0%,
+  19% {
+    stroke-dashoffset: 1.01;
+    d: path("M96.9 19.7C101.5 16.9 105.7 13.6 109 10C118 0 110 -9 98 -9C86 -9 78 0 84 12C90 24 112 30 138 30H198");
+  }
+
+  60% {
+    stroke-dashoffset: 0;
+    d: path("M96.9 19.7C101.5 16.9 105.7 13.6 109 10C118 0 110 -9 98 -9C86 -9 78 0 84 12C90 24 112 30 138 30H198");
+    animation-timing-function: var(--ease-paper);
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+  }
+}

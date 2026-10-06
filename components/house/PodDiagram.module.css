@@ -1,8 +1,9 @@
+/* A sheet of paper with its card edge, square like the house's boards. */
 .figure {
   margin: 0;
-  padding: 5% 4%;
-  border-radius: var(--radius-m);
-  background: var(--surface);
+  padding: 5% 4% 9%;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
 }
 
 .canvas {
@@ -15,18 +16,173 @@
   height: auto;
 }
 
-/* The drawing's dimension dots, numbered like the list. */
+/*
+ * The curtain, drawn over the pod's opening in the drawing's own frame: the
+ * same grey weave as the curtain the drawing shows gathered at the right, with
+ * its folds and its woven hem. At rest it has slid away into that gathered
+ * curtain: scaled to nothing at the rail's right end, and gone.
+ */
+.curtain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cloth {
+  --cloth: #8e867c;
+  --head: #fffaf2;
+  --hem-mark: #6f4d35;
+  --ring: #4a2f1b;
+  transform-box: view-box;
+  transform-origin: 286px 0;
+  transform: scaleX(0.04);
+  opacity: 0;
+}
+
+:global(:root[data-theme="dark"]) .cloth {
+  --cloth: #5d5750;
+  --head: #3a2b1f;
+  --hem-mark: #8a6444;
+  --ring: #dccdb6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .cloth {
+    --cloth: #5d5750;
+    --head: #3a2b1f;
+    --hem-mark: #8a6444;
+    --ring: #dccdb6;
+  }
+}
+
+.fabric {
+  fill: var(--cloth);
+  stroke: #4a2f1b;
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.folds {
+  fill: none;
+  stroke: #4a2f1b;
+  stroke-opacity: 0.45;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.hem {
+  fill: color-mix(in oklab, var(--cloth) 70%, #4a2f1b);
+}
+
+.diamonds {
+  fill: var(--hem-mark);
+}
+
+/* The curtain's head: a band of light cloth hung from rings on the rail, as drawn. */
+.header {
+  fill: var(--head);
+  stroke: #4a2f1b;
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+
+.rings,
+.holes {
+  fill: none;
+  stroke: var(--ring);
+  stroke-width: 6px;
+  stroke-linecap: round;
+}
+
+.holes {
+  stroke: var(--head);
+  stroke-width: 3px;
+}
+
+:global(:root[data-theme="dark"]) :is(.fabric, .folds, .header) {
+  stroke: #dccdb6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) :is(.fabric, .folds, .header) {
+    stroke: #dccdb6;
+  }
+}
+
+/* A plate hangs on a short cord from its dot, and swings about it. */
+.tag {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.tag::before {
+  content: "";
+  position: absolute;
+  left: -0.5px;
+  top: 0;
+  width: 1px;
+  height: 0.7rem;
+  background: var(--text);
+}
+
 .number {
   position: absolute;
-  translate: -50% -50%;
+  left: 0;
+  top: 0.7rem;
+  translate: -50% 0;
   display: grid;
   place-items: center;
   width: 1.4rem;
   height: 1.4rem;
   border-radius: var(--radius-s);
   background: var(--jar-orange);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
   color: var(--ink);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
+}
+
+/*
+ * Once, as the pod first comes into view: the curtain, drawn closed, slides
+ * open to the right (1.1 s), then the plates swing on their cords, 80 ms apart.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root[data-life]:not([data-motion="still"])) .figure:not([data-played]) .cloth {
+    transform: none;
+    opacity: 1;
+  }
+
+  :global(:root[data-life]:not([data-motion="still"])) .figure:not([data-played]) .tag {
+    rotate: -4deg;
+  }
+
+  :global(:root:not([data-motion="still"])) .figure[data-played] .cloth {
+    animation: curtain-open 1100ms var(--ease-in-out) 350ms both;
+  }
+
+  :global(:root:not([data-motion="still"])) .figure[data-played] .tag {
+    animation: tag-swing var(--dur-hinge) var(--ease-out) calc(1200ms + var(--k) * 80ms) both;
+  }
+}
+
+@keyframes curtain-open {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+
+  88% {
+    opacity: 1;
+  }
+}
+
+@keyframes tag-swing {
+  from {
+    rotate: -4deg;
+  }
 }

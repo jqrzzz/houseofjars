@@ -164,7 +164,34 @@
   --radius-s: 2px;
   --radius-m: 4px;
   --radius-l: 0;
+  /*
+   * Lantern theatre: the house folded from paper and lit from behind. No new hues:
+   * every paper tone is a mix of the palette above (docs/DESIGN.md, the lantern theatre).
+   */
+  --paper-far: color-mix(in oklab, var(--stone) 35%, var(--rice));
+  --paper-mid: color-mix(in oklab, var(--stone) 60%, var(--rice));
+  --paper-near: color-mix(in oklab, var(--white) 60%, var(--rice));
+  --paper-edge: color-mix(in oklab, var(--teak) 35%, var(--stone));
+  --edge-x: 1.5px;
+  --edge-y: 1.5px;
+  --stage-light: color-mix(in oklab, var(--lamplight) 70%, var(--white));
+  --glow-strength: 0.45;
+  --glow-ring: var(--teak);
+  --thread: var(--jar-orange);
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* Motion: durations and easings for the lantern theatre. Springs are for time-based moves only, never scroll-linked ones. */
+  --dur-press: 120ms;
+  --dur-hover: 200ms;
+  --dur-ui: 320ms;
+  --dur-hinge: 420ms;
+  --dur-section: 600ms;
+  --dur-scene: 900ms;
+  --dur-lamps: 2400ms;
+  --dur-phrase: 5s;
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* the splash curve */
+  --ease-lamp: cubic-bezier(0.3, 0, 0.1, 1); /* a filament warming */
+  --ease-sway: cubic-bezier(0.37, 0, 0.63, 1);
+  --ease-paper: linear(0, 0.24 8%, 0.62 20%, 0.9 33%, 1.025 47%, 1.01 62%, 1);
   /* One underline offset for every link. */
   --underline-offset: 0.22em;
 }
@@ -212,6 +239,16 @@
     --open-jar-top: #938573;
     --open-jar-hollow: #0c0805;
     --weave-ground: var(--curtain-night);
+    --paper-far: color-mix(in oklab, var(--night-raised) 60%, var(--night));
+    --paper-mid: color-mix(in oklab, var(--teak-night) 50%, var(--night));
+    --paper-near: var(--night-raised);
+    --paper-edge: color-mix(in oklab, var(--lamplight) 55%, var(--night));
+    --edge-x: 0px;
+    --edge-y: -1.5px;
+    --stage-light: var(--lamplight);
+    --glow-strength: 1;
+    --glow-ring: transparent;
+    --thread: color-mix(in oklab, var(--jar-orange) 80%, var(--lamplight));
   }
 }
 
@@ -252,6 +289,16 @@
   --open-jar-top: #938573;
   --open-jar-hollow: #0c0805;
   --weave-ground: var(--curtain-night);
+  --paper-far: color-mix(in oklab, var(--night-raised) 60%, var(--night));
+  --paper-mid: color-mix(in oklab, var(--teak-night) 50%, var(--night));
+  --paper-near: var(--night-raised);
+  --paper-edge: color-mix(in oklab, var(--lamplight) 55%, var(--night));
+  --edge-x: 0px;
+  --edge-y: -1.5px;
+  --stage-light: var(--lamplight);
+  --glow-strength: 1;
+  --glow-ring: transparent;
+  --thread: color-mix(in oklab, var(--jar-orange) 80%, var(--lamplight));
 }
 
 :root[data-theme="light"] {
@@ -576,13 +623,149 @@ strong {
   }
 }
 
+/*
+ * Reduced motion rests exactly as Still does (below): no animations and no
+ * transitions, not even instant ones, since every base style is its rest frame.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/*
+ * Day and Evening twins of a picture (Drawing, the house stage): the site's own
+ * theme picks one, not only the device's. Twins show as blocks. A lazy image
+ * hidden this way is never fetched.
+ */
+.for-evening {
+  display: none !important;
+}
+
+:root[data-theme="dark"] .for-day {
+  display: none !important;
+}
+
+:root[data-theme="dark"] .for-evening {
+  display: block !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .for-day {
+    display: none !important;
+  }
+
+  :root:not([data-theme="light"]) .for-evening {
+    display: block !important;
+  }
+}
+
+/*
+ * Still: the guest's own "Motion: Still" choice (lib/motion/prefs.ts). Every
+ * element rests on its base style, which is always its rest frame, and pages
+ * only fade into each other.
+ */
+:root[data-motion="still"] *,
+:root[data-motion="still"] *::before,
+:root[data-motion="still"] *::after {
+  animation: none !important;
+  /* No transitions at all, not even instant ones: hidden controls would otherwise keep them pending. */
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+:root[data-motion="still"]::view-transition-group(*) {
+  animation-name: none !important;
+}
+
+/* Ambient phrases (.amb) wait while their stage is off screen or the tab is hidden (components/motion/StageLife.tsx). */
+[data-stage]:not([data-live]) .amb {
+  animation-play-state: paused;
+}
+
+/*
+ * Typed page transitions (app/layout.tsx): going deeper, the old page drops
+ * a little as it fades and the new one lowers into place; going back mirrors it.
+ * Untyped navigations keep the cross-fade; with reduced motion or Still, pages only fade.
+ */
+@keyframes page-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes page-drop-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+@keyframes page-lower-in {
+  from {
+    opacity: 0;
+    transform: translateY(-1.25rem);
+  }
+}
+
+@keyframes page-rise-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}
+
+@keyframes page-lift-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+}
+
+::view-transition-old(.page-forward) {
+  animation: 200ms var(--ease-out) both page-drop-out;
+}
+
+::view-transition-new(.page-forward) {
+  animation: 360ms var(--ease-out) both page-lower-in;
+}
+
+::view-transition-old(.page-back) {
+  animation: 200ms var(--ease-out) both page-rise-out;
+}
+
+::view-transition-new(.page-back) {
+  animation: 360ms var(--ease-out) both page-lift-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(.page-forward),
+  ::view-transition-old(.page-back) {
+    animation: 200ms ease both page-fade-out !important;
+  }
+
+  ::view-transition-new(.page-forward),
+  ::view-transition-new(.page-back) {
+    animation: 200ms ease both page-fade-in !important;
+  }
+}
+
+:root[data-motion="still"]::view-transition-old(.page-forward),
+:root[data-motion="still"]::view-transition-old(.page-back) {
+  animation: 200ms ease both page-fade-out !important;
+}
+
+:root[data-motion="still"]::view-transition-new(.page-forward),
+:root[data-motion="still"]::view-transition-new(.page-back) {
+  animation: 200ms ease both page-fade-in !important;
 }

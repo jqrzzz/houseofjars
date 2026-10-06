@@ -33,8 +33,8 @@ export const openQuestions: readonly OpenQuestion[] = [
     guestTopic: null,
   },
   {
-    ask: "The layout of the house: which floor the dorms, the bathrooms and the front desk are on, and the building's shape. The drawing on /the-house (components/house/HouseCutaway.tsx) guesses and says it is an illustration, not a floor plan; with the real layout it can be made accurate.",
-    guestTopic: "which floor the dorms, bathrooms and front desk are on",
+    ask: "Floor 2: photos of Dorm J, its landing and the men's bathroom. The house drawing on /the-house (from lib/house) copies Floor 1 for it and says so; the photos would confirm it.",
+    guestTopic: "what Floor 2 looks like (it is drawn as a copy of Floor 1)",
   },
   {
     ask: "Where the team likes to eat nearby: a few local places, what to order there, roughly what it costs and when they are open (for Shadow and a food guide).",

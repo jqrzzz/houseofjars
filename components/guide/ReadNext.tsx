@@ -5,7 +5,10 @@ import { ArrowIcon } from "../ui/icons";
 import { Section } from "../ui/Section";
 import styles from "./Guide.module.css";
 
-/** Pages to read next, as cards: the links between the guides and the rest of the site. */
+/** Links deeper into the site play the forward page transition. */
+const FORWARD = ["nav-forward"];
+
+/** Pages to read next, as paper cards: the links between the guides and the rest of the site. */
 export function ReadNext({ paths }: { paths: readonly string[] }) {
   return (
     <Section space="m" labelledBy="read-next-title">
@@ -18,7 +21,7 @@ export function ReadNext({ paths }: { paths: readonly string[] }) {
             <li key={page.path} className={styles.card} data-reveal="">
               <p className={styles.kind}>{page.guide ? "Guide" : page.nav}</p>
               <h3 className={styles.cardTitle}>
-                <Link href={page.path} className={styles.cardLink}>
+                <Link href={page.path} className={styles.cardLink} transitionTypes={FORWARD}>
                   {noBreakHyphens(page.title)}
                 </Link>
               </h3>

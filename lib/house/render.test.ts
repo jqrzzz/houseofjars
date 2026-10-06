@@ -23,6 +23,12 @@ const views: Record<string, () => string> = {
   "plan floor1": () => renderPlan("floor1"),
   "plan floor2": () => renderPlan("floor2", { theme: "evening" }),
   "plan outside": () => renderPlan("outside"),
+  "street, paper": () => renderStreet({ outfit: "paper", theme: "day" }),
+  "street with neighbours, paper, auto": () => renderStreet({ outfit: "paper", neighbours: true }),
+  "cutaway, paper, lifted and labelled, with a walk": () => renderCutaway({ outfit: "paper", explode: 2.5, labels: true, route: "arrival", theme: "evening" }),
+  "cutaway, paper, Floor 1 highlighted": () => renderCutaway({ outfit: "paper", highlight: ["dorm-h"], labels: true }),
+  "plan ground, paper": () => renderPlan("ground", { outfit: "paper", theme: "day" }),
+  "plan floor2, paper, auto": () => renderPlan("floor2", { outfit: "paper" }),
 };
 
 interface Parsed {
@@ -405,7 +411,7 @@ describe("drawn from the model, not from constants in the renderer", () => {
   });
 
   it("describes a plan from the model: the dorm's pods and lockers counted, a floor not seen yet noted", () => {
-    expect(renderPlan("floor1")).toMatch(/<desc[^>]*>A plan of Floor 1 of House of Jars, street at the bottom: Dorm H \(12 pods, 12 lockers\), Landing \(the shoe cubbies\)/);
+    expect(renderPlan("floor1")).toMatch(/<desc[^>]*>A plan of Floor 1 of House of Jars, street at the bottom: Dorm H \(14 pods, 14 lockers\), Landing \(the shoe cubbies\)/);
     const floor2 = renderPlan("floor2");
     expect(floor2).toMatch(/<desc[^>]*>[^<]*Not photographed yet/);
     expect(floor2).toContain(">Not photographed yet: copied from Floor 1 on the owner's word.</text>");

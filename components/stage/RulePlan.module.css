@@ -1,0 +1,91 @@
+/*
+ * The rule plans: two paper plans at one scale. Wide screens: side by side,
+ * upright (the street at the foot), sticky below the header. Phones: two
+ * strips across the screen, each plan turned a quarter (the street on the
+ * left), sticky at the top on the page's own ground.
+ */
+.plans {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  align-self: start;
+  display: grid;
+  gap: var(--space-xs);
+  padding-block: var(--space-s);
+  background: var(--page);
+}
+
+.plan {
+  margin: 0;
+  width: calc(100% * var(--k));
+}
+
+.sheet {
+  position: relative;
+  aspect-ratio: var(--h) / var(--w);
+  container-type: size;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+/* Turned a quarter, clockwise: the plan's foot (the street) comes to the left. */
+.inner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100cqh;
+  height: 100cqw;
+  translate: -50% -50%;
+  rotate: 90deg;
+}
+
+.inner :global(img),
+.areas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.areas {
+  overflow: visible;
+}
+
+/* An area a rule names: lamplight laid on the paper, edged with the thread. */
+.areas path {
+  fill: color-mix(in srgb, var(--lamplight) 55%, transparent);
+  stroke: var(--jar-orange);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  transition: opacity var(--dur-ui) var(--ease-out);
+}
+
+@media (min-width: 48rem) {
+  .plans {
+    top: calc(4.5rem + var(--space-l));
+    grid-template-columns: repeat(2, auto);
+    justify-content: start;
+    align-items: start;
+    gap: var(--space-m);
+    padding: 0;
+    background: none;
+  }
+
+  .plan {
+    width: auto;
+  }
+
+  .sheet {
+    aspect-ratio: var(--w) / var(--h);
+    height: calc(min(72svh, 40rem) * var(--k));
+  }
+
+  .inner {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    translate: none;
+    rotate: none;
+  }
+}

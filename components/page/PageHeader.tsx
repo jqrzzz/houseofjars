@@ -6,8 +6,18 @@ import styles from "./PageHeader.module.css";
 type PageHeaderProps = {
   title: string;
   lede: ReactNode;
-  /** A drawing or mark set beside the title on wide screens. */
+  /** A drawing or a small scene beside the title (above it on phones). Decorative. */
   art?: ReactNode;
+  /**
+   * How the art sits:
+   * - "tile" (default): a drawing beside the title on wide screens, and on
+   *   phones a 6rem paper tile above the eyebrow;
+   * - "scene": a small scene that is its own card (a Diorama), a little wider
+   *   beside the title, and 8rem wide above the eyebrow on phones;
+   * - "band": a long, low picture (a train on its line) along the foot of the
+   *   header on wide screens, and across its top on phones.
+   */
+  artShape?: "tile" | "scene" | "band";
   /** A short line under the lede, e.g. when the page was last reviewed. */
   meta?: ReactNode;
 } & (
@@ -21,10 +31,10 @@ type PageHeaderProps = {
   | { trail: ReactNode; eyebrow?: never; morph?: never }
 );
 
-export function PageHeader({ eyebrow, morph, trail, title, lede, art, meta }: PageHeaderProps) {
+export function PageHeader({ eyebrow, morph, trail, title, lede, art, artShape = "tile", meta }: PageHeaderProps) {
   return (
     <header className={styles.header}>
-      <div className={`container ${styles.grid}`}>
+      <div className={["container", styles.grid, art ? styles[artShape] : ""].filter(Boolean).join(" ")}>
         <div className={styles.text}>
           {trail ?? <Eyebrow morph={morph}>{eyebrow}</Eyebrow>}
           <h1 className={styles.title}>{title}</h1>

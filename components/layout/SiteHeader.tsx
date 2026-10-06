@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Wordmark } from "../brand/Wordmark";
 import buttons from "../ui/button.module.css";
+import { MotionChoice } from "../motion/MotionChoice";
 import { MobileMenu } from "./MobileMenu";
 import { NavLinks } from "./NavLinks";
 import { ThemeChoices, ThemeToggle } from "./ThemeSwitch";
@@ -23,7 +24,10 @@ export function SiteHeader() {
           <MobileMenu className={styles.mobileMenu} summaryClassName={styles.menuButton}>
             <nav aria-label="Main" className={styles.mobilePanel}>
               <NavLinks className={styles.mobileLinks} linkClassName={styles.mobileLink} />
-              <ThemeChoices tone="page" className={styles.mobileTheme} />
+              <div className={styles.mobilePrefs}>
+                <ThemeChoices tone="page" />
+                <MotionChoice tone="page" />
+              </div>
             </nav>
           </MobileMenu>
         </div>

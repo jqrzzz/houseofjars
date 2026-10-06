@@ -1,0 +1,103 @@
+/*
+ * A row of jars on one ground, a little overlapped, as they stand on the plain.
+ * Each jar's drawing is a .paper sheet (paper.module.css): its ink, sage and
+ * card edge follow Day and Evening. --u scales the row (default 1px a unit).
+ */
+.jars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.jar {
+  display: block;
+  margin-inline: calc(var(--u, 1px) * -6);
+  transform-origin: 50% 100%;
+}
+
+.jar svg {
+  display: block;
+  width: calc(var(--w) * var(--u, 1px));
+  height: auto;
+}
+
+/* The stone's colours are the jar tones, which darken by Evening. */
+.stone {
+  fill: var(--jar-2);
+}
+
+.ground {
+  fill: var(--paper-mid);
+}
+
+.shade {
+  fill: var(--jar-3);
+  opacity: 0.5;
+}
+
+.stain {
+  fill: var(--jar-3);
+  opacity: 0.35;
+}
+
+.under {
+  fill: var(--jar-3);
+  opacity: 0.7;
+}
+
+.lichen {
+  fill: none;
+  stroke: var(--sage);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+
+.rim {
+  fill: var(--jar-1);
+}
+
+.hollow {
+  fill: var(--open-jar-hollow);
+}
+
+/* A broken wall's thickness catches the light. */
+.edge {
+  fill: none;
+  stroke: var(--jar-1);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.wall {
+  fill: var(--jar-3);
+  opacity: 0.55;
+}
+
+.ink {
+  fill: none;
+  stroke: var(--ink-line);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+/* Pop-up (§4.3): each jar hinges up from 62° about its foot as the row enters the view, one after another. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    :global(:root:not([data-motion="still"])) .jar {
+      animation: jar-pop linear both;
+      animation-timeline: view();
+      animation-range: entry calc(10% + var(--k) * 6%) entry calc(80% + var(--k) * 6%);
+    }
+  }
+}
+
+@keyframes jar-pop {
+  from {
+    transform: perspective(900px) rotateX(62deg);
+  }
+
+  to {
+    transform: perspective(900px) rotateX(0deg);
+  }
+}

@@ -1,0 +1,99 @@
+/*
+ * Light (docs/DESIGN.md §2.1, §4.3 "Lights on"): a glow disc where a real
+ * fixture is, never a decoration of its own.
+ *
+ * .glow is a disc for a stage or a drawing. Its parent must be positioned:
+ *   --x, --y  where its centre sits (any length or percentage; default the middle)
+ *   --r       its radius (default 1.5rem)
+ *   --i       its place in walking order (0, 1, 2…): the order the lights come on
+ * .disc is the same light without placement or motion, for a component that
+ * places and times its own (HouseLamp).
+ *
+ * The halo is stepped, like paper discs laid on each other: a core and four
+ * rings, each adding 7% of the light, all scaled by --glow-strength (0.45 by
+ * Day, 1 by Evening). By Day lamplight does not read on rice, so the core gets
+ * a 1 px --glow-ring outline (teak); by Evening the ring is transparent.
+ */
+.glow,
+.disc {
+  --a: calc(var(--glow-strength) * 7%);
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(closest-side, transparent calc(34% - 1px), var(--glow-ring) calc(34% - 1px) 34%, transparent 34%),
+    radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--stage-light) calc(var(--a) * 5), transparent) 0 34%,
+      color-mix(in srgb, var(--stage-light) calc(var(--a) * 4), transparent) 34% 51%,
+      color-mix(in srgb, var(--stage-light) calc(var(--a) * 3), transparent) 51% 67.5%,
+      color-mix(in srgb, var(--stage-light) calc(var(--a) * 2), transparent) 67.5% 84%,
+      color-mix(in srgb, var(--stage-light) var(--a), transparent) 84% 100%,
+      transparent 100%
+    );
+}
+
+.glow {
+  position: absolute;
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  width: calc(2 * var(--r, 1.5rem));
+  aspect-ratio: 1;
+  translate: -50% -50%;
+}
+
+/*
+ * Lights on: the discs light in walking order (600 ms each, 40 ms apart, all
+ * within --dur-lamps), with one 3% catch, as their scene first comes into view
+ * ([data-phrase] gets [data-played] from StageLife) and again after each theme
+ * switch: the animation's name differs by theme, so changing theme restarts
+ * it, held while the theme's 450 ms cross-fade runs. The base style is the
+ * rest frame, lit, so Still, reduced motion and pages without JavaScript simply
+ * show the lights on.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root[data-life]:not([data-motion="still"])) :global([data-phrase]:not([data-played])) .glow {
+    opacity: 0;
+    scale: 0.9;
+  }
+
+  :global(:root:not([data-motion="still"])) :global([data-played]) .glow {
+    animation: lights-on-day 600ms var(--ease-lamp) min(calc(var(--i, 0) * 40ms), 1800ms) both;
+  }
+
+  :global(:root[data-theme="dark"]:not([data-motion="still"])) :global([data-played]) .glow {
+    animation-name: lights-on-evening;
+  }
+
+  /* After the shorthand above, and as specific, so it wins. */
+  :global(:root[data-theme-fade]:not([data-motion="still"])) :global([data-played]) .glow {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"]):not([data-motion="still"])) :global([data-played]) .glow {
+    animation-name: lights-on-evening;
+  }
+}
+
+@keyframes lights-on-day {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+
+  70% {
+    scale: 1.03;
+  }
+}
+
+@keyframes lights-on-evening {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+
+  70% {
+    scale: 1.03;
+  }
+}

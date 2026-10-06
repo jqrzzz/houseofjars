@@ -46,25 +46,21 @@
   margin: 0;
 }
 
+/* A read-next card: a sheet of paper with its card edge, the whole card a link. */
 .card {
   position: relative;
   display: grid;
   align-content: start;
   gap: var(--space-xs);
   padding: var(--space-l) var(--space-l) calc(var(--space-l) + 2rem);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-m);
-  background: var(--surface);
-  transition:
-    border-color 180ms ease,
-    box-shadow 320ms var(--ease-out),
-    translate 320ms var(--ease-out);
+  border-top: 3px solid var(--card-top, color-mix(in oklab, var(--teak) 50%, var(--paper-near)));
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  transition: border-color var(--dur-hover) ease;
 }
 
 .card:hover {
-  border-color: var(--accent-text);
-  box-shadow: var(--shadow-soft);
-  translate: 0 -3px;
+  --card-top: var(--jar-orange);
 }
 
 .kind {
@@ -100,7 +96,6 @@
 .guide:has(.cardLink:focus-visible) {
   outline: 2px solid var(--focus);
   outline-offset: 4px;
-  border-radius: var(--radius-m);
 }
 
 .cardText {
@@ -174,7 +169,11 @@
   }
 }
 
-/* The guides index: each guide in an arched niche, like the rooms on the home page. */
+/*
+ * The guides index: each guide in a paper niche, an arch cut into a paper
+ * wall with its drawing standing on the sill, like the clay jars in the
+ * niches of the house's stair wall.
+ */
 .guides {
   display: grid;
   gap: var(--space-2xl);
@@ -190,23 +189,97 @@
   align-items: start;
 }
 
+/* The wall: a paper tile with its card edge. */
 .niche {
-  display: grid;
-  place-items: center;
   aspect-ratio: 4 / 5;
-  padding: 30% 6% 10%;
-  -webkit-clip-path: url(#arch-frame);
-  clip-path: url(#arch-frame);
-  background: var(--surface);
-  transition: background-color 180ms ease;
+  padding: 0.5rem 0.5rem 0;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
 }
 
-.guide:hover .niche {
-  background: color-mix(in srgb, var(--surface), var(--jar-orange) 12%);
+/*
+ * The recess: the arch, cut through to the paper behind, with a sill at its
+ * foot and the arch's inner face in shade along the top.
+ */
+.recess {
+  position: relative;
+  height: 100%;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 0 7% 14%;
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
+  background:
+    linear-gradient(to top, var(--paper-mid) 0 9%, color-mix(in oklab, var(--paper-edge) 70%, var(--paper-mid)) 9% calc(9% + 1.5px), transparent 0),
+    var(--paper-far);
+  perspective: 900px;
+}
+
+.recess::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
+  box-shadow: inset 0 0.45rem 0 color-mix(in oklab, var(--paper-edge) 45%, transparent);
+  pointer-events: none;
+}
+
+/* The niche's lamp: out at rest, lit (never faster than 400 ms) while the card is pointed at or focused. */
+.nicheGlow {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 130%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  opacity: 0;
+  transition: opacity 480ms var(--ease-lamp);
+}
+
+.guide:is(:hover, :has(.cardLink:focus-visible)) .nicheGlow {
+  opacity: 1;
+}
+
+/* The drawing on its sill; it hinges about its foot. */
+.popup {
+  position: relative;
+  width: 100%;
+  transform-origin: 50% 100%;
+  transition:
+    translate var(--dur-ui) var(--ease-out),
+    rotate var(--dur-ui) var(--ease-out);
+}
+
+.guide:is(:hover, :has(.cardLink:focus-visible)) .popup {
+  translate: 0 -4px;
+  rotate: x 4deg;
 }
 
 .nicheDrawing {
   width: 100%;
+}
+
+/* Pop-up (§4.3): as the card enters the view the drawing hinges up from 62° about its foot. Never the words. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    :global(:root:not([data-motion="still"])) .popup {
+      animation: niche-pop linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 80%;
+    }
+  }
+}
+
+@keyframes niche-pop {
+  from {
+    transform: rotateX(62deg);
+  }
+
+  to {
+    transform: rotateX(0deg);
+  }
 }
 
 .guideText {

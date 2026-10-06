@@ -6,7 +6,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 /**
  * A <details> disclosure for the phone menu: works without JavaScript. With
  * it, the menu also closes after client-side navigation, on Escape (focus
- * goes back to the menu button) and on a tap outside it.
+ * goes back to the menu button) and on a tap outside it. Its two bars cross
+ * into a close mark, and the panel unfolds and folds away (SiteHeader.module.css).
  */
 export function MobileMenu({ className, summaryClassName, children }: { className?: string; summaryClassName?: string; children: ReactNode }) {
   const pathname = usePathname();
@@ -40,11 +41,9 @@ export function MobileMenu({ className, summaryClassName, children }: { classNam
     <details ref={ref} className={className} onToggle={(event) => setOpen(event.currentTarget.open)}>
       <summary className={summaryClassName}>
         <span className="visually-hidden">Menu</span>
-        <svg data-icon="open" viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="24" height="24">
-          <path d="M4 8h16M4 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-        </svg>
-        <svg data-icon="close" viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="24" height="24">
-          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="24" height="24">
+          <path data-bar="top" d="M4 8h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+          <path data-bar="bottom" d="M4 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none" />
         </svg>
       </summary>
       {children}

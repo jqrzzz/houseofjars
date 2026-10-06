@@ -1,0 +1,90 @@
+/*
+ * The walk chips: square paper tags in a row that wraps. The chosen walk is
+ * tied with the thread: a jar-orange outline and a small knot. Shown only
+ * with JavaScript (StageLife sets html[data-life]); without it the list of
+ * walks beside the stage says everything.
+ */
+.chips {
+  display: none;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-l);
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+:global(:root[data-life]) .chips {
+  display: flex;
+}
+
+.legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--space-xs);
+  padding: 0;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  font-weight: 650;
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
+  border-radius: var(--radius-s);
+  background: var(--paper-near);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-strong),
+    var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--text);
+  font-size: var(--step--1);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: box-shadow var(--dur-hover) var(--ease-out);
+}
+
+.chip input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* The knot: an outlined ring that fills with the thread's colour when chosen. */
+.chip span::before {
+  content: "";
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.45rem;
+  border: 2px solid var(--jar-orange);
+  border-radius: 50%;
+  vertical-align: 0.02em;
+}
+
+.chip:hover {
+  box-shadow:
+    inset 0 0 0 1px var(--text-soft),
+    var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+.chip:has(input:checked) {
+  box-shadow:
+    inset 0 0 0 2px var(--jar-orange),
+    var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+.chip:has(input:checked) span::before {
+  background: var(--thread);
+}
+
+.chip:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}

@@ -16,6 +16,9 @@ next-env.d.ts
 screenshots/
 coverage/
 
+# frames recorded by scripts/film.ts (the encoded films go to public/film/)
+film-frames/
+
 # misc
 .DS_Store
 npm-debug.log*

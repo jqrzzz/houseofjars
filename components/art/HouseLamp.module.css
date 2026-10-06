@@ -1,0 +1,173 @@
+/*
+ * A house lamp at rest: hanging, unlit stone by Day, lit by Evening. Units are
+ * pixels: the drawing is 32 wide and its cord plus 24 tall.
+ */
+.lamp {
+  --shade: var(--stone);
+  --unlit: var(--stone);
+  --lit: 0;
+  --ink-line: #4a2f1b;
+  --ink-hair: rgb(74 47 27 / 0.6);
+  /* When the Lamplighting starts: 300 ms after load, or after the splash's curtain. */
+  --t0: 300ms;
+  position: relative;
+  display: block;
+  width: 32px;
+  /* It hangs from the top of its cord. */
+  transform-origin: 50% 0;
+  pointer-events: none;
+}
+
+:global(html.splash) .lamp {
+  --t0: 1150ms;
+}
+
+:global(:root[data-theme="dark"]) .lamp {
+  --shade: var(--lamplight);
+  --unlit: var(--stone-dark);
+  --lit: 1;
+  --ink-line: #dccdb6;
+  --ink-hair: rgb(220 205 182 / 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .lamp {
+    --shade: var(--lamplight);
+    --unlit: var(--stone-dark);
+    --lit: 1;
+    --ink-line: #dccdb6;
+    --ink-hair: rgb(220 205 182 / 0.6);
+  }
+}
+
+.lamp svg {
+  position: relative;
+  display: block;
+  overflow: visible;
+  fill: var(--shade);
+  stroke: var(--ink-line);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+/* The cord: inner detail, 1 px at 60%. */
+.lamp path:first-child {
+  fill: none;
+  stroke: var(--ink-hair);
+  stroke-width: 1;
+}
+
+/* A vein in the stone: teak at 35%, which reads on stone and on lamplight. */
+.lamp path:last-child {
+  fill: none;
+  stroke: color-mix(in srgb, var(--teak) 35%, transparent);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* The cap: teak. */
+.lamp rect {
+  fill: color-mix(in oklab, var(--teak) 84%, var(--page));
+  stroke-width: 1;
+}
+
+/* The shade's card edge: below and right by Day, a lamplight rim above by Evening. */
+.lamp use {
+  fill: var(--paper-edge);
+  stroke: none;
+  translate: var(--edge-x) var(--edge-y);
+}
+
+/* Its light: centred on the shade, 2.2 times its width. */
+.halo {
+  position: absolute;
+  left: 50%;
+  bottom: -19.8px;
+  width: 61.6px;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  opacity: var(--lit);
+}
+
+/* Motes rise from the shade as it lights; by Day the lamps stay unlit, so there are none. */
+.motes {
+  --delay: calc(var(--t0) + 420ms + var(--i) * 140ms);
+  --motes-y: calc(100% - 20px);
+  display: none;
+}
+
+:global(:root[data-theme="dark"]) .motes {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .motes {
+    display: block;
+  }
+}
+
+/*
+ * Lamplighting (§4.3), as phrases that end on the rest frame:
+ *   drop   12 px into place, 700 ms on --ease-paper, 90 ms apart;
+ *   light  the shade warms and its halo opens .9 to 1.03 to 1 (one 3% catch),
+ *          600 ms on --ease-lamp, 140 ms apart, left to right (Evening only:
+ *          by Day the shade stays stone and the halo dark);
+ *   sway   ±1.5° once over 2.4 s, every lamp first to the right, 120 ms apart,
+ *          like one breeze.
+ * They start 300 ms after load, or 1150 ms under the splash, and the last ends
+ * by 4.4 s (before the boot script lifts html.splash at 5 s).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .lamp {
+    animation:
+      lamp-drop 700ms var(--ease-paper) calc(var(--t0) + var(--i) * 90ms) both,
+      lamp-sway 2400ms var(--ease-sway) calc(var(--t0) + 600ms + var(--i) * 120ms) both;
+  }
+
+  /* On the drawing, whose fill the shade inherits (the edge's copy has its own). */
+  :global(:root:not([data-motion="still"])) .lamp svg {
+    animation: lamp-light 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+  }
+
+  :global(:root:not([data-motion="still"])) .halo {
+    animation: lamp-halo 600ms var(--ease-lamp) calc(var(--t0) + 420ms + var(--i) * 140ms) both;
+  }
+}
+
+@keyframes lamp-drop {
+  from {
+    translate: 0 -12px;
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+  }
+}
+
+@keyframes lamp-sway {
+  25% {
+    rotate: -1.5deg;
+  }
+
+  75% {
+    rotate: 1.5deg;
+  }
+}
+
+@keyframes lamp-light {
+  from {
+    fill: var(--unlit);
+  }
+}
+
+@keyframes lamp-halo {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+
+  70% {
+    scale: 1.03;
+  }
+}

@@ -1,16 +1,19 @@
+import { ViewTransition } from "react";
 import type { HouseNotes } from "@/components/book/BookingSteps";
 import { DirectRequest } from "@/components/book/DirectRequest";
 import { InquiryForm } from "@/components/book/InquiryForm";
 import { OnlineBooking } from "@/components/book/OnlineBooking";
+import { WovenBand } from "@/components/brand/WovenBand";
 import { ContactDetails } from "@/components/contact/ContactDetails";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
 import { ExternalIcon } from "@/components/ui/icons";
 import { PageJsonLd } from "@/components/PageJsonLd";
 import { addressLines, identity, whatsappUrl } from "@/content/identity";
-import { policies, rules, times } from "@/content/stay";
+import { breakfast, policies, rules, times } from "@/content/stay";
 import { lowerFirst } from "@/content/text";
 import { onlineBookingConfigured } from "@/lib/booking/config";
+import type { RailTimes } from "@/lib/booking/stay-rail";
 import { pageMetadata } from "@/lib/metadata";
 import { bookPage } from "@/lib/pages";
 import { pages } from "@/lib/site";
@@ -25,10 +28,14 @@ const platforms = [
 
 const passport = rules.stay.find((rule) => rule.value.rule.startsWith("Bring your passport"));
 
-/** What the booking confirmation says about arriving. */
+/** The house's times for the stay's rail (lib/booking/stay-rail.ts), passed down so the forms' JavaScript carries no content files. */
+const rail: RailTimes = { checkIn: times.checkIn.value, checkOut: times.checkOut.value, breakfast: breakfast.hours.value };
+
+/** What the booking form says about arriving: the rail, and the confirmation's notes. */
 const house: HouseNotes = {
   checkInFrom: times.checkIn.value,
   passport: passport ? `Bring your passport: ${lowerFirst(passport.value.why)}` : "",
+  rail,
 };
 
 /**
@@ -37,6 +44,10 @@ const house: HouseNotes = {
  * online booking and has the message form. Without them neither form could
  * send anything (both go through Shadow Check-in), so the guest's dates are
  * written out for them to send on WhatsApp or by email (DirectRequest).
+ * Either way the booking sits on a paper ticket, the same as the booking
+ * card's: following a link here from the card, the card's ticket glides into
+ * it (the "booking-ticket" morph). Once dates are chosen, the stay's rail
+ * appears on it: check-in, breakfast, check-out.
  */
 export default function BookPage() {
   const online = onlineBookingConfigured();
@@ -65,7 +76,13 @@ export default function BookPage() {
           />
           {/* Every "message the team" link lands here: the guest's dates, written out for their own WhatsApp or mail app. */}
           <Block id="message" title="Send your dates" aside="The team replies on WhatsApp or by email with what is free.">
-            <DirectRequest whatsapp={whatsappUrl()} email={identity.contact.email.value} />
+            <ViewTransition name="booking-ticket" share="morph" default="none">
+              {/* A booking form: Shadow's dock steps aside while it is at the bottom of the screen. */}
+              <div className={styles.ticket} data-hides-launcher="">
+                <WovenBand pattern="lozenge" />
+                <DirectRequest whatsapp={whatsappUrl()} email={identity.contact.email.value} rail={rail} className={styles.request} />
+              </div>
+            </ViewTransition>
           </Block>
         </>
       )}

@@ -5,3 +5,85 @@
 .door {
   width: min(100%, 17rem);
 }
+
+/* A paragraph with its picture: below it on phones, beside it from 36rem (the picture keeps its own width). */
+.withArt {
+  display: grid;
+  gap: var(--space-l);
+  align-items: center;
+  justify-items: start;
+}
+
+/* The plain's jars, a little overlapped on one ground; they pop up as they come into view. */
+.jars {
+  --u: 1px;
+}
+
+@media (min-width: 36rem) {
+  .withArt {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .jars {
+    --u: 1.25px;
+  }
+}
+
+/*
+ * The mark at the house's door. The wisp's box is the scene's width (1.25
+ * times the mark's): its crown lies 4px over the arch's top and its mouth at
+ * the jar's.
+ */
+.markScene {
+  position: relative;
+  width: 120px;
+}
+
+.markArt {
+  display: block;
+  width: 120px;
+  height: auto;
+}
+
+.forecourt {
+  fill: var(--paper-mid);
+}
+
+.piece {
+  fill: color-mix(in oklab, var(--teak) 84%, var(--page));
+  stroke: var(--ink-line);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+}
+
+.wisp {
+  position: absolute;
+  left: 0;
+  top: -12px;
+  --wisp-delay: 1000ms;
+}
+
+/*
+ * Setting the mark (a phrase, docs/DESIGN.md §4.4): its start pose is
+ * :root[data-life] [data-phrase]:not([data-played]); when the scene is first
+ * seen the pieces move to their rest, the finished mark, one after another.
+ * Still, reduced motion and pages without JavaScript only ever see the rest.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .piece {
+    transition:
+      translate 520ms var(--ease-out) var(--delay),
+      opacity 320ms ease var(--delay);
+  }
+
+  :global(:root[data-life]:not([data-motion="still"])) .markScene:not([data-played]) .rise {
+    translate: 0 14%;
+    opacity: 0;
+  }
+
+  :global(:root[data-life]:not([data-motion="still"])) .markScene:not([data-played]) .drop {
+    translate: 0 -12%;
+    opacity: 0;
+  }
+}

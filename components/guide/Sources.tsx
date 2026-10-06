@@ -27,7 +27,9 @@ export function Sources({ facts }: { facts: readonly Fact<unknown>[] }) {
         ) : (
           <>
             The house has not confirmed every detail here yet. For anything important,{" "}
-            <Link href={`${pages.book.path}#contact`}>ask the team</Link>.
+            <Link href={`${pages.book.path}#contact`} transitionTypes={["nav-forward"]}>
+              ask the team
+            </Link>.
           </>
         )}
       </p>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ViewTransition, type ReactNode } from "react";
 import { MarkSymbol } from "@/components/brand/Mark";
 import { Splash } from "@/components/brand/Splash";
+import { StageLife } from "@/components/motion/StageLife";
 import { ConciergeLauncher } from "@/components/concierge/ConciergeLauncher";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
@@ -31,7 +32,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // The boot script may set data-theme and the splash class before React hydrates, so <html> accepts what it finds.
-    <html lang="en-GB" className={`${brandFont.variable} ${laoFont.variable}`} suppressHydrationWarning>
+    <html lang="en-GB" className={`${brandFont.variable} ${laoFont.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
@@ -43,11 +44,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         <SiteHeader />
         <main id="main" tabIndex={-1}>
-          {/* Pages cross-fade into each other; section eyebrows glide into the next page's header (see Eyebrow). */}
-          <ViewTransition>{children}</ViewTransition>
+          {/*
+            Pages cross-fade into each other; links typed nav-forward or nav-back (deeper into the site, or back
+            up it) move the page down or up as well. Section eyebrows glide into the next page's header (see Eyebrow).
+          */}
+          <ViewTransition default={{ "nav-forward": "page-forward", "nav-back": "page-back", default: "auto" }}>{children}</ViewTransition>
         </main>
         <SiteFooter />
         <ConciergeLauncher />
+        {/* Wakes stages and phrases as they come into view, and pauses ambient motion off screen (components/motion). */}
+        <StageLife />
       </body>
     </html>
   );

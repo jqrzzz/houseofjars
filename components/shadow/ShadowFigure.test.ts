@@ -25,5 +25,19 @@ describe("ShadowFigure", () => {
 
   it("stays small enough to sit on every page", () => {
     expect(Buffer.byteLength(renderToStaticMarkup(createElement(ShadowFigure)))).toBeLessThan(3_500);
+    expect(Buffer.byteLength(renderToStaticMarkup(createElement(ShadowFigure, { variant: "silhouette" })))).toBeLessThan(3_500);
+  });
+
+  it("draws the silhouette as the full figure's outline in one fill", () => {
+    const full = renderToStaticMarkup(createElement(ShadowFigure));
+    const silhouette = renderToStaticMarkup(createElement(ShadowFigure, { variant: "silhouette" }));
+    expect(silhouette).toContain('viewBox="4 0 110 152"');
+    expect(silhouette).toContain('aria-hidden="true"');
+    // The same paths as the figure: every shape in the silhouette is drawn in the full figure too.
+    const shapes = (markup: string) => [...markup.matchAll(/ (?:d|x|cx)="[^"]+"/g)].map((match) => match[0]);
+    for (const shape of shapes(silhouette)) expect(full).toContain(shape);
+    // One fill, from the stylesheet: no shape colours itself, and nothing is clipped or layered inside.
+    expect(silhouette).not.toMatch(/<(?:g|clipPath|use)\b/);
+    expect(silhouette.match(/class="/g)).toHaveLength(1);
   });
 });

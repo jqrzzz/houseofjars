@@ -1,0 +1,138 @@
+/*
+ * The mini rail: three stops on the orange thread (2 px --thread, 10 px rings
+ * outlined in jar orange, filled with the ticket's paper). Side by side when
+ * there is room, down the thread on a narrow ticket. Nothing in it moves.
+ */
+.rail {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-s);
+  padding-block: var(--space-s) var(--space-m);
+  border-block: 1px dotted var(--rule-strong);
+}
+
+.title {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--accent-text);
+}
+
+.stops {
+  --ring: 10px;
+  position: relative;
+  display: grid;
+  gap: var(--space-s);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stops li {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.5rem;
+  align-items: baseline;
+  padding-left: calc(var(--ring) + 0.75rem);
+}
+
+/* A stop: a ring on the thread. */
+.stops li::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0.3rem;
+  left: 0;
+  width: var(--ring);
+  height: var(--ring);
+  box-sizing: border-box;
+  border: 2px solid var(--jar-orange);
+  border-radius: 50%;
+  background: var(--rail-ground, var(--paper-near));
+}
+
+/* Down the thread: from each ring to the next. */
+.stops li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: calc(0.3rem + var(--ring) / 2);
+  left: calc(var(--ring) / 2 - 1px);
+  width: 2px;
+  height: calc(100% + var(--space-s));
+  background: var(--thread);
+}
+
+.label {
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+}
+
+.time {
+  font-weight: 650;
+  color: var(--text);
+}
+
+.when {
+  grid-column: 1 / -1;
+  font-size: var(--step--1);
+  color: var(--text-soft);
+}
+
+/* Room for all three side by side: check-in on the left, breakfast in the middle, check-out on the right. */
+@container (min-width: 26rem) {
+  .stops {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-m);
+  }
+
+  /* Across: the thread from the first ring to the last. */
+  .stops::before {
+    content: "";
+    position: absolute;
+    inset: calc(var(--ring) / 2 - 1px) calc(var(--ring) / 2) auto;
+    height: 2px;
+    background: var(--thread);
+  }
+
+  .stops li:not(:last-child)::after {
+    content: none;
+  }
+
+  .stops li {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    row-gap: 0.1rem;
+    padding: calc(var(--ring) + 0.6rem) 0 0;
+  }
+
+  .stops li::before {
+    top: 0;
+  }
+
+  .stops li[data-stop="breakfast"] {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .stops li[data-stop="breakfast"]::before {
+    left: 50%;
+    translate: -50% 0;
+  }
+
+  .stops li[data-stop="check-out"] {
+    justify-items: end;
+    text-align: end;
+  }
+
+  .stops li[data-stop="check-out"]::before {
+    left: auto;
+    right: 0;
+  }
+
+  .when {
+    grid-column: auto;
+  }
+}

@@ -13,10 +13,12 @@ The model comes from the owner's walk of 5 October 2026 (the `place-walk` skill)
 | `lib/house/palette.ts` | Materials (day and Evening, three tones each), role classes, the stylesheet. |
 | `lib/house/geometry.ts` | Boxes, panels, extruded polygons, cylinders, turned shapes (jars), text on a wall; the isometric and plan projections; painter's sorting; path writing. |
 | `lib/house/fixtures.ts` | The fixture library: how each kind of thing is drawn, in 3D and as a plan symbol. |
-| `lib/house/render.ts` | The views: `renderStreet`, `renderCutaway`, `renderPlan`, and `HOUSE_RENDERS` (the committed set). |
+| `lib/house/render.ts` | The views: `renderStreet`, `renderCutaway`, `renderPlan`, each in the model or the paper outfit, and `HOUSE_RENDERS` (the committed set). |
+| `lib/house/paper.ts` | The paper stage: the paper outfit cut into layers that share one frame, and the overlays a page lays over them (a walk's thread, the lights, anchors, a pod's curtain, the plans' areas). Server code and scripts only. |
+| `lib/house/deckle.ts` | The deckle of hand-cut paper: a seeded wobble along the paper outfit's long straight edges. |
 | `lib/house/rules.ts` | The house rules, placed: where each rule of `content/stay.ts` applies or is acted on (`placedRules`, `placedHouseRules`, `rulesAt`). |
 | `lib/house/context.ts` | The house in words (`describeHouse`): every floor, room and thing, counted, with the rules where they apply and what is assumed. |
-| `scripts/house-render.ts` | `npm run house:render`: writes the committed SVGs to `public/house/` and the house in words to `docs/house-context.md`. |
+| `scripts/house-render.ts` | `npm run house:render`: writes the committed SVGs and `walks.json` to `public/house/`, and the house in words to `docs/house-context.md`. |
 | `lib/house/*.test.ts` | Model integrity and the walk's counts, geometry, rendering, and the drift check on `public/house/`. |
 
 ## Layers on the places
@@ -33,14 +35,14 @@ Places and rules can be public. Care logs, repairs, the team and day-to-day note
 
 ## The house in words (`docs/house-context.md`)
 
-`describeHouse()` turns the model and the placed rules into plain Markdown: each floor and room, what is in it (counted, with pod and locker numbers), the rules that apply there, and what is assumed. It is the context an assistant reads to know the house (Shadow can answer "where are the showers?" or "where do my shoes go?" from it). `npm run house:render` writes it to `docs/house-context.md`; a test fails while the committed copy differs from the model, so it never goes stale.
+`describeHouse()` turns the model and the placed rules into plain Markdown: each floor and room, what is in it (counted, with pod and locker numbers), the rules that apply there, what is assumed, and the house's customs (the bed numbers it skips, and why). It is the context an assistant reads to know the house (Shadow can answer "where are the showers?" or "where do my shoes go?" from it). `npm run house:render` writes it to `docs/house-context.md`; a test fails while the committed copy differs from the model, so it never goes stale.
 
 ## Where this is going
 
-- **The cute animated style.** This model is the accurate base. The cute style (soft, rounded shapes, warm glowing lamps, Shadow as a small guide character, gentle motion) is a later outfit drawn on the same places, so the cute version still shows the real house. Make it unmistakably this house: the woven pod curtains, the clay jars, the arch, the lamplight. Draw from the house's own life and the styles the owner loves, without copying any one studio.
+- **The paper outfit** (below) is the first outfit drawn on the same places: cut paper with an ink silhouette, for the website's paper theatre (docs/DESIGN.md). Further outfits follow the same rule: drawn from the model, unmistakably this house (the woven pod curtains, the clay jars, the arch, the lamplight), copying no one studio.
 - **Other houses.** The house is the data in `house-of-jars.ts` plus its rules; the engine (`types.ts`, `geometry.ts`, `fixtures.ts`, `render.ts`, `rules.ts`, `context.ts`) draws whatever model it is given. A few House of Jars details still live in the engine: the facade's arch and pilasters (`render.ts`), the street view's description and neighbours' names, and the default model. When a second house comes (walked with the `place-walk` skill), move those into the house's data, so each property is one data file run through the same engine and Shadow can help run many.
 
-The website's `/the-house` page still uses its old drawing (`public/art/house.svg`) until the owner approves the new one.
+The owner approved the new drawing for the website (5 October 2026): its paper theatre is built on the paper outfit's layers (`public/house/paper-*.svg`), replacing the old `public/art/house.svg` on `/the-house`.
 
 ## Coordinates (metres)
 
@@ -70,7 +72,7 @@ npm run house:render   # redraws public/house/
 npx vitest run lib/house   # checks the model and that the pictures match it
 ```
 
-The tests fail while `public/house/` differs from a fresh render, so the pictures never drift from the model. They also check that ids are unique, every fixture sits inside its area (to 5 cm), no two solid fixtures share volume (unless one is `mountedOn` the other), nothing stands in a doorway, no route walks through furniture, each slab opening covers the stairs below it, and the walk's counts (12 pods and 12 lockers per dorm, 3 toilets and 2 showers per bathroom, one toilet on the ground floor, 5 low tables and 10 chairs in the café, and so on).
+The tests fail while `public/house/` differs from a fresh render, so the pictures never drift from the model. They also check that ids are unique, every fixture sits inside its area (to 5 cm), no two solid fixtures share volume (unless one is `mountedOn` the other), nothing stands in a doorway, no route walks through furniture, each slab opening covers the stairs below it, and the walk's counts (14 pods and 14 lockers per dorm numbered as on the bed register, 3 toilets and 2 showers per bathroom, one toilet on the ground floor, 5 low tables and 10 chairs in the café, and so on).
 
 Everything the pictures show comes from the model, so a copy of the model with something changed draws that change: every renderer takes `model` (default `houseOfJars`), for a what-if or a test.
 
@@ -79,34 +81,39 @@ Examples:
 - **A table moved.** Change its centre in `LOW_TABLES`; its two chairs follow.
 - **Something new** (a second fridge): add a fixture with a unique `id`, its `type`, `area`, `box` (`centred(x, y, w, d, h, z0)` or `box(x0, x1, y0, y1, z0, z1)`), and `faces` if it has a front. Use an existing `type` when one fits; a new kind of thing also needs a builder in `fixtures.ts` (3D parts and a plan symbol).
 - **Floor 2 confirmed.** Drop `confirmed: false` from the `floor2` floor, and in `dormFloor` the `level === 2` unconfirmed marks for what the owner checked (and add the shoe cubbies if Floor 2 has them too). Update the counts test if a number changed.
-- **Which pod and locker carries which number, confirmed.** Fix the labels in `dormFloor` (the pod `columns` and the locker `stacks`) and update `POD_NOTE` and `LOCKER_NOTE`, or remove `confirmed: false` once the dorm's back end is confirmed too.
+- **Where a locker stack stands, confirmed.** Fix the `lockerStacks` list in `dormFloor` and update `LOCKER_NOTE`; remove `confirmed: false` from the lockers once nothing in their note is open.
+- **A custom.** Add a plain sentence to `customs` (numbers the house skips, and why): `docs/house-context.md` lists them for guides, the team and Shadow.
 - **The stairs moved.** Each flight is a `stairs` fixture: `faces` is the way it climbs and `climb` the heights it starts and ends at (relative to its floor); a landing has the variant `landing` and starts and ends at one height. Move the flights and the upper floors' `opening` with them; the slab holes, the floors around them and the plans follow. The test fails if a flight comes within 2 m of a slab without an opening over it.
 - **A room that is not a rectangle.** Give its area `more` rectangles (the café, the corridor and the toilet are drawn this way).
-- **A route.** Add it to `routes`: one segment per floor, points as `[x, y]` or `[x, y, z]` (on stairs), optional stops. The test fails if a flat stretch crosses a fixture standing on the floor.
+- **A walk.** Add it to `routes`: who walks it (`guest` or `staff`), when, one segment per floor (points as `[x, y]`, or `[x, y, z]` on stairs; `UP_TO_FLOOR1` and the other stair pieces are ready to reuse), and its steps: where each is drawn, its `area`, what happens there (`does`, one or two plain sentences) and the house rules met there (`rules`, ids from `lib/house/rules.ts`). The tests fail if a flat stretch crosses a fixture standing on the floor, or a step names an area on another floor or a rule that does not exist.
 
 ### What is assumed today (`confirmed: false`)
 
 - **All of Floor 2** (copied from Floor 1), except its two small windows, which show in the street photo.
-- **Which pod and locker carries which number.** The numbers themselves are the owner's: H01 to H12 on Floor 1 and J01 to J12 on Floor 2 (the plates in the photos are too blurry to read). Their order is not known: ask the owner, one side at a time, before the labels go into a tour or a cleaning guide.
-- **The back end of the dorms.** Photos f2-04, f2-05 and f2-08 show a crosswise pod column closing the aisle at the back, a locker stack beside it, and the door to its right; the model still draws the aisle running straight back to the door. Confirm it with the owner, then in `dormFloor`: add the crosswise column facing -y beside a locker stack, shorten the right-hand columns to leave the way in, re-split the columns so there are still 12 pods, and update the arrival and bathroom routes.
-- **Inside the ground floor's toilet.** The photos show its door, off a small wet corner beside the corridor, and the basin right outside it (f1-10, gf-09, gf-10); where the toilet and its sink stand inside is assumed, and so is the wall between it and the corridor.
-- **The kitchen's door.** The photos show the staff room and the kitchen (gf-07, gf-08) but not the way between them; the model puts a doorway in the wall between them.
+- **Most locker stacks.** One locker per pod, with its number (the owner's bed register). The stack beside the dorm door holds the three highest numbers (f2-04); some stacks are three high, towards the middle (the owner; photos to come). Where the others stand, and which numbers each holds, is assumed.
 - **The flights between Floor 1 and Floor 2.** Floor 1's photos show the first flight up beside the bathroom door (f2-02); the landing and the second flight are assumed to be the same as on the ground floor.
 - **The pendant lamps, downlights and framed photographs** in the café: seen in photos f1-03, gf-02 and gf-03; how many and where is approximate. So is where the clay jar on the landing stands.
 
-Seen but not known: where the staff room's teak lattice door leads, and what the tall teak cupboard in the corridor holds. Their notes say so.
+## Walks through the house
+
+`routes` holds the walks a guest or the team makes, each a path for the pictures and a list of steps for guides,
+the team and Shadow. Today: arriving (terrace to pod H01), breakfast, leaving early, going out for a smoke, the
+free water, the women's bathroom, and the housekeeping round about every hour. `docs/house-context.md` lists
+each walk step by step with the rules met at each step; `renderCutaway({ route })` draws one, its steps labelled.
+Hours, the deposit and the breakfast menu come from `content/stay.ts`, so a walk says what the website says.
 
 ## Views
 
 ```ts
 import { renderCutaway, renderPlan, renderStreet } from "@/lib/house/render";
 
-renderStreet({ theme, neighbours, depth, idPrefix, title, model });
-renderCutaway({ theme, explode, fitExplode, floors, labels, labelSize, highlight, route, idPrefix, title, model });
-renderPlan("ground" | "floor1" | "floor2" | "outside", { theme, labels, idPrefix, title, model });
+renderStreet({ theme, outfit, neighbours, depth, idPrefix, title, model });
+renderCutaway({ theme, outfit, explode, fitExplode, floors, labels, labelSize, highlight, route, idPrefix, title, model });
+renderPlan("ground" | "floor1" | "floor2" | "outside", { theme, outfit, labels, idPrefix, title, model });
 ```
 
 - `theme`: `"auto"` (default: day colours, the Evening palette under `prefers-color-scheme: dark`), `"day"` or `"evening"`.
+- `outfit`: `"model"` (default: every view below as committed) or `"paper"` (see "The paper outfit").
 - Bad options throw: no floors to draw, an unknown floor, route or highlighted area, an explode that is not a number of metres (0 or more), and an `idPrefix` that is not a CSS identifier (it becomes part of every id and of the stylesheet's class).
 - **Street**: the closed building: facade with the big arch (it echoes the logo), ledge band, windows, the three outdoor AC units, the awning on two posts with the "hostel" sign (white letters on orange), the hanging sign, door, grid window with its bamboo blind, the bench and two small tables on the tiled terrace. The awning's roof is drawn see-through so the shopfront under it reads. The side wall and roof are cropped `depth` metres back (default 4, so the facade leads; `depth: 16` draws the whole building), the cut edges dashed. `neighbours: true` adds NinetyNine 99 Bar (left) and Swedish Baking (right) as low-detail slices cropped the same way.
 - **Cutaway** (dollhouse): the same camera with the right wall, the roof and each floor's ceiling taken away. Conventions, so the rooms show:
@@ -131,8 +138,56 @@ renderPlan("ground" | "floor1" | "floor2" | "outside", { theme, labels, idPrefix
 | `cutaway-arrival.svg` | Ground floor and Floor 1 lifted apart, with the arrival route |
 | `cutaway-ground.svg`, `cutaway-floor1.svg` | One floor each, labelled: the clearest pictures of the lobby and of a dorm floor |
 | `plan-ground.svg`, `plan-floor1.svg`, `plan-floor2.svg`, `plan-outside.svg` | Plans |
+| `paper-{street,ground,ground-front,floor1,floor2}-{day,evening}.svg` | The paper stage's layers (see "The paper stage"), in one shared frame |
+| `paper-plan-{ground,floor1}-{day,evening}.svg` | The plans in the paper outfit, in the model plans' projection |
+| `walks.json` | Every walk's thread for the stage (`walksJson()`) |
 
-All are `theme: "auto"`. Other combinations come from the functions.
+The model drawings are `theme: "auto"`; the paper ones come in `day` and `evening`, so a page follows its own Day/Evening choice (a `.for-day` and a `.for-evening` image), never the operating system's. Other combinations come from the functions.
+
+## The paper outfit
+
+`outfit: "paper"` dresses any view as cut paper with an ink silhouette (docs/DESIGN.md §2.1, §3): each thing is a sheet of paper, ink only around its outside. The default outfit, `"model"`, is unchanged, byte for byte.
+
+- **Stylesheet** (`paletteCss({ outfit: "paper" })`): the left- and right-facing tones sit half as far from the top tone as the model's, so faces read as folds of one sheet; nothing is stroked unless a role says so. No hairlines (`h`), no outlines on faces (`o`), no light cones (`gw`: the page lights its own glow discs), no grids or dashes. The pen (`paperClass`) maps the model's classes: a face keeps its fill; a thick line (a handle) or an outlined open line (a leg, a rod) becomes a stick of ink (`sk`); on plans, treads and door swings stay as inner detail.
+- **Silhouettes** (`sl`): each thing's group is drawn twice, first as `<use href="#its-id" class="sl"/>` with every shape stroked 3 px wide in ink, then itself on top, so 1.5 px of ink (non-scaling) shows around its outside and none inside. Inner detail (`id`: window bars, curtain folds, cords) is 1 px of ink at 60%.
+- **Card edges** (`ce` with the material's edge tone, `e` + its code): on the big planes only (slabs, walls, the pods, the facade), the outline repeated behind the sheet, moved (1.5, 1.5) by day in the next darker tone, and (0, −1.5) by Evening as a lamplight rim.
+- **Deckle** (`lib/house/deckle.ts`): the slabs' and walls' straight runs longer than 24 px wobble by up to 0.6 px, from a mulberry32 generator seeded by the element's id (and the run's two ends, so two faces that share an edge still meet). Never `Math.random`.
+- **Depth**: the cutaway's party and back walls are back planes, a quarter of the way toward the far paper (`pl1f`). A faded floor (Floor 2's layer, a floor faded by `highlight`) is pale but opaque (`wd1g`), so a floor lifted over it still hides what is behind.
+- **Simple detail** (`isoParts` with `detail: "simple"`): fixtures in fewer, flatter pieces, never fewer fixtures. A pod is a teak box with its curtain (or, against the right wall, its bed) and a lamp dot; a stack of lockers is one block (the lockers above the lowest keep empty groups with their ids); legs are sticks; shelves, cubbies and the fridge's bottles are one shape each. About half the model's paths.
+
+## The paper stage (`lib/house/paper.ts`)
+
+The paper outfit cut into layers for a page to stack in one box, all with **one integer viewBox** (`stageGeometry().viewBox`), big enough for every floor lifted 2.5 m apart and for the street front. The floors are drawn **stacked**; a page lifts a floor by `liftPerLevel × level` (90 viewBox units per level).
+
+| Layer | What it holds |
+| --- | --- |
+| `street` | The street front (facade, awning, signs, posts, the terrace), cropped 4 m back, no neighbours. |
+| `ground` | The ground floor's cutaway, the facade cut at `FACADE_CUT`. |
+| `ground-front` | The ground floor's pieces in front of the facade that overlap the floors above (`isFrontPiece`: the awning, its posts, the signs, the jar for cigarette butts), drawn whole. It lifts with the ground floor and stacks **above** Floors 1 and 2. |
+| `floor1` | Floor 1's cutaway. |
+| `floor2` | Floor 2's cutaway, `class="dim"` (pale) and `data-confirmed="false"`. |
+
+`PAPER_LAYERS` lists them bottom to top: `ground`, `floor1`, `floor2`, `ground-front`, `street`. The layers are static images (`paperLayerSrc(layer, theme)`: `/house/paper-floor1-day.svg`); their fixtures keep their ids and `data-confirmed`, not the other data attributes.
+
+```ts
+stageGeometry(): { viewBox; liftPerLevel; crop(floors) }    // crop: the frame that holds those floors lifted (and the ground's front pieces)
+renderPaperLayer(layer, "day" | "evening"): string
+paperLayerSrc(layer, theme): string
+renderThreadLayer(routeId, { idPrefix, floors?, curtain? }): ThreadLayer
+lightPoints(floors?): LightPoint[]                         // never the shrine
+anchorOf("area-cafe" | "fx-pod-H01"): { floor, x, y } | undefined
+faceMatrix("pod-H01", "front" | "right"): [a, b, c, d, e, f]
+planOverlay("ground" | "floor1"): { viewBox, areas: { id, d }[] }
+walksJson(): string                                         // public/house/walks.json
+```
+
+Every overlay is in viewBox units with the floors stacked:
+
+- **The thread** (`renderThreadLayer`): per floor, an inline `<svg aria-hidden>` in the stage's viewBox holding the walk's `<path class="th" pathLength="1">` in walking order and a `<circle data-stop data-at r="5">` per stop (`data-at`: its share of the walk, 0 to 1, by the drawn length); `link` is one `<svg>` of the stairs between floors in the lifted pose (`<path class="tl" pathLength="1">`); `stops` carry their label, place, share, `does`, `rules` and area; `shares[floor]` is the part of the walk each floor's path draws. Nothing is coloured: the page strokes `.th` with `var(--thread)`. Each walk's thread is at most 4 kB. `curtain: "pod-H01"` adds `<g data-curtain stroke="none" transform="matrix(…)"><rect width="1" height="1"/></g>` under the thread on the pod's floor: a unit square on the side of the pod the camera sees (its opening, between deck, rail and ends), for the page to slide closed with `scaleX`.
+- **Lights** (`lightPoints`): the café's pendants, the wall lamps, the glass door and windows below the facade's cut, the big jar and the landing jar (at their mouths), the two signs and the drinks fridge, each with a glow radius and its place in walking order on the arrival walk (`order`; lights off that walk follow). The staff room's shrine is never one of them.
+- **Anchors** (`anchorOf`): an area's label anchor, a fixture's middle; for HTML tags, hotspots and camera dots.
+- **Faces** (`faceMatrix`): the matrix that maps a unit square onto a fixture's face ("front": to the street; "right": to the right); on a pod, its opening.
+- **Plans** (`planOverlay`): the paper plan's viewBox and each area's shape, for highlights and the game.
 
 ## The id and data-attribute contract (for animators)
 
@@ -170,7 +225,7 @@ The same exploded picture the renderer draws can be produced, and animated, with
 
 ## Style
 
-Lines keep their weight at any size (`vector-effect: non-scaling-stroke`): 1.5 px for walls, slabs, room floors and main outlines, 1 px for fixtures and hairlines (cut tops), tile and board grids fainter still, round caps and joins. Flat fills, no `<filter>`. Colours come from `public/art/house.svg` (ink `#4a2f1b`, Evening `#dccdb6`; cream, teak, jar orange, lamplight) with the walk's materials: the terracotta-orange facade, the café's ochre plaster and cream floor tiles, the dorms' brown tiles and clay-pink walls, terracotta landings and stairs, the curtains' grey-brown weave with a cream band, white bathroom tiles on a grey floor. Each material has three tones (top, left-facing, right-facing) mixed from its base in `palette.ts`; change a base colour there and the whole drawing follows. The Evening palette stays warm; the windows, the drinks fridge and the lamps glow in lamplight, and the café's pendant lamps throw soft cones of light.
+The model outfit (the paper outfit's differences are above). Lines keep their weight at any size (`vector-effect: non-scaling-stroke`): 1.5 px for walls, slabs, room floors and main outlines, 1 px for fixtures and hairlines (cut tops), tile and board grids fainter still, round caps and joins. Flat fills, no `<filter>`. Colours come from `public/art/house.svg` (ink `#4a2f1b`, Evening `#dccdb6`; cream, teak, jar orange, lamplight) with the walk's materials: the terracotta-orange facade, the café's ochre plaster and cream floor tiles, the dorms' brown tiles and clay-pink walls, terracotta landings and stairs, the curtains' grey-brown weave with a cream band, white bathroom tiles on a grey floor. Each material has three tones (top, left-facing, right-facing) mixed from its base in `palette.ts`; change a base colour there and the whole drawing follows. The Evening palette stays warm; the windows, the drinks fridge and the lamps glow in lamplight, and the café's pendant lamps throw soft cones of light.
 
 Classes are short (`wd1`: wood, left-facing tone) and scoped under the SVG's own class (`hj-auto`, `hj-day`, `hj-evening`, prefixed by `idPrefix`), and only the classes a drawing uses get a rule (a test checks every class has one). A faded area or fixture carries `dg` (an opaque ghost); a faded floor or label carries `dim` (opacity).
 
@@ -194,8 +249,9 @@ where `view.html` shows the SVG (`<img src>` or inline). For the Evening look, r
 ## Known gaps
 
 - Positions and sizes are approximate; Floor 2 is a copy of Floor 1.
-- The dorms' back end and the pod and locker numbers are drawn as assumed above, against what some photos show, until the owner confirms them.
 - The stairs are approximate: one U-shaped stair across the house behind the counter, the same on every floor. Its shape is read from the photos (the slope of its teak underside seen from the café, the turn at the landing against the left wall, the flight beside the bathroom door upstairs), not measured.
 - From this camera the stairs, the tall cupboard and the toilet's walls hide parts of the toilet and the corridor; the ground plan shows all of them. The inside of the curtains on the far side of the right-hand pods cannot be seen either.
 - A route's link between lifted floors is drawn for the rendered explode only.
 - The hanging "House of Jars" board under the awning is drawn as a board with the logo's arch, without its lettering (too small to read at this scale); the dorm doors' H and J plates are plain for the same reason.
+- The paper layers are images: a page cannot move one piece inside them (the awning in a breath of wind, a pod's lamp); it lays its own pieces over them at `anchorOf()` and `faceMatrix()`. The awning's thin roof covers the entrance in the `ground-front` layer, so a page draws the ground floor's thread above that layer.
+- The paper outfit's ink is 1.5 px at any size, so at phone width (about half size) the small furniture reads busier than the big planes.

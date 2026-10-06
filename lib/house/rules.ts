@@ -42,6 +42,13 @@ export const placedRules: readonly PlacedRule[] = [
     places: [{ floor: "floor1" }, { floor: "floor2" }, { area: "stairs-ground" }],
     where: "Floor 1 and Floor 2 are for registered guests only; the stairs behind the counter lead up to them.",
   },
+  {
+    id: "smoke-past-the-terrace",
+    match: "Smoke out past the terrace",
+    scope: "places",
+    places: [{ area: "terrace" }, { fixture: "jar-butts" }],
+    where: "Not on the terrace in front of the café, where smoke drifts inside: a few steps further out, where a small jar takes the butts.",
+  },
   { id: "no-outside-food", match: "No outside food or drink", scope: "house", places: [{ area: "entrance" }], where: "Anywhere in the house, from the front door in." },
   {
     id: "eat-in-the-cafe",

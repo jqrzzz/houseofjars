@@ -45,6 +45,7 @@ describe("the house rules, placed in the house", () => {
     expect(ids("desk")).toEqual(expect.arrayContaining(["check-in-hours", "passport", "deposit"]));
     expect(ids("entrance")).toContain("front-door-locked");
     expect(ids("cafe")).toEqual(expect.arrayContaining(["eat-in-the-cafe", "pack-downstairs"]));
+    expect(ids("terrace")).toEqual(expect.arrayContaining(["smoke-past-the-terrace", "bikes"]));
     expect(() => rulesAt(model, "nowhere", placed)).toThrow(/Unknown area/);
   });
 });
@@ -54,8 +55,11 @@ describe("the house in words", () => {
     const text = describeHouse();
     for (const f of model.floors) expect(text).toContain(`## ${f.name}`);
     for (const a of model.areas) expect(text).toContain(a.name);
-    expect(text).toContain("12 pods (H01 to H12)");
-    expect(text).toContain("12 pods (J01 to J12)");
+    expect(text).toContain("14 pods (H01 to H17, with no H04, H13 or H14)");
+    expect(text).toContain("14 pods (J01 to J17, with no J04, J13 or J14)");
+    expect(text).toContain("## House customs");
+    expect(text).toContain("## Walks through the house");
+    expect(text).toContain("1. Front door, Entrance: In through the glass door");
     expect(text).toContain("30 shoe cubbies");
     expect(text).not.toMatch(/undefined|NaN/);
   });

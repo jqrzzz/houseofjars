@@ -1,0 +1,868 @@
+/*
+ * "Find your pod": a native dialog. Phones: the whole screen, the board above and the panel below. Wider
+ * screens: a sheet of paper over the page, the board on the left and the panel on the right. Motion is the
+ * lamp's step (a transform over --dur-ui), the newest stretch of thread drawing in, and the last scene; under
+ * Still or reduced motion each is at its rest frame at once.
+ */
+
+.dialog {
+  display: none;
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--page);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.dialog[open] {
+  display: block;
+}
+
+.dialog::backdrop {
+  background: rgb(32 21 12 / 0.5);
+}
+
+@media (min-width: 48rem) {
+  .dialog {
+    inset: 0;
+    margin: auto;
+    width: min(62rem, calc(100vw - 3rem));
+    height: min(54rem, calc(100dvh - 3rem));
+    border: 1px solid var(--rule-strong);
+    box-shadow:
+      var(--edge-x) var(--edge-y) 0 var(--paper-edge),
+      var(--shadow-lift);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="still"]) .dialog,
+  :root:not([data-motion="still"]) .dialog::backdrop {
+    transition:
+      opacity var(--dur-ui) var(--ease-out),
+      translate var(--dur-ui) var(--ease-out),
+      overlay var(--dur-ui) allow-discrete,
+      display var(--dur-ui) allow-discrete;
+  }
+
+  :root:not([data-motion="still"]) .dialog:not([open]) {
+    opacity: 0;
+    translate: 0 0.75rem;
+  }
+
+  :root:not([data-motion="still"]) .dialog:not([open])::backdrop {
+    opacity: 0;
+  }
+
+  @starting-style {
+    :root:not([data-motion="still"]) .dialog[open] {
+      opacity: 0;
+      translate: 0 1.25rem;
+    }
+
+    :root:not([data-motion="still"]) .dialog[open]::backdrop {
+      opacity: 0;
+    }
+  }
+}
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.loading {
+  margin: auto;
+  padding: var(--space-l);
+  color: var(--text-soft);
+}
+
+/* ------------------------------------------------------------------ header */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  padding: 0.5rem 0.5rem 0.5rem var(--space-m);
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-near);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--step-1);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.meter {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0 0 0 auto;
+  padding: 0;
+}
+
+.meterGroup {
+  display: flex;
+  gap: 1px;
+  padding-bottom: 3px;
+  border-bottom: 2px solid transparent;
+}
+
+.meterGroup[data-current] {
+  border-bottom-color: var(--thread);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--rule);
+}
+
+.close svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* The house's lamp, small: unlit stone, lit lamplight with a glow. */
+.lampIcon {
+  display: block;
+  width: 0.85rem;
+  height: 1.3rem;
+  overflow: visible;
+}
+
+.lampCord {
+  fill: none;
+  stroke: var(--teak);
+  stroke-width: 1;
+}
+
+.lampCap {
+  fill: var(--teak);
+}
+
+.lampShade {
+  fill: var(--stone);
+  stroke: var(--text);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.lampGlow {
+  fill: var(--lamplight);
+  opacity: 0;
+  transition: opacity var(--dur-section) var(--ease-lamp);
+}
+
+.lampIcon[data-lit] .lampShade {
+  fill: var(--lamplight);
+}
+
+.lampIcon[data-lit] .lampGlow {
+  opacity: calc(0.25 + 0.35 * var(--glow-strength));
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--space-s);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-s) var(--space-m) max(var(--space-m), env(safe-area-inset-bottom));
+  border-top: 1px solid var(--rule);
+  background: var(--page);
+  overscroll-behavior: contain;
+}
+
+/* Phones: a smaller board while the panel has more to say (the welcome). */
+.body[data-phase="intro"] .boardWrap {
+  height: max(12rem, 34svh);
+}
+
+@media (min-width: 48rem) {
+  .body {
+    flex-direction: row;
+  }
+
+  .panel {
+    flex: 0 0 24rem;
+    padding: var(--space-m) var(--space-l) var(--space-l);
+    border-top: 0;
+    border-left: 1px solid var(--rule);
+  }
+}
+
+/* ------------------------------------------------------------------ board */
+
+.boardWrap {
+  position: relative;
+  flex: 0 0 auto;
+  height: max(15rem, 50svh);
+  min-width: 0;
+  padding: 0.75rem;
+  container-type: size;
+  background: var(--paper-far);
+  outline-offset: -3px;
+}
+
+@media (min-width: 48rem) {
+  .boardWrap,
+  .body[data-phase="intro"] .boardWrap {
+    flex: 1 1 0;
+    height: auto;
+  }
+}
+
+.boardFrame {
+  position: relative;
+  width: min(100cqw, 100cqh * var(--board-ratio));
+  aspect-ratio: var(--board-ratio);
+  margin: 0 auto;
+}
+
+.board {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sheetEdge {
+  fill: var(--paper-edge);
+  transform: translate(calc(var(--edge-x) * 2), calc(var(--edge-y) * 2));
+}
+
+.floorTag {
+  position: absolute;
+  padding: 0.15em 0.45em;
+  margin-bottom: 0.35em;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--text);
+  /* Sized with the board, so the two names never meet. */
+  font-size: clamp(0.625rem, calc(min(100cqw, 100cqh * var(--board-ratio)) * 0.034), 0.875rem);
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* At 23:50 and 06:40 the house is dim, and the lamp is your light. */
+.dusk {
+  fill: var(--curtain-night);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-section) var(--ease-lamp);
+}
+
+.boardWrap[data-night] .dusk {
+  opacity: 0.34;
+}
+
+.thread {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.thread path {
+  fill: none;
+}
+
+.hint {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 7;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.spot {
+  cursor: pointer;
+}
+
+.spotHit {
+  fill: transparent;
+}
+
+.spotRing {
+  fill: var(--paper-near);
+  stroke: var(--jar-orange);
+  stroke-width: 3;
+  transition: fill var(--dur-hover) var(--ease-out);
+}
+
+.spot:hover .spotRing {
+  fill: color-mix(in oklab, var(--jar-orange) 40%, var(--paper-near));
+}
+
+/* The lamp light: a pool of light on the floor, and a bright core (ringed in teak by Day, where lamplight on paper would not read). */
+.lamp {
+  pointer-events: none;
+}
+
+.halo {
+  fill: color-mix(in oklab, var(--lamplight) 72%, var(--thread));
+  opacity: calc(0.22 - 0.07 * var(--glow-strength));
+}
+
+.core {
+  fill: var(--lamplight);
+  stroke: var(--glow-ring);
+  stroke-width: 2.5;
+}
+
+.bulb {
+  fill: var(--white);
+  opacity: 0.85;
+}
+
+/* The last scene: the curtain, its hem, and the house's lamps glowing through it. */
+.weave {
+  fill: var(--curtain);
+}
+
+.weaveFold {
+  fill: var(--lamplight);
+  opacity: 0.07;
+}
+
+.weaveThread {
+  fill: var(--thread-gold);
+  opacity: 0.4;
+}
+
+/* A scrim more than a wall: the house shows faintly through it, its lamps brightly. */
+.curtain {
+  opacity: calc(1.03 - 0.17 * var(--glow-strength));
+  transform-box: fill-box;
+}
+
+.valance {
+  fill: var(--curtain);
+}
+
+.curtainLeft {
+  transform-origin: 0 50%;
+}
+
+.curtainRight {
+  transform-origin: 100% 50%;
+}
+
+.hem {
+  fill: var(--thread-gold);
+  opacity: 0.85;
+}
+
+.light .halo {
+  fill: var(--lamplight);
+  opacity: 0.17;
+}
+
+.light .core {
+  fill: var(--lamplight);
+  stroke: none;
+}
+
+.sleepTag {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  translate: -50% 0;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--text);
+  font-size: var(--step-0);
+  font-weight: 650;
+  white-space: nowrap;
+  transform-origin: 50% -1rem;
+}
+
+.sleepTag::before {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 1px;
+  height: 1rem;
+  background: var(--thread-gold);
+  content: "";
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="still"]) .lamp {
+    transition: transform var(--dur-ui) var(--ease-out);
+  }
+
+  :root:not([data-motion="still"]) .threadNew {
+    stroke-dasharray: 1;
+    animation: draw var(--dur-ui) var(--ease-out) both;
+  }
+
+  /* The lamps light in walking order (no more than four at once), then the curtain closes behind them. */
+  :root:not([data-motion="still"]) .light {
+    animation: light-up var(--dur-section) var(--ease-lamp) calc(var(--i) * 140ms) both;
+  }
+
+  :root:not([data-motion="still"]) .curtain {
+    animation: curtain-close var(--dur-scene) var(--ease-paper) 1.6s both;
+  }
+
+  :root:not([data-motion="still"]) .sleepTag {
+    animation: tag-swing var(--dur-hinge) var(--ease-out) 2.6s both;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes curtain-close {
+  from {
+    transform: scaleX(0.14);
+  }
+}
+
+@keyframes light-up {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes tag-swing {
+  from {
+    rotate: -4deg;
+  }
+}
+
+/* ------------------------------------------------------------------ panel */
+
+.status {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.say {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid var(--thread);
+  background: var(--paper-near);
+  font-size: var(--step--1);
+  line-height: 1.45;
+}
+
+.where {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+  margin: 0;
+  font-size: var(--step--1);
+  line-height: 1.4;
+}
+
+.place {
+  font-weight: 650;
+}
+
+.next {
+  color: var(--text-soft);
+}
+
+.card,
+.errand {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+}
+
+/* While playing, the errand leads the panel, then where you are and what's next, then the moves. */
+.errand {
+  order: -1;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  color: var(--accent-text);
+  font-size: var(--step--1);
+  font-weight: 650;
+}
+
+.clock {
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--rule-strong);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.heading {
+  margin: 0;
+  font-size: var(--step-1);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.lede {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+
+.keys {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  line-height: 1.7;
+}
+
+.keys kbd,
+.arrow {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--rule-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.steps {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--step--1);
+  line-height: 1.35;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  align-items: baseline;
+  gap: 0.45rem;
+  color: var(--text-soft);
+}
+
+.steps li::before {
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1.5px solid var(--rule-strong);
+  border-radius: 50%;
+  justify-self: center;
+  content: "";
+  translate: 0 0.05rem;
+}
+
+.steps li[data-current] {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.steps li[data-current]::before {
+  border-color: var(--jar-orange);
+  border-width: 2px;
+}
+
+.steps li[data-done] {
+  color: var(--text);
+}
+
+.steps li[data-done]::before {
+  border-color: var(--thread);
+  background: var(--thread);
+}
+
+/* Phones: the steps as a row of beads (their words stay for screen readers); "Next" says the one that matters. */
+@media (max-width: 47.99rem) {
+  .steps {
+    display: flex;
+    gap: 0.35rem;
+  }
+
+  .steps li {
+    display: block;
+  }
+
+  .steps li::before {
+    display: block;
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+
+  .stepLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .errand {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.35rem 0.75rem;
+  }
+
+  .errand .eyebrow {
+    grid-column: 1 / -1;
+  }
+
+  .errand .heading {
+    font-size: var(--step-0);
+  }
+}
+
+.forTouch {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .forKeys {
+    display: none;
+  }
+
+  .forTouch {
+    display: block;
+  }
+}
+
+.moves {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.groupLabel {
+  margin: 0.25rem 0 0;
+  color: var(--text-soft);
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.options {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--step--1);
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-hover) ease,
+    background-color var(--dur-hover) ease;
+}
+
+.option:hover {
+  border-color: var(--text);
+}
+
+.option:active {
+  translate: 0 1px;
+}
+
+.option[data-kind="act"] {
+  border-color: color-mix(in oklab, var(--jar-orange) 55%, var(--rule-strong));
+  background: color-mix(in oklab, var(--lamplight) calc(30% - 16% * var(--glow-strength)), var(--surface));
+}
+
+.option[data-kind="act"]::before {
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-inline: 0.5rem 0.45rem;
+  border-radius: 50%;
+  background: var(--jar-orange);
+  content: "";
+}
+
+.arrow {
+  flex: none;
+  min-width: 1.75rem;
+}
+
+/* Shadow holds up the rule: his bust beside a paper sign with the rule and its reason, word for word. */
+.nudge {
+  display: grid;
+  gap: var(--space-s);
+  justify-items: start;
+}
+
+.nudgeFigure {
+  display: grid;
+  grid-template-columns: 4.25rem 1fr;
+  align-items: start;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.bust {
+  display: block;
+  width: 4.25rem;
+  height: 4.25rem;
+  margin-top: 0.35rem;
+}
+
+.bust svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sign {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.8rem 0.95rem 0.9rem;
+  border: 1.5px solid var(--text);
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  rotate: -1deg;
+}
+
+.signLabel {
+  color: var(--accent-text);
+  font-size: var(--step--2);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+}
+
+.rule {
+  margin: 0;
+  font-size: var(--step-0);
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.why {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-motion="still"]) .sign {
+    animation: sign-up var(--dur-hinge) var(--ease-out) both;
+    transform-origin: 0 0;
+  }
+}
+
+@keyframes sign-up {
+  from {
+    rotate: -5deg;
+    translate: 0 0.5rem;
+  }
+}
+
+.earned {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0.25rem 0 0;
+}
+
+.bigLamp {
+  width: 2rem;
+  height: 3rem;
+}
+
+.earnedGroup {
+  display: flex;
+  gap: 2px;
+}
+
+.midLamp {
+  width: 1.1rem;
+  height: 1.65rem;
+}
+
+.line {
+  display: block;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.shared {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+.shared:empty {
+  display: none;
+}

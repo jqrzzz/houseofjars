@@ -18,6 +18,7 @@ import {
   type Vec3,
   box,
   boxFaces,
+  boxOutline,
   circle,
   cylinderPaint,
   ellipseOnPlane,
@@ -31,6 +32,7 @@ import {
   poly,
   prismFaces,
   screen,
+  shapes,
   turned,
   union,
 } from "./geometry";
@@ -46,6 +48,13 @@ export interface FixtureContext {
   readonly cut?: number;
   /** How far the floor above is from this one (a flight of stairs climbs that far). */
   readonly rise?: number;
+  /**
+   * "simple": the paper outfit's detail. Fewer pieces, never fewer fixtures: a pod is a teak box with a
+   * curtain front and a lamp dot, a stack of lockers one block (its other lockers keep their empty groups).
+   */
+  readonly detail?: "full" | "simple";
+  /** The other fixtures on the floor (a locker finds its stack). */
+  readonly siblings?: readonly Fixture[];
 }
 
 const c = (m: MaterialName, tone: 0 | 1 | 2, extra = "") => (extra ? `${fill(m, tone)} ${extra}` : fill(m, tone));
@@ -750,6 +759,15 @@ function basinWall(fx: Fixture, b: Box3): Node[] {
         poly(arch("right", b.x0 + 0.01, yc, b.y1 - b.y0 + 0.04, top + 0.25, b.z1, 0.2), c("glass", 2)),
       ]),
     );
+  else if (fx.faces === "-y") {
+    // On a wall across the house: the arched mirror on the wall behind it, facing the camera.
+    const xc = (b.x0 + b.x1) / 2;
+    out.push(
+      part(box(b.x0 - 0.02, b.x1 + 0.02, b.y1 - 0.01, b.y1, top + 0.25, b.z1), [
+        poly(arch("front", b.y1 - 0.01, xc, b.x1 - b.x0 + 0.04, top + 0.25, b.z1, 0.2), c("glass", 1)),
+      ]),
+    );
+  }
   return out;
 }
 
@@ -769,6 +787,7 @@ function sinkSmall(b: Box3): Node[] {
 function wallBox(b: Box3, m: MaterialName, faces: Fixture["faces"]): Node[] {
   const paint: Paint[] = [];
   if (faces === "+x") paint.push(line([[b.x1, b.y0 + 0.04, b.z0 + 0.05], [b.x1, b.y1 - 0.04, b.z0 + 0.05]], "h"));
+  else if (faces === "-y") paint.push(line([[b.x0 + 0.04, b.y0, b.z0 + 0.05], [b.x1 - 0.04, b.y0, b.z0 + 0.05]], "h"));
   return [decorate(solid(b, m), paint)];
 }
 
@@ -967,6 +986,7 @@ function doorLeaf(fx: Fixture, b: Box3): Node[] {
 // The dorms
 
 function pod(fx: Fixture, b: Box3): Node[] {
+  if (fx.faces === "-y") return podAcross(fx, b);
   const variant = fx.variant ?? "";
   const left = variant.includes("left");
   const upper = variant.includes("upper");
@@ -1050,10 +1070,52 @@ function pod(fx: Fixture, b: Box3): Node[] {
   return out;
 }
 
+/**
+ * A pod lying across the house (the stack just inside the dorm's door), its back against the wall behind it
+ * and its curtain on the front, which the camera sees.
+ */
+function podAcross(fx: Fixture, b: Box3): Node[] {
+  const upper = (fx.variant ?? "").includes("upper");
+  const deck = 0.12;
+  const end = 0.04;
+  const rail = 0.06;
+  const zf = b.z0 + deck;
+  const x0 = b.x0 + end;
+  const x1 = b.x1 - end;
+  const cz1 = b.z1 - rail;
+  const band = zf + (cz1 - zf) * 0.2;
+  const folds: Vec3[][] = [];
+  for (let x = x0 + 0.17; x < x1 - 0.05; x += 0.17) folds.push([[x, b.y0, zf + 0.02], [x, b.y0, cz1 - 0.02]]);
+  const out: Node[] = [
+    solid(box(b.x0, b.x1, b.y0, b.y1, b.z0, zf), "woodDark"),
+    solid(box(b.x0, b.x1, b.y1 - end, b.y1, zf, b.z1), "wood"),
+    solid(box(b.x0, x0, b.y0, b.y1, zf, b.z1), "wood"),
+    decorate(solid(box(x1, b.x1, b.y0, b.y1, zf, b.z1), "wood"), [
+      poly(onRight(b.x1, b.y0 + 0.08, b.y1 - 0.08, zf + 0.08, b.z1 - 0.1), c("wood", 2, "tg")),
+    ]),
+  ];
+  if (upper) out.push(solid(box(x0, x1, b.y0 + rail, b.y1 - end, b.z1 - 0.03, b.z1), "wood"));
+  out.push(
+    solid(box(x0, x1, b.y0, b.y0 + rail, cz1, b.z1), "woodDark"),
+    part(box(x0, x1, b.y0, b.y0 + 0.03, zf, cz1), [
+      poly(onFront(b.y0, x0, x1, zf, cz1), c("curtain", 1)),
+      poly(onFront(b.y0, x0, x1, zf, band), c("curtainBand", 1)),
+      lines(folds, "tg"),
+    ]),
+  );
+  return out;
+}
+
+/** A pod's ladder: two rails and the rungs between them, standing along y (or along x for a pod lying across). */
 function ladder(b: Box3): Node[] {
-  const out: Node[] = [solid(box(b.x0, b.x1, b.y1 - 0.035, b.y1, b.z0, b.z1), "wood")];
-  for (let z = b.z0 + 0.42; z < b.z1 - 0.2; z += 0.4) out.push(solid(box(b.x0 + 0.015, b.x1 - 0.015, b.y0 + 0.035, b.y1 - 0.035, z, z + 0.035), "wood"));
-  out.push(solid(box(b.x0, b.x1, b.y0, b.y0 + 0.035, b.z0, b.z1), "wood"));
+  const alongX = b.x1 - b.x0 > b.y1 - b.y0;
+  const t = 0.035;
+  const railA = alongX ? box(b.x0, b.x0 + t, b.y0, b.y1, b.z0, b.z1) : box(b.x0, b.x1, b.y1 - t, b.y1, b.z0, b.z1);
+  const railB = alongX ? box(b.x1 - t, b.x1, b.y0, b.y1, b.z0, b.z1) : box(b.x0, b.x1, b.y0, b.y0 + t, b.z0, b.z1);
+  const out: Node[] = [solid(railA, "wood")];
+  for (let z = b.z0 + 0.42; z < b.z1 - 0.2; z += 0.4)
+    out.push(solid(alongX ? box(b.x0 + t, b.x1 - t, b.y0 + 0.015, b.y1 - 0.015, z, z + t) : box(b.x0 + 0.015, b.x1 - 0.015, b.y0 + t, b.y1 - t, z, z + t), "wood"));
+  out.push(solid(railB, "wood"));
   return out;
 }
 
@@ -1063,6 +1125,9 @@ function locker(fx: Fixture, b: Box3): Node[] {
   if (fx.faces === "+x") {
     paint.push(poly(onRight(b.x1, b.y0 + 0.03, b.y1 - 0.03, b.z0 + 0.03, b.z1 - 0.03), c("wood", 2, "h")));
     paint.push(plateRight(b.x1, yc, b.z1 - 0.2, 0.035, c("steel", 2)));
+  } else if (fx.faces === "-y") {
+    paint.push(poly(onFront(b.y0, b.x0 + 0.03, b.x1 - 0.03, b.z0 + 0.03, b.z1 - 0.03), c("wood", 1, "h")));
+    paint.push(plateFront((b.x0 + b.x1) / 2, b.y0, b.z1 - 0.2, 0.035, c("steel", 1)));
   }
   return [decorate(solid(b, "wood"), paint)];
 }
@@ -1282,6 +1347,10 @@ function shower(b: Box3): Node[] {
 export function isoParts(fx: Fixture, ctx: FixtureContext, ceiling: number): Node[] {
   const b: Box3 = { ...fx.box, z0: fx.box.z0 + ctx.z, z1: fx.box.z1 + ctx.z };
   if (ctx.cut !== undefined && b.z0 >= ctx.cut - 1e-6) return [];
+  if (ctx.detail === "simple") {
+    const parts = simpleParts(fx, b, ctx, ceiling);
+    if (parts) return parts;
+  }
   switch (fx.type) {
     case "door":
       return frontDoor(fx, b, ctx);
@@ -1421,6 +1490,653 @@ export function isoParts(fx: Fixture, ctx: FixtureContext, ceiling: number): Nod
 }
 
 // ---------------------------------------------------------------------------
+// The paper outfit's simple detail: each fixture in fewer, flatter pieces (sheets of paper), with inner
+// detail ("id": window bars, cords, curtain folds) and sticks of ink ("sk": legs, rods) as the only lines.
+
+/** The silhouettes of several boxes as one shape (pillows, rails): one fill, one element. */
+function hulls(boxes: readonly Box3[], cls: string): Paint {
+  return screen(cls, (p) => boxes.flatMap((b) => outlineCmds(boxOutline(b, cls), p)));
+}
+
+function outlineCmds(paint: Paint, p: Projection): readonly Cmd[] {
+  return paint.t === "screen" ? paint.build(p) : [];
+}
+
+/** Several round plates on one plane, as one shape. */
+function plates(plane: "front" | "right", at: number, centres: readonly (readonly [number, number])[], r: number, cls: string): Paint {
+  return screen(cls, (p) =>
+    centres.flatMap(([a, z]) => (plane === "front" ? ellipseOnPlane(p, [a, at, z], [r, 0, 0], [0, 0, r]) : ellipseOnPlane(p, [at, a, z], [0, r, 0], [0, 0, r]))),
+  );
+}
+
+/** The side and the top of a short upright cylinder (a stool's seat, a table's round top). */
+function drum(cx: number, cy: number, r: number, z0: number, z1: number, m: MaterialName): Paint[] {
+  const k = 0.5523;
+  return [
+    screen(c(m, 1), (p) => {
+      const rx = r * p.scale * Math.SQRT2 * Math.cos(Math.PI / 6);
+      const ry = r * p.scale * Math.SQRT2 * 0.5;
+      const [bx, by] = p.point([cx, cy, z0]);
+      const [, ty] = p.point([cx, cy, z1]);
+      return [
+        ["M", bx - rx, ty],
+        ["L", bx - rx, by],
+        ["C", bx - rx, by + k * ry, bx - k * rx, by + ry, bx, by + ry],
+        ["C", bx + k * rx, by + ry, bx + rx, by + k * ry, bx + rx, by],
+        ["L", bx + rx, ty],
+        ["C", bx + rx, ty + k * ry, bx + k * rx, ty + ry, bx, ty + ry],
+        ["C", bx - k * rx, ty + ry, bx - rx, ty + k * ry, bx - rx, ty],
+        ["Z"],
+      ];
+    }),
+    screen(c(m, 0), (p) => flatCircle(p, cx, cy, z1, r)),
+  ];
+}
+
+/** Upright lines between two heights at points of the plan: legs, posts, rods. */
+function sticks(points: readonly (readonly [number, number])[], z0: number, z1: number): Paint {
+  return lines(points.map(([x, y]) => [[x, y, z0], [x, y, z1]] as Vec3[]), "sk");
+}
+
+/**
+ * A pod: a teak box. Its side toward the camera shows the woven curtain with its cream band, a few folds
+ * and the reading lamp's dot, or (a few upper pods, drawn half open) the bed behind the curtain; the pods
+ * against the right wall, which the cutaway takes away with their outer panels, show their beds.
+ */
+/** The paper pod's frame: the deck under the bed, the rail over the curtain, the ends (metres). */
+export const PAPER_POD = { deck: 0.12, end: 0.05, rail: 0.07 } as const;
+
+function paperPod(fx: Fixture, b: Box3): Node[] {
+  const variant = fx.variant ?? "";
+  const { deck, end, rail } = PAPER_POD;
+  const zf = b.z0 + deck;
+  const zc = b.z1 - rail;
+  const band = zf + (zc - zf) * 0.2;
+  const lamp = zc - 0.15;
+  const paint: Paint[] = boxFaces(b, { top: c("wood", 0), front: c("wood", 1), right: c("wood", 2) });
+  if (fx.faces === "-y") {
+    const x0 = b.x0 + end;
+    const x1 = b.x1 - end;
+    const folds: Vec3[][] = [];
+    for (let x = x0 + 0.3; x < x1 - 0.1; x += 0.3) folds.push([[x, b.y0, band], [x, b.y0, zc - 0.03]]);
+    paint.push(
+      poly(onFront(b.y0, x0, x1, zf, zc), c("curtain", 1)),
+      poly(onFront(b.y0, x0, x1, zf, band), c("curtainBand", 1)),
+      lines(folds, "id"),
+      plates("front", b.y0, [[x1 - 0.2, lamp]], 0.05, c("lamp", 1)),
+    );
+    return [part(b, paint)];
+  }
+  const y0 = b.y0 + end;
+  const y1 = b.y1 - end;
+  if (variant.includes("left")) {
+    const open = variant.includes("open");
+    const cy0 = open ? y0 + (y1 - y0) * 0.55 : y0;
+    const folds: Vec3[][] = [];
+    for (let y = cy0 + 0.3; y < y1 - 0.1; y += 0.3) folds.push([[b.x1, y, band], [b.x1, y, zc - 0.03]]);
+    if (open)
+      paint.push(
+        poly(onRight(b.x1, y0, cy0, zf, zc), c("shadow", 2)),
+        poly(onRight(b.x1, y0, cy0, zf, zf + 0.15), c("linen", 2)),
+        poly(onRight(b.x1, y0 + 0.06, y0 + 0.42, zf + 0.15, zf + 0.27), c("linen", 1)),
+      );
+    paint.push(
+      poly(onRight(b.x1, cy0, y1, zf, zc), c("curtain", 2)),
+      poly(onRight(b.x1, cy0, y1, zf, band), c("curtainBand", 2)),
+      lines(folds, "id"),
+      plates("right", b.x1, [[open ? y0 + 0.62 : y1 - 0.22, lamp]], 0.05, c("lamp", 2)),
+    );
+    return [part(b, paint)];
+  }
+  const mid = (y0 + y1) / 2;
+  paint.push(
+    poly(onRight(b.x1, y0, y1, zf, zc), c("shadow", 2)),
+    poly(onRight(b.x1, y0, y1, zf, zf + 0.15), c("linen", 2)),
+    poly(onRight(b.x1, mid - 0.35, mid + 0.1, zf + 0.15, zf + 0.2), c("sage", 2)),
+    poly(onRight(b.x1, y1 - 0.45, y1 - 0.08, zf + 0.15, zf + 0.29), c("linen", 1)),
+    plates("right", b.x1, [[y1 - 0.25, lamp]], 0.05, c("lamp", 2)),
+  );
+  return [part(b, paint)];
+}
+
+/** A ladder: its two rails as thin sheets, its rungs as sticks between them. */
+function paperLadder(b: Box3): Node[] {
+  const alongX = b.x1 - b.x0 > b.y1 - b.y0;
+  const t = 0.035;
+  const railA = alongX ? box(b.x0, b.x0 + t, b.y0, b.y1, b.z0, b.z1) : box(b.x0, b.x1, b.y1 - t, b.y1, b.z0, b.z1);
+  const railB = alongX ? box(b.x1 - t, b.x1, b.y0, b.y1, b.z0, b.z1) : box(b.x0, b.x1, b.y0, b.y0 + t, b.z0, b.z1);
+  const xm = (b.x0 + b.x1) / 2;
+  const ym = (b.y0 + b.y1) / 2;
+  const rungs: Vec3[][] = [];
+  for (let z = b.z0 + 0.42; z < b.z1 - 0.2; z += 0.4) rungs.push(alongX ? [[b.x0 + t, ym, z], [b.x1 - t, ym, z]] : [[xm, b.y0 + t, z], [xm, b.y1 - t, z]]);
+  return [part(b, [boxOutline(railA, c("wood", 1)), lines(rungs, "sk"), boxOutline(railB, c("wood", 1))])];
+}
+
+/** A wall ladder (to the bathroom's hatch): two rails against the wall, rungs between. */
+function paperLadderWall(b: Box3): Node[] {
+  const railA = box(b.x0, b.x1, b.y1 - 0.04, b.y1, b.z0, b.z1);
+  const railB = box(b.x0, b.x1, b.y0, b.y0 + 0.04, b.z0, b.z1);
+  const rungs: Vec3[][] = [];
+  for (let z = b.z0 + 0.35; z < b.z1 - 0.1; z += 0.35) rungs.push([[b.x1 - 0.03, b.y0 + 0.04, z], [b.x1 - 0.03, b.y1 - 0.04, z]]);
+  return [part(b, [boxOutline(railA, c("woodDark", 1)), lines(rungs, "sk"), boxOutline(railB, c("woodDark", 1))])];
+}
+
+/**
+ * A locker, as one block for its whole stack: the lowest locker of a stack draws the block, its doors split
+ * as inner detail with a number plate each; the lockers above keep their (empty) groups and ids.
+ */
+function paperLocker(fx: Fixture, b: Box3, ctx: FixtureContext): Node[] {
+  const f = fx.box;
+  const stack = (ctx.siblings ?? []).filter((g) => g.type === "locker" && g.box.x0 < f.x1 && f.x0 < g.box.x1 && g.box.y0 < f.y1 && f.y0 < g.box.y1);
+  if (!stack.includes(fx)) stack.push(fx);
+  const low = Math.min(...stack.map((g) => g.box.z0));
+  const high = Math.max(...stack.map((g) => g.box.z1));
+  if (f.z0 > low + 1e-6) return [part(b, [])];
+  const block = box(b.x0, b.x1, b.y0, b.y1, b.z0, ctx.z + high);
+  const tops = stack.map((g) => ctx.z + g.box.z1).filter((z) => z < block.z1 - 1e-6);
+  const paint: Paint[] = boxFaces(block, { top: c("wood", 0), front: c("wood", 1), right: c("wood", 2) });
+  if (fx.faces === "+x") {
+    paint.push(lines(tops.map((z) => [[b.x1, b.y0 + 0.03, z], [b.x1, b.y1 - 0.03, z]]), "id"));
+    paint.push(plates("right", b.x1, stack.map((g) => [(b.y0 + b.y1) / 2, ctx.z + g.box.z1 - 0.2] as const), 0.04, c("steel", 2)));
+  } else if (fx.faces === "-y") {
+    paint.push(lines(tops.map((z) => [[b.x0 + 0.03, b.y0, z], [b.x1 - 0.03, b.y0, z]]), "id"));
+    paint.push(plates("front", b.y0, stack.map((g) => [(b.x0 + b.x1) / 2, ctx.z + g.box.z1 - 0.2] as const), 0.04, c("steel", 1)));
+  }
+  return [part(block, paint)];
+}
+
+function paperChair(fx: Fixture, b: Box3): Node[] {
+  const seat = b.z0 + 0.45;
+  const backAtFront = fx.faces === "+y";
+  const back = backAtFront ? box(b.x0, b.x1, b.y0, b.y0 + 0.04, seat, b.z1) : box(b.x0, b.x1, b.y1 - 0.04, b.y1, seat, b.z1);
+  const a = 0.03;
+  const top = box(b.x0, b.x1, b.y0, b.y1, seat - 0.04, seat);
+  return [
+    part(box(b.x0, b.x1, b.y0, b.y1, b.z0, seat - 0.04), [
+      sticks(
+        [
+          [b.x0 + a, b.y1 - a],
+          [b.x1 - a, b.y1 - a],
+          [b.x0 + a, b.y0 + a],
+          [b.x1 - a, b.y0 + a],
+        ],
+        b.z0,
+        seat - 0.04,
+      ),
+    ]),
+    part(top, [boxOutline(top, c("wood", 0))]),
+    part(back, [boxOutline(back, c("woodDark", 1))]),
+  ];
+}
+
+/** The legs of a rectangular top, as sticks, a little in from its corners. */
+function cornerSticks(b: Box3, inset: number, z0: number, z1: number): Paint {
+  return sticks(
+    [
+      [b.x0 + inset, b.y1 - inset],
+      [b.x1 - inset, b.y1 - inset],
+      [b.x0 + inset, b.y0 + inset],
+      [b.x1 - inset, b.y0 + inset],
+    ],
+    z0,
+    z1,
+  );
+}
+
+function paperTable(b: Box3): Node[] {
+  const t = 0.05;
+  const top = box(b.x0, b.x1, b.y0, b.y1, b.z1 - t, b.z1);
+  return [part(b, [cornerSticks(b, 0.06, b.z0, b.z1 - t), ...boxFaces(top, { top: c("wood", 0), front: c("wood", 1), right: c("wood", 2) })])];
+}
+
+function paperBench(b: Box3): Node[] {
+  const top = b.z1 - 0.07;
+  const seat = box(b.x0, b.x1, b.y0, b.y1, top, b.z1);
+  return [part(b, [cornerSticks(b, 0.08, b.z0, top), ...boxFaces(seat, { top: c("wood", 0), front: c("wood", 1), right: c("wood", 2) })])];
+}
+
+function paperBenchSeat(b: Box3): Node[] {
+  const base = b.z0 + 0.35;
+  const seat = b.z0 + 0.45;
+  const len = b.y1 - b.y0;
+  const pillows: Box3[] = [];
+  for (let i = 0; i < 3; i++) {
+    const yc = b.y0 + (len * (i + 0.5)) / 3;
+    pillows.push(box(b.x1 - 0.2, b.x1 - 0.03, yc - 0.3, yc + 0.3, seat, b.z1));
+  }
+  return [
+    solid(box(b.x0, b.x1, b.y0, b.y1, b.z0, base), "plaster"),
+    solid(box(b.x0 + 0.02, b.x1, b.y0 + 0.02, b.y1 - 0.02, base, seat), "cushion"),
+    part(box(b.x1 - 0.2, b.x1 - 0.03, b.y0, b.y1, seat, b.z1), [hulls(pillows, c("pillow", 1))]),
+  ];
+}
+
+/** A round table or stool: a drum of a top on sticks. */
+function paperRoundTop(b: Box3, spread: number): Node[] {
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
+  const r = (b.x1 - b.x0) / 2;
+  const a = r * spread;
+  const top = b.z1 - 0.05;
+  return [
+    part(box(cx - a, cx + a, cy - a, cy + a, b.z0, top), [
+      sticks(
+        [
+          [cx - a, cy + a],
+          [cx + a, cy + a],
+          [cx - a, cy - a],
+          [cx + a, cy - a],
+        ],
+        b.z0,
+        top,
+      ),
+    ]),
+    part(box(cx - r, cx + r, cy - r, cy + r, top, b.z1), drum(cx, cy, r, top, b.z1, "wood")),
+  ];
+}
+
+function paperPlant(b: Box3): Node[] {
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
+  const r = Math.min(b.x1 - b.x0, b.y1 - b.y0) / 2;
+  const potH = Math.min(0.32, (b.z1 - b.z0) * 0.38);
+  const potTop = b.z0 + potH;
+  const pot: readonly (readonly [number, number])[] = [
+    [r * 0.62, 0],
+    [r * 0.8, potH * 0.85],
+    [r * 0.9, potH],
+  ];
+  const leafLen = b.z1 - potTop;
+  const leaves: readonly (readonly [number, number])[] = [
+    [-62, 0.62],
+    [48, 0.66],
+    [-30, 0.92],
+    [22, 0.96],
+    [-8, 1],
+    [70, 0.5],
+    [-80, 0.48],
+  ];
+  const leafCmds = (p: Projection, list: readonly (readonly [number, number])[]): Cmd[] =>
+    list.flatMap(([deg, len]): Cmd[] => {
+      const [x0, y0] = p.point([cx, cy, potTop]);
+      const L = leafLen * p.scale * len;
+      const a = (deg * Math.PI) / 180;
+      const tip: Vec2 = [x0 + Math.sin(a) * L, y0 - Math.cos(a) * L];
+      const w = L * 0.22;
+      const mid: Vec2 = [(x0 + tip[0]) / 2, (y0 + tip[1]) / 2];
+      return [
+        ["M", x0, y0],
+        ["Q", mid[0] - Math.cos(a) * w, mid[1] - Math.sin(a) * w, tip[0], tip[1]],
+        ["Q", mid[0] + Math.cos(a) * w, mid[1] + Math.sin(a) * w, x0, y0],
+        ["Z"],
+      ];
+    });
+  return [
+    part(box(cx - r, cx + r, cy - r, cy + r, b.z0, potTop), [
+      screen(c("terracotta", 1), (p) => turned(p, cx, cy, b.z0, pot).body),
+      screen(c("shadow", 0), (p) => turned(p, cx, cy, b.z0, pot, 0.85).rim),
+    ]),
+    part(box(cx - r, cx + r, cy - r, cy + r, potTop, b.z1), [
+      screen(c("sage", 1), (p) => leafCmds(p, leaves.filter(([deg]) => deg <= 0))),
+      screen(c("sage", 2), (p) => leafCmds(p, leaves.filter(([deg]) => deg > 0))),
+    ]),
+  ];
+}
+
+/** A glazed door: its frame, its panes as one sheet of glass, a handle. */
+function paperDoor(fx: Fixture, b: Box3, ctx: FixtureContext): Node[] {
+  const cols = fx.grid?.cols ?? 2;
+  const rows = fx.grid?.rows ?? 6;
+  const y = b.y0;
+  const bar = 0.05;
+  const frame = under(onFront(y, b.x0, b.x1, b.z0, b.z1), ctx.cut);
+  if (!frame) return [];
+  const pw = (b.x1 - b.x0 - bar) / cols;
+  const ph = (b.z1 - b.z0 - bar) / rows;
+  const panes: Vec3[][] = [];
+  for (let i = 0; i < cols; i++)
+    for (let j = 0; j < rows; j++) {
+      const pane = under(onFront(y, b.x0 + bar + i * pw, b.x0 + (i + 1) * pw, b.z0 + bar + j * ph, b.z0 + (j + 1) * ph), ctx.cut);
+      if (pane) panes.push(pane);
+    }
+  const paint: Paint[] = [poly(frame, c("copper", 1)), shapes(panes, c("glass", 1))];
+  const handle = under([[b.x1 - 0.12, y, b.z0 + 0.95], [b.x1 - 0.12, y, b.z0 + 1.15]], ctx.cut);
+  if (handle && handle[1]![2] > handle[0]![2]) paint.push(line(handle, "sk"));
+  return [part({ ...b, z1: ctx.cut !== undefined ? Math.min(b.z1, ctx.cut) : b.z1 }, paint)];
+}
+
+function paperShopWindow(fx: Fixture, b: Box3, ctx: FixtureContext): Node[] {
+  const cols = fx.grid?.cols ?? 4;
+  const rows = fx.grid?.rows ?? 3;
+  const sill = b.z0 + 0.95;
+  const out: Node[] = [solid(box(b.x0, b.x1, b.y0 + 0.05, b.y1, b.z0, sill), "facadeDeep")];
+  const gy = b.y0 + 0.07;
+  const frame = under(onFront(gy, b.x0, b.x1, sill, b.z1), ctx.cut);
+  if (frame) {
+    const bar = 0.05;
+    const pw = (b.x1 - b.x0 - bar) / cols;
+    const ph = (b.z1 - sill - bar) / rows;
+    const panes: Vec3[][] = [];
+    for (let i = 0; i < cols; i++)
+      for (let j = 0; j < rows; j++) {
+        const pane = under(onFront(gy, b.x0 + bar + i * pw, b.x0 + (i + 1) * pw, sill + bar + j * ph, sill + (j + 1) * ph), ctx.cut);
+        if (pane) panes.push(pane);
+      }
+    out.push(part(box(b.x0, b.x1, gy, gy, sill, ctx.cut !== undefined ? Math.min(ctx.cut, b.z1) : b.z1), [poly(frame, c("copper", 1)), shapes(panes, c("glass", 1))]));
+  }
+  // The bamboo blind, rolled down over the top third, and its roll.
+  const blind = under(onFront(b.y0 + 0.04, b.x0 + 0.04, b.x1 - 0.04, b.z1 - 0.62, b.z1 - 0.05), ctx.cut);
+  const roll = cutBox(box(b.x0 + 0.02, b.x1 - 0.02, b.y0, b.y0 + 0.04, b.z1 - 0.08, b.z1), ctx.cut);
+  if (blind) out.push(part(box(b.x0 + 0.04, b.x1 - 0.04, b.y0 + 0.04, b.y0 + 0.04, b.z1 - 0.62, b.z1 - 0.05), [poly(blind, c("bamboo", 1))]));
+  if (roll) out.push(part(roll, [boxOutline(roll, c("bamboo", 0))]));
+  return out;
+}
+
+function paperAcOutdoor(b: Box3): Node[] {
+  const w = b.x1 - b.x0;
+  const h = b.z1 - b.z0;
+  return [decorate(solid(b, "white"), [plates("front", b.y0, [[b.x0 + w * 0.4, b.z0 + h / 2]], h * 0.36, c("steel", 1))])];
+}
+
+/** The hanging "House of Jars" board: two rods, the board, its paper face with the arch and two lines of lettering. */
+function paperSignHanging(b: Box3): Node[] {
+  const boardTop = b.z0 + 0.5;
+  const board = box(b.x0, b.x1, b.y0, b.y1, b.z0, boardTop);
+  const xc = (b.x0 + b.x1) / 2;
+  const ym = (b.y0 + b.y1) / 2;
+  return [
+    part(box(b.x0, b.x1, ym, ym, boardTop, b.z1), [
+      sticks(
+        [
+          [b.x0 + 0.12, ym],
+          [b.x1 - 0.12, ym],
+        ],
+        boardTop,
+        b.z1,
+      ),
+    ]),
+    decorate(solid(board, "woodDark"), [
+      poly(onFront(b.y0, b.x0 + 0.06, b.x1 - 0.06, b.z0 + 0.06, boardTop - 0.06), c("paper", 1)),
+      poly(arch("front", b.y0, xc + 0.22, 0.16, b.z0 + 0.12, boardTop - 0.1), c("jar", 1)),
+      lines(
+        [
+          [[b.x0 + 0.14, b.y0, b.z0 + 0.32], [xc + 0.06, b.y0, b.z0 + 0.32]],
+          [[b.x0 + 0.14, b.y0, b.z0 + 0.22], [xc, b.y0, b.z0 + 0.22]],
+        ],
+        "id",
+      ),
+    ]),
+  ];
+}
+
+function paperBackCounter(b: Box3): Node[] {
+  const checks: Vec3[][] = [];
+  const s = 0.3;
+  for (let i = 0; i * s < b.y1 - b.y0 - 1e-6; i++)
+    for (let j = 0; j * s < b.z1 - b.z0 - 0.05 - 1e-6; j++) {
+      if ((i + j) % 2 === 0) continue;
+      const y0 = b.y0 + i * s;
+      const z0 = b.z0 + j * s;
+      checks.push(onRight(b.x1, y0, Math.min(y0 + s, b.y1), z0, Math.min(z0 + s, b.z1 - 0.05)));
+    }
+  return [decorate(solid(b, "tile"), [shapes(checks, c("woodDark", 2))])];
+}
+
+function paperShelves(fx: Fixture, b: Box3): Node[] {
+  const cols = fx.grid?.cols ?? 8;
+  const rows = fx.grid?.rows ?? 4;
+  const t = 0.04;
+  const cw = (b.y1 - b.y0 - t) / cols;
+  const ch = (b.z1 - b.z0 - t) / rows;
+  const cubbies: Vec3[][] = [];
+  const books: Record<"jar" | "sage" | "cream", Vec3[][]> = { jar: [], sage: [], cream: [] };
+  const boxes: Vec3[][] = [];
+  const colours = ["jar", "sage", "cream"] as const;
+  for (let i = 0; i < cols; i++)
+    for (let j = 0; j < rows; j++) {
+      const y0 = b.y0 + t + i * cw;
+      const z0 = b.z0 + t + j * ch;
+      cubbies.push(onRight(b.x1, y0, y0 + cw - t, z0, z0 + ch - t));
+      if ((i * 3 + j * 5) % 4 === 0) {
+        for (let k = 0; k < 4; k++) {
+          const by = y0 + 0.03 + k * 0.055;
+          const tall = ch - t - 0.06 - ((k + i) % 3) * 0.03;
+          books[colours[(i + j + k) % colours.length]!].push(onRight(b.x1, by, by + 0.045, z0, z0 + tall));
+        }
+      } else if ((i + j) % 5 === 2) boxes.push(onRight(b.x1, y0 + 0.08, y0 + cw - t - 0.08, z0, z0 + ch * 0.5));
+    }
+  return [
+    decorate(solid(b, "wood"), [
+      shapes(cubbies, c("shadow", 2)),
+      ...colours.filter((k) => books[k].length > 0).map((k) => shapes(books[k], c(k, 2))),
+      shapes(boxes, c("wood", 2)),
+    ]),
+  ];
+}
+
+/** The drinks fridge: its glass door, lit, with the bottles on its shelves as one row of shapes. */
+function paperFridge(b: Box3): Node[] {
+  const bottles: Vec3[][] = [];
+  for (const z of [0.5, 0.9, 1.3])
+    for (let k = 0; k < 5; k++) {
+      const y = b.y0 + 0.09 + k * 0.085;
+      bottles.push(onRight(b.x1, y, y + 0.05, b.z0 + z, b.z0 + z + 0.22));
+    }
+  return [decorate(solid(b, "dark"), [poly(onRight(b.x1, b.y0 + 0.05, b.y1 - 0.05, b.z0 + 0.15, b.z1 - 0.08), c("fridgeGlass", 2)), shapes(bottles, c("jar", 2))])];
+}
+
+function paperDoormat(b: Box3): Node[] {
+  const z = b.z0 + 0.01;
+  const n = 8;
+  const stripes: Vec3[][] = [];
+  for (let i = 1; i < n; i += 2) {
+    const x0 = b.x0 + ((b.x1 - b.x0) * i) / n;
+    stripes.push(onTop(z, x0, x0 + (b.x1 - b.x0) / n, b.y0, b.y1));
+  }
+  return [part({ ...b, z1: z }, [poly(onTop(z, b.x0, b.x1, b.y0, b.y1), c("jar", 0)), shapes(stripes, c("sage", 0))])];
+}
+
+function paperLedge(b: Box3): Node[] {
+  const top = b.z1 - 0.05;
+  const slab = box(b.x0, b.x1, b.y0, b.y1, top, b.z1);
+  return [part(b, [cornerSticks(b, 0.12, b.z0, top), ...boxFaces(slab, { top: c("woodDark", 0), front: c("woodDark", 1), right: c("woodDark", 2) })])];
+}
+
+function paperToilet(fx: Fixture, b: Box3): Node[] {
+  const alongX = fx.faces === "-x" || fx.faces === "+x";
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
+  const depth = alongX ? b.x1 - b.x0 : b.y1 - b.y0;
+  const width = alongX ? b.y1 - b.y0 : b.x1 - b.x0;
+  const at = (a: number, d: number): Vec2 => (fx.faces === "-x" ? [b.x0 + d, cy + a] : fx.faces === "+x" ? [b.x1 - d, cy + a] : [cx + a, b.y0 + d]);
+  const rect = (a0: number, a1: number, d0: number, d1: number, z0: number, z1: number): Box3 => {
+    const p = at(a0, d0);
+    const q = at(a1, d1);
+    return box(p[0], q[0], p[1], q[1], z0, z1);
+  };
+  const [bx, by] = at(0, depth * 0.4);
+  const r = Math.min(width * 0.42, depth * 0.34);
+  const top = b.z0 + 0.42;
+  return [
+    part(box(bx - r, bx + r, by - r, by + r, b.z0, top), [
+      ...drum(bx, by, r, b.z0, top, "white"),
+      screen(c("white", 2), (p) => flatCircle(p, bx, by, top, r * 0.6)),
+    ]),
+    solid(rect(-width * 0.45, width * 0.45, depth * 0.75, depth, b.z0 + 0.35, b.z1), "white"),
+  ];
+}
+
+function paperFan(b: Box3, ceiling: number): Node[] {
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
+  const r = (b.x1 - b.x0) / 2;
+  const z = b.z0 + 0.04;
+  const at = (a: number, d: number): Vec3 => [cx + Math.cos(a) * d, cy + Math.sin(a) * d, z];
+  const blades = [0, 1, 2].map((k) => {
+    const a = (k * 2 * Math.PI) / 3 + 0.4;
+    return [at(a - 0.35, 0.05), at(a - 0.2, r * 0.97), at(a, r), at(a + 0.2, r * 0.97), at(a + 0.35, 0.05)];
+  });
+  return [
+    part(box(cx, cx, cy, cy, b.z0 + 0.1, ceiling), [sticks([[cx, cy]], b.z0 + 0.1, ceiling)]),
+    part(box(cx - r, cx + r, cy - r, cy + r, z, z), [shapes(blades, c("white", 0)), screen(c("white", 1), (p) => flatCircle(p, cx, cy, z + 0.02, 0.07))]),
+  ];
+}
+
+function paperCubbies(fx: Fixture, b: Box3): Node[] {
+  const cols = fx.grid?.cols ?? 5;
+  const rows = fx.grid?.rows ?? 6;
+  const t = 0.05;
+  const cw = (b.y1 - b.y0 - t) / cols;
+  const ch = (b.z1 - b.z0 - t) / rows;
+  const cells: Vec3[][] = [];
+  const shoes: Vec3[][] = [];
+  for (let i = 0; i < cols; i++)
+    for (let j = 0; j < rows; j++) {
+      const y0 = b.y0 + t + i * cw;
+      const z0 = b.z0 + t + j * ch;
+      cells.push(onRight(b.x1, y0, y0 + cw - t, z0, z0 + ch - t));
+      if ((i * 7 + j * 3) % 5 === 1) {
+        shoes.push(onRight(b.x1, y0 + 0.06, y0 + cw / 2 - 0.02, z0, z0 + 0.08));
+        shoes.push(onRight(b.x1, y0 + cw / 2 + 0.01, y0 + cw - t - 0.06, z0, z0 + 0.08));
+      }
+    }
+  return [decorate(solid(b, "dormPlaster"), [shapes(cells, c("shadow", 2)), shapes(shoes, c("white", 2))])];
+}
+
+/** A pendant lamp: its cord, the jar-orange dome and the lit underside; the stage lights it, no cone. */
+function paperPendant(b: Box3): Node[] {
+  const cx = (b.x0 + b.x1) / 2;
+  const cy = (b.y0 + b.y1) / 2;
+  const r = (b.x1 - b.x0) / 2;
+  const domeH = 0.16;
+  const base = b.z0 + 0.02;
+  const shape = (p: Projection) => {
+    const [x, y] = p.point([cx, cy, base]);
+    return { x, y, rx: r * p.scale * 1.2247, h: domeH * p.scale };
+  };
+  return [
+    part(b, [
+      line([[cx, cy, base + domeH], [cx, cy, b.z1]], "id"),
+      screen(c("jar", 1), (p) => {
+        const { x, y, rx, h } = shape(p);
+        return [["M", x - rx, y], ["C", x - rx, y - h * 0.75, x - rx * 0.45, y - h, x, y - h], ["C", x + rx * 0.45, y - h, x + rx, y - h * 0.75, x + rx, y], ["Z"]];
+      }),
+      screen(c("lamp", 0), (p) => {
+        const { x, y, rx } = shape(p);
+        return [["M", x - rx * 0.8, y], ["C", x - rx * 0.4, y + rx * 0.22, x + rx * 0.4, y + rx * 0.22, x + rx * 0.8, y], ["Z"]];
+      }),
+    ]),
+  ];
+}
+
+function paperPrinter(b: Box3): Node[] {
+  const standTop = b.z0 + 0.7;
+  const stand = box(b.x0, b.x1, b.y0, b.y1, standTop - 0.04, standTop);
+  const body = box(b.x0 + 0.04, b.x1 - 0.04, b.y0 + 0.02, b.y1 - 0.02, standTop, b.z1);
+  return [part(box(b.x0, b.x1, b.y0, b.y1, b.z0, standTop), [cornerSticks(b, 0.05, b.z0, standTop - 0.04), boxOutline(stand, c("wood", 0))]), solid(body, "dark")];
+}
+
+function paperRack(b: Box3): Node[] {
+  const shelves: Box3[] = [];
+  for (let i = 0; i < 4; i++) {
+    const z = b.z0 + 0.15 + (i * (b.z1 - b.z0 - 0.15)) / 3;
+    shelves.push(box(b.x0, b.x1, b.y0, b.y1, z - 0.03, z));
+  }
+  return [
+    part(b, [
+      sticks(
+        [
+          [b.x0 + 0.02, b.y1 - 0.02],
+          [b.x0 + 0.02, b.y0 + 0.02],
+          [b.x1 - 0.02, b.y1 - 0.02],
+        ],
+        b.z0,
+        b.z1,
+      ),
+      hulls(shelves, c("steel", 0)),
+      sticks([[b.x1 - 0.02, b.y0 + 0.02]], b.z0, b.z1),
+    ]),
+  ];
+}
+
+function paperLattice(b: Box3): Node[] {
+  return [
+    part(b, [
+      poly(onFront(b.y0, b.x0, b.x1, b.z0, b.z1), c("wood", 1)),
+      lines(gridFront(b.y0, b.x0 + 0.04, b.x1 - 0.04, b.z0 + 0.04, b.z1 - 0.04, (b.x1 - b.x0 - 0.08) / 6, (b.z1 - b.z0 - 0.08) / 9), "id"),
+    ]),
+  ];
+}
+
+/** The simple version of a fixture, or undefined where the full one is simple enough already (its lines go through the paper pen). */
+function simpleParts(fx: Fixture, b: Box3, ctx: FixtureContext, ceiling: number): Node[] | undefined {
+  switch (fx.type) {
+    case "pod":
+      return paperPod(fx, b);
+    case "ladder":
+      return paperLadder(b);
+    case "ladder-wall":
+      return paperLadderWall(b);
+    case "locker":
+      return paperLocker(fx, b, ctx);
+    case "chair":
+      return paperChair(fx, b);
+    case "table":
+      return paperTable(b);
+    case "bench":
+      return paperBench(b);
+    case "bench-seat":
+      return paperBenchSeat(b);
+    case "table-small-round":
+      return paperRoundTop(b, 0.52);
+    case "table-tall-round":
+    case "stool-low":
+    case "stool-bar":
+      return paperRoundTop(b, 0.55);
+    case "plant":
+      return paperPlant(b);
+    case "door":
+      return paperDoor(fx, b, ctx);
+    case "window":
+      return fx.variant === "shopfront" ? paperShopWindow(fx, b, ctx) : undefined;
+    case "ac-outdoor":
+      return ctx.cut !== undefined && b.z1 > ctx.cut ? [] : paperAcOutdoor(b);
+    case "sign-hanging":
+      return paperSignHanging(b);
+    case "back-counter":
+      return paperBackCounter(b);
+    case "shelves":
+      return paperShelves(fx, b);
+    case "fridge-drinks":
+      return paperFridge(b);
+    case "doormat":
+      return paperDoormat(b);
+    case "window-ledge":
+      return paperLedge(b);
+    case "toilet":
+      return paperToilet(fx, b);
+    case "fan-ceiling":
+    case "fan":
+      return paperFan(b, ceiling);
+    case "shoe-cubbies":
+      return paperCubbies(fx, b);
+    case "pendant-lamp":
+      return paperPendant(b);
+    case "printer":
+      return paperPrinter(b);
+    case "rack":
+      return paperRack(b);
+    case "lattice-door":
+      return paperLattice(b);
+    case "luggage-space":
+      // A dashed outline on the floor: paper draws no dashes.
+      return [];
+    default:
+      return undefined;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Plan symbols (top-down)
 
 export type PlanMark =
@@ -1530,6 +2246,8 @@ export function planStairs(b: Box3, p: Projection, arrows: readonly StairArrow[]
 export interface PlanMarkOptions {
   /** The arrows of a flight of stairs (default: one arrow "Up" the way it rises). */
   readonly stairs?: readonly StairArrow[];
+  /** The numbers of every locker in a stack, for the label on its bottom one (default: its own number). */
+  readonly lockerStack?: readonly string[];
 }
 
 /** The plan symbol of a fixture: simple shapes, a number where it helps. */
@@ -1543,27 +2261,30 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
     case "pod": {
       const upper = fx.variant?.includes("upper");
       const left = fx.variant?.includes("left");
+      const across = fx.faces === "-y";
       const curtainX = left ? b.x1 - 0.05 : b.x0 + 0.05;
+      // A stack lying across is too shallow for the two numbers one above the other: they sit side by side.
+      const [tx, ty] = across ? [cx + (upper ? 0.5 : -0.5), cy + 0.42] : [cx, cy];
       if (upper)
         return [
           mark("dl", planRect(p, b.x0 + 0.09, b.x1 - 0.09, b.y0 + 0.09, b.y1 - 0.09)),
-          planText(p, cx, cy + 0.42, fx.label ?? "", 13, "ls"),
-          planText(p, cx, cy + 0.12, "upper", 9, "lc"),
+          planText(p, tx, ty + (across ? -0.25 : 0.42), fx.label ?? "", 13, "ls"),
+          planText(p, tx, ty + (across ? -0.55 : 0.12), "upper", 9, "lc"),
         ];
       return [
         rect(c("wood", 0)),
         mark(c("paper", 0), planRect(p, b.x0 + 0.06, b.x1 - 0.06, b.y0 + 0.06, b.y1 - 0.06)),
-        mark("o n kcu", planLine(p, [[curtainX, b.y0 + 0.08], [curtainX, b.y1 - 0.08]])),
-        planText(p, cx, cy - 0.28, fx.label ?? "", 13, "ls"),
-        planText(p, cx, cy - 0.58, "lower", 9, "lc"),
+        mark("o n kcu", planLine(p, across ? [[b.x0 + 0.08, b.y0 + 0.05], [b.x1 - 0.08, b.y0 + 0.05]] : [[curtainX, b.y0 + 0.08], [curtainX, b.y1 - 0.08]])),
+        planText(p, tx, ty + (across ? -0.25 : -0.28), fx.label ?? "", 13, "ls"),
+        planText(p, tx, ty + (across ? -0.55 : -0.58), "lower", 9, "lc"),
       ];
     }
     case "locker": {
       if (b.z0 > 0.01) return [];
-      // One label for the stack of three: H01–H03.
-      const letter = fx.label?.slice(0, 1) ?? "";
-      const first = Number(fx.label?.slice(1) ?? 0);
-      return [rect(c("wood", 0)), planText(p, cx, cy, `${letter}${String(first).padStart(2, "0")}–${letter}${String(first + 2).padStart(2, "0")}`, 9, "ln")];
+      // One label for the whole stack, from its lowest number to its highest: H01–H03.
+      const stack = [...(opts.lockerStack ?? [fx.label ?? ""])].sort();
+      const text = stack.length > 1 ? `${stack[0]}–${stack[stack.length - 1]}` : stack[0]!;
+      return [rect(c("wood", 0)), planText(p, cx, cy, text, 9, "ln")];
     }
     case "ladder":
     case "ladder-wall":

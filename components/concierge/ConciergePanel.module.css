@@ -16,17 +16,65 @@
 
 .panel[open] {
   display: flex;
-  animation: sheet-in 260ms var(--ease-out);
 }
 
 .panel::backdrop {
   background: rgb(32 21 12 / 0.4);
 }
 
-@keyframes sheet-in {
-  from {
+/*
+ * Opening, the sheet rises into place as it fades in; closing, it sinks back
+ * and fades, a little quicker. allow-discrete keeps the dialog (and its
+ * backdrop) in the top layer until the fade is done, so closing has an exit.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .panel {
     opacity: 0;
     transform: translateY(1.5rem);
+    transition:
+      opacity var(--dur-hover) ease-in,
+      transform var(--dur-hover) var(--ease-in-out),
+      display var(--dur-hover) allow-discrete,
+      overlay var(--dur-hover) allow-discrete;
+  }
+
+  :global(:root:not([data-motion="still"])) .panel[open] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--dur-ui) var(--ease-out),
+      transform var(--dur-ui) var(--ease-out),
+      display var(--dur-ui) allow-discrete,
+      overlay var(--dur-ui) allow-discrete;
+  }
+
+  @starting-style {
+    :global(:root:not([data-motion="still"])) .panel[open] {
+      opacity: 0;
+      transform: translateY(1.5rem);
+    }
+  }
+
+  :global(:root:not([data-motion="still"])) .panel::backdrop {
+    opacity: 0;
+    transition:
+      opacity var(--dur-hover) ease-in,
+      display var(--dur-hover) allow-discrete,
+      overlay var(--dur-hover) allow-discrete;
+  }
+
+  :global(:root:not([data-motion="still"])) .panel[open]::backdrop {
+    opacity: 1;
+    transition:
+      opacity var(--dur-ui) var(--ease-out),
+      display var(--dur-ui) allow-discrete,
+      overlay var(--dur-ui) allow-discrete;
+  }
+
+  @starting-style {
+    :global(:root:not([data-motion="still"])) .panel[open]::backdrop {
+      opacity: 0;
+    }
   }
 }
 
@@ -47,6 +95,23 @@
 
   .panel::backdrop {
     background: rgb(32 21 12 / 0.18);
+  }
+
+  /* The corner panel stands up from its bottom edge like a card, rather than floating in. */
+  .panel {
+    transform-origin: 50% 100%;
+  }
+}
+
+@media (min-width: 48rem) and (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .panel {
+    transform: perspective(1200px) translateY(0.75rem) rotateX(7deg);
+  }
+
+  @starting-style {
+    :global(:root:not([data-motion="still"])) .panel[open] {
+      transform: perspective(1200px) translateY(0.75rem) rotateX(7deg);
+    }
   }
 }
 

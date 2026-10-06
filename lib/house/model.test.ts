@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { insideRect, intersects } from "./geometry";
 import { houseOfJars as model } from "./house-of-jars";
+import { placedRules } from "./rules";
 import type { Area, Box3, Fixture, FixtureType, FloorId, Rect } from "./types";
 
 const TOLERANCE = 0.05;
@@ -162,6 +163,35 @@ describe("the House of Jars model: integrity", () => {
     expect(hits).toEqual([]);
   });
 
+  it("walks guests and the team through the house step by step: each step in a real area on its floor, with real rules", () => {
+    const ruleIds = new Set(placedRules.map((r) => r.id));
+    for (const r of model.routes) {
+      expect(["guest", "staff"], r.id).toContain(r.who);
+      const floors = new Set(r.segments.map((s) => s.floor));
+      expect(r.stops?.length, r.id).toBeGreaterThan(0);
+      for (const stop of r.stops ?? []) {
+        const where = `${r.id} / ${stop.label}`;
+        expect(floors.has(stop.floor), where).toBe(true);
+        expect(area(stop.area!)?.floor, where).toBe(stop.floor);
+        expect(stop.does, where).toMatch(/\.$/);
+        for (const id of stop.rules ?? []) expect(ruleIds.has(id), `${where}: ${id}`).toBe(true);
+      }
+    }
+    // The guest's day: arriving, breakfast, leaving early, a smoke, water, the bathroom; the team's hourly round.
+    expect(model.routes.map((r) => r.id)).toEqual(["arrival", "breakfast", "leaving-early", "smoke", "water", "bathroom-women", "housekeeping-round"]);
+    // The arrival ends at pod H01's ladder, and the round reaches every bathroom and dorm.
+    const arrival = model.routes.find((r) => r.id === "arrival")!.segments.at(-1)!.points.at(-1)!;
+    const h01 = model.fixtures.find((f) => f.id === "pod-H01")!.box;
+    expect(Math.hypot(Math.max(h01.x0 - arrival[0], 0), Math.max(h01.y0 - arrival[1], 0, arrival[1] - h01.y1))).toBeLessThan(0.5);
+    const round = model.routes.find((r) => r.id === "housekeeping-round")!;
+    expect(round.who).toBe("staff");
+    expect(round.stops!.map((s) => s.area)).toEqual(expect.arrayContaining(["toilet-ground", "bath-women", "bath-men", "dorm-h", "dorm-j", "cafe"]));
+    // The smoke ends by the jar, past the terrace's seats.
+    const smoke = model.routes.find((r) => r.id === "smoke")!.segments[0]!.points.at(-1)!;
+    const jar = model.fixtures.find((f) => f.id === "jar-butts")!.box;
+    expect(Math.hypot(smoke[0] - (jar.x0 + jar.x1) / 2, smoke[1] - (jar.y0 + jar.y1) / 2)).toBeLessThan(0.5);
+  });
+
   it("runs every route over floors that exist, inside the house or on the terrace", () => {
     for (const r of model.routes) {
       expect(r.segments.length, r.id).toBeGreaterThan(0);
@@ -176,24 +206,25 @@ describe("the House of Jars model: integrity", () => {
     }
   });
 
-  it("marks what was not seen as unconfirmed: all of Floor 2, the pods' and lockers' order, the dorms' back end, the toilet's inside, the kitchen's door", () => {
+  it("marks what was not seen as unconfirmed: all of Floor 2, where most locker stacks stand", () => {
     expect(floor("floor2").confirmed).toBe(false);
     expect(floor("floor2").note).toBeTruthy();
     for (const a of model.areas.filter((x) => x.floor === "floor2")) expect(a.confirmed, a.id).toBe(false);
     // Floor 2's two small windows are seen from the street (f1-01); everything else up there is a copy of Floor 1.
     for (const f of model.fixtures.filter((x) => x.floor === "floor2")) expect(f.confirmed, f.id).toBe(f.type === "window" ? undefined : false);
-    // The numbers are the owner's (H01 to H12, J01 to J12); which pod or locker carries which number is open.
-    for (const f of model.fixtures.filter((x) => x.type === "pod" || x.type === "locker")) {
-      expect(f.confirmed, f.id).toBe(false);
-      expect(f.note, f.id).toMatch(/The numbers are the owner's/);
-      expect(f.note, f.id).not.toMatch(/H1[5-7]/);
+    // The numbers, stacks and top bunks are from the owner's bed register, confirmed by the owner on both sides.
+    for (const f of model.fixtures.filter((x) => x.type === "pod" && x.floor === "floor1")) {
+      expect(f.confirmed, f.id).toBeUndefined();
+      expect(f.note, f.id).toMatch(/the top bunk is 1 and beneath it 2"; down the left, 09 over 08/);
     }
-    // Photos f2-04, f2-05 and f2-08 show the dorm's back end differently from the model.
-    for (const id of ["dorm-h", "dorm-j"]) expect(area(id).note, id).toMatch(/f2-04, f2-05 and f2-08/);
-    for (const id of ["floor1-dorm-partition", "floor2-dorm-partition"]) expect(model.walls.find((w) => w.id === id)!.confirmed, id).toBe(false);
-    // The ground floor's back half is photographed (gf-01 to gf-15), but the toilet's inside and the way into the kitchen are not pinned down.
-    for (const id of ["toilet-ground", "sink-toilet"]) expect(model.fixtures.find((f) => f.id === id)!.confirmed, id).toBe(false);
-    for (const id of ["toilet-wall", "kitchen-wall"]) expect(model.walls.find((w) => w.id === id)!.confirmed, id).toBe(false);
+    for (const f of model.fixtures.filter((x) => x.type === "locker")) expect(f.note, f.id).toMatch(/is assumed\.$/);
+    // Floor 1's dorm itself is seen (and drawn from the register); Floor 2's is a copy.
+    expect(area("dorm-h").confirmed).toBeUndefined();
+    expect(model.walls.find((w) => w.id === "floor1-dorm-partition")!.confirmed).toBeUndefined();
+    // The owner described the toilet's inside and said the kitchen is part of the staff room, with no wall between.
+    for (const id of ["toilet-ground", "sink-toilet"]) expect(model.fixtures.find((f) => f.id === id)!.confirmed, id).toBeUndefined();
+    expect(model.walls.find((w) => w.id === "toilet-wall")!.confirmed).toBeUndefined();
+    expect(model.walls.find((w) => w.id === "kitchen-wall")).toBeUndefined();
     for (const thing of [...model.floors, ...model.areas, ...model.fixtures, ...model.walls]) {
       if (thing.confirmed === false) expect(thing.note, thing.id).toBeTruthy();
     }
@@ -221,20 +252,27 @@ describe("the House of Jars model: integrity", () => {
 });
 
 describe("the House of Jars model: counts from the walk", () => {
-  it("has 12 pods and 12 lockers per dorm, numbered H01-H12 and J01-J12", () => {
+  it("has 14 pods and 14 lockers per dorm, numbered as on the bed register: no 4, 13 or 14", () => {
     for (const [dorm, letter] of [
       ["dorm-h", "H"],
       ["dorm-j", "J"],
     ] as const) {
-      const numbers = Array.from({ length: 12 }, (_, i) => `${letter}${String(i + 1).padStart(2, "0")}`);
+      const numbers = [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17].map((n) => `${letter}${String(n).padStart(2, "0")}`);
       const pods = model.fixtures.filter((f) => f.type === "pod" && f.area === dorm);
       const lockers = model.fixtures.filter((f) => f.type === "locker" && f.area === dorm);
       expect(pods.map((p) => p.label).sort()).toEqual(numbers);
       expect(lockers.map((l) => l.label).sort()).toEqual(numbers);
-      // Two high: six lower pods and six upper ones.
-      expect(pods.filter((p) => p.variant?.includes("lower"))).toHaveLength(6);
-      expect(pods.filter((p) => p.variant?.includes("upper"))).toHaveLength(6);
+      // Seven stacks of two, as the register pairs them; the last lies across, just inside the door.
+      const stacks = new Map<string, string[]>();
+      for (const p of pods) stacks.set(`${p.box.x0},${p.box.y0}`, [...(stacks.get(`${p.box.x0},${p.box.y0}`) ?? []), p.label!]);
+      const pairs = [[1, 2], [3, 5], [6, 7], [8, 9], [10, 11], [12, 15], [16, 17]].map((pair) => pair.map((n) => `${letter}${String(n).padStart(2, "0")}`).join("/"));
+      expect([...stacks.values()].map((s) => s.sort().join("/")).sort()).toEqual(pairs.sort());
+      // The top bunk of each stack, as the register draws it.
+      const top = [1, 3, 6, 9, 11, 15, 17].map((n) => `${letter}${String(n).padStart(2, "0")}`);
+      expect(pods.filter((p) => p.variant?.includes("upper")).map((p) => p.label).sort()).toEqual(top);
+      expect(pods.filter((p) => p.faces === "-y").map((p) => p.label).sort()).toEqual([`${letter}16`, `${letter}17`]);
     }
+    expect(model.customs?.[0]).toMatch(/skip the numbers 4, 13 and 14/);
   });
 
   it("has the women's bathroom of the walk (and the same in the men's)", () => {
@@ -317,6 +355,16 @@ describe("the House of Jars model: counts from the walk", () => {
     expect(count("water-tank", inArea("staff-kitchen"))).toBe(1);
     expect(count("fridge", inArea("kitchen"))).toBe(1);
     expect(count("sink", inArea("kitchen"))).toBe(1);
+    // As the owner told it: the Staff Only door against the right wall, the toilet straight across from its door,
+    // the second basin in the corridor, and the clay jars along the right wall.
+    const staffDoor = model.walls.find((w) => w.id === "back-partition")!.openings![0]!;
+    expect(staffDoor.to).toBeGreaterThan(model.width - 0.15);
+    const toiletDoor = model.walls.find((w) => w.id === "toilet-wall")!.openings![0]!;
+    const toilet = model.fixtures.find((f) => f.id === "toilet-ground")!;
+    expect(toilet.faces).toBe("+x");
+    expect((toilet.box.y0 + toilet.box.y1) / 2).toBeCloseTo((toiletDoor.from + toiletDoor.to) / 2, 6);
+    expect(model.fixtures.find((f) => f.id === "basin-corridor")!.area).toBe("corridor");
+    for (const jar of model.fixtures.filter((f) => f.type === "jar-clay" && f.area === "corridor")) expect(jar.box.x1).toBeGreaterThan(model.width - 0.2);
   });
 
   it("puts the door on the left of the front and the big window to its right", () => {

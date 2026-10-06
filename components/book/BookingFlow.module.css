@@ -1,9 +1,9 @@
 /*
- * The booking form, set as the site's ticket (the same card as
- * components/BookingCard.module.css): cream, a woven band along the top, and a
- * stub torn off along a perforation. The steps fill the ticket; the stub holds
- * the stay's summary and the other ways to book. Phones stack the stub under
- * the ticket; wide screens put it to the right.
+ * The booking form, set as the site's ticket (the same paper as
+ * components/BookingCard.module.css): --paper-near with a faint fibre and a
+ * card edge, and a stub torn off along a perforation. The steps fill the
+ * ticket; the stub holds the stay's summary and the other ways to book.
+ * Phones stack the stub under the ticket; wide screens put it to the right.
  */
 .section {
   padding-bottom: var(--space-3xl);
@@ -16,12 +16,30 @@
   max-width: 76rem;
   margin-inline: auto;
   color: var(--text);
+  /* The card edge, following the notches. */
+  filter: drop-shadow(var(--edge-x) var(--edge-y) 0 var(--paper-edge));
 }
 
 .main,
 .stub {
   --bite: transparent var(--notch), #000 calc(var(--notch) + 0.5px);
-  background: var(--surface);
+  position: relative;
+  isolation: isolate;
+  background: var(--paper-near);
+}
+
+/* The paper's fibre: hairlines in the text's colour at 6% (public/art/paper-fibre.svg), under the words. */
+.main::before,
+.stub::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--text);
+  -webkit-mask: url(/art/paper-fibre.svg) repeat;
+  mask: url(/art/paper-fibre.svg) repeat;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .main {
@@ -36,9 +54,10 @@
 }
 
 .body {
+  --pad-top: var(--space-l);
   display: grid;
   gap: var(--space-l);
-  padding: var(--space-l) var(--space-m) var(--space-2xl);
+  padding: var(--pad-top) var(--space-m) var(--space-2xl);
 }
 
 .title {
@@ -615,6 +634,10 @@
   margin: 0;
 }
 
+.reviewRail {
+  margin-top: var(--space-s);
+}
+
 
 @media (min-width: 40rem) {
   .reviewRow {
@@ -644,6 +667,29 @@
 
 .done .title {
   padding-right: 6.5rem;
+}
+
+/*
+ * One of the house's lamps, hung from the ticket's top edge, lights for the
+ * guest (components/art/HouseLamp): lit by Day too, here. Its Lamplighting
+ * waits until the thread below has drawn in, so one thing moves at a time.
+ */
+.doneLamp {
+  margin-top: calc(-1 * var(--pad-top));
+  margin-bottom: calc(-1 * var(--space-s));
+  padding-left: var(--space-2xs);
+}
+
+.lamp.lamp {
+  --shade: var(--lamplight);
+  --lit: 1;
+  --t0: 900ms;
+  /* Lit by Day as well, its light a little stronger than a stage's so it reads on paper. */
+  --glow-strength: 0.8;
+}
+
+.knot {
+  margin-top: calc(var(--space-xs) - var(--space-l));
 }
 
 .stamp {
@@ -814,7 +860,8 @@
 
 @media (min-width: 40rem) {
   .body {
-    padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+    --pad-top: var(--space-xl);
+    padding: var(--pad-top) var(--space-xl) var(--space-2xl);
   }
 }
 
@@ -834,7 +881,8 @@
   }
 
   .body {
-    padding: var(--space-2xl) var(--space-2xl) var(--space-3xl);
+    --pad-top: var(--space-2xl);
+    padding: var(--pad-top) var(--space-2xl) var(--space-3xl);
   }
 
   .stub {
@@ -855,7 +903,7 @@
 .main {
   background:
     radial-gradient(120% 60% at 0% 0%, var(--lantern), transparent 55%),
-    var(--surface);
+    var(--paper-near);
 }
 
 @media print {

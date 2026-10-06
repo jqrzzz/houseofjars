@@ -1,19 +1,25 @@
-/* The header switch: a square button like the menu button, showing the theme it switches to. */
+/*
+ * The header switch: a square button like the menu button, with the house
+ * lamp hanging inside it from the top edge. Unlit by Day (a stone shade);
+ * lit by Evening (a lamplight shade and a stepped halo: four rings, each
+ * adding a little light, the house's way of drawing light without gradients).
+ */
 .toggle {
   display: grid;
-  place-items: center;
+  place-items: start center;
   width: 2.75rem;
   height: 2.75rem;
   flex: none;
   padding: 0;
+  overflow: clip;
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius-s);
   background: transparent;
   color: var(--text);
   cursor: pointer;
   transition:
-    background-color 160ms ease,
-    border-color 160ms ease;
+    background-color var(--dur-hover) ease,
+    border-color var(--dur-hover) ease;
 }
 
 .toggle:hover {
@@ -21,40 +27,153 @@
   background: var(--surface);
 }
 
-.toggle svg {
-  grid-area: 1 / 1;
-  width: 1.15rem;
-  height: 1.15rem;
-  transition:
-    transform 420ms var(--ease-out),
-    opacity 240ms ease;
+.lamp {
+  width: 1.5rem;
+  height: 2.625rem;
+  overflow: visible;
+  --lamp-ink: color-mix(in oklab, currentColor 78%, var(--teak));
 }
 
-/* Day shows the moon (switch to Evening); Evening shows the sun. The other turns away. */
-.sun {
+/* The whole lamp swings from the top of its cord. */
+.hang {
+  transform-box: view-box;
+  transform-origin: 12px 0;
+}
+
+.cord {
+  fill: none;
+  stroke: var(--lamp-ink);
+  stroke-width: 1px;
+  stroke-opacity: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.cap {
+  fill: var(--teak);
+}
+
+.shade {
+  fill: var(--stone);
+  stroke: var(--lamp-ink);
+  stroke-width: 1.25px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The seam above the shade's rim: inner detail, 1 px and faint. */
+.rim {
+  fill: none;
+  stroke: var(--lamp-ink);
+  stroke-width: 1px;
+  stroke-opacity: 0.35;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The bulb shows only when it is lit. */
+.bulb {
+  fill: color-mix(in oklab, var(--lamplight) 35%, var(--white));
   opacity: 0;
-  transform: rotate(-90deg) scale(0.6);
 }
 
-:global(:root[data-theme="dark"]) .sun {
+.halo {
+  opacity: 0;
+  scale: 0.9;
+  transform-box: view-box;
+  transform-origin: 12px 28px;
+}
+
+.halo circle {
+  fill: var(--lamplight);
+  fill-opacity: 0.1;
+}
+
+/* Evening: the lamp is lit. */
+:global(:root[data-theme="dark"]) .shade {
+  fill: var(--lamplight);
+  stroke: color-mix(in oklab, var(--lamplight) 50%, var(--teak));
+}
+
+:global(:root[data-theme="dark"]) .bulb {
   opacity: 1;
-  transform: none;
 }
 
-:global(:root[data-theme="dark"]) .moon {
-  opacity: 0;
-  transform: rotate(90deg) scale(0.6);
+:global(:root[data-theme="dark"]) .rim {
+  stroke: var(--teak);
+}
+
+:global(:root[data-theme="dark"]) .halo {
+  opacity: 1;
+  scale: 1;
 }
 
 @media (prefers-color-scheme: dark) {
-  :global(:root:not([data-theme="light"])) .sun {
-    opacity: 1;
-    transform: none;
+  :global(:root:not([data-theme="light"])) .shade {
+    fill: var(--lamplight);
+    stroke: color-mix(in oklab, var(--lamplight) 50%, var(--teak));
   }
 
-  :global(:root:not([data-theme="light"])) .moon {
-    opacity: 0;
-    transform: rotate(90deg) scale(0.6);
+  :global(:root:not([data-theme="light"])) .bulb {
+    opacity: 1;
+  }
+
+  :global(:root:not([data-theme="light"])) .rim {
+    stroke: var(--teak);
+  }
+
+  :global(:root:not([data-theme="light"])) .halo {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/*
+ * Motion: switching lights the lamp like a filament warming (never faster
+ * than 400 ms), and the halo catches once, 3% past full, as it settles.
+ * Pointing at the lamp nudges it into one small swing; pressing tugs the cord.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .shade {
+    transition:
+      fill var(--dur-section) var(--ease-lamp),
+      stroke var(--dur-section) var(--ease-lamp);
+  }
+
+  :global(:root:not([data-motion="still"])) .bulb {
+    transition: opacity var(--dur-section) var(--ease-lamp);
+  }
+
+  :global(:root:not([data-motion="still"])) .halo {
+    transition:
+      opacity var(--dur-section) var(--ease-lamp) 80ms,
+      scale var(--dur-scene) var(--ease-paper) 80ms;
+  }
+
+  :global(:root:not([data-motion="still"])) .hang {
+    transition: translate var(--dur-press) var(--ease-out);
+  }
+
+  :global(:root:not([data-motion="still"])) .toggle:hover .hang {
+    animation: lamp-nudge 1600ms var(--ease-sway);
+  }
+
+  :global(:root:not([data-motion="still"])) .toggle:active .hang {
+    translate: 0 1.5px;
+  }
+}
+
+@keyframes lamp-nudge {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25% {
+    rotate: 3deg;
+  }
+  55% {
+    rotate: -2deg;
+  }
+  80% {
+    rotate: 0.8deg;
   }
 }
 

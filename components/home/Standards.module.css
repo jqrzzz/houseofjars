@@ -1,0 +1,30 @@
+.split {
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.intro {
+  max-width: 40rem;
+}
+
+.heading {
+  font-size: var(--step-4);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+}
+
+.lede {
+  margin-block: var(--space-l) var(--space-xl);
+  max-width: 34rem;
+  font-size: var(--step-1);
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+
+@media (min-width: 60rem) {
+  .split {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: var(--space-4xl);
+    align-items: start;
+  }
+}
