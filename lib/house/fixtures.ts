@@ -2281,8 +2281,12 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
     }
     case "locker": {
       if (b.z0 > 0.01) return [];
+      // Where a stack stands and which numbers it holds stays unwritten until the house confirms it
+      // (docs/DESIGN.md §9: no locker position stated as firm): an unconfirmed stack is drawn bare.
+      if (fx.confirmed === false) return [rect(c("wood", 0))];
       // One label for the whole stack, from its lowest number to its highest: H01–H03.
-      const stack = [...(opts.lockerStack ?? [fx.label ?? ""])].sort();
+      const stack = [...(opts.lockerStack ?? [fx.label ?? ""])].filter(Boolean).sort();
+      if (stack.length === 0) return [rect(c("wood", 0))];
       const text = stack.length > 1 ? `${stack[0]}–${stack[stack.length - 1]}` : stack[0]!;
       return [rect(c("wood", 0)), planText(p, cx, cy, text, 9, "ln")];
     }

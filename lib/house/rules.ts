@@ -29,8 +29,18 @@ export interface PlacedRule {
   readonly match: string;
   readonly scope: RuleScope;
   readonly places: readonly Place[];
+  /**
+   * Places the rule keeps something out of ("never in Dorm H"): a plan marks them apart from its places,
+   * never lit as if the rule happened there. The rule still applies there, so rulesAt() finds it.
+   */
+  readonly avoid?: readonly Place[];
   /** One plain sentence for a guide: what happens where. */
   readonly where: string;
+}
+
+/** Every place a rule concerns: where it happens and where it keeps something out of. */
+export function concerns(rule: Pick<PlacedRule, "places" | "avoid">): readonly Place[] {
+  return [...rule.places, ...(rule.avoid ?? [])];
 }
 
 export const placedRules: readonly PlacedRule[] = [
@@ -54,7 +64,8 @@ export const placedRules: readonly PlacedRule[] = [
     id: "eat-in-the-cafe",
     match: "Eat and drink in the café",
     scope: "places",
-    places: [{ area: "cafe" }, { area: "dorm-h" }, { area: "dorm-j" }],
+    places: [{ area: "cafe" }],
+    avoid: [{ area: "dorm-h" }, { area: "dorm-j" }],
     where: "Food and drink belong in the café on the ground floor, never in Dorm H or Dorm J.",
   },
   { id: "no-strong-food", match: "No strong-smelling food", scope: "house", places: [], where: "Anywhere in the house." },
@@ -72,7 +83,8 @@ export const placedRules: readonly PlacedRule[] = [
     id: "pack-downstairs",
     match: "Pack your bag on the ground floor",
     scope: "places",
-    places: [{ fixture: "luggage-space" }, { area: "dorm-h" }, { area: "dorm-j" }],
+    places: [{ fixture: "luggage-space" }],
+    avoid: [{ area: "dorm-h" }, { area: "dorm-j" }],
     where: "Early leavers pack on the ground floor, where luggage waits beside the front desk, so Dorm H and Dorm J can sleep on.",
   },
   {
@@ -136,9 +148,9 @@ export function placedHouseRules(): ResolvedRule[] {
   });
 }
 
-/** Whether a rule names this area, its floor, its parent area or a fixture in it. */
+/** Whether a rule names this area (as a place or a place it keeps something out of), its floor, its parent area or a fixture in it. */
 function names(rule: PlacedRule, model: HouseModel, area: Area): boolean {
-  return rule.places.some((place) => {
+  return concerns(rule).some((place) => {
     if ("area" in place) return place.area === area.id || place.area === area.parent;
     if ("floor" in place) return place.floor === area.floor;
     return model.fixtures.some((f) => f.id === place.fixture && f.area === area.id);

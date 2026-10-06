@@ -32,27 +32,48 @@ export function cameraNumber(keys: readonly PhotoKey[], key: PhotoKey): number |
   return cameraSpots(keys).find((spot) => spot.key === key)?.n;
 }
 
+/** The prefix of a whole floor in data-places: "floor:floor1". */
+export const FLOOR = "floor:";
+
+/** The prefix of a place a rule keeps something out of, in data-places: "not:dorm-h". */
+export const AVOID = "not:";
+
 /**
- * The areas a placed rule names, for its <li data-places>: an area itself, every
- * area on a floor it names, the area a fixture stands in. Space-separated, in
- * the model's order, so CSS can match one with [data-places~="cafe"].
+ * Places as data-places tokens: the areas named one by one (an area itself,
+ * the area a fixture stands in), in the model's order, then each floor named
+ * as a whole, "floor:floor1", in the model's order.
  */
-export function placesOf(rule: { readonly places: readonly Place[] }): string {
-  const named = new Set<string>();
-  for (const place of rule.places) {
+function tokensOf(places: readonly Place[]): string[] {
+  const areas = new Set<string>();
+  const floors = new Set<string>();
+  for (const place of places) {
     if ("area" in place) {
-      named.add(place.area);
+      areas.add(place.area);
     } else if ("floor" in place) {
-      for (const area of houseOfJars.areas) if (area.floor === place.floor) named.add(area.id);
+      floors.add(place.floor);
     } else {
       const fixture = houseOfJars.fixtures.find((f) => f.id === place.fixture);
-      if (fixture) named.add(fixture.area);
+      if (fixture) areas.add(fixture.area);
     }
   }
-  return houseOfJars.areas
-    .map((a) => a.id)
-    .filter((id) => named.has(id))
-    .join(" ");
+  return [
+    ...houseOfJars.areas.map((a) => a.id).filter((id) => areas.has(id)),
+    ...houseOfJars.floors.map((f) => f.id).filter((id) => floors.has(id)).map((id) => `${FLOOR}${id}`),
+  ];
+}
+
+/**
+ * Where a placed rule lives, for its <li data-places>: the areas it names one
+ * by one (an area, the area a fixture stands in), then the floors it names
+ * whole ("floor:floor1"); then, each prefixed "not:", the places it keeps
+ * something out of ("never in Dorm H"), which a plan marks apart instead of
+ * lighting. Space-separated, so CSS can match one with [data-places~="cafe"],
+ * [data-places~="floor:floor1"] or [data-places~="not:dorm-h"].
+ */
+export function placesOf(rule: { readonly places: readonly Place[]; readonly avoid?: readonly Place[] }): string {
+  const here = tokensOf(rule.places);
+  const not = tokensOf(rule.avoid ?? []).filter((token) => !here.includes(token));
+  return [...here, ...not.map((token) => `${AVOID}${token}`)].join(" ");
 }
 
 /**

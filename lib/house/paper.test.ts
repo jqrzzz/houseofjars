@@ -407,6 +407,15 @@ describe("anchors, faces and plans", () => {
           .sort(),
       );
       for (const a of overlay.areas) expect(a.d, a.id).toMatch(/^(M-?[\d.]+ -?[\d.]+(L-?[\d.]+ -?[\d.]+){3}Z)+$/);
+      // Each area's name, at the point the plan writes it: inside the plan's frame.
+      const [x, y, w, h] = overlay.viewBox;
+      for (const a of overlay.areas) {
+        expect(a.name, a.id).toBe(model.areas.find((m) => m.id === a.id)!.name);
+        expect(a.label[0], a.id).toBeGreaterThanOrEqual(x);
+        expect(a.label[0], a.id).toBeLessThanOrEqual(x + w);
+        expect(a.label[1], a.id).toBeGreaterThanOrEqual(y);
+        expect(a.label[1], a.id).toBeLessThanOrEqual(y + h);
+      }
     }
   });
 });

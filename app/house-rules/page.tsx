@@ -14,6 +14,7 @@ import { airportTransport, immigration } from "@/content/area";
 import { whatsappUrl } from "@/content/identity";
 import { beds, rules, times, type HouseRule } from "@/content/stay";
 import { joinList, lowerFirst } from "@/content/text";
+import { DRAWN_CAPTION } from "@/lib/house/caption";
 import { placedHouseRules, type ResolvedRule } from "@/lib/house/rules";
 import { pageMetadata } from "@/lib/metadata";
 import { pages } from "@/lib/site";
@@ -117,12 +118,20 @@ export default function HouseRulesPage() {
        * stay beside the rules (above them on phones), and a rule lights its
        * places when it is pointed at or crosses the middle of the screen. The
        * plans are decorative: each rule's "Where" line says the same in words.
+       * With them, the line every house drawing carries: under the plans on
+       * wide screens, just above the strips on phones. On phones the column
+       * steps aside (display: contents), so each piece is aria-hidden itself.
        */}
       <div id="where-rules" className={styles.where}>
         <div className={styles.planColumn} aria-hidden="true">
           <div className={styles.planHolder}>
-            <p className={styles.planLabel}>Where each rule lives</p>
-            <RulePlan scope="where-rules" />
+            <p className={styles.planLabel} aria-hidden="true">
+              Where each rule lives
+            </p>
+            <RulePlan scope="where-rules" className={styles.plans} />
+            <p className={styles.planCaption} aria-hidden="true">
+              {DRAWN_CAPTION}
+            </p>
           </div>
         </div>
         <div className={styles.lists}>

@@ -1386,6 +1386,11 @@ export function renderCutaway(opts: CutawayOptions = {}, layer: LayerOptions = {
 /** Pixels per metre in the floor plans. */
 export const PLAN_SCALE = 50;
 
+/** Where a plan writes an area's name: its plan anchor, else its label anchor, else the middle of its rectangle. */
+export function planLabelAnchor(area: Area): { readonly x: number; readonly y: number } {
+  return area.planAnchor ?? area.anchor ?? { x: (area.rect.x0 + area.rect.x1) / 2, y: (area.rect.y0 + area.rect.y1) / 2 };
+}
+
 /**
  * The walls at plan height (1.2 m): solid where no opening reaches that high. A facade is broken at every
  * window, even one above or below the cut (Floor 2's small windows), so its glass shows.
@@ -1509,7 +1514,8 @@ export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): 
   for (const f of sortedFx) {
     const under = f.type === "stairs" ? arriving.find((g) => reachesHere(g) && overlapsRect(g.box, f.box)) : undefined;
     const up: StairArrow[] = startsHere(f) ? [{ toward: climbOf(f), label: "Up" }] : [];
-    const stack = f.type === "locker" ? fixtures.filter((g) => g.type === "locker" && overlapsRect(g.box, f.box)).map((g) => g.label ?? "") : [];
+    // A stack's label names only the lockers the house has confirmed (see planMarks).
+    const stack = f.type === "locker" ? fixtures.filter((g) => g.type === "locker" && g.confirmed !== false && overlapsRect(g.box, f.box)).map((g) => g.label ?? "") : [];
     const marks = planMarks(f, p, f.type === "stairs" ? { stairs: [...(under ? downOf(under) : []), ...up] } : { lockerStack: stack });
     if (marks.length === 0) continue;
     // Paper: each symbol a sheet, its silhouette drawn by a <use> just before it.
@@ -1527,7 +1533,7 @@ export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): 
   let labelMarks = "";
   if (labels) {
     for (const area of areas) {
-      const at = area.planAnchor ?? area.anchor ?? { x: (area.rect.x0 + area.rect.x1) / 2, y: (area.rect.y0 + area.rect.y1) / 2 };
+      const at = planLabelAnchor(area);
       const [sx, sy] = p.point([at.x, at.y, 0]);
       const size = 15;
       const tw = textWidth(area.name, size) + 16;

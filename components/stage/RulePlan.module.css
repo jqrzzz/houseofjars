@@ -2,7 +2,8 @@
  * The rule plans: two paper plans at one scale. Wide screens: side by side,
  * upright (the street at the foot), sticky below the header. Phones: two
  * strips across the screen, each plan turned a quarter (the street on the
- * left), sticky at the top on the page's own ground.
+ * left), sticky at the top on the page's own ground, each with its floor's
+ * name above it and upright name tags for the areas a rule lights.
  */
 .plans {
   position: sticky;
@@ -11,13 +12,23 @@
   align-self: start;
   display: grid;
   gap: var(--space-xs);
-  padding-block: var(--space-s);
+  padding-block: var(--space-xs);
   background: var(--page);
 }
 
 .plan {
   margin: 0;
   width: calc(100% * var(--k));
+}
+
+/* The floor's name, upright above its strip (the plan's own title lies on its side here). */
+.floor {
+  margin-bottom: 0.15rem;
+  font-size: var(--step--2);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  color: var(--text);
 }
 
 .sheet {
@@ -51,14 +62,59 @@
   overflow: visible;
 }
 
+/* Light changes take no less than 400 ms (docs/DESIGN.md §4.1): the lamp's own pace. */
+.areas :is([data-plan-area], [data-plan-avoid]),
+.tag {
+  opacity: 0;
+  transition: opacity var(--dur-section) var(--ease-lamp);
+}
+
 /* An area a rule names: lamplight laid on the paper, edged with the thread. */
-.areas path {
+.areas [data-plan-area] {
   fill: color-mix(in srgb, var(--lamplight) 55%, transparent);
   stroke: var(--jar-orange);
   stroke-width: 1.5px;
   vector-effect: non-scaling-stroke;
-  opacity: 0;
-  transition: opacity var(--dur-ui) var(--ease-out);
+}
+
+/* An area a rule keeps something out of: never lit, only hatched and edged with a dashed line in stone. */
+.areas [data-plan-avoid] {
+  stroke: var(--stone-dark);
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.hatch path {
+  stroke: var(--stone-dark);
+  stroke-width: 2.5px;
+  stroke-opacity: 0.7;
+}
+
+/*
+ * A lit area's name, upright, at the point the plan writes it (--u, --v: its
+ * place across and down the upright plan). Turned with the plan, that point
+ * lands at (1 - v, u) on the strip; the tag shifts by its own size in step,
+ * so one at an end of the strip stays on it.
+ */
+.tag {
+  --x: calc(1 - var(--v));
+  --y: var(--u);
+  position: absolute;
+  left: calc(var(--x) * 100%);
+  top: calc(var(--y) * 100%);
+  translate: calc(var(--x) * -100%) calc(var(--y) * -100%);
+  padding: 0.12rem 0.36rem 0.16rem;
+  border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
+  border-radius: var(--radius-s);
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--text);
+  font-size: var(--step--2);
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 @media (min-width: 48rem) {
@@ -74,6 +130,12 @@
 
   .plan {
     width: auto;
+  }
+
+  /* Upright here, the plan's own title and names read as drawn. */
+  .floor,
+  .tag {
+    display: none;
   }
 
   .sheet {

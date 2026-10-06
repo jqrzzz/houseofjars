@@ -1,42 +1,56 @@
 /*
  * Where each rule lives. Phones: the two paper plans stay at the top of the
- * screen as strips while the rules scroll under them. From 48rem: the plans
- * stand in the left column (the blocks' 5:7 columns from 60rem), sticky
- * below the site header, beside the rules.
+ * screen as strips while the rules scroll under them; their caption comes
+ * just before them in the page's flow and scrolls away, so the sticky band
+ * stays its size. From 48rem: the plans, with the caption under them, stand
+ * in the left column (the blocks' 5:7 columns from 60rem), sticky below the
+ * site header, beside the rules.
  */
 .where {
   --block-space: clamp(2.5rem, 1.5rem + 3vw, 4rem);
   display: grid;
-  gap: var(--space-l) var(--space-3xl);
+  gap: 0 var(--space-3xl);
   width: 100%;
   max-width: calc(var(--max-width) + 2 * var(--gutter));
   margin-inline: auto;
   padding: var(--block-space) var(--gutter);
 }
 
-.planColumn {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  align-self: start;
+/* Phones: the column and its holder step aside, so the plans stick within the whole list and the caption flows. */
+.planColumn,
+.planHolder {
+  display: contents;
+}
+
+/* The plans' band runs edge to edge on the page's ground. */
+.plans {
   margin-inline: calc(-1 * var(--gutter));
   padding-inline: var(--gutter);
-  background: var(--page);
 }
 
 .planLabel {
   display: none;
 }
 
+.planCaption {
+  order: -1;
+  margin: 0;
+  font-size: var(--step--2);
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+
 .lists {
+  margin-top: var(--space-l);
   display: grid;
   gap: var(--block-space);
   min-width: 0;
   max-width: 42rem;
 }
 
+/* Below the sticky band of plans. */
 .group {
-  scroll-margin-top: 13rem;
+  scroll-margin-top: 15.5rem;
 }
 
 .groupTitle {
@@ -51,16 +65,31 @@
   }
 
   .planColumn {
-    position: static;
-    align-self: stretch;
-    margin: 0;
-    padding: 0;
-    background: none;
+    display: block;
   }
 
   .planHolder {
+    display: block;
     position: sticky;
     top: calc(4.5rem + var(--space-l));
+  }
+
+  /* The holder sticks, with the label and caption; the plans ride in it rather than sliding over the caption. */
+  .planHolder .plans {
+    position: static;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  /* Under the plans, as wide as their column and never widening it. */
+  .planCaption {
+    order: 0;
+    contain: inline-size;
+    margin-top: var(--space-s);
+  }
+
+  .lists {
+    margin-top: 0;
   }
 
   .planLabel {
