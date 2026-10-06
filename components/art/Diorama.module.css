@@ -38,6 +38,13 @@
   }
 }
 
+/* On a phone the Vientiane scene runs across the top of the page (PageHeader's "scene"), as a band. */
+@media (max-width: 47.99rem) {
+  .vientiane {
+    aspect-ratio: 16 / 5;
+  }
+}
+
 /* Evening: a night sky over a dark river, lanterns and windows lit. */
 :global(:root[data-theme="dark"]) .diorama {
   --sky-1: var(--night);

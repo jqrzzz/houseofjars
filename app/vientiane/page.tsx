@@ -30,9 +30,11 @@ const FORWARD = ["nav-forward"];
 /*
  * A string of paper lanterns hung across the front of the riverside picture,
  * nearer than the drawing's own: a sagging cord (a quadratic curve over a
- * 480 by 60 strip) and four lanterns along it, each a teak cap, an orange
- * body and a tassel. They hang over the mat, clear of the drawing. By
- * Evening each glows in two halo steps.
+ * 480 by 60 strip) and four lanterns along it, each a teak cap, a clay body
+ * and a tassel. The bodies are clay, not jar orange: on a wide screen they
+ * are larger than 24 px, and only the Book button is a jar-orange fill that
+ * big. They hang over the mat, clear of the drawing. By Evening each glows in
+ * two halo steps.
  */
 const CORD = { from: [-12, 3], control: [240, 34], to: [492, 7] } as const;
 const at = (t: number) =>
@@ -53,7 +55,7 @@ function LanternString({ className }: { className?: string }) {
       ))}
       <path className="l" d={cords} />
       {LANTERNS.map(([x, y]) => (
-        <ellipse key={x} className={`a ${styles.lantern}`} cx={x} cy={y + 18} rx="10" ry="12" />
+        <ellipse key={x} className={`r ${styles.lantern}`} cx={x} cy={y + 18} rx="10" ry="12" />
       ))}
       <path className="b" d={caps} />
       <path className="h" d={LANTERNS.map(([x, y]) => `M${x - 10} ${y + 18}h20M${x - 6} ${y + 9.5}q6 -2 12 0M${x - 6} ${y + 26.5}q6 2 12 0`).join("")} />

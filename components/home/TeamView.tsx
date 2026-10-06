@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { PhotoFrame, type Photo } from "@/components/PhotoFrame";
-import { Mark } from "@/components/brand/Mark";
+import { Eyebrow } from "@/components/ui/Section";
 import buttons from "@/components/ui/button.module.css";
 import { ArrowIcon } from "@/components/ui/icons";
 import styles from "./Team.module.css";
@@ -25,7 +25,7 @@ export function TeamView({ photo, caption, text, about }: { photo: Photo; captio
         className={styles.frame}
       />
       <div className={styles.words}>
-        <Mark className={styles.mark} />
+        <Eyebrow morph="about">The team</Eyebrow>
         <h2 id="team-title" className={styles.heading}>
           A team on site, day and night.
         </h2>

@@ -40,7 +40,8 @@
 
 /*
  * The art. On phones it comes first, above the eyebrow: a drawing on a small
- * paper tile with its card edge, a scene at 8rem, a band across the top.
+ * paper tile with its card edge, or a scene or a band across the top (on a
+ * tablet a scene is an 8rem tile).
  */
 .art {
   order: -1;
@@ -71,6 +72,13 @@
 
 .scene .art {
   width: 8rem;
+}
+
+/* On a phone the scene runs the full width (the Diorama goes 16:5), so what moves in it is big enough to see. */
+@media (max-width: 47.99rem) {
+  .scene .art {
+    width: 100%;
+  }
 }
 
 .band .art {

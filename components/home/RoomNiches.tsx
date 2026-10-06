@@ -5,7 +5,7 @@ import { pages } from "@/lib/site";
 import { RoomNichesView } from "./RoomNichesView";
 
 const rooms: readonly (readonly [DrawingName, string, string])[] = [
-  ["pod", "Your own pod", `Every bed is its own cubicle, with ${joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`))}.`],
+  ["pod-plain", "Your own pod", `Every bed is its own cubicle, with ${joinList(beds.perBed.value.map((item) => `a ${item.toLowerCase()}`))}.`],
   ["shower", "Hot showers", `Shared bathrooms with hot showers: guests say they are ${lowerFirst(bathrooms.cleaning.value)}.`],
   ...(breakfast.included.value
     ? [

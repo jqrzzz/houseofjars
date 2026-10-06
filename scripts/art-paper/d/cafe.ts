@@ -1,11 +1,11 @@
 import { Art } from "../lib";
 
-/** Breakfast on the café counter: two fried eggs, salad, a baguette, fruit and a hot coffee, under the café pendant. */
+/**
+ * Breakfast on the café counter: two fried eggs, salad, a baguette, fruit and a hot coffee, under the café pendant.
+ * No back wall of its own: like the pod and the shower, it stands on whatever paper it is set on (a niche, a mat).
+ */
 export default function cafe(): Art {
   const a = new Art("cafe", [0, 0, 480, 360], [480, 360]);
-
-  // Back plane: the café wall, and the floor under the counter.
-  a.rect(22, 26, 436, 318, "s3", { r: 6 });
 
   // The shelf: cups, a teapot, a little stone jar and a plant.
   a.rect(54, 106, 204, 7, "wd f", { r: 2 });

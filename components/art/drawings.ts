@@ -10,6 +10,8 @@
  */
 export const drawings = {
   pod: { src: "/art/pod.svg", evening: "/art/evening/pod.svg", width: 480, height: 360 },
+  /** The pod without the callout dots that PodDiagram numbers, for wherever nothing numbers them. */
+  "pod-plain": { src: "/art/pod-plain.svg", evening: "/art/evening/pod-plain.svg", width: 480, height: 360 },
   cafe: { src: "/art/cafe.svg", evening: "/art/evening/cafe.svg", width: 480, height: 360 },
   shower: { src: "/art/shower.svg", evening: "/art/evening/shower.svg", width: 480, height: 360 },
   luggage: { src: "/art/luggage.svg", evening: "/art/evening/luggage.svg", width: 480, height: 360 },

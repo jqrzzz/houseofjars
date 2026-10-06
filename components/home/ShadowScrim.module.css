@@ -42,6 +42,7 @@
   width: 58%;
   height: auto;
   opacity: 0.9;
+  transform-origin: 50% 100%;
 }
 
 .figure {
@@ -52,14 +53,25 @@
   height: auto;
 }
 
-/* The shadow slides aside once, as the scrim first comes into view; at rest it stands beside him. */
+/*
+ * The shadow slides aside once, as the scrim first comes into view; at rest it
+ * stands beside him, upright. While a question is pointed at or focused, his
+ * shadow leans 2° towards it from its foot, listening; the buttons stay still.
+ * Under Still or reduced motion it never leans.
+ */
 @media (prefers-reduced-motion: no-preference) {
   :global(:root[data-life]:not([data-motion="still"])) :global([data-phrase]:not([data-played])) .silhouette {
     translate: 0.75rem 0;
   }
 
   :global(:root:not([data-motion="still"])) .silhouette {
-    transition: translate 1600ms var(--ease-out) 300ms;
+    transition:
+      translate 1600ms var(--ease-out) 300ms,
+      rotate var(--dur-hinge) var(--ease-out);
+  }
+
+  :global(:root:not([data-motion="still"])) .grid:has(.questions button:is(:hover, :focus-visible)) .silhouette {
+    rotate: 2deg;
   }
 }
 

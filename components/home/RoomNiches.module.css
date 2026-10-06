@@ -3,6 +3,10 @@
  * with its card edge, the drawing standing on its sill. The Pop-up (§4.3): the
  * drawing hinges up from 62° about its foot as it scrolls into view, the
  * reader holding the clock; at rest it stands. Never the words.
+ *
+ * The arch is the mark's, at the hero's proportion whatever the niche's
+ * shape: its crown is sized from the niche's width (a size container), not
+ * from its height, so a wide niche on a desk is not a squashed dome.
  */
 .block {
   padding-block: var(--space-3xl) var(--space-4xl);
@@ -27,16 +31,20 @@
   position: relative;
   grid-row: span 2;
   aspect-ratio: 4 / 5;
+  container-type: inline-size;
 }
 
-/* The card edge: the arch again, behind, offset. */
+/*
+ * The card edge: the arch again, behind, offset. Each side of the crown
+ * curves over half the niche's width and drops 41.7% of it: the mark's crown
+ * (0.2778 of a 2:3 arch's height), the proportion of the hero's arch.
+ */
 .rooms > li > div::before,
 .rooms > li > div::after {
   content: "";
   position: absolute;
   inset: 0;
-  -webkit-clip-path: url(#arch-frame);
-  clip-path: url(#arch-frame);
+  border-radius: 50cqw 50cqw 0 0 / 41.7cqw 41.7cqw 0 0;
 }
 
 .rooms > li > div::before {
@@ -49,6 +57,24 @@
   background:
     linear-gradient(to bottom, color-mix(in oklab, var(--paper-edge) 45%, transparent) 0 0.4rem, transparent 0.4rem),
     var(--paper-far);
+}
+
+/*
+ * Evening: far paper is the page's own night, so the recess is cut deeper,
+ * into the mid paper (teak night), and the arch's sides and sill still read.
+ */
+:global(:root[data-theme="dark"]) .rooms > li > div::after {
+  background:
+    linear-gradient(to bottom, color-mix(in oklab, var(--paper-edge) 45%, transparent) 0 0.4rem, transparent 0.4rem),
+    var(--paper-mid);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .rooms > li > div::after {
+    background:
+      linear-gradient(to bottom, color-mix(in oklab, var(--paper-edge) 45%, transparent) 0 0.4rem, transparent 0.4rem),
+      var(--paper-mid);
+  }
 }
 
 .rooms span {

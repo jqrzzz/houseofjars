@@ -17,10 +17,9 @@
   gap: var(--space-l);
 }
 
-.mark {
-  width: 1.5rem;
-  height: 2.25rem;
-  color: var(--jar-orange);
+/* The eyebrow: the grid's gap spaces it from the heading, as its own margin does in the other sections. */
+.words > :first-child {
+  margin-bottom: 0;
 }
 
 .heading {

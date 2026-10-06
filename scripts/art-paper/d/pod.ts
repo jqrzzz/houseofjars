@@ -1,7 +1,10 @@
 import { Art, n } from "../lib";
 
-/** One pod, drawn apart: curtain, reading light, socket and the locker below, each with a callout dot. */
-export default function pod(): Art {
+/**
+ * One pod, drawn apart: curtain, reading light, socket and the locker below, each with a callout dot.
+ * Without `callouts` it is the same pod with no dots or leaders (pod-plain.ts), for where nothing numbers them.
+ */
+export default function pod({ callouts = true }: { callouts?: boolean } = {}): Art {
   const a = new Art("pod", [0, 0, 480, 360], [480, 360]);
 
   // The pod: a teak box with a lit hollow.
@@ -67,6 +70,7 @@ export default function pod(): Art {
   a.path("M352 335H378", "l");
 
   // Callouts: curtain, light, socket, locker (PodDiagram numbers sit on the dots).
+  if (!callouts) return a;
   const call = (x1: number, y1: number, x2: number, y2: number) => {
     a.path(`M${n(x1)} ${n(y1)}L${n(x2)} ${n(y2)}`, "h d");
     a.circle(x1, y1, 2.2, "k");
