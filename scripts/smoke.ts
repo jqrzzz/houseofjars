@@ -485,6 +485,11 @@ async function bookingPages(browser: Browser, mode: BookingMode) {
   }
 
   await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  // The rating strip under the hero: each booking and review site as a badge linking to the house's page there.
+  const strip = page.locator('section[aria-label="House of Jars on booking and review sites"]');
+  for (const site of ["Booking.com", "Agoda", "Tripadvisor"]) {
+    check(await strip.getByRole("link", { name: new RegExp(`^${site}`) }).isVisible(), `home: no ${site} badge in the rating strip`);
+  }
   if (mode === "off") {
     const checkInDay = addDays(houseToday(), 10);
     const card = page.locator('[data-hides-launcher]').filter({ has: page.locator("#booking-card-title") });
