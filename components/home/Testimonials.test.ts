@@ -11,17 +11,30 @@ const quote = (name: string, topic: string): Testimonial => ({
   platform: "Booking.com",
   month: "2026-08",
   topic,
-  agreed: true,
+  consent: "guest",
 });
 
 describe("guests in their own words", () => {
-  it("stays away until there are three quotes", () => {
-    expect(renderToStaticMarkup(createElement(Testimonials, { quotes: [quote("Aiko", "sleep"), quote("Ren", "breakfast")] }))).toBe("");
+  it("shows no quotes until there are three, and nothing at all with no replies either", () => {
+    const two = [quote("Aiko", "sleep"), quote("Ren", "breakfast")];
+    expect(renderToStaticMarkup(createElement(Testimonials, { quotes: two, replies: [] }))).toBe("");
+    const repliesOnly = renderToStaticMarkup(createElement(Testimonials, { quotes: two }));
+    expect(repliesOnly).not.toContain("<blockquote");
+    expect(repliesOnly).toContain('id="testimonials-title"');
+    expect(repliesOnly).toContain("Our answer: ");
+  });
+
+  it("gives each wish the house's answer, after the quotes", () => {
+    const html = renderToStaticMarkup(createElement(Testimonials));
+    expect(html.indexOf("In guests’ own words")).toBeLessThan(html.indexOf("What a few guests wish were different"));
+    expect(html).toContain("extra blanket");
+    expect(html).toContain("translated by Agoda");
+    expect(html).toContain('src="/brands/agoda.png"');
   });
 
   it("credits each quote with the guest's first name, home, site and month", () => {
     const html = renderToStaticMarkup(
-      createElement(Testimonials, { quotes: [quote("Aiko", "sleep"), quote("Ren", "breakfast"), quote("Yui", "the team")] }),
+      createElement(Testimonials, { quotes: [quote("Aiko", "sleep"), quote("Ren", "breakfast"), quote("Yui", "the team")], replies: [] }),
     );
     expect(html).toContain("<blockquote");
     expect(html).toContain("Aiko, Japan");

@@ -6,7 +6,7 @@ import { guideList, guidePath } from "@/content/guides";
 import { formatAddress, identity } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
 import { openQuestions } from "@/content/open-questions";
-import { honestNotes, praise, ratings } from "@/content/reviews";
+import { agodaScores, honestNotes, honestReplies, praise, ratings } from "@/content/reviews";
 import { countWord, joinList, lowerFirst, orList } from "@/content/text";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, services, staff, times } from "@/content/stay";
 import { pages } from "../site";
@@ -122,8 +122,12 @@ export function buildHouseKnowledge(siteUrl: string, options: KnowledgeOptions =
         ratings.map(
           (r) =>
             `${r.value.platform}: ${r.value.score}${r.value.outOf ? ` out of ${r.value.outOf}` : ""}, ${r.value.context} (as of ${r.value.asOf})`,
-        ),
+        ).concat(`Agoda by category: ${agodaScores.value.map(([what, score]) => `${what.toLowerCase()} ${score}`).join(", ")}`),
       ),
+    ],
+    [
+      "What a few guests wish were different, and the house's answer (say it kindly and with confidence)",
+      bullet(honestReplies.map((r) => `${r.value.said} ${r.value.reply}`)),
     ],
     [
       "What guests mention most",

@@ -56,9 +56,19 @@
 
 .strip a > img {
   grid-area: mark;
-  width: 2.75rem;
+  width: auto;
   height: 2.75rem;
   border-radius: 0.4rem;
+}
+
+/* A wordmark (Agoda's) spells the name: the written name is kept for screen readers only. */
+.strip a[data-wordmark] > span:first-of-type > span:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* The words: the site's name across the top, then the score and its context side by side. */

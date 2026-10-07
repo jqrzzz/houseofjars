@@ -6,7 +6,7 @@ import { guideList, guidePath, type Guide } from "@/content/guides";
 import { formatAddress, identity, whatsappUrl } from "@/content/identity";
 import { inlineToTextWithUrls } from "@/content/inline";
 import { openQuestions } from "@/content/open-questions";
-import { honestNotes, praise, ratings } from "@/content/reviews";
+import { agodaScores, honestNotes, honestReplies, praise, ratings } from "@/content/reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, policies, rules, staff, times } from "@/content/stay";
 import { countWord, joinList, lowerFirst, orList } from "@/content/text";
 import { collectFacts, factsMentionedIn } from "./content-audit";
@@ -260,11 +260,13 @@ export function buildLlmsFullTxt(siteUrl: string, options: LlmsOptions = {}): st
           `${rating.platform}: ${rating.score}${rating.outOf ? ` out of ${rating.outOf}` : ""}, ${rating.context} (as of ${rating.asOf}${rating.url ? "" : "; link to come"})${rating.url ? `: ${rating.url}` : ""}`,
       ),
     ),
+    `- Agoda by category: ${agodaScores.value.map(([what, score]) => `${what.toLowerCase()} ${score}`).join(", ")}`,
     "",
     "## What guests say",
     ...bullets([
       `Mentioned most: ${praise.value.map((item) => item.toLowerCase()).join("; ")}`,
       ...honestNotes.map((note) => `Worth knowing: ${note.value}`),
+      ...honestReplies.map((r) => `A few guests say: ${r.value.said} The house's answer: ${r.value.reply}`),
     ]),
     "",
     "## How to book",

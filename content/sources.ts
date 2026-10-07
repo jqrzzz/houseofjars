@@ -20,6 +20,8 @@ export const sources = {
   // The photographs are in the repository, in photos/signs and photos/menus.
   signs: "The house’s own signs and menus, photographed by the team on 2026-10-04",
   team: "Told by the house’s team, 2026-10-04",
+  owner: "Told by the owner, 2026-10-07",
+  agodaOwner: "Agoda listing, from the screenshots the owner sent on 2026-10-07",
   immigration: `Lao Department of Immigration website, seen ${SEEN_ON}`,
   unesco: "UNESCO World Heritage List (inscribed 2019)",
   laoLaw: "General practice for guesthouses in Laos",
@@ -76,6 +78,8 @@ export const sourceKinds: Readonly<Record<string, SourceKind>> = {
   [sources.facebook]: "listing",
   [sources.signs]: "listing",
   [sources.team]: "listing",
+  [sources.owner]: "listing",
+  [sources.agodaOwner]: "listing",
   [sources.reviews]: "guests",
   [sources.oneReview]: "one-source",
   [sources.immigration]: "official",
