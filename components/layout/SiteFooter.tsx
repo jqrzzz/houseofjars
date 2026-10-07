@@ -1,19 +1,25 @@
 import Link from "next/link";
 import { addressLines, identity, whatsappUrl } from "@/content/identity";
+import { reviewSites, type SiteMark } from "@/content/reviews";
 import { bookingLabel } from "@/lib/booking/config";
 import { pages, primaryNav, teamSignInUrl } from "@/lib/site";
 import { Wordmark } from "../brand/Wordmark";
 import { WovenBand } from "../brand/WovenBand";
 import { AskShadowButton } from "../concierge/AskShadowButton";
+import { BrandMark, hasBrandMark } from "../ui/BrandMark";
 import { MotionChoice } from "../motion/MotionChoice";
 import { ShareButton } from "../ui/ShareButton";
 import { ThemeChoices } from "./ThemeSwitch";
 import styles from "./SiteFooter.module.css";
 
-const elsewhere = [
-  { label: "Booking.com", href: identity.links.booking.value },
-  { label: "Agoda", href: identity.links.agoda.value },
-  { label: "Tripadvisor", href: identity.links.tripadvisor.value },
+/** The booking and review sites, with their logos and scores, then Facebook. */
+const elsewhere: readonly { label: string; href: string; mark?: SiteMark; score?: string }[] = [
+  ...reviewSites.map((site) => ({
+    label: site.platform,
+    href: site.url,
+    mark: site.mark,
+    ...(site.rating?.score ? { score: site.rating.score } : {}),
+  })),
   { label: "Facebook", href: identity.links.facebook.value },
 ];
 
@@ -95,8 +101,10 @@ export function SiteFooter() {
           <ul role="list" className={styles.list}>
             {elsewhere.map((link) => (
               <li key={link.href}>
-                <a href={link.href} rel="noopener noreferrer" target="_blank">
+                <a href={link.href} rel="noopener noreferrer" target="_blank" className={styles.site}>
+                  {link.mark && hasBrandMark(link.mark) ? <BrandMark mark={link.mark} className={styles.mark} /> : null}
                   {link.label}
+                  {link.score ? <span className={styles.score}>{link.score}</span> : null}
                   <span className="visually-hidden"> (opens in a new tab)</span>
                 </a>
               </li>

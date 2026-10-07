@@ -1,3 +1,8 @@
+/* The rating strip, between the woven band and the house. */
+.sites {
+  padding-block: var(--space-l) 0;
+}
+
 /* ① The house: the theatre, then its rooms, on the page's paper. */
 .house {
   padding-top: var(--space-3xl);

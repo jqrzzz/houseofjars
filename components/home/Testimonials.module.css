@@ -1,0 +1,113 @@
+.section {
+  padding-top: 0;
+}
+
+.heading {
+  margin-bottom: var(--space-xl);
+  font-size: var(--step-3);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.quotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-l);
+  margin: 0;
+}
+
+/*
+ * Each quote on a paper card with a card edge, a jar-orange opening mark
+ * cut into its corner, and the guest's name, home and site at its foot.
+ */
+.card {
+  position: relative;
+  display: grid;
+  padding: 2.25rem 1.5rem 1.4rem;
+  background: var(--paper-near);
+  box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+.card::before {
+  content: "“";
+  position: absolute;
+  top: 0.35rem;
+  left: 1.1rem;
+  font-family: var(--font-display-stack);
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--accent-text);
+  opacity: 0.85;
+}
+
+.card figure {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: var(--space-m);
+  height: 100%;
+  margin: 0;
+}
+
+.quote {
+  margin: 0;
+  font-family: var(--font-display-stack);
+  font-weight: var(--display-weight);
+  font-size: var(--step-1);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-top: var(--space-s);
+  border-top: 1px solid var(--rule);
+  font-size: var(--step--1);
+}
+
+.who > span {
+  display: grid;
+}
+
+.mark {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.3rem;
+}
+
+.name {
+  font-weight: 650;
+}
+
+.where {
+  color: var(--text-soft);
+}
+
+.where a {
+  color: inherit;
+}
+
+/* The cards come up from the paper one after another as the row scrolls in, slowly. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .card {
+      animation: card-rise linear both;
+      animation-duration: auto;
+      animation-timeline: view();
+      animation-range: entry 5% cover 30%;
+    }
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    translate: 0 1.25rem;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}

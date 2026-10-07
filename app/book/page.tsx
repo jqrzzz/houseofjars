@@ -8,8 +8,8 @@ import { WovenBand } from "@/components/brand/WovenBand";
 import { ContactDetails } from "@/components/contact/ContactDetails";
 import { Block, Prose } from "@/components/page/Block";
 import { PageHeader } from "@/components/page/PageHeader";
-import { ExternalIcon } from "@/components/ui/icons";
 import { PageJsonLd } from "@/components/PageJsonLd";
+import { RatingStrip } from "@/components/RatingStrip";
 import { addressLines, identity, whatsappUrl } from "@/content/identity";
 import { breakfast, policies, rules, times } from "@/content/stay";
 import { lowerFirst } from "@/content/text";
@@ -21,11 +21,6 @@ import { pages } from "@/lib/site";
 import styles from "./book.module.css";
 
 export const metadata = pageMetadata(bookPage());
-
-const platforms = [
-  { name: "Booking.com", href: identity.links.booking.value },
-  { name: "Agoda", href: identity.links.agoda.value },
-];
 
 const passport = rules.stay.find((rule) => rule.value.rule.startsWith("Bring your passport"));
 
@@ -110,19 +105,8 @@ export default function BookPage() {
       </Block>
 
       {/* The booking sites come after the house's own ways to book. */}
-      <Block id="online" title="Also on Booking.com and Agoda" aside="Live prices and free beds. Both open in a new tab.">
-        <ul role="list" className={styles.platforms}>
-          {platforms.map((platform) => (
-            <li key={platform.name}>
-              <a href={platform.href} target="_blank" rel="noopener noreferrer" className={styles.platform}>
-                <span className={styles.platformName}>{platform.name}</span>
-                <span className={styles.platformNote}>Live prices and availability</span>
-                <ExternalIcon className={styles.platformIcon} />
-                <span className="visually-hidden"> (opens in a new tab)</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+      <Block id="online" title="Also on Booking.com and Agoda" aside="Live prices, free beds and guest reviews. Both open in a new tab.">
+        <RatingStrip bookable />
       </Block>
       <PageJsonLd path={pages.book.path} />
     </>

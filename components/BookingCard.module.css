@@ -253,14 +253,14 @@
   text-decoration: none;
 }
 
-.platform span:first-child {
+.platform span:first-of-type {
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: var(--underline-offset);
   text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
 }
 
-.platform:hover span:first-child {
+.platform:hover span:first-of-type {
   text-decoration-color: currentColor;
 }
 
@@ -268,6 +268,13 @@
   width: 1rem;
   height: 1rem;
   flex: none;
+}
+
+/* The site's own logo, before its name. */
+.platform .platformMark {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.25rem;
 }
 
 /* The way to /book's other ways in: under the booking sites, across a fold. */

@@ -125,9 +125,11 @@ interface PhotoFrameProps {
  * - else, with no photograph, a decorative drawing set inside the frame.
  *
  * By default the frame sits in a cut-paper mat (docs/DESIGN.md §2.4): a
- * --paper-near ground 1.25rem wide with a card edge. By Evening the mat is
- * washed with lamplight behind the picture, never over it. Nothing drawn
- * crosses into a photograph.
+ * --paper-near ground 1.5 to 2.25rem wide with a card edge, and a narrow
+ * cream slip rimmed with a gilt line round the window. A soft lamplight glow
+ * stands behind it, and the picture comes up out of the paper as it scrolls
+ * into view. By Evening the mat is washed with lamplight behind the picture,
+ * never over it. Nothing drawn crosses into a photograph.
  */
 export function PhotoFrame({
   caption,
@@ -148,7 +150,9 @@ export function PhotoFrame({
   const inMat = (frame: ReactNode) =>
     mat ? (
       <div className={shape === "arch" ? `${styles.mount} ${styles.archMount}` : styles.mount}>
-        <div className={`${styles.mat} ${styles[shape]}`}>{frame}</div>
+        <div className={`${styles.mat} ${styles[shape]}`}>
+          <div className={`${styles.window} ${styles[shape]}`}>{frame}</div>
+        </div>
       </div>
     ) : (
       frame

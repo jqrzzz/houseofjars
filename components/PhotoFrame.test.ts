@@ -14,6 +14,12 @@ describe("PhotoFrame", () => {
     expect(frame({ mat: false })).not.toContain("_mat_");
   });
 
+  it("gives the window a gilt-rimmed slip inside the mat, in the frame's shape", () => {
+    expect(frame({})).toMatch(/class="_window_[0-9a-f]+ _rect_/);
+    expect(frame({ shape: "arch" })).toMatch(/class="_window_[0-9a-f]+ _arch_/);
+    expect(frame({ mat: false })).not.toContain("_window_");
+  });
+
   it("shows a photograph's drawing, not the photograph, unless the page asks for the real one", () => {
     const drawn = frame({});
     expect(drawn).toContain('src="/art/dorm-corridor.svg"');
