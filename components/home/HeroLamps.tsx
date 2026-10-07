@@ -5,7 +5,7 @@ import { HouseLamp } from "@/components/art/HouseLamp";
 import styles from "./Hero.module.css";
 
 /**
- * The house's own lamps over the hero's arch (docs/DESIGN.md §5.1, §10.11):
+ * The house's own lamps over the hero's arch (docs/DESIGN.md §5.1, §10.12):
  * where each hangs across the arch's crown, and how long its cord is (px).
  * They are let down on their cords and catch light one by one, left to
  * right; each sends up one warm mote as it lights, three in all. Afterwards

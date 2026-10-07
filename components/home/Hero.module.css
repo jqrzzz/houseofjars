@@ -132,7 +132,7 @@
 }
 
 /*
- * Now and then a bulb stutters (docs/DESIGN.md §10.11, the stutter in
+ * Now and then a bulb stutters (docs/DESIGN.md §10.12, the stutter in
  * HouseLamp.module.css), each lamp on a cycle of its own: 23, 37 and 31 s,
  * left to right, the first after 12, 27 and 19 s, so the three never keep
  * time with each other. Only these lamps have a cycle, so only they stutter.

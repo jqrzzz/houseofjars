@@ -10,7 +10,7 @@ import { SPLASH_MS } from "@/lib/theme";
  * The Lamplighting (HouseLamp.module.css) and the hero lamps' stutter
  * (Hero.module.css), read from the stylesheets themselves: the timings that
  * must agree with each other, with the splash, and with the rules for calm,
- * flash-free light (docs/DESIGN.md §4.1, §10.11).
+ * flash-free light (docs/DESIGN.md §4.1, §10.12).
  */
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");

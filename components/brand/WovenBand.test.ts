@@ -31,7 +31,7 @@ describe("the woven band", () => {
   });
 });
 
-describe("the weave (docs/DESIGN.md §10.11)", () => {
+describe("the weave (docs/DESIGN.md §10.13)", () => {
   it("draws the motif in behind a soft edge, never a hard wipe", () => {
     expect(css).not.toContain("clip-path");
     const motif = keyframes("weave-motif");

@@ -1,6 +1,6 @@
 /*
  * Buttons and text links, with one slow, soft touch (docs/DESIGN.md §4.7 and
- * §10.11): pointed at, a button rises a pixel off the page and its arrow
+ * §10.13): pointed at, a button rises a pixel off the page and its arrow
  * glides on; pressed, it answers at once (--dur-press) and comes back up at
  * the hover's unhurried pace. Movement is on the translate property, so a
  * button placed with a transform of its own keeps it.

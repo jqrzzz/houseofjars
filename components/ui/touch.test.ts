@@ -7,7 +7,7 @@ import { BookingCardView } from "../BookingCardView";
 
 /*
  * The site's small motion details, one slow, soft touch everywhere
- * (docs/DESIGN.md §10.11): text links draw their thread, buttons rise and
+ * (docs/DESIGN.md §10.13): text links draw their thread, buttons rise and
  * press, keyboard focus gets what the pointer gets, and scroll-driven
  * reveals run at the scroll's length.
  */
