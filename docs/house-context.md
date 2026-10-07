@@ -9,7 +9,7 @@ The house rules board counts the ground floor as the 1st, so its "2nd & 3rd floo
 
 ### Café
 
-In it: 2 air-conditioners, 3 bar stools, 1 big clay jar, 1 built-in bench seat, 3 ceiling lights, 10 chairs, 1 dehumidifier, 1 drinks fridge, 5 framed photographs, 2 low stools, 5 low tables, 7 pendant lamps, 1 plant, 1 printer, 1 space for luggage, 2 tall round tables, 1 track light, 1 window, 1 window ledge to sit at.
+In it: 2 air-conditioners, 3 bar stools, 1 big clay jar, 1 built-in bar, 1 built-in bench seat, 3 ceiling lights, 10 chairs, 1 dehumidifier, 1 drinks fridge, 5 framed photographs, 2 low stools, 5 low tables, 7 pendant lamps, 1 plant, 1 printer, 1 space for luggage, 2 tall round tables, 1 track light, 1 window, 1 window ledge to sit at.
 
 Rules here:
 - Eat and drink in the café on the ground floor, not in the dorms. Clean dorms, with no crumbs or smells. (Food and drink belong in the café on the ground floor, never in Dorm H or Dorm J.)
@@ -19,6 +19,7 @@ Assumed:
 - Seen in photos f1-03, gf-02 and gf-03; how many there are and where they hang is approximate.
 - Small downlights in the café's ceiling (gf-02, gf-03); how many there are is approximate.
 - Framed black-and-white photographs along the right wall (gf-02, gf-03, gf-15); about five, the count is approximate.
+- The dehumidifier stood at (0.9, 4.15) on the walk, where the built-in bar is (the owner, 7 October 2026); where it stands now is assumed: just behind the bar, at the closed end of the staff aisle.
 
 #### Entrance
 
@@ -141,7 +142,7 @@ Assumed:
 
 ### Landing
 
-In it: 1 wall lamp.
+In it: 2 paintings, 1 wall lamp.
 
 Rules here:
 - No outside guests upstairs: the dorm floors are for registered guests, one to a pod. Everyone sleeps among people the house knows. (The 1st and 2nd floors are for registered guests only; the stairs behind the counter lead up to them.)
@@ -149,6 +150,7 @@ Rules here:
 
 Assumed:
 - The 2nd floor has not been photographed: copied from the 1st floor on the owner's word ("the same layout").
+- The owner, 7 October 2026: no shoe cubbies on this landing, just a wall with two paintings.
 
 ### Men's bathroom
 
@@ -160,7 +162,11 @@ Rules here:
 
 Assumed:
 - The 2nd floor has not been photographed: copied from the 1st floor on the owner's word ("the same layout").
+- The bathroom's door is in its front wall, right next to the right wall (the owner, 7 October 2026); drawn open, swung in to the left.
+- The sinks are on your right as you walk in (the owner, 7 October 2026).
 - Up to a hatch in the ceiling.
+- Past the sinks you turn left into a small corridor toward the left wall: the 3 toilets are on its right, in stalls against the back wall with their doors onto it (the owner, 7 October 2026).
+- The 2 showers are on the corridor's left, side by side on the front side, opening onto it (the owner, 7 October 2026).
 - Each shower has its own small hot-water heater on the wall.
 
 ## Outside
@@ -252,7 +258,7 @@ For guests.
 
 For guests.
 
-1. Women’s bathroom: The women’s bathroom is on the 1st floor, past the stairs.
+1. Women’s bathroom: The women’s bathroom is on the 1st floor, past the stairs: its door is by the right wall. The sinks are on your right; turn left for the showers and the toilets.
 
 ### Housekeeping round: from the café up through every floor
 

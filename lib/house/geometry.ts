@@ -92,6 +92,58 @@ export function insideRect(inner: Rect, outer: Rect, tolerance = 0): boolean {
   );
 }
 
+/** A rectangle's corners in plan, counter-clockwise. */
+export function rectCorners(r: Rect): Vec2[] {
+  return [
+    [r.x0, r.y0],
+    [r.x1, r.y0],
+    [r.x1, r.y1],
+    [r.x0, r.y1],
+  ];
+}
+
+/** A thing's footprint in plan: its outline when it has one (a convex polygon), else its box's rectangle. */
+export function footprint(thing: { readonly box: Rect; readonly outline?: readonly Vec2[] }): readonly Vec2[] {
+  return thing.outline ?? rectCorners(thing.box);
+}
+
+/** Whether a polygon in plan is convex and counter-clockwise (no three corners in a line). */
+export function isConvexCcw(pts: readonly Vec2[]): boolean {
+  if (pts.length < 3) return false;
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i]!;
+    const b = pts[(i + 1) % pts.length]!;
+    const c = pts[(i + 2) % pts.length]!;
+    if ((b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]) <= 1e-9) return false;
+  }
+  return true;
+}
+
+/**
+ * Whether two convex shapes in plan share some area (touching edges do not count), by separating axes. Either
+ * may be a segment (two points): then whether the segment passes through the other's inside.
+ */
+export function convexOverlap(a: readonly Vec2[], b: readonly Vec2[], eps = 1e-6): boolean {
+  for (const shape of [a, b]) {
+    for (let i = 0; i < shape.length; i++) {
+      const p = shape[i]!;
+      const q = shape[(i + 1) % shape.length]!;
+      const nx = q[1] - p[1];
+      const ny = p[0] - q[0];
+      const len = Math.hypot(nx, ny);
+      if (len < 1e-12) continue;
+      const span = (pts: readonly Vec2[]) => {
+        const d = pts.map(([x, y]) => (x * nx + y * ny) / len);
+        return [Math.min(...d), Math.max(...d)] as const;
+      };
+      const [a0, a1] = span(a);
+      const [b0, b1] = span(b);
+      if (a1 <= b0 + eps || b1 <= a0 + eps) return false;
+    }
+  }
+  return true;
+}
+
 // ---------------------------------------------------------------------------
 // Paint: what a node draws, in 3D (polygons, polylines) or straight in screen space.
 

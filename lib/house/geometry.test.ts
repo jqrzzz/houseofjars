@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Node, S, box, behind, depthSort, isoProjection, num, planProjection, prismFaces } from "./geometry";
+import { type Node, S, box, behind, convexOverlap, depthSort, footprint, isConvexCcw, isoProjection, num, planProjection, prismFaces } from "./geometry";
 
 const D = 16;
 
@@ -69,6 +69,33 @@ describe("painter's sorting", () => {
     ];
     const faces = prismFaces(square, 0, 1, D, { top: "t", front: "f", right: "r" });
     expect(faces.map((f) => f.cls)).toEqual(["f", "r", "t"]);
+  });
+});
+
+describe("footprints", () => {
+  // The bar's shape: straight from the wall, then angled up to the counter's corner.
+  const bar = [
+    [0, 3.9],
+    [0.65, 3.9],
+    [1.65, 4.4],
+    [0, 4.4],
+  ] as const;
+
+  it("tells a convex counter-clockwise outline from one that is not", () => {
+    expect(isConvexCcw(bar)).toBe(true);
+    expect(isConvexCcw([...bar].reverse())).toBe(false);
+    expect(isConvexCcw([[0, 0], [1, 0], [2, 0], [1, 1]])).toBe(false);
+  });
+
+  it("finds shared area by separating axes: a box in the angled corner of the outline's box is clear, touching is clear", () => {
+    const stool = (x: number, y: number) => footprint({ box: box(x - 0.175, x + 0.175, y - 0.175, y + 0.175, 0, 0.75) });
+    expect(convexOverlap(bar, stool(1.38, 3.93))).toBe(false);
+    expect(convexOverlap(bar, stool(1.2, 4.1))).toBe(true);
+    expect(convexOverlap(bar, footprint({ box: box(0, 1.65, 4.4, 7.6, 0, 1.05) }))).toBe(false);
+    // A segment through the inside, and one along an edge.
+    expect(convexOverlap(bar, [[0.5, 3.5], [0.5, 4.0]])).toBe(true);
+    expect(convexOverlap(bar, [[0, 3.9], [0.65, 3.9]])).toBe(false);
+    expect(footprint({ box: box(1, 2, 3, 4, 0, 1), outline: bar })).toBe(bar);
   });
 });
 
