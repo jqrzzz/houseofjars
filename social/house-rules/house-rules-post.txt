@@ -1,0 +1,23 @@
+POST CAPTION (Instagram, TikTok, WhatsApp)
+
+Three house rules for a calm night.
+
+1. No shoes upstairs: wear them on the ground floor, then take them off at the foot of the stairs before you go up. Clean floors where everyone sleeps, as in most Lao homes.
+2. No smoking anywhere in the house. Smoke out past the terrace, by the small jar for cigarette butts, not on the terrace itself. Smoke from the terrace drifts straight into the café.
+3. Quiet hours 21:00–07:00. Keep your voice down at all times. Most guests come here to sleep well.
+
+All the house rules: houseofjars.la/house-rules
+
+VIDEO ALT TEXT
+
+A short film: three house rules at House of Jars. No shoes upstairs: off at the foot of the stairs. No smoking inside: smoke past the terrace, not on it. Quiet hours 21:00–07:00. Sleep well.
+
+GIF AND STILL CARD ALT TEXT
+
+Three house rules at House of Jars. No shoes upstairs: off at the foot of the stairs. No smoking inside: smoke past the terrace, not on it. Quiet hours 21:00–07:00: keep your voice down at all times. Thank you.
+
+EMAIL SNIPPET ("Before arrival" email: the GIF in a cell with background #fbf6ee, then the link line under it, linking to https://www.houseofjars.la/house-rules)
+
+<img src="https://www.houseofjars.la/email/house-rules@2x.gif" width="600" height="792" alt="Three house rules at House of Jars. No shoes upstairs: off at the foot of the stairs. No smoking inside: smoke past the terrace, not on it. Quiet hours 21:00–07:00: keep your voice down at all times. Thank you." style="display:block;width:100%;max-width:600px;height:auto;border:0">
+
+All the house rules: houseofjars.la/house-rules

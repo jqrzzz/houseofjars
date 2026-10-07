@@ -25,6 +25,9 @@ npm run dev                  # http://localhost:3000
 | `npm run smoke` | Browser smoke test against a running server (see below) |
 | `npm run fake-shadow` | A stand-in for Shadow Check-in's public API on port 4010, to try online booking locally ([docs/BOOKING_API.md](docs/BOOKING_API.md)) |
 | `npm run indexnow` | After a deploy: tells Bing and the other IndexNow search engines which pages changed (see [docs/SEO.md](docs/SEO.md)) |
+| `npm run social -- house-rules` | Builds a social piece from `scripts/social/pieces/` in Chromium and ffmpeg: a 9:16 silent film, an email GIF and 4:5 still cards (`--only video\|gif\|still` for one format, `--check` to hold every output to the piece's spec: reading time, safe zones, a seamless loop, fonts, colour, the files' formats) |
+
+The film, its cover, the still cards and the post's caption and alt texts go to `social/{piece}/` (not served by the site); the email GIF (the `@2x` file ships; the exact `<img>` tag for the email is in the post file), its 1x fallback and a still of its first frame go to `public/email/`. A test fails when the post file no longer matches the piece's facts in `content/`: rebuild and commit every output then. Frames and review sheets (a contact sheet, the safe zones, the GIF's key frames, the cards side by side) go to `film-frames/social/{piece}/`, which git ignores.
 
 ### Smoke test
 
