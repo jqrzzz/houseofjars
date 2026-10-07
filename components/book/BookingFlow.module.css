@@ -351,8 +351,8 @@
   background: var(--page);
   cursor: pointer;
   transition:
-    border-color 260ms ease,
-    box-shadow 260ms ease;
+    border-color var(--dur-hover) ease,
+    box-shadow var(--dur-hover) ease;
 }
 
 .room:hover {

@@ -111,7 +111,10 @@ export function BookingCardView({ online, directPrice, morning: [lead, rest], bo
                       <li key={platform.platform}>
                         <a href={platform.url} target="_blank" rel="noopener noreferrer" className={styles.platform}>
                           {platform.mark ? <BrandMark mark={platform.mark} className={styles.platformMark} /> : null}
-                          <span>See prices on {platform.platform}</span>
+                          {/* The words in a line box of their own, so the underline's thread follows them onto a second line. */}
+                          <span>
+                            <span>See prices on {platform.platform}</span>
+                          </span>
                           <ExternalIcon />
                           <span className="visually-hidden"> (opens in a new tab)</span>
                         </a>

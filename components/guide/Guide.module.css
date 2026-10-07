@@ -59,7 +59,7 @@
   transition: border-color var(--dur-hover) ease;
 }
 
-.card:hover {
+.card:is(:hover, :has(.cardLink:focus-visible)) {
   --card-top: var(--jar-orange);
 }
 
@@ -109,11 +109,12 @@
   width: 1.25rem;
   height: 1.25rem;
   color: var(--accent-text);
-  transition: transform 320ms var(--ease-out);
+  transition: translate var(--dur-ui) var(--ease-out);
 }
 
-.card:hover .cardArrow {
-  transform: translateX(3px);
+/* The arrow glides on as the card is pointed at or focused, as on the site's buttons and text links. */
+.card:is(:hover, :has(.cardLink:focus-visible)) .cardArrow {
+  translate: 3px 0;
 }
 
 @media (min-width: 48rem) {
@@ -280,6 +281,7 @@
   @supports (animation-timeline: view()) {
     :global(:root:not([data-motion="still"])) .popup {
       animation: niche-pop linear both;
+      animation-duration: auto;
       animation-timeline: view();
       animation-range: entry 10% entry 80%;
     }

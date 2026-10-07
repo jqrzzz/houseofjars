@@ -23,6 +23,7 @@
     @media (prefers-reduced-motion: no-preference) {
       .header {
         animation: header-lift linear both;
+        animation-duration: auto;
         animation-timeline: scroll(root);
         animation-range: 0 6rem;
       }
@@ -78,12 +79,13 @@
   font-size: 0.975rem;
   font-weight: 500;
   text-decoration: none;
-  transition: color 260ms ease;
+  transition: color var(--dur-hover) ease;
 }
 
 /*
- * Underlines draw in like thread: from the left as the pointer arrives, and
- * drawn out to the right as it leaves. The page you're on keeps a 2 px thread.
+ * Underlines draw in like thread: from the left as the pointer arrives (or
+ * keyboard focus), and drawn out to the right as it leaves. The page you're
+ * on keeps a 2 px thread.
  */
 .link::after {
   content: "";
@@ -97,12 +99,12 @@
   transform-origin: right;
 }
 
-.link:hover,
+.link:is(:hover, :focus-visible),
 .link[aria-current="page"] {
   color: var(--text);
 }
 
-.link:hover::after,
+.link:is(:hover, :focus-visible)::after,
 .link[aria-current="page"]::after {
   transform: scaleX(1);
   transform-origin: left;

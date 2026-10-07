@@ -215,8 +215,8 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    background-color 260ms ease,
-    color 260ms ease;
+    background-color var(--dur-hover) ease,
+    color var(--dur-hover) ease;
 }
 
 .option:hover {

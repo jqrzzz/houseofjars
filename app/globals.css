@@ -465,6 +465,24 @@ a:hover {
 }
 
 /*
+ * The ring is there the moment focus arrives, and settles in to its place
+ * from a little further out, like a thread drawn snug, over a hover's time
+ * (§10.11). A component's own animation on the same element wins over this
+ * one, and Still and reduced motion drop it: the ring then simply appears.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :focus-visible {
+    animation: focus-settle var(--dur-hover) var(--ease-out);
+  }
+}
+
+@keyframes focus-settle {
+  from {
+    outline-offset: 7px;
+  }
+}
+
+/*
  * A date field's last stop is its calendar button, inside the field, where
  * :focus-visible can't reach: the field carries the ring for it (and by
  * Evening the browser's own ring wouldn't show on the dark field).
@@ -588,12 +606,16 @@ strong {
  * Settling into place: an element marked data-reveal rises a little as it
  * scrolls into view. Scroll-driven, so no script waits on it, and only the
  * position moves: everything is visible at rest, in screenshots and to
- * readers who never scroll. Off with reduced motion.
+ * readers who never scroll. It lands on the long soft ease, so it slows into
+ * its place rather than stopping dead at the end of its range (§10.11). The
+ * duration is set after the shorthand, whose 0s would end it at once in some
+ * browsers. Off with reduced motion.
  */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     [data-reveal] {
-      animation: settle-in linear both;
+      animation: settle-in var(--ease-out) both;
+      animation-duration: auto;
       animation-timeline: view();
       animation-range: entry 0% entry 90%;
     }

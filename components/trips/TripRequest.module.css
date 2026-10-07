@@ -28,9 +28,9 @@
   text-align: center;
   cursor: pointer;
   transition:
-    border-color 260ms ease,
-    background-color 260ms ease,
-    color 260ms ease;
+    border-color var(--dur-hover) ease,
+    background-color var(--dur-hover) ease,
+    color var(--dur-hover) ease;
 }
 
 .kind input {
