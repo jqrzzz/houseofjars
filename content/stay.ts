@@ -57,7 +57,7 @@ export const services = {
 export const building = {
   /** The floors of pod dorms, above the café: written as "Two floors of pod dorms above …". */
   floors: fact(2, sources.booking, {
-    note: 'Counts the dorm floors above the café on the ground floor, so three storeys in all. The house rules board puts the dorms on the "2nd & 3rd floor", counting the ground floor as the 1st.',
+    note: 'Counts the dorm floors above the café on the ground floor, so three storeys in all. The owner, 6 October 2026: the Ground floor, the 1st floor (Dorm H) and the 2nd floor (the second set of dorms). The house rules board puts the dorms on the "2nd & 3rd floor", counting the ground floor as the 1st.',
   }),
   cafe: fact("A café on the ground floor", sources.booking),
   cafeDrinks: fact("08:00–19:00", sources.signs, {
@@ -154,6 +154,17 @@ const door = times.frontDoorLocked.value;
 export const rules = {
   house: [
     fact<HouseRule>(
+      {
+        rule: "No shoes upstairs: wear them on the ground floor, then take them off at the foot of the stairs before you go up.",
+        why: "Clean floors where everyone sleeps, as in most Lao homes.",
+      },
+      sources.signs,
+      {
+        confirmed: true,
+        note: 'House rules board: "Shoes on 2nd & 3rd floor" are not allowed (the board counts the ground floor as the 1st). The signs on the stairs and the dorm doors ask for it too. The owner, 6 October 2026: shoes are fine on the ground floor; take them off before going upstairs.',
+      },
+    ),
+    fact<HouseRule>(
       { rule: "No smoking anywhere in the house.", why: "Clean air in every dorm, and beds that smell fresh." },
       sources.booking,
       { note: "The house rules board lists smoking as not allowed too." },
@@ -172,7 +183,7 @@ export const rules = {
         why: "Everyone sleeps among people the house knows.",
       },
       sources.signs,
-      { note: 'House rules board: "Un-registered guests on 2nd & 3rd floor" are not allowed (the dorm floors, counted from the ground floor as the 1st).' },
+      { note: 'House rules board: "Un-registered guests on 2nd & 3rd floor" are not allowed. The board counts the ground floor as the 1st, so these are the 1st and 2nd floors, the dorm floors.' },
     ),
     fact<HouseRule>(
       { rule: "No outside food or drink in the house.", why: "So the house stays clean and fresh." },
@@ -186,11 +197,6 @@ export const rules = {
     fact<HouseRule>(
       { rule: "No strong-smelling food, such as durian or kimchi.", why: "A smell carries through a whole shared house." },
       sources.signs,
-    ),
-    fact<HouseRule>(
-      { rule: "No shoes upstairs, on the dorm floors.", why: "Clean floors, as in most Lao homes." },
-      sources.signs,
-      { note: 'House rules board: "Shoes on 2nd & 3rd floor" are not allowed. The signs on the stairs and the dorm doors ask for it too.' },
     ),
     fact<HouseRule>({ rule: "No pets.", why: "The house is shared, and the dorms are for sleeping." }, sources.signs),
     fact<HouseRule>(

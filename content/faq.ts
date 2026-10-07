@@ -39,6 +39,15 @@ export const faq: readonly FaqGroup[] = [
         ],
       },
       {
+        id: "shoes",
+        question: "Do I take my shoes off?",
+        answer: [
+          "Yes, before you go upstairs. Shoes are fine on the ground floor, in the café and at the front desk. Take them off at the foot of the stairs and carry them up to the shoe cubbies on the 1st floor landing: the 1st and 2nd floors, where the dorms are, are shoes-off. ",
+          { text: "The house rules", href: "/house-rules" },
+          ".",
+        ],
+      },
+      {
         id: "deposit",
         question: "Is there a deposit?",
         answer: [

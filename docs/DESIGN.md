@@ -31,7 +31,7 @@ Drawings come from the house model in `lib/house`, and facts come from `content/
 2. **Theatre.** The 5 shots show, in order:
    - the street front;
    - the cutaway opening;
-   - Floor 1 lifted, with three HTML label tags;
+   - 1st floor lifted, with three HTML label tags;
    - the thread at Check in, then at Shoes;
    - pod H01 with its curtain closed.
 
@@ -45,7 +45,7 @@ Drawings come from the house model in `lib/house`, and facts come from `content/
    Reduced-motion screenshots match the Still ones.
 5. **Honesty.**
    - Every house drawing has the caption "Drawn from our walk through the house: positions are approximate."
-   - Floor 2 appears only on `/the-house`, dimmed, with the caption "Floor 2 is drawn as a copy of Floor 1: not yet photographed."
+   - The 2nd floor appears only on `/the-house`, dimmed, with the caption "The 2nd floor is drawn as a copy of the 1st floor: not yet photographed."
    - No photo is recoloured or drawn over, and no new hue is added.
 6. **No regressions.**
    - Lint, typecheck, `npx vitest run` and `npm run build` pass.
@@ -176,8 +176,8 @@ Seeds are ids. `Math.random` is never used.
 | `street` | The facade, awning, signs and posts, in the shared projection, with no neighbours. |
 | `ground` | The ground-floor cutaway, with the facade cut at `FACADE_CUT`. |
 | `ground-front` | Ground pieces in front of the facade (y < 0: awning, `sign-hanging`, posts, `jar-butts`) that must overlap the upper floors. It lifts with the ground floor. |
-| `floor1` | The Floor 1 cutaway, in its stacked position. |
-| `floor2` | The Floor 2 cutaway, stacked, with `dim` and `data-confirmed="false"`. |
+| `floor1` | The 1st floor cutaway, in its stacked position. |
+| `floor2` | The 2nd floor cutaway, stacked, with `dim` and `data-confirmed="false"`. |
 
 ```ts
 export type PaperLayerId = "street" | "ground" | "ground-front" | "floor1" | "floor2";
@@ -281,7 +281,7 @@ Add these to `:root` only:
 | **Curtain up** | The existing Splash, once per visit, re-skinned as teak fibre paper with a card-edged diamond hem. The boot script removes `html.splash` after 5000 ms, once the last hero phrase has ended (≤ 4.7 s). | time |
 | **Lamplighting** | The hero lamps drop 12 px (700 ms, `--ease-paper`, 90 ms stagger). They light left to right (600 ms, `--ease-lamp`, 140 ms stagger), and the halo scales .9 → 1.03 → 1, one 3% catch *(day)*. Then they sway ±1.5° once over 2.4 s, all starting rightward, 120 ms apart, like one breeze *(lamplit)*. By Day they stay unlit, so only the drop and the sway run; switching to Evening lights them again. It starts 300 ms after load (1450 ms under `html.splash`, as the curtain clears the top of the screen). | time, CSS |
 | **Open the house** *(day)* | The `street` layer fades and slides 12 units toward the viewer while the interior fades in. No zoom. | scroll |
-| **Floor lift** | The Floor 1 wrapper moves `translateY(calc(var(--u) * -90))`. The keyframes are on `transform` itself, never on an animated custom property. Its thread SVG moves with it, and the stair link fades in at the end. | scroll / IO fallback |
+| **Floor lift** | The 1st floor wrapper moves `translateY(calc(var(--u) * -90))`. The keyframes are on `transform` itself, never on an animated custom property. Its thread SVG moves with it, and the stair link fades in at the end. | scroll / IO fallback |
 | **Thread walk** | Each floor path's `stroke-dashoffset` runs 1 → 0, in segments that stop at each `at`. Each ring settles (scale .6 → 1) as the thread reaches it. The bead rides `offset-path`, inside `@supports`. | scroll |
 | **Lights on** | The glow discs light in walking order (600 ms, 40 ms stagger *(spirits)*, ≤ `--dur-lamps`). It plays on entry and after each theme switch: the `animation-name` changes per theme, which restarts the animation. It never plays inside the 450 ms theme fade. In the home theatre, the discs follow Act C instead. | time |
 | **Curtain close** | H01's curtain goes `scaleX` .15 → 1 (`transform-box: fill-box; transform-origin: 0 50%`). By Evening, its lamp then lights. | scroll |
@@ -426,13 +426,13 @@ Every hook stays:
 **① The theatre** (`components/home/HouseTheatre.tsx`, built around `PaperStage`):
 - **Section:** `<section id="the-house-story">`, 260svh tall on desktop and 200svh on phones, with `view-timeline: --theatre`. A "Skip the house story" link comes first.
 - **Desktop:** text on the left (5/12) and the stage on the right (7/12). The stage is sticky at `top: calc(header + 2rem)` and `min(80svh, 46rem)` tall.
-- **Phones:** the stage is sticky at `top: 0`, 48svh tall, with `overflow: clip`. It shows the ground floor and Floor 1 in the `crop(["ground","floor1"])` frame, with no pan or zoom.
+- **Phones:** the stage is sticky at `top: 0`, 48svh tall, with `overflow: clip`. It shows the ground floor and the 1st floor in the `crop(["ground","floor1"])` frame, with no pan or zoom.
 - **No `data-hides-launcher`:** the dock and its Book button stay.
 
 | `contain` range | Act | Stage | Text (server HTML) |
 |---|---|---|---|
 | 0–20% | A Open | `street` → interior | Eyebrow ① "The house" (morph `the-house`); h2 "Made for a good night’s sleep."; lede "`${building.cafe.value}`, dorms upstairs." |
-| 20–45% | B Lift | Floor 1 lifts. Tags swing in at 30, 34 and 38%: "Café and front desk", "Dorm H: 14 pods" (count from the model) and "Shoes off at the stairs". | The same three phrases, as a list. |
+| 20–45% | B Lift | The 1st floor lifts. Tags swing in at 30, 34 and 38%: "Café and front desk", "Dorm H: 14 pods" (count from the model) and "Shoes off at the stairs". | The same three phrases, as a list. |
 | 45–95% | C Walk | The thread walks `arrival`; stop *i* lights at `45 + 50·at` %. At Check in, `jar-big` glows and one arch wisp rises. At Shoes, the landing jar and the cubbies glow. | An `<ol>` of the 5 stops (`<h3>{label}</h3><p>{does}</p>`). The active step gets the thread marker; the others go to `--text-soft`, which is still AA. |
 | 95–100% | Curtain | H01's curtain closes. By Evening, its lamp lights. | "There is no pod 4, 13 or 14: `${beds.numbering.value.why}`." and "Quiet hours `${times.quietHours.value}`." Links to `/the-house#section` and to "Practise the walk: play Find your pod" (`/the-house#play`). |
 
@@ -484,7 +484,7 @@ The home page gains about 14 kB of HTML and ≤ 4 kB gzip of new JS.
 ### 5.3 Other pages
 
 - **/house-rules: "Where each rule lives".**
-  - A sticky `RulePlan` holds the paper plans of the ground floor and Floor 1.
+  - A sticky `RulePlan` holds the paper plans of the ground floor and the 1st floor.
   - Each placed rule's `<li>` carries `data-places` from `placedHouseRules()` and a visible line, "Where: {where}".
   - A rule lights its areas when hovered (`:has()`, *lamplit*) or when it crosses the middle of the screen (`CurrentMarker`, ≤ 1 kB).
   - The plan is `aria-hidden`; the "Where" line carries the fact.
@@ -737,7 +737,7 @@ export function actRanges(stops: readonly StageStop[], c: readonly [number, numb
 - **Stacking across floors:** separate layers lose depth sorting between floors. `ground-front` covers this, and P1 compares stacked shots with `cutaway.svg`.
 - **No scroll timelines:** the IO fallback covers visitors with JS; others see the still.
 - **Raster memory:** keep at most 3 visible layers, set `will-change` only during acts, and test on a throttled mid-range Android.
-- **Owner approvals:** the `HouseCutaway` swap, the wording of the 4/13/14 reason, and the round's frequency. Floor 2 stays dimmed.
+- **Owner approvals:** the `HouseCutaway` swap, the wording of the 4/13/14 reason, and the round's frequency. The 2nd floor stays dimmed.
 - **Busyness:** review every page with motion on and with Still. Where two things move in one viewport, cut one.
 - **Translations:** CJK captions need native-speaker review.
 
@@ -779,7 +779,7 @@ export function actRanges(stops: readonly StageStop[], c: readonly [number, numb
   - add routes, a second h1 or extra JSON-LD;
   - rename any smoke hook;
   - use `Math.random` or `Date.now` in render.
-- **Facts:** don't state Floor 2, locker positions, the round's frequency or the numbering reason as firm before `content/` says so.
+- **Facts:** don't state the 2nd floor, locker positions, the round's frequency or the numbering reason as firm before `content/` says so.
 
 ---
 

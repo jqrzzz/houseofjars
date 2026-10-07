@@ -3,7 +3,7 @@
  * stage stands still in it (sticky) and its acts play on the section's view
  * timeline, in shares of its contain range:
  *   A  0 → --a1      the street front opens
- *   B  --a1 → --c0   Floor 1 lifts, the tags swing in
+ *   B  --a1 → --c0   the 1st floor lifts, the tags swing in
  *   C  --c0 → --c1   the thread walks; stop k is reached at c0 + (c1 − c0) × at
  *   D  --c1 → 100    the curtain closes, and by Evening the house goes to bed
  * --scroll is the distance that range takes: the section's height less the

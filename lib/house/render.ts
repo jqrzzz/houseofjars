@@ -135,7 +135,7 @@ export interface LayerOptions {
   readonly fixturesOnly?: boolean;
   /** The floor group's id instead of floor-{id} (floor-ground-front). */
   readonly groupId?: string;
-  /** Fade the floor (Floor 2, not yet photographed). */
+  /** Fade the floor (the 2nd floor, not yet photographed). */
   readonly dim?: boolean;
   /** The picture's description, when the view's own would not say what this layer holds. */
   readonly desc?: string;
@@ -1393,7 +1393,7 @@ export function planLabelAnchor(area: Area): { readonly x: number; readonly y: n
 
 /**
  * The walls at plan height (1.2 m): solid where no opening reaches that high. A facade is broken at every
- * window, even one above or below the cut (Floor 2's small windows), so its glass shows.
+ * window, even one above or below the cut (the 2nd floor's small windows), so its glass shows.
  */
 function planWallMarks(model: HouseModel, floor: Floor, p: Projection, only?: (wall: Wall) => boolean): PlanMark[] {
   const out: PlanMark[] = [];
@@ -1442,7 +1442,7 @@ function planDesc(model: HouseModel, floor: Floor, areas: readonly Area[]): stri
       return extras.length > 0 ? `${a.name} (${extras.join(", ")})` : a.name;
     });
   const note = floor.confirmed === false && floor.note ? ` ${floor.note}` : "";
-  return `A plan of ${floor.name} of ${model.name}, street at the bottom: ${parts.join(", ")}.${note}`;
+  return `A plan of the ${floor.name.toLowerCase()} of ${model.name}, street at the bottom: ${parts.join(", ")}.${note}`;
 }
 
 export function renderPlan(which: FloorId | "outside", opts: PlanOptions = {}): string {

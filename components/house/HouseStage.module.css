@@ -19,9 +19,9 @@
 }
 
 /*
- * Floor 2 is drawn as a copy of Floor 1, not yet photographed: its paper is
+ * The 2nd floor is drawn as a copy of the 1st floor, not yet photographed: its paper is
  * dimmed, and a walk that climbs up there (the team's round) dims with it,
- * the stairs to it too. Only this stage shows Floor 2.
+ * the stairs to it too. Only this stage shows the 2nd floor.
  */
 .sticky :global([data-ov="floor2"]),
 .sticky :global([data-link] [data-to="floor2"]) {

@@ -34,7 +34,7 @@ const ON = new Set(["landing", "stairs", "terrace"]);
 
 /**
  * Where a view of the house is, in the house model's words, to follow "Seen":
- * "in Dorm H, Floor 1" for a named room, "on the landing, Floor 1" for a
+ * "in Dorm H, 1st floor" for a named room, "on the landing, 1st floor" for a
  * plain place.
  */
 function placeName(area: string): string | undefined {

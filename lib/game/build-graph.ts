@@ -43,7 +43,7 @@ export const PLAN_IMAGES: Readonly<Record<FloorKey, { readonly day: string; read
 /** renderPlan's scale (lib/house/render.ts): plan pixels to the metre. */
 export const PLAN_SCALE = 50;
 
-const FLOOR_NAMES: Readonly<Record<FloorKey, string>> = { ground: "Ground floor", floor1: "Floor 1" };
+const FLOOR_NAMES: Readonly<Record<FloorKey, string>> = { ground: "Ground floor", floor1: "1st floor" };
 
 /** Room between the two floors on the board, and above them for their names. */
 const GAP = 24;
@@ -53,7 +53,7 @@ const SIDE = 14;
 /**
  * The depth (in metres from the street) where the board's top edge cuts each plan: along the wall across the back
  * of the part that is played, never through a room's fixtures. On the ground floor that is the partition behind
- * the toilet and the corridor (13.2 to 13.3 m), on Floor 1 the one between the landing and the women's bathroom
+ * the toilet and the corridor (13.2 to 13.3 m), on the 1st floor the one between the landing and the women's bathroom
  * (12.6 to 12.7 m). No place on the board lies deeper.
  */
 export const BOARD_TOP: Readonly<Record<FloorKey, number>> = { ground: 13.25, floor1: 12.65 };
@@ -252,7 +252,7 @@ export function buildGameGraph(model: HouseModel = houseOfJars, root = process.c
     ...stackEdges,
   ];
 
-  // The house's lamps, lit in walking order at the end: the ground floor from the street back, Floor 1 from the
+  // The house's lamps, lit in walking order at the end: the ground floor from the street back, the 1st floor from the
   // stairs, and last the reading light in your pod.
   const lit = (f: Fixture) => ["pendant-lamp", "wall-lamp", "jar-big"].includes(f.type) && (f.floor === "ground" || f.floor === "floor1");
   const centre = (f: Fixture): Spot => [(f.box.x0 + f.box.x1) / 2, (f.box.y0 + f.box.y1) / 2];

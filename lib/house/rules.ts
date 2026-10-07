@@ -50,7 +50,7 @@ export const placedRules: readonly PlacedRule[] = [
     match: "No outside guests upstairs",
     scope: "places",
     places: [{ floor: "floor1" }, { floor: "floor2" }, { area: "stairs-ground" }],
-    where: "Floor 1 and Floor 2 are for registered guests only; the stairs behind the counter lead up to them.",
+    where: "The 1st and 2nd floors are for registered guests only; the stairs behind the counter lead up to them.",
   },
   {
     id: "smoke-past-the-terrace",
@@ -74,7 +74,7 @@ export const placedRules: readonly PlacedRule[] = [
     match: "No shoes upstairs",
     scope: "places",
     places: [{ area: "stairs-ground" }, { fixture: "shoe-cubbies" }, { floor: "floor1" }, { floor: "floor2" }],
-    where: "Shoes come off at the foot of the stairs on the ground floor, and guests carry them up to the cubbies on the Floor 1 landing. No shoes on Floor 1 or Floor 2.",
+    where: "Shoes are fine on the ground floor. They come off at the foot of the stairs, and guests carry them up to the cubbies on the 1st floor landing: no shoes on the 1st or 2nd floor.",
   },
   { id: "no-pets", match: "No pets", scope: "house", places: [{ area: "entrance" }], where: "Anywhere in the house." },
   { id: "nothing-dangerous", match: "No drugs, weapons", scope: "house", places: [], where: "Anywhere in the house." },

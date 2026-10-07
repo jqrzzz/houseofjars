@@ -40,8 +40,10 @@ Data shape:
 
 Ask for:
 
-1. **One area per message**, starting with where they are: "Floor 2, Dorm H". Photos can't tell which floor they show.
+1. **One area per message**, starting with where they are: "2nd floor, Dorm J". Photos can't tell which floor they show.
 2. **Two or three photos per room**: from the doorway, from the far corner looking back, and the ceiling (air-conditioning, fans, smoke alarms).
+   - A panorama helps too, but only as an extra: it shows what sits next to what, all the way round.
+   - The normal photos are still needed for the drawings, because a panorama bends straight lines.
 3. **One line about what photos can't show**: counts behind curtains, what is next to what.
 4. **About 5 to 15 photos per message.**
 5. **Their own names and numbers**, asked once at the start: what each floor and room is called, how beds and lockers are numbered, and the house rules that shape how people move (where shoes come off, which bathroom is on which floor).

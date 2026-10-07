@@ -14,6 +14,15 @@ describe("the house rules, placed in the house", () => {
     expect(placed.map((r) => r.rule).sort()).toEqual([...all].sort());
   });
 
+  it("puts the shoe rule first, as the owner told it: shoes on downstairs, off before the stairs", () => {
+    const shoes = rules.house[0]!;
+    expect(shoes.value.rule).toMatch(/^No shoes upstairs: wear them on the ground floor, then take them off at the foot of the stairs/);
+    expect(shoes.confirmed).toBe(true);
+    const where = placedRules.find((r) => r.id === "no-shoes-upstairs")!.where;
+    expect(where).toMatch(/^Shoes are fine on the ground floor\./);
+    expect(where).toContain("no shoes on the 1st or 2nd floor");
+  });
+
   it("gives every placed rule a unique id and a sentence for guides", () => {
     expect(new Set(placedRules.map((r) => r.id)).size).toBe(placedRules.length);
     for (const r of placedRules) expect(r.where, r.id).toMatch(/\.$/);

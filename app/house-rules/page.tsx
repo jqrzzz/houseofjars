@@ -114,7 +114,7 @@ export default function HouseRulesPage() {
       />
 
       {/*
-       * Where each rule lives: the paper plans of the ground floor and Floor 1
+       * Where each rule lives: the paper plans of the ground floor and the 1st floor
        * stay beside the rules (above them on phones), and a rule lights its
        * places when it is pointed at or crosses the middle of the screen. The
        * plans are decorative: each rule's "Where" line says the same in words.

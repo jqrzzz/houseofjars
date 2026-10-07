@@ -9,10 +9,10 @@ describe("the house's walks, as guests read them", () => {
     for (const { stop, at } of stops) expect(stop.does ?? "", at).not.toMatch(/photo/i);
   });
 
-  it("say nothing firm about Floor 2: no guest walk goes there, and no stop places anything on it", () => {
+  it("say nothing firm about the 2nd floor: no guest walk goes there, and no stop places anything on it", () => {
     for (const { route, stop, at } of stops) {
       if (route.who === "guest") expect(stop.floor, at).not.toBe("floor2");
-      expect(stop.does ?? "", at).not.toMatch(/Floor 2|\bmen[’']s\b/);
+      expect(stop.does ?? "", at).not.toMatch(/2nd floor|\bmen[’']s\b/);
     }
   });
 

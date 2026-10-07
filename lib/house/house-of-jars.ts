@@ -21,9 +21,9 @@ const SLAB = 0.2;
 
 /**
  * The stairs: one U-shaped stair, the same on every floor (ground floor photos gf-04, gf-05, gf-12,
- * gf-14, gf-15; Floor 1 photos f2-01 to f2-03). The first flight climbs from the corridor toward the left wall
+ * gf-14, gf-15; the 1st floor's photos f2-01 to f2-03). The first flight climbs from the corridor toward the left wall
  * along the back strip, turns on a landing against the left wall, and the second climbs back along the
- * front strip: you arrive on the floor above facing the right wall (the shoe cubbies on Floor 1).
+ * front strip: you arrive on the floor above facing the right wall (the shoe cubbies on the 1st floor).
  */
 const STAIR = { x1: 2.6, landing: 0.85, front: 8.75, mid: 9.55, back: 10.35 } as const;
 /** The stairwell on the upper floors: the opening in the slab over the stairs from the floor below. */
@@ -31,20 +31,20 @@ const STAIRWELL = { x0: 0, x1: STAIR.x1, y0: 8.7, y1: STAIR.back } as const;
 
 export const floors: readonly Floor[] = [
   { id: "ground", name: "Ground floor", level: 0, z: 0, ceiling: 3.6 },
-  { id: "floor1", name: "Floor 1", level: 1, z: 3.8, ceiling: 6.7, opening: STAIRWELL },
+  { id: "floor1", name: "1st floor", level: 1, z: 3.8, ceiling: 6.7, opening: STAIRWELL },
   {
     id: "floor2",
-    name: "Floor 2",
+    name: "2nd floor",
     level: 2,
     z: 6.9,
     ceiling: 9.8,
     opening: STAIRWELL,
     confirmed: false,
-    note: "Not photographed yet: copied from Floor 1 on the owner's word.",
+    note: "Not photographed yet: copied from the 1st floor on the owner's word.",
   },
 ];
 
-const FLOOR2_NOTE = 'Floor 2 has not been photographed: copied from Floor 1 on the owner\'s word ("the same layout").';
+const FLOOR2_NOTE = 'The 2nd floor has not been photographed: copied from the 1st floor on the owner\'s word ("the same layout").';
 const POD_NOTE =
   'The numbers, the stacks and which pod is on top are from the owner\'s bed register, as drawn: the number written on top is the top bunk (the owner: "the top bunk is 1 and beneath it 2"; down the left, 09 over 08).';
 const LOCKER_NOTE =
@@ -291,7 +291,7 @@ function dormWalls(floor: FloorId, level: 1 | 2): Wall[] {
           { from: 1.75, to: 2.25, z0: 0.5, z1: 1.0 },
           { from: 1.75, to: 2.25, z0: 1.5, z1: 2.0 },
         ];
-  // The stairwell: a low parapet behind it, and on Floor 2 (the top) one beside the first flight's hole too.
+  // The stairwell: a low parapet behind it, and on the 2nd floor (the top) one beside the first flight's hole too.
   const stair: Wall[] = [
     { id: `${floor}-stair-parapet`, floor, kind: "parapet", box: box(0, STAIR.x1, STAIR.back, STAIR.back + 0.1, 0, 1.0), material: "dormPlaster", ...unconfirmed },
     ...(level === 2
@@ -494,7 +494,7 @@ const groundFixtures: Fixture[] = on("ground", [
     note: "Guests' luggage waits beside the front desk, in front of the store's doors (gf-14, gf-15).",
   },
 
-  // The stairs (see STAIR): the first flight from the corridor, the landing, the second flight up to Floor 1.
+  // The stairs (see STAIR): the first flight from the corridor, the landing, the second flight up to the 1st floor.
   {
     id: "stairs-up",
     type: "stairs",
@@ -522,7 +522,7 @@ const groundFixtures: Fixture[] = on("ground", [
     faces: "+x",
     climb: { from: 1.9, to: 3.8 },
     variant: "flight",
-    note: "Back toward the corridor, up to Floor 1, where you arrive facing the shoe cubbies (f2-01). Its underside is the teak slope seen from the café (gf-14).",
+    note: "Back toward the corridor, up to the 1st floor, where you arrive facing the shoe cubbies (f2-01). Its underside is the teak slope seen from the café (gf-14).",
   },
   {
     id: "jar-clay-stairs",
@@ -604,7 +604,7 @@ const groundFixtures: Fixture[] = on("ground", [
 ]);
 
 /**
- * A dorm floor (Floor 1: Dorm H and the women's bathroom; Floor 2: Dorm J and
+ * A dorm floor (1st floor: Dorm H and the women's bathroom; 2nd floor: Dorm J and
  * the men's bathroom). The owner says the two floors have the same layout.
  */
 export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "men"): { areas: Area[]; walls: Wall[]; fixtures: Fixture[] } {
@@ -620,13 +620,13 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
     list.push(
       facade(`window-${letter}-tall`, "window", dorm, box(1.75, 2.25, -0.12, -0.04, 1.0, 2.4), { variant: "upper" }),
       facade(`window-${letter}-small`, "window", dorm, box(1.75, 2.25, -0.12, -0.04, 0.2, 0.7), { variant: "upper" }),
-      // The three outdoor AC units hang on the facade at Floor 1 level: two stacked on the left, one on the right.
+      // The three outdoor AC units hang on the facade at the 1st floor level: two stacked on the left, one on the right.
       facade("ac-outdoor-1", "ac-outdoor", dorm, box(0.6, 1.4, -0.5, -0.2, 0.6, 1.2)),
       facade("ac-outdoor-2", "ac-outdoor", dorm, box(0.6, 1.4, -0.5, -0.2, 1.3, 1.9)),
       facade("ac-outdoor-3", "ac-outdoor", dorm, box(3.0, 3.8, -0.5, -0.2, 1.0, 1.6)),
     );
   } else {
-    // Seen from the street (f1-01), so confirmed although the rest of Floor 2 is not.
+    // Seen from the street (f1-01), so confirmed although the rest of the 2nd floor is not.
     const seen = { variant: "upper", note: "Seen from the street (f1-01): two small windows inside the arch." };
     list.push(
       facade(`window-${letter}-low`, "window", dorm, box(1.75, 2.25, -0.12, -0.04, 0.5, 1.0), seen),
@@ -704,7 +704,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
     },
   );
 
-  // The landing: the stairwell, the shoe cubbies (Floor 1 only), a wall lamp. You arrive up the stairs facing the cubbies,
+  // The landing: the stairwell, the shoe cubbies (1st floor only), a wall lamp. You arrive up the stairs facing the cubbies,
   // and the passage beside the stairwell leads to the dorm at the front and the bathroom at the back (f2-01 to f2-03).
   if (level === 1) {
     list.push(
@@ -717,7 +717,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
         grid: { cols: 5, rows: 6 },
         note: "Built in: 5 across and 6 high. Guests carry their shoes up from the ground floor.",
       },
-      // The same U-shaped stair to Floor 2 (see STAIR), its first flight beside the bathroom door (f2-02).
+      // The same U-shaped stair to the 2nd floor (see STAIR), its first flight beside the bathroom door (f2-02).
       {
         id: "stairs-floor2",
         type: "stairs",
@@ -747,7 +747,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
         climb: { from: 1.55, to: 3.1 },
         variant: "flight",
         confirmed: false,
-        note: "Assumed the same as the ground floor's: back toward the passage, up to Floor 2.",
+        note: "Assumed the same as the ground floor's: back toward the passage, up to the 2nd floor.",
       },
     );
   }
@@ -827,7 +827,7 @@ const floor2 = dormFloor(2, "j", "men");
 // on the way. Each is a path for the pictures (one segment per floor; on stairs a point carries its height) and
 // a list of steps for guides, the team and Shadow.
 
-/** Up the U-shaped stair from the ground floor to Floor 1, from the foot in the corridor to the top. */
+/** Up the U-shaped stair from the ground floor to the 1st floor, from the foot in the corridor to the top. */
 const UP_TO_FLOOR1: readonly RoutePoint[] = [
   [3.25, 9.95],
   [3.0, 9.95, 0],
@@ -837,9 +837,9 @@ const UP_TO_FLOOR1: readonly RoutePoint[] = [
   [0.85, 9.15, 1.9],
   [2.6, 9.15, 3.8],
 ];
-/** The same, down: from the top on Floor 1 to the foot in the corridor. */
+/** The same, down: from the top on the 1st floor to the foot in the corridor. */
 const DOWN_FROM_FLOOR1: readonly RoutePoint[] = [...UP_TO_FLOOR1].reverse();
-/** Up the same stair from Floor 1 to Floor 2 (a storey of 3.1 m). */
+/** Up the same stair from the 1st floor to the 2nd floor (a storey of 3.1 m). */
 const UP_TO_FLOOR2: readonly RoutePoint[] = [
   [2.9, 9.95],
   [2.6, 9.95, 0],
@@ -849,7 +849,7 @@ const UP_TO_FLOOR2: readonly RoutePoint[] = [
   [0.85, 9.15, 1.55],
   [2.6, 9.15, 3.1],
 ];
-/** From the top of the stairs on Floor 1, past the shoe cubbies, through the dorm door to the aisle. */
+/** From the top of the stairs on the 1st floor, past the shoe cubbies, through the dorm door to the aisle. */
 const LANDING_TO_DORM: readonly RoutePoint[] = [
   [2.6, 9.15],
   [3.1, 9.3],
@@ -915,7 +915,7 @@ const routes: readonly Route[] = [
         rules: ["check-in-hours", "passport", "deposit"],
       },
       { floor: "ground", at: [3.25, 9.6], ...shoesOff, does: "Take your shoes off at the foot of the stairs and carry them up." },
-      { floor: "floor1", at: [3.3, 10.2], label: "Shoes", area: "landing-1", does: "Leave your shoes in the cubbies on the Floor 1 landing.", rules: ["no-shoes-upstairs"] },
+      { floor: "floor1", at: [3.3, 10.2], label: "Shoes", area: "landing-1", does: "Leave your shoes in the cubbies on the 1st floor landing.", rules: ["no-shoes-upstairs"] },
       {
         floor: "floor1",
         at: [2.45, 5.4],
@@ -994,7 +994,7 @@ const routes: readonly Route[] = [
     who: "guest",
     segments: [{ floor: "floor1", points: [[3.15, 8.7], [3.1, 11.6], [3.0, 12.7], [3.1, 13.6]] }],
     stops: [
-      { floor: "floor1", at: [3.1, 13.6], label: "Women’s bathroom", area: "bath-women", does: "The women’s bathroom is on Floor 1, past the stairs." },
+      { floor: "floor1", at: [3.1, 13.6], label: "Women’s bathroom", area: "bath-women", does: "The women’s bathroom is on the 1st floor, past the stairs." },
     ],
   },
   {
