@@ -2,6 +2,7 @@ import Form from "next/form";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import { identity, whatsappUrl } from "@/content/identity";
+import { reviewSites } from "@/content/reviews";
 import { breakfast, policies } from "@/content/stay";
 import { onlineBookingConfigured } from "@/lib/booking/config";
 import { firstMorningText } from "@/lib/booking/stay-rail";
@@ -10,6 +11,7 @@ import { DirectRequest } from "./book/DirectRequest";
 import { WovenBand } from "./brand/WovenBand";
 import styles from "./BookingCard.module.css";
 import { ShadowWriting } from "./shadow/ShadowWriting";
+import { BrandMark, hasBrandMark } from "./ui/BrandMark";
 import { Section } from "./ui/Section";
 import buttons from "./ui/button.module.css";
 import { ArrowIcon, ExternalIcon } from "./ui/icons";
@@ -17,10 +19,7 @@ import { ArrowIcon, ExternalIcon } from "./ui/icons";
 const nights = Array.from({ length: 14 }, (_, index) => index + 1);
 const guests = Array.from({ length: 8 }, (_, index) => index + 1);
 
-const platforms = [
-  { name: "Booking.com", href: identity.links.booking.value },
-  { name: "Agoda", href: identity.links.agoda.value },
-];
+const platforms = reviewSites.filter((site) => site.bookable);
 
 /**
  * The closing call to action on most pages: a paper ticket standing in a slot
@@ -117,9 +116,10 @@ export function BookingCard() {
                   <p className={styles.stubText}>The house is on the booking sites too, with live prices.</p>
                   <ul role="list" className={styles.platforms}>
                     {platforms.map((platform) => (
-                      <li key={platform.name}>
-                        <a href={platform.href} target="_blank" rel="noopener noreferrer" className={styles.platform}>
-                          <span>See prices on {platform.name}</span>
+                      <li key={platform.platform}>
+                        <a href={platform.url} target="_blank" rel="noopener noreferrer" className={styles.platform}>
+                          {hasBrandMark(platform.mark) ? <BrandMark mark={platform.mark} className={styles.platformMark} /> : null}
+                          <span>See prices on {platform.platform}</span>
                           <ExternalIcon />
                           <span className="visually-hidden"> (opens in a new tab)</span>
                         </a>

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { insideRect, intersects } from "./geometry";
+import { convexOverlap, footprint, insideRect, intersects, isConvexCcw } from "./geometry";
 import { houseOfJars as model } from "./house-of-jars";
 import { placedRules } from "./rules";
 import type { Area, Box3, Fixture, FixtureType, FloorId, Rect } from "./types";
@@ -12,6 +12,9 @@ const rects = (a: Area): readonly Rect[] => [a.rect, ...(a.more ?? [])];
 const floor = (id: FloorId) => model.floors.find((f) => f.id === id)!;
 const count = (type: FixtureType, where: (f: Fixture) => boolean = () => true) => model.fixtures.filter((f) => f.type === type && where(f)).length;
 const inArea = (id: string) => (f: Fixture) => f.area === id;
+/** Whether two fixtures share volume: their boxes, or, where one has an outline, its prism. */
+const fixturesClash = (a: { box: Box3; outline?: Fixture["outline"] }, b: { box: Box3; outline?: Fixture["outline"] }) =>
+  a.outline || b.outline ? intersects(a.box, b.box) && convexOverlap(footprint(a), footprint(b)) : intersects(a.box, b.box);
 
 describe("the House of Jars model: integrity", () => {
   it("gives every area, fixture, wall and route its own id", () => {
@@ -103,7 +106,18 @@ describe("the House of Jars model: integrity", () => {
     }
   });
 
-  it("lets no two solid fixtures on a floor share volume, unless one is mounted on the other", () => {
+  it("gives a fixture that is not a box a convex outline, counter-clockwise, that fills its box's plan", () => {
+    const shaped = model.fixtures.filter((f) => f.outline);
+    expect(shaped.map((f) => f.id)).toEqual(["bar"]);
+    for (const f of shaped) {
+      expect(isConvexCcw(f.outline!), f.id).toBe(true);
+      const xs = f.outline!.map((p) => p[0]);
+      const ys = f.outline!.map((p) => p[1]);
+      expect([Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)], f.id).toEqual([f.box.x0, f.box.x1, f.box.y0, f.box.y1]);
+    }
+  });
+
+  it("lets no two solid fixtures on a floor share volume, unless one is mounted on the other (an outline counts, not its box)", () => {
     const solid = model.fixtures.filter((f) => !f.flat);
     const clashes: string[] = [];
     for (let i = 0; i < solid.length; i++)
@@ -111,7 +125,7 @@ describe("the House of Jars model: integrity", () => {
         const a = solid[i]!;
         const b = solid[j]!;
         if (a.floor !== b.floor || a.mountedOn === b.id || b.mountedOn === a.id) continue;
-        if (intersects(a.box, b.box)) clashes.push(`${a.id} x ${b.id}`);
+        if (fixturesClash(a, b)) clashes.push(`${a.id} x ${b.id}`);
       }
     expect(clashes).toEqual([]);
   });
@@ -157,7 +171,8 @@ describe("the House of Jars model: integrity", () => {
           const p = s.points[i - 1]!;
           const q = s.points[i]!;
           if (p.length > 2 || q.length > 2) continue; // climbing a flight
-          for (const f of solid) if (crosses(p, q, f.box)) hits.push(`${route.id}: ${p.join(",")} -> ${q.join(",")} crosses ${f.id}`);
+          for (const f of solid)
+            if (f.outline ? convexOverlap(f.outline, [[p[0]!, p[1]!], [q[0]!, q[1]!]]) : crosses(p, q, f.box)) hits.push(`${route.id}: ${p.join(",")} -> ${q.join(",")} crosses ${f.id}`);
         }
       }
     expect(hits).toEqual([]);
@@ -243,7 +258,7 @@ describe("the House of Jars model: integrity", () => {
           : { x0: wall.box.x0 - 0.3, x1: wall.box.x1 + 0.3, y0: o.from, y1: o.to, z0: 0, z1: 1.5 };
         for (const f of model.fixtures) {
           if (f.floor !== wall.floor || f.flat || ["door", "door-leaf", "stairs"].includes(f.type) || f.mount === "facade") continue;
-          if (intersects(f.box, zone)) blocked.push(`${f.id} in ${wall.id}`);
+          if (fixturesClash(f, { box: zone })) blocked.push(`${f.id} in ${wall.id}`);
         }
       }
     }
@@ -289,6 +304,7 @@ describe("the House of Jars model: counts from the walk", () => {
 
   it("has the café of the walk", () => {
     const cafe = inArea("cafe");
+    expect(count("bar", cafe)).toBe(1);
     expect(count("table", cafe)).toBe(5);
     expect(count("chair", cafe)).toBe(10);
     expect(count("table-tall-round", cafe)).toBe(2);
@@ -365,6 +381,111 @@ describe("the House of Jars model: counts from the walk", () => {
     expect((toilet.box.y0 + toilet.box.y1) / 2).toBeCloseTo((toiletDoor.from + toiletDoor.to) / 2, 6);
     expect(model.fixtures.find((f) => f.id === "basin-corridor")!.area).toBe("corridor");
     for (const jar of model.fixtures.filter((f) => f.type === "jar-clay" && f.area === "corridor")) expect(jar.box.x1).toBeGreaterThan(model.width - 0.2);
+  });
+
+  it("lays out both bathrooms as the owner told it: the door by the right wall, the sinks on the right, then a corridor with 2 showers in front and 3 toilets behind", () => {
+    for (const [bath, floorId] of [
+      ["bath-women", "floor1"],
+      ["bath-men", "floor2"],
+    ] as const) {
+      const of = (type: FixtureType) => model.fixtures.filter((f) => f.type === type && f.area === bath);
+      const showers = of("shower");
+      const stalls = of("toilet-stall");
+      const toilets = of("toilet");
+      expect([showers.length, stalls.length, toilets.length], bath).toEqual([2, 3, 3]);
+      // The door, in the front wall (to the landing), within a metre of the right wall.
+      const front = model.walls.find((w) => w.floor === floorId && w.id.endsWith("-bath-partition"))!;
+      const door = front.openings![0]!;
+      expect(front.openings, bath).toHaveLength(1);
+      expect(model.width - door.to, bath).toBeLessThan(1.0);
+      expect(door.from, bath).toBeGreaterThan(model.width / 2);
+      // The sinks on the right wall, on your right as you walk in, clear of the door's swing.
+      const vanity = of("vanity")[0]!;
+      expect(vanity.box.x1, bath).toBe(model.width);
+      expect(of("basin").every((b) => b.mountedOn === vanity.id), bath).toBe(true);
+      const leaf = of("door-leaf")[0]!.box;
+      const reach = door.to - door.from;
+      expect(Math.hypot(vanity.box.x0 - leaf.x0, vanity.box.y0 - front.box.y1), bath).toBeGreaterThan(reach);
+      // The showers side by side along the front, opening onto the corridor behind them.
+      expect(new Set(showers.map((s) => s.box.y0)).size, bath).toBe(1);
+      expect(showers.every((s) => s.faces === "+y" && s.box.y0 >= front.box.y1 - 1e-9 && s.box.x1 <= door.from), bath).toBe(true);
+      // The toilets in their stalls against the back wall, doors onto the corridor; the showers in front of them.
+      expect(stalls.every((s) => s.faces === "-y" && s.box.y1 === model.depth), bath).toBe(true);
+      expect(toilets.every((t) => stalls.some((s) => s.id === t.mountedOn)), bath).toBe(true);
+      const corridor = { y0: Math.max(...showers.map((s) => s.box.y1)), y1: Math.min(...stalls.map((s) => s.box.y0)) };
+      expect(corridor.y1 - corridor.y0, bath).toBeGreaterThanOrEqual(0.9);
+      // The corridor runs from the way in (left of the sinks) to the left wall, clear of everything on the floor.
+      const inCorridor = model.fixtures.filter((f) => f.area === bath && f.box.z0 < 1.5 && f.box.y0 < corridor.y1 && f.box.y1 > corridor.y0 && f.box.x0 < vanity.box.x0);
+      expect(inCorridor.map((f) => f.id), bath).toEqual([]);
+    }
+    // Both walks into the bathrooms go in through the door, and the team's round walks the corridor.
+    const bathDoor = model.walls.find((w) => w.id === "floor1-bath-partition")!.openings![0]!;
+    for (const route of model.routes.filter((r) => r.stops?.some((s) => s.area === "bath-women"))) {
+      const pts = route.segments.find((s) => s.floor === "floor1")!.points;
+      const through = pts.some((p, i) => {
+        const q = pts[i + 1];
+        if (!q || (p[1] - 12.65) * (q[1] - 12.65) > 0) return false;
+        const x = p[0] + ((q[0] - p[0]) * (12.65 - p[1])) / (q[1] - p[1] || 1);
+        return x > bathDoor.from && x < bathDoor.to;
+      });
+      expect(through, route.id).toBe(true);
+    }
+  });
+
+  it("has the built-in bar at the counter's street end: a little higher, angled then straight to the left wall, with the 3 high stools along it", () => {
+    const bar = model.fixtures.find((f) => f.type === "bar")!;
+    const counter = model.fixtures.find((f) => f.id === "counter")!;
+    expect(bar.note).toMatch(/^The owner, 7 October 2026: a built-in bar/);
+    // A little higher than the counter.
+    expect(bar.box.z1 - counter.box.z1).toBeGreaterThan(0.05);
+    expect(bar.box.z1 - counter.box.z1).toBeLessThanOrEqual(0.2);
+    const outline = bar.outline!;
+    // It meets the left wall, and its back runs from the wall to the counter's café side along the counter's street
+    // end: no gap there, so the staff aisle behind the counter is closed at that end.
+    expect(outline.filter((p) => p[0] === 0)).toHaveLength(2);
+    const back = outline.filter((p) => p[1] === counter.box.y0).map((p) => p[0]);
+    expect([Math.min(...back), Math.max(...back)]).toEqual([0, counter.box.x1]);
+    expect(bar.box.y1).toBe(counter.box.y0);
+    // Its face toward the café: straight from the wall, then at an angle up to the counter's corner.
+    const face = outline.filter((p) => p[1] < counter.box.y0);
+    expect(face.length).toBe(2);
+    const [wallEnd, bend] = [...face].sort((a, b) => a[0] - b[0]) as [readonly [number, number], readonly [number, number]];
+    expect(wallEnd[1]).toBe(bend[1]);
+    expect(bend[0]).toBeGreaterThan(0.3);
+    expect(bend[0]).toBeLessThan(counter.box.x1);
+    // The three high stools stand in front of it, on the café side: each near its face, and none along the counter.
+    const stools = model.fixtures.filter((f) => f.type === "stool-bar");
+    expect(stools).toHaveLength(3);
+    const toFace = (x: number, y: number) => {
+      // The signed distance to the angled face (positive on the café side) or, left of the bend, to the straight one.
+      if (x <= bend[0]) return bend[1] - y;
+      const dx = counter.box.x1 - bend[0];
+      const dy = counter.box.y0 - bend[1];
+      return ((x - bend[0]) * dy - (y - bend[1]) * dx) / Math.hypot(dx, dy);
+    };
+    for (const s of stools) {
+      const cx = (s.box.x0 + s.box.x1) / 2;
+      const cy = (s.box.y0 + s.box.y1) / 2;
+      expect(toFace(cx, cy), s.id).toBeGreaterThan(0.18);
+      expect(toFace(cx, cy), s.id).toBeLessThan(0.45);
+      expect(s.box.y1, s.id).toBeLessThan(counter.box.y0);
+      expect(convexOverlap(outline, footprint(s)), s.id).toBe(false);
+    }
+  });
+
+  it("has two paintings on the 2nd floor's landing, where the 1st floor has its shoe cubbies, and no cubbies; everyone's shoes go in the 1st floor's", () => {
+    const cubbies = model.fixtures.find((f) => f.type === "shoe-cubbies")!;
+    expect(cubbies.note).toMatch(/All guests, Dorm J's too, leave their shoes here \(the owner, 7 October 2026\)/);
+    expect(model.fixtures.filter((f) => f.area === "landing-2" && f.type === "shoe-cubbies")).toEqual([]);
+    const paintings = model.fixtures.filter((f) => f.area === "landing-2" && f.type === "picture-frame");
+    expect(paintings).toHaveLength(2);
+    for (const p of paintings) {
+      expect(p.variant, p.id).toBe("painting");
+      expect(p.mount, p.id).toBe("right-wall");
+      expect(p.box.x1, p.id).toBe(model.width);
+      expect(p.box.y0 >= cubbies.box.y0 && p.box.y1 <= cubbies.box.y1, p.id).toBe(true);
+      expect(p.note, p.id).toContain("The owner, 7 October 2026: no shoe cubbies on this landing, just a wall with two paintings.");
+    }
   });
 
   it("puts the door on the left of the front and the big window to its right", () => {

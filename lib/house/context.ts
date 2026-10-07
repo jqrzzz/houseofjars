@@ -15,6 +15,7 @@ const NAMES: Readonly<Record<FixtureType, readonly [string, string] | null>> = {
   "ac-outdoor": ["outdoor air-conditioning unit", "outdoor air-conditioning units"],
   awning: null,
   "back-counter": ["back counter", "back counters"],
+  bar: ["built-in bar", "built-in bars"],
   basin: ["basin", "basins"],
   bench: ["bench", "benches"],
   "bench-seat": ["built-in bench seat", "built-in bench seats"],
@@ -81,6 +82,16 @@ const NAMES: Readonly<Record<FixtureType, readonly [string, string] | null>> = {
   "window-ledge": ["window ledge to sit at", "window ledges to sit at"],
 };
 
+/** Things of one kind that are called otherwise when drawn as a variant: a frame that holds a painting. */
+const VARIANT_NAMES: Readonly<Record<string, readonly [string, string]>> = {
+  "picture-frame painting": ["painting", "paintings"],
+};
+
+/** What a thing is called, one and many (its variant's name, if it has one); null when it is not listed. */
+function nameOf(f: Fixture): readonly [string, string] | null {
+  return VARIANT_NAMES[`${f.type} ${f.variant ?? ""}`] ?? NAMES[f.type];
+}
+
 /** How many of a thing a fixture stands for: a grid of cubbies counts each cubby. */
 function units(f: Fixture): number {
   return f.type === "shoe-cubbies" && f.grid ? f.grid.cols * f.grid.rows : 1;
@@ -109,13 +120,15 @@ const outdoors = (f: Fixture) => f.type === "ac-outdoor";
 
 /** Things counted by kind: "3 bar stools, 14 pods (H01 to H17, with no H04, H13 or H14)". */
 function counted(fixtures: readonly Fixture[]): string {
-  const byType = new Map<FixtureType, Fixture[]>();
+  const byName = new Map<string, Fixture[]>();
   for (const f of fixtures) {
-    if (!NAMES[f.type]) continue;
-    byType.set(f.type, [...(byType.get(f.type) ?? []), f]);
+    const name = nameOf(f);
+    if (!name) continue;
+    byName.set(name[0], [...(byName.get(name[0]) ?? []), f]);
   }
-  const parts = [...byType.entries()].map(([type, list]) => {
-    const [one, many] = NAMES[type]!;
+  const parts = [...byName.values()].map((list) => {
+    const [one, many] = nameOf(list[0]!)!;
+    const type = list[0]!.type;
     const n = list.reduce((sum, f) => sum + units(f), 0);
     const labels = type === "pod" || type === "locker" ? list.map((f) => f.label).filter((l): l is string => Boolean(l)) : [];
     return `${n} ${n === 1 ? one : many}${labels.length > 0 ? ` (${labelRange(labels)})` : ""}`;

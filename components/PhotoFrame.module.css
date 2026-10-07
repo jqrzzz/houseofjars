@@ -1,4 +1,6 @@
 .figure {
+  /* The mat's width: generous, as a gallery mounts a picture. */
+  --mat: clamp(1.5rem, 1rem + 1.4vw, 2.25rem);
   display: grid;
   gap: var(--space-s);
 }
@@ -23,11 +25,11 @@
 }
 
 .mount + .plate {
-  margin-top: calc(-1 * var(--space-s) - 1.25rem + 6px);
+  margin-top: calc(-1 * var(--space-s) - var(--mat) + 6px);
 }
 
 /*
- * The mat: a --paper-near ground 1.25rem wide around the window, cut from
+ * The mat: a --paper-near ground --mat wide around the window, cut from
  * card: its edge is the outline repeated at (--edge-x, --edge-y) in
  * --paper-edge (a lamplight rim by Evening). A square mat carries the edge as
  * a box shadow; an arch mat is clipped to the arch, so its edge is an arch of
@@ -35,6 +37,28 @@
  */
 .mount {
   position: relative;
+  isolation: isolate;
+}
+
+/*
+ * Lamplight behind the frame: a soft warm glow, as if a lamp stood behind
+ * the picture, faint by Day and warm by Evening (--glow-strength). It comes
+ * up as the picture is revealed and swells a little under the pointer.
+ */
+.mount::after {
+  content: "";
+  position: absolute;
+  /* Above and below only on phones, where a frame runs to the screen's edges; round the sides from 48rem. */
+  inset: -9% 0;
+  z-index: -1;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--lamplight) calc(var(--glow-strength) * 48%), transparent) 0%,
+    color-mix(in srgb, var(--lamplight) calc(var(--glow-strength) * 18%), transparent) 62%,
+    transparent 100%
+  );
+  pointer-events: none;
+  transition: scale var(--dur-scene) var(--ease-out);
 }
 
 .archMount::before {
@@ -50,8 +74,66 @@
 .mat {
   --wash: transparent;
   position: relative;
-  padding: 1.25rem;
+  padding: var(--mat);
   background: var(--paper-near);
+}
+
+@media (min-width: 48rem) {
+  .mount::after {
+    inset: -9% -7%;
+  }
+}
+
+/*
+ * The window's slip: a narrow inner mat of warm cream, rimmed with a fine
+ * gilt line, between the mat and the picture, as in a gallery frame. By
+ * Evening the slip is lamplit and its line glows.
+ */
+.window {
+  --slip: color-mix(in oklab, var(--paper-near) 80%, var(--lamplight) 20%);
+  --fillet: color-mix(in srgb, var(--teak) 60%, transparent);
+  position: relative;
+  z-index: 1;
+  padding: 0.5rem;
+}
+
+.window::before,
+.window::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.window::before {
+  inset: 0;
+  background: var(--fillet);
+}
+
+.window::after {
+  inset: 1px;
+  background: var(--slip);
+}
+
+.arch > .window::before,
+.arch > .window::after {
+  -webkit-clip-path: url(#arch-frame);
+  clip-path: url(#arch-frame);
+}
+
+.window > .frame {
+  z-index: 1;
+}
+
+:global(:root[data-theme="dark"]) .window {
+  --slip: color-mix(in oklab, var(--paper-near) 82%, var(--lamplight) 18%);
+  --fillet: color-mix(in srgb, var(--lamplight) 75%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .window {
+    --slip: color-mix(in oklab, var(--paper-near) 82%, var(--lamplight) 18%);
+    --fillet: color-mix(in srgb, var(--lamplight) 75%, transparent);
+  }
 }
 
 .mat.rect {
@@ -86,9 +168,6 @@
   clip-path: url(#arch-frame);
 }
 
-.mat > .frame {
-  z-index: 1;
-}
 
 :global(:root[data-theme="dark"]) .mat {
   --wash: color-mix(in srgb, var(--lamplight) 9%, transparent);
@@ -100,10 +179,14 @@
   }
 }
 
-/* Cream by default; a section that is itself cream sets --frame-ground to paper. */
+/*
+ * Cream by default; a section that is itself cream sets --frame-ground to
+ * paper. It clips its picture without becoming a scroll container (clip, not
+ * hidden), so the picture's view() timeline follows the page's scroll.
+ */
 .frame {
   position: relative;
-  overflow: hidden;
+  overflow: clip;
   width: 100%;
   background: var(--frame-ground, var(--surface));
 }
@@ -135,12 +218,36 @@
   @supports (animation-timeline: view()) {
     .image {
       animation:
+        photo-reveal linear both,
         photo-settle linear both,
         photo-drift linear both;
+      /* As long as the scroll range (the shorthand's 0s would end each animation at once). */
+      animation-duration: auto;
       animation-timeline: view();
       animation-range:
+        entry 0% cover 35%,
         entry 0% cover 45%,
         cover 0% cover 100%;
+    }
+
+    .drawing {
+      animation: photo-reveal linear both;
+      animation-duration: auto;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+
+    .mount::after {
+      animation: glow-up linear both;
+      animation-duration: auto;
+      animation-timeline: view();
+      animation-range: entry 20% cover 50%;
+    }
+  }
+
+  @media (hover: hover) {
+    .figure:hover .mount::after {
+      scale: 1.06;
     }
   }
 
@@ -148,6 +255,45 @@
     .figure:hover .image {
       scale: 1.02;
     }
+  }
+}
+
+/*
+ * The reveal: the picture unrolls from the top as it comes into view, behind
+ * a soft edge as tall as the picture, like a paper blind let down in
+ * lamplight; what has scrolled into view is never left empty for long. The
+ * mask is set only while the animation runs, so with Still or reduced motion
+ * the picture simply shows.
+ */
+@keyframes photo-reveal {
+  from {
+    -webkit-mask-image: linear-gradient(to bottom, #000 33.3%, transparent 66.6%);
+    mask-image: linear-gradient(to bottom, #000 33.3%, transparent 66.6%);
+    -webkit-mask-size: 100% 300%;
+    mask-size: 100% 300%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: 0 100%;
+    mask-position: 0 100%;
+  }
+  to {
+    -webkit-mask-image: linear-gradient(to bottom, #000 33.3%, transparent 66.6%);
+    mask-image: linear-gradient(to bottom, #000 33.3%, transparent 66.6%);
+    -webkit-mask-size: 100% 300%;
+    mask-size: 100% 300%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+
+@keyframes glow-up {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

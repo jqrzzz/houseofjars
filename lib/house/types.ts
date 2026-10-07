@@ -91,6 +91,7 @@ export type FixtureType =
   | "ac-outdoor"
   | "awning"
   | "back-counter"
+  | "bar"
   | "basin"
   | "bench"
   | "bench-seat"
@@ -173,6 +174,12 @@ export interface Fixture extends Certainty {
   readonly area: string;
   /** Its bounding box; z is relative to its floor. */
   readonly box: Box3;
+  /**
+   * Its footprint, when it is not a rectangle (the built-in bar, angled then straight): a convex polygon in
+   * plan, [x, y] points counter-clockwise, whose bounding rectangle is the box's. It stands from the box's z0
+   * to its z1. The plans, the cutaways and the tests (collisions, routes, doorways) use it instead of the box.
+   */
+  readonly outline?: readonly (readonly [number, number])[];
   /** A name or number that belongs to the thing: H01, J12, Women. */
   readonly label?: string;
   readonly faces?: Facing;

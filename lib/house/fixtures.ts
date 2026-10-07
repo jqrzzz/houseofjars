@@ -31,6 +31,7 @@ import {
   planeText,
   poly,
   prismFaces,
+  rectCorners,
   screen,
   shapes,
   turned,
@@ -490,6 +491,53 @@ function counter(b: Box3): Node[] {
       lines(gridRight(b.x1, b.y0, b.y1, b.z0, b.z1, step, step), "tg"),
     ]),
   ];
+}
+
+/**
+ * A built-in bar that is not a box (angled, then straight): its outline extruded in cream tiles, like the
+ * counter, with the tile joints on the faces the camera sees and on its top.
+ */
+function bar(fx: Fixture, b: Box3, ctx: FixtureContext): Node[] {
+  const outline = fx.outline ?? rectCorners(b);
+  const step = 0.15;
+  const joints: Vec3[][] = [];
+  for (let i = 0; i < outline.length; i++) {
+    const p = outline[i]!;
+    const q = outline[(i + 1) % outline.length]!;
+    const dx = q[0] - p[0];
+    const dy = q[1] - p[1];
+    // Only the faces toward the camera (see prismFaces).
+    if (dx + dy <= 1e-9) continue;
+    const len = Math.hypot(dx, dy);
+    for (let s = step; s < len - 1e-6; s += step) joints.push([[p[0] + (dx * s) / len, p[1] + (dy * s) / len, b.z0], [p[0] + (dx * s) / len, p[1] + (dy * s) / len, b.z1]]);
+    for (let z = b.z0 + step; z < b.z1 - 1e-6; z += step) joints.push([[p[0], p[1], z], [q[0], q[1], z]]);
+  }
+  // The top's grid, each line clipped to the outline (convex: one stretch per line).
+  const across = (at: number, axis: 0 | 1): Vec3[] | null => {
+    const hits: number[] = [];
+    for (let i = 0; i < outline.length; i++) {
+      const p = outline[i]!;
+      const q = outline[(i + 1) % outline.length]!;
+      const lo = Math.min(p[axis], q[axis]);
+      const hi = Math.max(p[axis], q[axis]);
+      if (at < lo - 1e-9 || at > hi + 1e-9 || hi - lo < 1e-9) continue;
+      const t = (at - p[axis]) / (q[axis] - p[axis]);
+      hits.push(p[1 - axis]! + (q[1 - axis]! - p[1 - axis]!) * t);
+    }
+    if (hits.length < 2) return null;
+    const [m0, m1] = [Math.min(...hits), Math.max(...hits)];
+    if (m1 - m0 < 1e-6) return null;
+    return axis === 0 ? [[at, m0, b.z1], [at, m1, b.z1]] : [[m0, at, b.z1], [m1, at, b.z1]];
+  };
+  for (let x = b.x0 + step; x < b.x1 - 1e-6; x += step) {
+    const l = across(x, 0);
+    if (l) joints.push(l);
+  }
+  for (let y = b.y0 + step; y < b.y1 - 1e-6; y += step) {
+    const l = across(y, 1);
+    if (l) joints.push(l);
+  }
+  return [part(b, [...prismFaces(outline, b.z0, b.z1, ctx.depth, { top: c("tile", 0), front: c("tile", 1), right: c("tile", 2) }), lines(joints, "tg")])];
 }
 
 function backCounter(b: Box3): Node[] {
@@ -1317,8 +1365,31 @@ function stall(fx: Fixture, b: Box3): Node[] {
   ];
 }
 
-function shower(b: Box3): Node[] {
+/**
+ * A shower cubicle. Opening to the right (+x, the default): the heater on the left wall, a panel front and
+ * back, the door in the panel on the right. Opening onto a corridor behind it (+y, the bathrooms upstairs):
+ * its front is the room's wall and its left the wall or the next shower's panel; the heater and the shower
+ * head on its left side, the panel on its right, the door across the back (the camera sees its inner face).
+ */
+function shower(fx: Fixture, b: Box3): Node[] {
   const t = 0.04;
+  if (fx.faces === "+y") {
+    const yh = b.y1 - 0.4;
+    const yr = b.y0 + 0.35;
+    return [
+      decorate(solid(box(b.x0, b.x0 + 0.08, yh - 0.13, yh + 0.13, b.z0 + 1.45, b.z0 + 1.85), "slate"), [
+        poly(onRight(b.x0 + 0.08, yh - 0.06, yh + 0.06, b.z0 + 1.62, b.z0 + 1.72), c("lamp", 2, "ns")),
+      ]),
+      part(box(b.x0, b.x0 + 0.25, yr - 0.02, yr + 0.02, b.z0 + 1.45, b.z0 + 1.65), [
+        line([[b.x0, yr, b.z0 + 1.6], [b.x0 + 0.2, yr, b.z0 + 1.6], [b.x0 + 0.22, yr, b.z0 + 1.45]], "b"),
+      ]),
+      decorate(solid(box(b.x0, b.x1 - t, b.y1 - t, b.y1, b.z0, b.z1), "bathTile"), [
+        poly(onFront(b.y1 - t, b.x0 + 0.1, b.x1 - t - 0.1, b.z0 + 0.04, b.z0 + 1.95), c("white", 1)),
+        line([[b.x1 - t - 0.24, b.y1 - t, b.z0 + 0.95], [b.x1 - t - 0.2, b.y1 - t, b.z0 + 0.95]], "b"),
+      ]),
+      decorate(solid(box(b.x1 - t, b.x1, b.y0, b.y1, b.z0, b.z1), "bathTile"), [line([[b.x1, b.y0, b.z0 + 1.2], [b.x1, b.y1, b.z0 + 1.2]], "tg")]),
+    ];
+  }
   const yc = (b.y0 + b.y1) / 2;
   return [
     // The hot-water heater on the left wall, and the shower head.
@@ -1397,6 +1468,8 @@ export function isoParts(fx: Fixture, ctx: FixtureContext, ceiling: number): Nod
       return acIndoor(fx, b);
     case "counter":
       return counter(b);
+    case "bar":
+      return bar(fx, b, ctx);
     case "back-counter":
       return backCounter(b);
     case "sink":
@@ -1477,7 +1550,7 @@ export function isoParts(fx: Fixture, ctx: FixtureContext, ceiling: number): Nod
     case "toilet-stall":
       return stall(fx, b);
     case "shower":
-      return shower(b);
+      return shower(fx, b);
     case "mirror":
       return [part(b, [poly(arch("right", b.x0, (b.y0 + b.y1) / 2, b.y1 - b.y0, b.z0, b.z1), c("glass", 2))])];
     case "sign-plate":
@@ -2166,6 +2239,10 @@ function planCircle(p: Projection, x: number, y: number, r: number): Cmd[] {
   return circle(cx, cy, r * p.scale);
 }
 
+function planPolygon(p: Projection, pts: readonly (readonly [number, number])[]): Cmd[] {
+  return [...planLine(p, pts), ["Z"]];
+}
+
 function planLine(p: Projection, pts: readonly (readonly [number, number])[]): Cmd[] {
   return pts.map(([x, y], i) => {
     const [sx, sy] = p.point([x, y, 0]);
@@ -2320,6 +2397,8 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
       return [rect(c("plaster", 0)), mark(c("cushion", 0), planRect(p, b.x0 + 0.04, b.x1 - 0.04, b.y0 + 0.04, b.y1 - 0.04))];
     case "counter":
       return [rect(c("tile", 0))];
+    case "bar":
+      return [mark(c("tile", 0), planPolygon(p, fx.outline ?? rectCorners(b)))];
     case "back-counter":
     case "vanity":
     case "kitchen-counter":
@@ -2352,10 +2431,25 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
       return [mark(c("white", 0), tank), mark(c("white", 0), bowl)];
     }
     case "shower":
+      // The door on the side it opens to: the back (+y) or the right (+x, the default).
       return [
         rect(c("bathTile", 0), 0.04),
         mark(c("slate", 0), planCircle(p, cx, cy, 0.05)),
-        mark("h n", planLine(p, [[b.x1 - 0.04, b.y0 + 0.1], [b.x1 - 0.04, b.y1 - 0.1]])),
+        mark(
+          "h n",
+          planLine(
+            p,
+            fx.faces === "+y"
+              ? [
+                  [b.x0 + 0.1, b.y1 - 0.04],
+                  [b.x1 - 0.1, b.y1 - 0.04],
+                ]
+              : [
+                  [b.x1 - 0.04, b.y0 + 0.1],
+                  [b.x1 - 0.04, b.y1 - 0.1],
+                ],
+          ),
+        ),
       ];
     case "toilet-stall":
       return [
@@ -2423,8 +2517,13 @@ export function planMarks(fx: Fixture, p: Projection, opts: PlanMarkOptions = {}
       return [rect(c(fx.variant?.includes("dark") ? "brown" : "wood", 0))];
     case "door-panel":
     case "lattice-door":
-    case "picture-frame":
       return [rect(c("woodDark", 0))];
+    case "picture-frame": {
+      // A painting (the 2nd floor's landing) is named beside its frame, which on a plan is a sliver on the wall.
+      if (fx.variant !== "painting") return [rect(c("woodDark", 0))];
+      const off = fx.faces === "-x" ? [b.x0 - 0.55, cy] : fx.faces === "+x" ? [b.x1 + 0.55, cy] : fx.faces === "+y" ? [cx, b.y1 + 0.2] : [cx, b.y0 - 0.2];
+      return [rect(c("woodDark", 0)), planText(p, off[0]!, off[1]!, "painting", 9, "lc")];
+    }
     case "fridge":
       return [rect(c("steel", 0))];
     case "rack":

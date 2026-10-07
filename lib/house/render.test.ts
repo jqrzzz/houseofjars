@@ -418,6 +418,25 @@ describe("drawn from the model, not from constants in the renderer", () => {
     expect(renderPlan("floor2")).toMatch(/<g id="labels-floor2" data-labels="" data-floor="floor2">/);
   });
 
+  it("draws a fixture with an outline from its outline: the built-in bar on the plans and in the cutaways, in the counter's tiles", () => {
+    // Plans: one closed shape through the outline's four corners (50 px to the metre, the street at the bottom).
+    for (const svg of [renderPlan("ground"), renderPlan("ground", { outfit: "paper", theme: "day" })]) {
+      const shape = /<g id="fx-bar" data-fixture="bar"[^>]*>(?:<use[^>]*\/>)?<path class="ti0" d="([^"]+)"\/><\/g>/.exec(svg)?.[1];
+      expect(shape).toBe("M0 605L32.5 605L82.5 580L0 580Z");
+    }
+    for (const svg of [renderCutaway({ floors: ["ground"] }), renderCutaway({ floors: ["ground"], outfit: "paper", theme: "day" })]) {
+      const group = /<g id="fx-bar"[^>]*>([\s\S]*?)<\/g>/.exec(svg)![1]!;
+      // Its two faces toward the camera (the straight one and the angled one) and its top.
+      expect((group.match(/class="ti[012]/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it("names the 2nd floor's paintings on its plan, beside their frames on the right wall", () => {
+    const svg = renderPlan("floor2");
+    for (const id of ["painting-2-1", "painting-2-2"]) expect(svg).toMatch(new RegExp(`<g id="fx-${id}" data-fixture="picture-frame"[^>]*><path[^>]*/><text class="lc"[^>]*>painting</text></g>`));
+    expect(renderPlan("ground")).not.toContain(">painting<");
+  });
+
   it("writes no locker numbers on a plan while where the stacks stand is assumed", () => {
     for (const svg of [renderPlan("floor1"), renderPlan("floor2"), renderPlan("floor1", { outfit: "paper", theme: "day" })]) {
       expect(svg).toMatch(/data-fixture="locker"/);

@@ -210,7 +210,10 @@ function dormAreas(floor: FloorId, level: 1 | 2, letter: "h" | "j", bath: "women
       kind: "wash",
       name: bath === "women" ? "Women's bathroom" : "Men's bathroom",
       rect: { x0: 0, x1: W, y0: 12.6, y1: D },
-      anchor: { x: 2.0, y: 14.0 },
+      // Over the corridor between the showers and the toilets: in 3D at the height of their tops (so the label
+      // sits above them, over the back wall, and leaves them in view), on the plans on its floor, clear of the sinks.
+      anchor: { x: 1.75, y: 14.25, z: 2.2 },
+      planAnchor: { x: 1.75, y: 14.25 },
       ...unconfirmed,
     },
   ];
@@ -316,8 +319,8 @@ function dormWalls(floor: FloorId, level: 1 | 2): Wall[] {
       floor,
       kind: "partition",
       box: box(0, W, 12.6, 12.7, 0, 2.9),
-      // Straight ahead up the passage (f2-02).
-      openings: [{ from: 2.6, to: 3.45, z1: 2.1 }],
+      // The bathroom's door, up the passage (f2-02), right next to the right wall (the owner, 7 October 2026).
+      openings: [{ from: 2.95, to: 3.75, z1: 2.1 }],
       material: "bathTile",
       ...unconfirmed,
     },
@@ -346,13 +349,24 @@ const facade = (id: string, type: FixtureType, area: string, b: Box3, more: Part
   ...more,
 });
 
-/** Low tables, front left and along the right wall, each with a chair on either side along y. */
+/**
+ * Low tables, front left and along the right wall, each with a chair on either side along y. The two front left
+ * ones stood at (0.65, 1.9) and (0.65, 3.4) on the walk; they are drawn a little toward the street and the wall,
+ * clear of the built-in bar and its stools (the owner, 7 October 2026).
+ */
 const LOW_TABLES: readonly (readonly [number, number])[] = [
-  [0.65, 1.9],
-  [0.65, 3.4],
+  [0.55, 1.6],
+  [0.55, 3.05],
   [3.55, 5.6],
   [3.55, 7.0],
   [3.55, 8.4],
+];
+
+/** The three high stools, about 30 cm out from the built-in bar's angled face, from its corner to its tip at the counter. */
+const BAR_STOOLS: readonly (readonly [number, number])[] = [
+  [0.98, 3.73],
+  [1.38, 3.93],
+  [1.785, 4.13],
 ];
 
 const groundFixtures: Fixture[] = on("ground", [
@@ -426,14 +440,33 @@ const groundFixtures: Fixture[] = on("ground", [
     type: "counter",
     area: "desk",
     box: box(1.05, 1.65, 4.4, 7.6, 0, 1.05),
-    note: "Free-standing, cream tiles: the café bar and the front desk.",
+    note: "Cream tiles: the café bar and the front desk. Its street end runs into the built-in bar, which closes the staff aisle there; staff get in behind it from the back end, by the drinks fridge.",
+  },
+  // At the counter's street end, a little higher: angled toward the left wall, then straight to meet it (the owner,
+  // 7 October 2026). Its outline in plan, counter-clockwise: the straight run along the wall end, the angled face
+  // up to the counter's café-side corner, and the back flush with the counter's end and the back counter's.
+  {
+    id: "bar",
+    type: "bar",
+    area: "cafe",
+    box: box(0, 1.65, 3.9, 4.4, 0, 1.15),
+    outline: [
+      [0, 3.9],
+      [0.65, 3.9],
+      [1.65, 4.4],
+      [0, 4.4],
+    ],
+    note: "The owner, 7 October 2026: a built-in bar at the counter's street end, a little higher, at an angle to the left wall and then straight, with 3 high stools.",
   },
   { id: "back-counter", type: "back-counter", area: "desk", box: box(0, 0.55, 4.4, 7.6, 0, 0.9), faces: "+x" },
   { id: "sink-bar", type: "sink", area: "desk", box: box(0.1, 0.46, 6.4, 6.8, 0.86, 0.95), mountedOn: "back-counter" },
   // The espresso machine and grinder stand on the counter's back end, by the reception sign (gf-01).
   { id: "coffee-machine", type: "coffee-machine", area: "desk", box: box(1.1, 1.5, 6.95, 7.4, 1.05, 1.45), mountedOn: "counter", faces: "-x" },
   { id: "shelves", type: "shelves", area: "desk", box: box(0, 0.3, 4.4, 7.6, 1.3, 2.8), faces: "+x", grid: { cols: 8, rows: 4 } },
-  ...many("stool-bar", "stool-bar", "cafe", [centred(1.95, 5.0, 0.35, 0.35, 0.75), centred(1.95, 5.8, 0.35, 0.35, 0.75), centred(1.95, 6.6, 0.35, 0.35, 0.75)]),
+  // The three high stools stand along the bar's face, on the café side (the owner, 7 October 2026).
+  ...many("stool-bar", "stool-bar", "cafe", BAR_STOOLS.map(([x, y]) => centred(x, y, 0.35, 0.35, 0.75)), {
+    note: "The three high stools stand along the built-in bar's face, on the café side (the owner, 7 October 2026).",
+  }),
   // Behind the counter's back end, against the stairs' teak front (gf-14, gf-15).
   { id: "fridge-drinks", type: "fridge-drinks", area: "cafe", box: box(0.05, 0.7, 7.95, 8.6, 0, 1.9), faces: "+x" },
   {
@@ -450,8 +483,8 @@ const groundFixtures: Fixture[] = on("ground", [
     "pendant",
     "cafe",
     [
-      [0.85, 1.9],
-      [0.85, 3.4],
+      [0.75, 1.6],
+      [0.75, 3.05],
       [1.35, 4.9],
       [1.35, 6.0],
       [1.35, 7.1],
@@ -482,8 +515,9 @@ const groundFixtures: Fixture[] = on("ground", [
     id: "dehumidifier",
     type: "dehumidifier",
     area: "cafe",
-    box: centred(0.95, 4.25, 0.35, 0.25, 0.6),
-    note: "Nudged 10 cm from the walk's spot (0.9, 4.15) so it clears the chair at the second table.",
+    box: centred(0.8, 4.6, 0.35, 0.25, 0.6),
+    confirmed: false,
+    note: "The dehumidifier stood at (0.9, 4.15) on the walk, where the built-in bar is (the owner, 7 October 2026); where it stands now is assumed: just behind the bar, at the closed end of the staff aisle.",
   },
   {
     id: "luggage-space",
@@ -704,7 +738,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
     },
   );
 
-  // The landing: the stairwell, the shoe cubbies (1st floor only), a wall lamp. You arrive up the stairs facing the cubbies,
+  // The landing: the stairwell, the shoe cubbies (1st floor only; the 2nd floor has two paintings there), a wall lamp. You arrive up the stairs facing the cubbies,
   // and the passage beside the stairwell leads to the dorm at the front and the bathroom at the back (f2-01 to f2-03).
   if (level === 1) {
     list.push(
@@ -715,7 +749,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
         box: box(3.6, W, 9.2, 11.4, 0, 2.1),
         faces: "-x",
         grid: { cols: 5, rows: 6 },
-        note: "Built in: 5 across and 6 high. Guests carry their shoes up from the ground floor.",
+        note: "Built in: 5 across and 6 high. Guests carry their shoes up from the ground floor. All guests, Dorm J's too, leave their shoes here (the owner, 7 October 2026).",
       },
       // The same U-shaped stair to the 2nd floor (see STAIR), its first flight beside the bathroom door (f2-02).
       {
@@ -750,25 +784,48 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
         note: "Assumed the same as the ground floor's: back toward the passage, up to the 2nd floor.",
       },
     );
+  } else {
+    // No cubbies on the 2nd floor's landing: two paintings on the wall where the 1st floor has them.
+    list.push(
+      ...many("picture-frame", `painting-${level}`, landing, [box(3.96, W, 9.45, 10.15, 1.2, 1.8), box(3.96, W, 10.45, 11.15, 1.2, 1.8)], {
+        mount: "right-wall",
+        faces: "-x",
+        variant: "painting",
+        note: "The owner, 7 October 2026: no shoe cubbies on this landing, just a wall with two paintings.",
+      }),
+    );
   }
   list.push({ id: `wall-lamp-${level}`, type: "wall-lamp", area: landing, box: box(0, 0.12, 9.05, 9.25, 2.1, 2.4), faces: "+x" });
 
-  // The bathroom. Walking in and facing the back: the vanity on the right wall, showers on the left, toilets at the back.
+  // The bathroom (the owner, 7 October 2026). Its door is in the front wall, right next to the right wall. Walking
+  // in and facing the back: the sinks on your right (the vanity on the right wall, with the mirrors, the dryers and
+  // the rules sign). Then you turn left into a small corridor that runs toward the left wall: the 2 showers on its
+  // left (the front side, side by side) and the 3 toilet stalls on its right (against the back wall), all opening
+  // onto it.
   list.push(
     {
       id: `door-${bath}`,
       type: "door-leaf",
       area: bath,
-      box: box(2.6, 2.65, 12.7, 13.55, 0, 2.05),
+      box: box(2.95, 3.0, 12.7, 13.5, 0, 2.05),
       label: bathroom === "women" ? "Women" : "Men",
       variant: "wood",
+      note: "The bathroom's door is in its front wall, right next to the right wall (the owner, 7 October 2026); drawn open, swung in to the left.",
     },
-    { id: `vanity-${bathroom}`, type: "vanity", area: bath, box: box(3.45, W, 12.8, 14.4, 0, 0.85), faces: "-x" },
-    ...many("basin", `basin-${bathroom}`, bath, [centred(3.72, 13.4, 0.4, 0.4, 0.15, 0.85), centred(3.72, 13.95, 0.4, 0.4, 0.15, 0.85)], {
+    {
+      id: `vanity-${bathroom}`,
+      type: "vanity",
+      area: bath,
+      // Starting clear of the door's swing.
+      box: box(3.45, W, 13.35, 14.65, 0, 0.85),
+      faces: "-x",
+      note: "The sinks are on your right as you walk in (the owner, 7 October 2026).",
+    },
+    ...many("basin", `basin-${bathroom}`, bath, [centred(3.72, 13.7, 0.4, 0.4, 0.15, 0.85), centred(3.72, 14.3, 0.4, 0.4, 0.15, 0.85)], {
       mountedOn: `vanity-${bathroom}`,
       variant: "vessel",
     }),
-    ...many("mirror", `mirror-${bathroom}`, bath, [box(3.97, W, 13.2, 13.6, 1.15, 2.0), box(3.97, W, 13.75, 14.15, 1.15, 2.0)], {
+    ...many("mirror", `mirror-${bathroom}`, bath, [box(3.97, W, 13.5, 13.9, 1.15, 2.0), box(3.97, W, 14.1, 14.5, 1.15, 2.0)], {
       mount: "right-wall",
       faces: "-x",
       variant: "arched",
@@ -788,7 +845,7 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
       id: `ladder-hatch-${bathroom}`,
       type: "ladder-wall",
       area: bath,
-      box: box(3.88, W, 14.45, 14.8, 0, 2.9),
+      box: box(3.88, W, 14.7, 15.05, 0, 2.9),
       note: "Up to a hatch in the ceiling.",
     },
   );
@@ -796,16 +853,26 @@ export function dormFloor(level: 1 | 2, letter: "h" | "j", bathroom: "women" | "
     const stall = `stall-${bathroom}-${i + 1}`;
     list.push(
       // The stall nearest the camera (on the right) is drawn cut open low, so one toilet shows in the 3D views.
-      { id: stall, type: "toilet-stall", area: bath, box: box(i * 0.9, (i + 1) * 0.9, 14.75, D, 0, 2.2), faces: "-y", variant: i === 2 ? "cut" : undefined },
+      {
+        id: stall,
+        type: "toilet-stall",
+        area: bath,
+        box: box(i * 0.9, (i + 1) * 0.9, 14.75, D, 0, 2.2),
+        faces: "-y",
+        variant: i === 2 ? "cut" : undefined,
+        note: "Past the sinks you turn left into a small corridor toward the left wall: the 3 toilets are on its right, in stalls against the back wall with their doors onto it (the owner, 7 October 2026).",
+      },
       { id: `toilet-${bathroom}-${i + 1}`, type: "toilet", area: bath, box: centred(i * 0.9 + 0.45, 15.55, 0.4, 0.65, 0.8), faces: "-y", mountedOn: stall },
     );
   }
   list.push(
-    ...many("shower", `shower-${bathroom}`, bath, [box(0, 1.0, 12.8, 13.75, 0, 2.2), box(0, 1.0, 13.75, 14.7, 0, 2.2)], {
-      faces: "+x",
-      note: "Each shower has its own small hot-water heater on the wall.",
+    // Side by side along the front wall, between the left wall and the way in, each opening onto the corridor behind it.
+    ...many("shower", `shower-${bathroom}`, bath, [box(0, 1.15, 12.7, 13.75, 0, 2.2), box(1.15, 2.3, 12.7, 13.75, 0, 2.2)], {
+      faces: "+y",
+      note: "The 2 showers are on the corridor's left, side by side on the front side, opening onto it (the owner, 7 October 2026). Each shower has its own small hot-water heater on the wall.",
     }),
-    { id: `fan-${bathroom}`, type: "fan", area: bath, box: centred(2.2, 13.3, 0.4, 0.4, 0.3, 2.6) },
+    // Over the way in, between the showers and the door.
+    { id: `fan-${bathroom}`, type: "fan", area: bath, box: centred(2.6, 13.3, 0.4, 0.4, 0.3, 2.6) },
   );
 
   const extra: Partial<Fixture> = level === 2 ? { confirmed: false, note: FLOOR2_NOTE } : {};
@@ -872,6 +939,22 @@ const DORM_TO_STAIRS: readonly RoutePoint[] = [
   [3.1, 9.3],
   [2.6, 9.15],
 ];
+/** Where the bathroom's corridor runs, between the showers and the toilets (both dorm floors). */
+const BATHROOM_CORRIDOR = [1.5, 14.25] as const;
+/**
+ * From the landing's passage through the bathroom's door by the right wall, past the sinks, left along the corridor
+ * between the showers and the toilets, and back out to the passage (both dorm floors).
+ */
+const INTO_BATHROOM: readonly RoutePoint[] = [
+  [3.35, 12.65],
+  [3.2, 13.55],
+  [3.0, 14.25],
+  BATHROOM_CORRIDOR,
+  [3.0, 14.25],
+  [3.2, 13.55],
+  [3.35, 12.65],
+];
+
 /** From the counter through the café and out of the glass door onto the terrace. */
 const CAFE_TO_TERRACE: readonly RoutePoint[] = [
   [2.35, 4.6],
@@ -992,9 +1075,15 @@ const routes: readonly Route[] = [
     id: "bathroom-women",
     name: "From Dorm H to the women’s bathroom",
     who: "guest",
-    segments: [{ floor: "floor1", points: [[3.15, 8.7], [3.1, 11.6], [3.0, 12.7], [3.1, 13.6]] }],
+    segments: [{ floor: "floor1", points: [[3.15, 8.7], [3.1, 11.6], [3.35, 12.65], [3.2, 13.55]] }],
     stops: [
-      { floor: "floor1", at: [3.1, 13.6], label: "Women’s bathroom", area: "bath-women", does: "The women’s bathroom is on the 1st floor, past the stairs." },
+      {
+        floor: "floor1",
+        at: [3.2, 13.55],
+        label: "Women’s bathroom",
+        area: "bath-women",
+        does: "The women’s bathroom is on the 1st floor, past the stairs: its door is by the right wall. The sinks are on your right; turn left for the showers and the toilets.",
+      },
     ],
   },
   {
@@ -1006,17 +1095,17 @@ const routes: readonly Route[] = [
       { floor: "ground", points: [[2.35, 6.2], [2.35, 7.3], [2.85, 8.45], [3.25, 9.2], [3.2, 11.0], [2.5, 11.8], [3.2, 11.0], ...UP_TO_FLOOR1] },
       {
         floor: "floor1",
-        points: [[2.6, 9.15], [3.1, 9.3], [3.3, 10.2], [3.1, 11.6], [3.0, 12.7], [3.1, 13.6], [3.0, 12.7], [3.1, 11.6], [3.15, 8.65], [3.15, 8.0], [2.4, 7.85], [2.0, 6.8], [2.0, 3.0], [2.0, 6.8], [2.4, 7.85], [3.15, 8.0], [3.15, 8.65], ...UP_TO_FLOOR2],
+        points: [[2.6, 9.15], [3.1, 9.3], [3.3, 10.2], [3.1, 11.6], ...INTO_BATHROOM, [3.1, 11.6], [3.15, 8.65], [3.15, 8.0], [2.4, 7.85], [2.0, 6.8], [2.0, 3.0], [2.0, 6.8], [2.4, 7.85], [3.15, 8.0], [3.15, 8.65], ...UP_TO_FLOOR2],
       },
-      { floor: "floor2", points: [[2.6, 9.15], [3.1, 9.3], [3.15, 10.4], [3.1, 11.6], [3.0, 12.7], [3.1, 13.6], [3.0, 12.7], [3.1, 11.6], [3.15, 8.65], [3.15, 8.0], [2.4, 7.85], [2.0, 6.8], [2.0, 3.0]] },
+      { floor: "floor2", points: [[2.6, 9.15], [3.1, 9.3], [3.15, 10.4], [3.1, 11.6], ...INTO_BATHROOM, [3.1, 11.6], [3.15, 8.65], [3.15, 8.0], [2.4, 7.85], [2.0, 6.8], [2.0, 3.0]] },
     ],
     stops: [
       { floor: "ground", at: [2.35, 6.2], label: "Café", area: "cafe", does: "Look over the tables, the counter and the floor, and clean what needs it." },
       { floor: "ground", at: [2.5, 11.8], label: "Toilet", area: "toilet-ground", does: "The toilet, its sink and the corridor basin: cleaned and refilled." },
       { floor: "floor1", at: [3.3, 10.2], label: "Landing", area: "landing-1", does: "Tidy the shoe cubbies and sweep the landing.", rules: ["no-shoes-upstairs"] },
-      { floor: "floor1", at: [3.1, 13.6], label: "Bathroom", area: "bath-women", does: "Toilets, showers, basins and floor: cleaned and refilled." },
+      { floor: "floor1", at: BATHROOM_CORRIDOR, label: "Bathroom", area: "bath-women", does: "Toilets, showers, basins and floor: cleaned and refilled." },
       { floor: "floor1", at: [2.0, 3.0], label: "Dorm H", area: "dorm-h", does: "Quietly: the aisle, the floor and the bins; pods made up fresh after check-out.", rules: ["quiet"] },
-      { floor: "floor2", at: [3.1, 13.6], label: "Bathroom", area: "bath-men", does: "Toilets, showers, basins and floor: cleaned and refilled." },
+      { floor: "floor2", at: BATHROOM_CORRIDOR, label: "Bathroom", area: "bath-men", does: "Toilets, showers, basins and floor: cleaned and refilled." },
       { floor: "floor2", at: [2.0, 3.0], label: "Dorm J", area: "dorm-j", does: "Quietly: the aisle, the floor and the bins; pods made up fresh after check-out.", rules: ["quiet"] },
     ],
   },
