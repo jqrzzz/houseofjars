@@ -15,8 +15,12 @@ export { THEME_KEY, themeColor, type ThemeChoice } from "@/components/layout/the
 
 export const SPLASH_KEY = "hoj-splash";
 
-/** How long html.splash stays: by then the curtain is up and the last hero phrase has ended (7.5 s at most). */
-export const SPLASH_MS = 8000;
+/**
+ * How long html.splash stays: by then the curtain is up and the last hero
+ * phrase has ended (the lamps' last mote, by 8.7 s). Lifting it moves the
+ * hero's start (--t0 in HouseLamp.module.css), so nothing may still be playing.
+ */
+export const SPLASH_MS = 9600;
 
 /**
  * The house now, in Vientiane time (UTC+7 all year: Laos keeps no daylight

@@ -36,12 +36,14 @@
   @supports (animation-timeline: view()) {
     :global(:root:not([data-motion="still"])) .riversideFrame :global(img) {
       animation: river-mid linear both;
+      animation-duration: auto;
       animation-timeline: view();
       animation-range: cover 0% cover 100%;
     }
 
     :global(:root:not([data-motion="still"])) .lanterns {
       animation: river-front linear both;
+      animation-duration: auto;
       animation-timeline: view();
       animation-range: cover 0% cover 100%;
     }

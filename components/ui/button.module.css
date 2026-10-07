@@ -1,3 +1,10 @@
+/*
+ * Buttons and text links, with one slow, soft touch (docs/DESIGN.md §4.7 and
+ * §10.13): pointed at, a button rises a pixel off the page and its arrow
+ * glides on; pressed, it answers at once (--dur-press) and comes back up at
+ * the hover's unhurried pace. Movement is on the translate property, so a
+ * button placed with a transform of its own keeps it.
+ */
 .button {
   --button-bg: transparent;
   --button-fg: var(--text);
@@ -23,33 +30,41 @@
     background-color var(--dur-hover) ease,
     border-color var(--dur-hover) ease,
     color var(--dur-hover) ease,
-    box-shadow var(--dur-press) var(--ease-out),
-    transform var(--dur-press) var(--ease-out);
+    box-shadow var(--dur-hover) var(--ease-out),
+    translate var(--dur-hover) var(--ease-out);
 }
 
 .button:hover {
   text-decoration: none;
 }
 
+/* Only where a pointer can hover: a tap never leaves a button standing raised. */
+@media (hover: hover) {
+  .button:hover {
+    translate: 0 -1px;
+  }
+}
+
 .button:active {
-  transform: translateY(1px);
+  translate: 0 1px;
+  transition-duration: var(--dur-press);
 }
 
 .button svg {
   width: 1.1rem;
   height: 1.1rem;
   flex: none;
-  transition: transform var(--dur-hover) var(--ease-out);
+  transition: translate var(--dur-ui) var(--ease-out);
 }
 
-.button:hover svg[data-arrow] {
-  transform: translateX(3px);
+.button:is(:hover, :focus-visible) svg[data-arrow] {
+  translate: 3px 0;
 }
 
 /*
  * Jar orange, like the house's plates. Ink text: 5.7:1 (white would be 3.1:1).
- * It sits on a 2 px paper edge, a card standing on the page, and presses flat
- * onto it.
+ * It sits on a 2 px paper edge, a card standing on the page: pointed at, it
+ * lifts onto a 3 px edge, and pressed, it goes flat onto the page.
  */
 .primary {
   --button-bg: var(--jar-orange);
@@ -58,15 +73,21 @@
   box-shadow: 0 2px 0 var(--paper-edge);
 }
 
-.primary:active {
-  transform: translateY(2px);
-  box-shadow: 0 0 0 var(--paper-edge);
-}
-
 /* Lighter on hover, so the ink only gains contrast. */
 .primary:hover {
   --button-bg: color-mix(in oklab, var(--jar-orange) 85%, white);
   --button-border: color-mix(in oklab, var(--jar-orange) 85%, white);
+}
+
+@media (hover: hover) {
+  .primary:hover {
+    box-shadow: 0 3px 0 var(--paper-edge);
+  }
+}
+
+.primary:active {
+  translate: 0 2px;
+  box-shadow: 0 0 0 var(--paper-edge);
 }
 
 .secondary:hover {
@@ -89,32 +110,62 @@
   font-size: 0.9375rem;
 }
 
+/*
+ * A text link: the words on a faint underline, then an arrow. The words are
+ * an inline box (not a flex item), so the thread below follows them onto a
+ * second line if they wrap, and the arrow rides at the end of the last line,
+ * centred on it as align-items: center had it (the line's middle sits 0.35em
+ * above the baseline at the body's 1.6 line height). It may be a button: the
+ * button's own chrome is cleared.
+ */
 .textLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: none;
   font-weight: 600;
   color: var(--accent-text);
   text-decoration: none;
 }
 
 .textLink svg {
+  display: inline-block;
   width: 1.05rem;
   height: 1.05rem;
-  transition: transform var(--dur-hover) var(--ease-out);
+  margin-inline-start: 0.4rem;
+  vertical-align: calc(0.35em - 0.525rem);
+  transition: translate var(--dur-ui) var(--ease-out);
 }
 
-.textLink:hover svg {
-  transform: translateX(3px);
+.textLink:is(:hover, :focus-visible) svg {
+  translate: 3px 0;
 }
 
+/*
+ * Underlines draw in like thread (§4.7). The faint line is the text's own
+ * underline (it steps round descenders); pointed at or focused, a full-colour
+ * thread is drawn over it from the left, and drawn out to the right as the
+ * pointer leaves, as the header's links do. The thread is a 1 px background
+ * laid exactly on the underline: an inline box's background ends at the
+ * font's descent, 0.25em under the baseline (Figtree's, and its stand-ins'
+ * in app/globals.css), and the underline starts --underline-offset under it,
+ * so the thread sits (0.25em - offset) above the bottom of a box padded by
+ * its own 1 px. SiteFooter, BookingCard, RatingStrip and ShareButton draw
+ * theirs the same way.
+ */
 .textLink span {
+  padding-bottom: 1px;
   text-decoration-line: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: var(--underline-offset);
   text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  background: linear-gradient(currentColor, currentColor) no-repeat;
+  background-position: right calc(100% - (0.25em - var(--underline-offset)));
+  background-size: 0% 1px;
+  transition: background-size var(--dur-ui) var(--ease-out);
 }
 
-.textLink:hover span {
-  text-decoration-color: currentColor;
+.textLink:is(:hover, :focus-visible) span {
+  background-position-x: left;
+  background-size: 100% 1px;
 }

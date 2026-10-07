@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
-import { ShadowFigure } from "../shadow/ShadowFigure";
 import buttons from "../ui/button.module.css";
 import styles from "./ConciergeLauncher.module.css";
 import type { ConciergePanelProps } from "./ConciergePanel";
 import { dockHidden, type DockHidden } from "./dock-state";
+import { shadowDock } from "./mascot";
 
 // The chat window's code loads on first interaction, never on page load.
 let panelModule: Promise<ComponentType<ConciergePanelProps>> | null = null;
@@ -34,6 +34,12 @@ function loadPanel() {
  * Elements that arrive later (the booking form loads its own code) are picked
  * up as they appear. CSS hides the button until the first check, so it never
  * flashes.
+ *
+ * Shadow floats in it: the 3D mascot, whole, before a soft lamplight glow,
+ * drifting up and down a few pixels as slowly as a breath. The dock is a stage
+ * of its own (`data-stage`), so StageLife pauses his float while the tab is
+ * hidden, as it pauses every ambient (`.amb`) animation; the CSS pauses it
+ * while the dock steps aside, and Still and reduced motion leave him at rest.
  */
 export function ConciergeLauncher() {
   const [Panel, setPanel] = useState<ComponentType<ConciergePanelProps> | null>(null);
@@ -158,6 +164,7 @@ export function ConciergeLauncher() {
       <aside
         aria-label="Ask Shadow"
         className={styles.dock}
+        data-stage=""
         data-hidden={hidden}
         data-header={headerInView === undefined ? undefined : String(headerInView)}
       >
@@ -171,8 +178,20 @@ export function ConciergeLauncher() {
           onPointerEnter={() => void loadPanel()}
           onFocus={() => void loadPanel()}
         >
+          {/* Shadow himself, whole and free of any frame, before a lamplight glow (ConciergeLauncher.module.css). */}
           <span className={styles.avatar}>
-            <ShadowFigure variant="bust" />
+            {/* Two tiny files picked by the screen's sharpness: next/image would add nothing but weight. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className={`${styles.figure} amb`}
+              src={shadowDock.src}
+              srcSet={`${shadowDock.src} 1x, ${shadowDock.src2x} 2x`}
+              width={shadowDock.width}
+              height={shadowDock.height}
+              alt=""
+              decoding="async"
+              draggable={false}
+            />
           </span>
           <span className={styles.label} aria-hidden="true">
             Ask Shadow

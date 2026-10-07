@@ -131,6 +131,7 @@
 
     :global(:root:not([data-motion="still"])) .ticked .term::before {
       animation: stitch linear both;
+      animation-duration: auto;
       animation-timeline: --ledger-row;
       animation-range: entry 10% entry 100%;
     }

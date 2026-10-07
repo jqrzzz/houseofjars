@@ -127,6 +127,7 @@
   @supports (animation-timeline: view()) {
     :global(:root:not([data-motion="still"])) .rooms span {
       animation: pop-up linear both;
+      animation-duration: auto;
       animation-timeline: view();
       animation-range: entry 10% entry 80%;
     }

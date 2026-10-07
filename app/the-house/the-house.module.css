@@ -55,12 +55,13 @@
   color: var(--text-soft);
   font-size: var(--step--1);
   line-height: 1.45;
-  text-decoration: none;
+  /* The underline is there all along, out of sight, and comes up as the line is pointed at: it never snaps in. */
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
 }
 
-.where:hover {
+.where:is(:hover, :focus-visible) {
   color: var(--text);
-  text-decoration: underline;
   text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
 }
 

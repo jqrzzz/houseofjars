@@ -16,7 +16,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-s);
-  padding: 0.5rem max(1rem, env(safe-area-inset-right)) calc(0.5rem + env(safe-area-inset-bottom))
+  padding: 0.625rem max(1rem, env(safe-area-inset-right)) calc(0.625rem + env(safe-area-inset-bottom))
     max(1rem, env(safe-area-inset-left));
   border-top: 1px solid var(--rule);
   background: var(--glass);
@@ -34,12 +34,13 @@
  * booking form, the home hero) reaches into the bottom of the screen (and
  * until that has been checked); while the guest is typing in a form, so it
  * never covers a field or sits on the keyboard; and while the phone menu is
- * open.
+ * open. Shadow's float waits while he is away (--float-state, below).
  */
 :global(body:has([data-hides-launcher])) .dock:not([data-hidden="false"]):not([data-hidden="ask"]),
 :global(body:has(main :is(input, select, textarea):focus)) .dock,
 :global(body:has(header details[open])) .dock,
 .dock[data-hidden="true"] {
+  --float-state: paused;
   opacity: var(--away-opacity);
   visibility: hidden;
   transform: var(--away);
@@ -52,6 +53,7 @@
  */
 @media (max-width: 47.99rem) {
   .dock[data-hidden="ask"] .launcher {
+    --float-state: paused;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -65,17 +67,31 @@
 /* Phones: the dock comes up once the header, with its own Book button, has scrolled away (and not before that is known). */
 @media (max-width: 47.99rem) {
   .dock:not([data-header="false"]) {
+    --float-state: paused;
     visibility: hidden;
     transform: var(--away);
     pointer-events: none;
   }
 }
 
+/*
+ * The button: on phones a teak plate holding Shadow and his name, Shadow
+ * standing taller than the plate, his cap and the tip of his tail past its
+ * edges, so no frame closes round him; on wider screens Shadow alone
+ * (below). His lamplight: jar orange warmed with lamplight.
+ */
 .launcher {
+  --shadow-glow: color-mix(in oklab, var(--jar-orange) 62%, var(--lamplight));
+  /* His own shadow, under him as he floats: soft by Day, deeper by Evening. */
+  --figure-shadow: rgb(23 23 19 / 0.24);
+  /* How far he drifts, and how far he lifts to the pointer or focus: less in the phone dock, which has less room above him. */
+  --float-rise: -2px;
+  --float-lift: -0.125rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.25rem 1.1rem 0.25rem 0.25rem;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  padding: 0 1.1rem 0 0.45rem;
   border: 1px solid var(--launcher-edge);
   border-radius: var(--radius-s);
   background: var(--launcher-bg);
@@ -83,35 +99,86 @@
   font-weight: 600;
   font-size: 0.975rem;
   transition:
-    transform 350ms var(--ease-out),
-    box-shadow 350ms ease,
+    transform var(--dur-press) var(--ease-out),
     opacity 380ms ease,
     visibility 380ms;
+}
+
+:global(:root[data-theme="dark"]) .launcher {
+  --figure-shadow: rgb(0 0 0 / 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .launcher {
+    --figure-shadow: rgb(0 0 0 / 0.5);
+  }
 }
 
 .launcher:focus-visible {
   outline-color: var(--focus);
 }
 
+/* A press answers at once: the plate presses into the dock. */
+.launcher:active {
+  transform: translateY(1px);
+}
+
 /* While the chat window is open, the button would only show faintly through its glass. */
 :global(html:has(dialog[open])) .dock {
+  --float-state: paused;
   visibility: hidden;
 }
 
+/*
+ * Shadow, whole, before his glow. The figure's negative margins let him stand
+ * past the plate's edges without making the dock any taller.
+ */
 .avatar {
-  display: block;
-  width: 2.5rem;
-  height: 2.5rem;
-  -webkit-clip-path: url(#arch-frame);
-  clip-path: url(#arch-frame);
-  overflow: hidden;
-  background: var(--teak-night);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
   flex: none;
+  width: 2.4rem;
 }
 
-.avatar svg {
-  width: 100%;
-  height: 100%;
+.figure {
+  width: auto;
+  height: 3.5rem;
+  max-width: none;
+  margin-block: -0.3rem -0.45rem;
+  filter: drop-shadow(0 0.2rem 0.2rem var(--figure-shadow));
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/*
+ * The glow: a soft disc of lamplight behind him, as if a lamp stood at his
+ * back; faint by Day, warm by Evening (--glow-strength, as the picture
+ * frames' glow, with a floor so that by Day it still reads on teak and rice:
+ * 41% at its heart by Day, 70% by Evening). It holds still while he floats in
+ * front of it.
+ */
+.avatar::before {
+  --glow-heart: calc(18% + var(--glow-strength) * 52%);
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 52%;
+  width: 4.5rem;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--shadow-glow) var(--glow-heart), transparent) 0%,
+    color-mix(in srgb, var(--shadow-glow) calc(var(--glow-heart) * 0.48), transparent) 45%,
+    color-mix(in srgb, var(--shadow-glow) calc(var(--glow-heart) * 0.13), transparent) 75%,
+    transparent 100%
+  );
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 @media (min-width: 48rem) {
@@ -119,7 +186,7 @@
     --away: translateY(0.75rem);
     --away-opacity: 0;
     left: auto;
-    right: max(1rem, env(safe-area-inset-right));
+    right: max(1.25rem, env(safe-area-inset-right));
     bottom: max(1rem, env(safe-area-inset-bottom));
     padding: 0;
     border: 0;
@@ -129,51 +196,167 @@
     box-shadow: none;
   }
 
-  .book {
+  /*
+   * The header, with its own Book button, stays in view on wider screens.
+   * Through .dock, since the shared button style, loaded after this file,
+   * would otherwise show it again.
+   */
+  .dock .book {
     display: none;
   }
 
   /* With no Book button beside it, the floating button steps aside for an inline Ask Shadow too. */
   .dock[data-hidden="ask"] {
+    --float-state: paused;
     opacity: var(--away-opacity);
     visibility: hidden;
     transform: var(--away);
     pointer-events: none;
   }
 
+  /*
+   * Shadow alone, floating in the corner: no plate, no frame, only his glow.
+   * Isolated, so its focus ring is drawn over his name's plate (z-index -1),
+   * not broken by it.
+   */
   .launcher {
-    padding: 0.3rem;
-    box-shadow: var(--shadow-lift);
+    --float-rise: -3px;
+    --float-lift: -0.25rem;
+    position: relative;
+    isolation: isolate;
+    min-height: 0;
+    padding: 0.25rem 0.375rem 0.375rem;
+    border: 0;
+    background: none;
   }
 
-  .launcher:hover {
-    transform: translateY(-2px);
+  .launcher:active {
+    transform: none;
   }
 
   .avatar {
-    width: 3.25rem;
-    height: 3.25rem;
+    z-index: 1;
+    width: auto;
+  }
+
+  .figure {
+    height: 4.5rem;
+    margin: 0;
+    filter: drop-shadow(0 0.35rem 0.35rem var(--figure-shadow));
+  }
+
+  .avatar::before {
+    width: 7.5rem;
   }
 
   /*
-   * The name shows where the margin beside the page can hold it, so it never
-   * lies over the text; narrower, it opens on hover and keyboard focus.
+   * His name, on a teak plate that slides out from behind him, its end
+   * tucked under his glow. It shows where the margin beside the page can hold
+   * it, so it never lies over the text; narrower, it slides out on hover and
+   * keyboard focus.
    */
   .label {
-    display: none;
-    padding-right: 1rem;
+    position: absolute;
+    z-index: -1;
+    right: calc(100% - 1.5rem);
+    top: 50%;
+    translate: 0 -50%;
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 2.1rem 0 1.1rem;
+    border: 1px solid var(--launcher-edge);
+    border-radius: var(--radius-s);
+    background: var(--launcher-bg);
+    box-shadow: var(--shadow-lift);
+    white-space: nowrap;
+    clip-path: inset(-3rem -3rem -3rem 100%);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      clip-path var(--dur-hinge) var(--ease-out),
+      translate var(--dur-hinge) var(--ease-out),
+      opacity var(--dur-ui) ease,
+      visibility var(--dur-hinge);
   }
 }
 
 @media (min-width: 100rem) {
   .label {
-    display: inline;
+    clip-path: inset(-3rem);
+    opacity: 1;
+    visibility: visible;
   }
 }
 
 @media (hover: hover) and (min-width: 48rem) {
   .launcher:is(:hover, :focus-visible) .label {
-    display: inline;
+    clip-path: inset(-3rem);
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+@media (min-width: 48rem) {
+  .launcher:focus-visible .label {
+    clip-path: inset(-3rem);
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/*
+ * The float: Shadow drifts up a few pixels and down again over 6.4 s, as
+ * slowly as a breath, eased like the lamps' sway; never more than 3 px, and
+ * the glow stays where it is. Under the pointer or keyboard focus he lifts a
+ * touch and his glow swells, as slowly as a scene settles; a press brings him
+ * back at once. His rest frame is his base style, so Still and reduced motion
+ * show him at rest, glow unswollen. The float waits while the dock is away
+ * (--float-state) and, as every ambient (.amb) animation, while the tab is
+ * hidden (StageLife).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .figure {
+    animation: shadow-float 6.4s var(--ease-sway) infinite;
+    animation-play-state: var(--float-state, running);
+    transition: translate var(--dur-scene) var(--ease-out);
+  }
+
+  :global(:root:not([data-motion="still"])) .avatar::before {
+    transition:
+      scale var(--dur-scene) var(--ease-out),
+      opacity var(--dur-scene) var(--ease-out);
+  }
+
+  :global(:root:not([data-motion="still"])) .launcher:is(:hover, :focus-visible) .figure {
+    translate: 0 var(--float-lift);
+  }
+
+  :global(:root:not([data-motion="still"])) .launcher:is(:hover, :focus-visible) .avatar::before {
+    scale: 1.14;
+    opacity: 1;
+  }
+
+  :global(:root:not([data-motion="still"])) .launcher:active .figure {
+    translate: 0 0;
+    transition-duration: var(--dur-press);
+  }
+
+  /* Wider screens: the plate slides out from behind him, not only unrolls. */
+  @media (min-width: 48rem) and (max-width: 99.99rem) {
+    :global(:root:not([data-motion="still"])) .label {
+      translate: 0.75rem -50%;
+    }
+
+    :global(:root:not([data-motion="still"])) .launcher:is(:hover, :focus-visible) .label {
+      translate: 0 -50%;
+    }
+  }
+}
+
+@keyframes shadow-float {
+  50% {
+    transform: translateY(var(--float-rise));
   }
 }
 

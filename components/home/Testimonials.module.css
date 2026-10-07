@@ -135,11 +135,15 @@
   font-weight: 650;
 }
 
-/* The cards come up from the paper one after another as the row scrolls in, slowly. */
+/*
+ * The cards come up from the paper one after another as the row scrolls in,
+ * slowly, on the long soft ease, so each slows into its place rather than
+ * stopping dead at the end of its range.
+ */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     .quotes > li {
-      animation: card-rise linear both;
+      animation: card-rise var(--ease-out) both;
       animation-duration: auto;
       animation-timeline: view();
       animation-range: entry 5% cover 30%;

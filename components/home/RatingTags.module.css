@@ -227,6 +227,7 @@
   @supports (animation-timeline: view()) {
     :global(:root:not([data-motion="still"])) .thread {
       animation: thread-draw linear both;
+      animation-duration: auto;
       animation-timeline: view();
       animation-range: entry 20% cover 45%;
     }
