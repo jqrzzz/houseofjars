@@ -37,7 +37,7 @@ export default function HomePage() {
       {/* The house's curtains, woven in under the hero. */}
       <WovenBand pattern="diamond" weave />
       {/* The booking and review sites, each badge a link to book or read the reviews there. */}
-      <section aria-label="House of Jars on booking and review sites" className={`container ${styles.sites}`}>
+      <section aria-label="Booking and review sites" className={`container ${styles.sites}`}>
         <RatingStrip />
       </section>
       <div className={styles.house}>

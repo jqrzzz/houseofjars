@@ -1,3 +1,9 @@
+/*
+ * Guests in their own words: each quote on a paper card with a card edge, a
+ * jar-orange opening mark at its corner, and the guest's name, home and site
+ * at its foot. Only the section, heading and list have classes: the cards'
+ * parts are styled by position (TestimonialsView), which keeps the page light.
+ */
 .section {
   padding-top: 0;
 }
@@ -16,11 +22,7 @@
   margin: 0;
 }
 
-/*
- * Each quote on a paper card with a card edge, a jar-orange opening mark
- * cut into its corner, and the guest's name, home and site at its foot.
- */
-.card {
+.quotes > li {
   position: relative;
   display: grid;
   padding: 2.25rem 1.5rem 1.4rem;
@@ -28,7 +30,7 @@
   box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
 }
 
-.card::before {
+.quotes > li::before {
   content: "“";
   position: absolute;
   top: 0.35rem;
@@ -40,7 +42,7 @@
   opacity: 0.85;
 }
 
-.card figure {
+.quotes figure {
   display: grid;
   grid-template-rows: 1fr auto;
   gap: var(--space-m);
@@ -48,7 +50,7 @@
   margin: 0;
 }
 
-.quote {
+.quotes blockquote {
   margin: 0;
   font-family: var(--font-display-stack);
   font-weight: var(--display-weight);
@@ -57,7 +59,7 @@
   text-wrap: pretty;
 }
 
-.who {
+.quotes figcaption {
   display: flex;
   align-items: center;
   gap: 0.65rem;
@@ -66,33 +68,33 @@
   font-size: var(--step--1);
 }
 
-.who > span {
-  display: grid;
-}
-
-.mark {
+.quotes figcaption img {
   flex: none;
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 0.3rem;
 }
 
-.name {
+.quotes figcaption > span {
+  display: grid;
+}
+
+.quotes figcaption b {
   font-weight: 650;
 }
 
-.where {
+.quotes figcaption > span > span {
   color: var(--text-soft);
 }
 
-.where a {
+.quotes figcaption a {
   color: inherit;
 }
 
 /* The cards come up from the paper one after another as the row scrolls in, slowly. */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
-    .card {
+    .quotes > li {
       animation: card-rise linear both;
       animation-duration: auto;
       animation-timeline: view();

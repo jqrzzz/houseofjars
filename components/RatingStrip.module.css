@@ -2,21 +2,29 @@
  * The rating strip: paper badges in a row, cut from the same card as the
  * rating tags (--paper-near with a card edge), each with its site's logo, the
  * score in the display face and what clicking does. A badge lifts a little
- * toward the pointer and lamplight comes up round it, slowly.
+ * toward the pointer and lamplight comes up round it, slowly. Only the strip
+ * has a class: its parts are styled by position (RatingStripView), which
+ * keeps the page light.
+ *
+ *   a       the badge: [logo] [words]
+ *                             [action]
+ *   a > img                 the site's logo
+ *   a > span:first-of-type  the words: the site's name, the score, its context
+ *   a > span:nth-of-type(2) what clicking does
  */
 .strip {
   display: grid;
   gap: var(--space-s);
 }
 
-.badges {
+.strip ul {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr));
   gap: var(--space-s);
   margin: 0;
 }
 
-.badge {
+.strip a {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
@@ -39,21 +47,22 @@
 }
 
 /* No logo yet (Agoda): the name stands in its place, in the display face. */
-.badge:not(:has(.mark)) {
+.strip a[data-named] {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     "words"
     "action";
 }
 
-.mark {
+.strip a > img {
   grid-area: mark;
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 0.4rem;
 }
 
-.words {
+/* The words: the site's name across the top, then the score and its context side by side. */
+.strip a > span:first-of-type {
   grid-area: words;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -61,7 +70,7 @@
   column-gap: 0.6rem;
 }
 
-.platform {
+.strip a > span:first-of-type > span:first-child {
   grid-column: 1 / -1;
   font-size: var(--step--2);
   font-weight: 650;
@@ -69,7 +78,7 @@
 }
 
 /* The name standing in for a logo: as large as a score. */
-.named {
+.strip a[data-named] > span:first-of-type > span:first-child {
   font-family: var(--font-display-stack);
   font-weight: var(--display-weight);
   font-size: var(--step-3);
@@ -77,13 +86,7 @@
   letter-spacing: -0.01em;
 }
 
-.score {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.15rem;
-}
-
-.score b {
+.strip b {
   font-family: var(--font-display-stack);
   font-weight: var(--display-weight);
   font-size: var(--step-4);
@@ -92,24 +95,25 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
-.score span {
+.strip small {
+  margin-left: 0.15rem;
   font-size: var(--step--1);
   color: var(--text-soft);
 }
 
-.context {
+/* The context: beside the score, or across the badge when there is none. */
+.strip a > span:first-of-type > span:last-child {
   font-size: var(--step--2);
   line-height: 1.35;
   color: var(--text-soft);
 }
 
-/* With no score, the context runs the badge's width. */
-.platform + .context {
+.strip a > span:first-of-type > span:first-child + span:last-child {
   grid-column: 1 / -1;
   margin-top: 0.15rem;
 }
 
-.action {
+.strip a > span:nth-of-type(2) {
   grid-area: action;
   display: inline-flex;
   align-items: center;
@@ -119,50 +123,53 @@
   color: var(--accent-text);
 }
 
-.action svg {
+.strip a > span:nth-of-type(2) svg {
   flex: none;
   width: 0.85rem;
   height: 0.85rem;
   transition: translate var(--dur-ui) var(--ease-out);
 }
 
-.badge:hover,
-.badge:focus-visible {
+.strip a:hover,
+.strip a:focus-visible {
   translate: 0 -2px;
   box-shadow:
     var(--edge-x) var(--edge-y) 0 var(--paper-edge),
     0 0.6rem 2.5rem -0.75rem color-mix(in srgb, var(--lamplight) calc(var(--glow-strength) * 90%), transparent);
 }
 
-.badge:hover .action svg {
+.strip a:hover > span:nth-of-type(2) svg {
   translate: 2px -2px;
 }
 
-.badge:hover .platform:not(.named),
-.badge:hover .named {
+.strip a:hover > span:first-of-type > span:first-child {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: var(--underline-offset);
   text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
 }
 
-.asOf {
+.strip > p {
   font-size: var(--step--2);
   color: var(--text-soft);
 }
 
 @media (min-width: 48rem) {
-  .badges {
+  .strip ul {
     gap: var(--space-m);
   }
 
-  .badge {
+  .strip a {
     padding: 1.15rem 1.4rem;
   }
 
-  .platform:not(.named),
-  .context,
-  .action {
+  .strip a > span:first-of-type > span:first-child,
+  .strip a > span:first-of-type > span:last-child,
+  .strip a > span:nth-of-type(2) {
     font-size: var(--step--1);
+  }
+
+  .strip a[data-named] > span:first-of-type > span:first-child {
+    font-size: var(--step-3);
   }
 }

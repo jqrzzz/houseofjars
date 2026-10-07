@@ -14,9 +14,9 @@ describe("PhotoFrame", () => {
     expect(frame({ mat: false })).not.toContain("_mat_");
   });
 
-  it("gives the window a gilt-rimmed slip inside the mat, in the frame's shape", () => {
-    expect(frame({})).toMatch(/class="_window_[0-9a-f]+ _rect_/);
-    expect(frame({ shape: "arch" })).toMatch(/class="_window_[0-9a-f]+ _arch_/);
+  it("gives the window a gilt-rimmed slip inside the mat", () => {
+    expect(frame({})).toMatch(/class="_mat_[0-9a-f]+ _rect_[0-9a-f]+"><div class="_window_[0-9a-f]+"/);
+    expect(frame({ shape: "arch" })).toMatch(/class="_mat_[0-9a-f]+ _arch_[0-9a-f]+"><div class="_window_[0-9a-f]+"/);
     expect(frame({ mat: false })).not.toContain("_window_");
   });
 

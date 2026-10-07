@@ -87,25 +87,6 @@
   text-decoration-color: currentColor;
 }
 
-/* A booking or review site: its own logo before its name, its score after. */
-.site {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.mark {
-  flex: none;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 0.2rem;
-}
-
-.score {
-  font-variant-numeric: lining-nums tabular-nums;
-  opacity: 0.75;
-}
-
 /* Ask Shadow opens the chat window, so it is a button, dressed as the links around it. */
 .ask {
   padding: 0;

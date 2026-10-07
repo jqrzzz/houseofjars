@@ -1,6 +1,7 @@
-import { type Testimonial, reviewSites, shownTestimonials } from "@/content/reviews";
-import { BrandMark, hasBrandMark } from "@/components/ui/BrandMark";
 import { Section } from "@/components/ui/Section";
+import { hasBrandMark } from "@/components/ui/BrandMark";
+import { type Testimonial, reviewSites, shownTestimonials } from "@/content/reviews";
+import { type QuoteCard, TestimonialsView } from "./TestimonialsView";
 import styles from "./Testimonials.module.css";
 
 /** The fewest quotes worth a section of their own. */
@@ -10,55 +11,32 @@ export const MIN_TESTIMONIALS = 3;
 const monthOf = (month: string) =>
   new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${month}-01T00:00:00Z`));
 
+/** A quote as its card shows it: the words, who and where from, the site (linked, with its logo) and the month. */
+export function quoteCard(t: Testimonial): QuoteCard {
+  const site = reviewSites.find((s) => s.platform === t.platform);
+  return {
+    quote: t.quote,
+    who: `${t.name}, ${t.from}`,
+    platform: t.platform,
+    url: site?.url ?? null,
+    mark: site && hasBrandMark(site.mark) ? site.mark : null,
+    month: monthOf(t.month),
+  };
+}
+
 /**
- * Guests in their own words (docs/DESIGN.md §5.1), after the ratings: a few
+ * Guests in their own words (docs/DESIGN.md §10.9), after the ratings: a few
  * short quotes from different guests, each about something different, on
  * paper cards with the guest's first name, where they are from, the site and
  * the month. Only quotes the guests agreed to share are shown
  * (content/reviews.ts), and the section stays away until there are three.
+ * The words come from content/reviews; TestimonialsView draws them.
  */
 export function Testimonials({ quotes = shownTestimonials() }: { quotes?: readonly Testimonial[] }) {
   if (quotes.length < MIN_TESTIMONIALS) return null;
   return (
     <Section labelledBy="testimonials-title" className={styles.section}>
-      <div className="container">
-        <h2 id="testimonials-title" className={styles.heading}>
-          In guests’ own words
-        </h2>
-        <ul role="list" className={styles.quotes}>
-          {quotes.map((t) => {
-            const site = reviewSites.find((s) => s.platform === t.platform);
-            return (
-              <li key={`${t.name}-${t.from}-${t.month}`} className={styles.card}>
-                <figure>
-                  <blockquote className={styles.quote}>
-                    <p>{t.quote}</p>
-                  </blockquote>
-                  <figcaption className={styles.who}>
-                    {site && hasBrandMark(site.mark) ? <BrandMark mark={site.mark} className={styles.mark} /> : null}
-                    <span>
-                      <span className={styles.name}>
-                        {t.name}, {t.from}
-                      </span>
-                      <span className={styles.where}>
-                        {site ? (
-                          <a href={site.url} target="_blank" rel="noopener noreferrer">
-                            {t.platform}
-                            <span className="visually-hidden"> (opens in a new tab)</span>
-                          </a>
-                        ) : (
-                          t.platform
-                        )}
-                        , {monthOf(t.month)}
-                      </span>
-                    </span>
-                  </figcaption>
-                </figure>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+      <TestimonialsView quotes={quotes.map(quoteCard)} />
     </Section>
   );
 }

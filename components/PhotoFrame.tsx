@@ -151,7 +151,7 @@ export function PhotoFrame({
     mat ? (
       <div className={shape === "arch" ? `${styles.mount} ${styles.archMount}` : styles.mount}>
         <div className={`${styles.mat} ${styles[shape]}`}>
-          <div className={`${styles.window} ${styles[shape]}`}>{frame}</div>
+          <div className={styles.window}>{frame}</div>
         </div>
       </div>
     ) : (

@@ -48,7 +48,8 @@
 .mount::after {
   content: "";
   position: absolute;
-  inset: -9% -7%;
+  /* Above and below only on phones, where a frame runs to the screen's edges; round the sides from 48rem. */
+  inset: -9% 0;
   z-index: -1;
   background: radial-gradient(
     closest-side,
@@ -75,6 +76,12 @@
   position: relative;
   padding: var(--mat);
   background: var(--paper-near);
+}
+
+@media (min-width: 48rem) {
+  .mount::after {
+    inset: -9% -7%;
+  }
 }
 
 /*
@@ -107,7 +114,8 @@
   background: var(--slip);
 }
 
-.window.arch::after {
+.arch > .window::before,
+.arch > .window::after {
   -webkit-clip-path: url(#arch-frame);
   clip-path: url(#arch-frame);
 }

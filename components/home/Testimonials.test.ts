@@ -26,6 +26,7 @@ describe("guests in their own words", () => {
     expect(html).toContain("<blockquote");
     expect(html).toContain("Aiko, Japan");
     expect(html).toContain("August 2026");
-    expect(html.match(/<li /g)).toHaveLength(3);
+    expect(html.match(/<li>/g)).toHaveLength(3);
+    expect(html).toContain('src="/brands/booking.svg"');
   });
 });
