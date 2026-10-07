@@ -1,0 +1,503 @@
+/*
+ * The lantern theatre for social pieces: the site's paper wall, an arch cut into it with drawings behind, a paper
+ * tag pinned under it, plates and the Splash curtain, for `npm run social` (scripts/social/theatre.ts builds the
+ * pages). The colours are the site's own tokens, injected from app/globals.css into .day and .evening scopes
+ * with the composition's roles; nothing here adds a hue.
+ *
+ * --k scales the site's paper details (card edges, pins, rims, fibre, the hem's points): 2.5 on the film and
+ * the still card, 1 in the email GIF. Every size below is in output px.
+ */
+
+@font-face {
+  font-family: "Figtree";
+  src: url("/fonts/figtree.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Noto Sans Lao";
+  src: url("/fonts/noto-sans-lao.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  position: relative;
+  overflow: hidden;
+  font-family: "Figtree", sans-serif;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  background: var(--page);
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.abs {
+  position: absolute;
+}
+
+/* Sentence case. Headlines 700 at -0.02em, body 500, times 700 with tabular figures. */
+.title,
+.headline {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  font-weight: 500;
+}
+
+.times {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--times);
+  white-space: nowrap;
+}
+
+.line {
+  display: block;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ the wall */
+
+/* The site's paper wall, with its fibre in the text's colour (as BookingCard draws it), in both themes. */
+.wall {
+  position: absolute;
+  inset: 0;
+  background: var(--wall);
+}
+
+.fibre::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--fg);
+  -webkit-mask: url("/art/paper-fibre.svg") 0 0 / calc(72px * var(--k)) repeat;
+  mask: url("/art/paper-fibre.svg") 0 0 / calc(72px * var(--k)) repeat;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ the arch */
+
+/* A window cut to the mark's outline: the flats and the curtain inside it, its rim drawn over them. */
+.arch .window {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--stage-ground);
+}
+
+.rim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* A flat: a scene as a card that slides, never a pan through its drawing. */
+.flat {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--stage-ground);
+}
+
+.flat img,
+.stage img {
+  position: absolute;
+  display: block;
+  max-width: none;
+}
+
+/* A shade: the curtains' dark, laid over a flat to dim it. */
+.shade {
+  position: absolute;
+  inset: 0;
+  background: var(--curtain);
+  opacity: 0;
+}
+
+/* ------------------------------------------------------------------ paper */
+
+/* A paper card: square, solid paper-near, its card edge repeated at (--edge-x, --edge-y) × k. */
+.card {
+  position: absolute;
+  background: var(--tag-paper);
+  box-shadow: var(--edge-dx) var(--edge-dy) 0 var(--paper-edge);
+}
+
+.pin {
+  position: absolute;
+  width: calc(8px * var(--k));
+  height: calc(8px * var(--k));
+  margin: calc(-4px * var(--k)) 0 0 calc(-4px * var(--k));
+  border-radius: 50%;
+  background: var(--teak);
+  box-shadow: 0 0 0 calc(1px * var(--k)) var(--silhouette);
+}
+
+/* The house's sign plate: jar orange, the acrylic's 2 px corner, its icon in ink (5.7:1). Never white on orange. */
+.plate {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  background: var(--jar-orange);
+  border-radius: calc(2px * var(--k));
+}
+
+.plate img {
+  position: static;
+  width: 72%;
+  height: 72%;
+}
+
+.plate.edged {
+  box-shadow: var(--edge-dx) var(--edge-dy) 0 var(--paper-edge);
+}
+
+/* Shadow, unposed and unmirrored. No blink: every frame of a film must be the same each time it is drawn. */
+.shadow-figure svg {
+  width: 100%;
+  height: 100%;
+}
+
+.ShadowFigure__eyes {
+  animation: none !important;
+}
+
+/* ------------------------------------------------------------------ the curtain (after the site's Splash) */
+
+/*
+ * components/brand/Splash.module.css: teak fibre paper (a shade deeper by Evening), the mark at its centre, the
+ * woven hem cut to points along its foot and edged like card. The fibre is the Splash's own data URI, drawn
+ * at 30 px × k; scripts/social/css-modules.test.ts keeps the two the same.
+ */
+.curtain {
+  --fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke-linecap='round'%3E%3Cpath stroke='%23fbf6ee' stroke-opacity='.16' d='M3 4l5 1M14 9l6-2M7 17l4 3'/%3E%3Cpath stroke='%23171713' stroke-opacity='.2' d='M17 15l5 2M2 11l4-1M12 21h6'/%3E%3C/svg%3E");
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+.curtain .paper {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  background: var(--fibre) 0 0 / calc(30px * var(--k)) calc(30px * var(--k)), var(--curtain-paper);
+}
+
+.curtain .mark {
+  position: absolute;
+  overflow: visible;
+  fill: var(--jar-orange);
+}
+
+.curtain .lockup {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.curtain .url {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--on-teak);
+}
+
+.curtain .greeting {
+  font-family: "Noto Sans Lao", sans-serif;
+  font-weight: 600;
+  color: var(--lamplight);
+}
+
+/* Splash's .hem: Day, a card edge and a little shadow on the page; Evening, a lamplight rim along the points. */
+.curtain .hem {
+  position: absolute;
+  left: 0;
+  right: 0;
+  filter: drop-shadow(var(--edge-dx) var(--edge-dy) 0 var(--paper-edge)) drop-shadow(0 calc(0.6rem * var(--k)) calc(1.1rem * var(--k)) rgb(0 0 0 / 0.2));
+}
+
+.evening .curtain .hem {
+  filter: drop-shadow(0 calc(1.5px * var(--k)) 0 var(--paper-edge)) drop-shadow(0 calc(0.6rem * var(--k)) calc(1.1rem * var(--k)) rgb(0 0 0 / 0.35));
+}
+
+/* Splash's .points, at k. */
+.curtain .points {
+  --point: calc(0.55rem * var(--k));
+  display: block;
+  height: var(--point);
+  background: var(--weave-ground);
+  -webkit-mask: conic-gradient(from -45deg at bottom, #000 90deg, #0000 0) 50% 0 / calc(2 * var(--point)) 100%;
+  mask: conic-gradient(from -45deg at bottom, #000 90deg, #0000 0) 50% 0 / calc(2 * var(--point)) 100%;
+}
+
+/* ------------------------------------------------------------------ the film, 1080 × 1920 */
+
+.video {
+  width: 1080px;
+  height: 1920px;
+}
+
+.video .layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--fg);
+}
+
+.video .arch {
+  position: absolute;
+  left: 110px;
+  top: 130px;
+  width: 860px;
+  height: 900px;
+}
+
+.video .curtain {
+  height: 858px;
+}
+
+.video .curtain .paper {
+  height: 740px;
+}
+
+.video .curtain .hem {
+  top: 740px;
+}
+
+.video .curtain .hem .WovenBand__band {
+  --band-height: 96px;
+}
+
+.video .curtain .url {
+  top: 512px;
+  font-size: 64px;
+  line-height: 77px;
+}
+
+.video .curtain .greeting {
+  top: 596px;
+  font-size: 46px;
+  line-height: 69px;
+}
+
+/* The floor of the stage: teak (teak-night by Evening) with its fibre, a top line and two plank seams. */
+.video .floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 1640px;
+  bottom: 0;
+  background: var(--floor);
+  box-shadow: inset 0 calc(1.5px * var(--k)) 0 var(--silhouette);
+}
+
+.video .seam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: var(--silhouette);
+  opacity: 0.35;
+}
+
+/* The caption tag: one paper card, pinned at its top centre; it swings about the pin when its words change. */
+.video .tag {
+  left: 90px;
+  top: 990px;
+  width: 900px;
+  height: 500px;
+  transform-origin: 450px 26px;
+}
+
+.video .tag .pin {
+  left: 450px;
+  top: 26px;
+}
+
+.video .caption {
+  position: absolute;
+  inset: 0;
+}
+
+.video .title {
+  font-size: 150px;
+  line-height: 147px;
+}
+
+.video .headline {
+  font-size: 112px;
+  line-height: 112px;
+}
+
+.video .body {
+  font-size: 60px;
+  line-height: 71px;
+}
+
+.video .times {
+  font-size: 124px;
+  line-height: 124px;
+}
+
+.video .aside {
+  font-size: 64px;
+  line-height: 77px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.video .plate {
+  left: 708px;
+  top: 63px;
+  width: 132px;
+  height: 132px;
+}
+
+.video .shadow-figure {
+  left: 695px;
+  top: 56px;
+  width: 137.5px;
+  height: 190px;
+}
+
+/* The wipe's hem: a strip of pod curtain riding the reveal edge, two gold threads in it. */
+.wipe-hem {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 1920px;
+  background: var(--curtain);
+}
+
+.wipe-hem::before,
+.wipe-hem::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--thread-gold);
+  opacity: 0.4;
+}
+
+.wipe-hem::before {
+  left: 4px;
+}
+
+.wipe-hem::after {
+  left: 11px;
+}
+
+/* ------------------------------------------------------------------ the board: the GIF and the still card */
+
+.board {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--fg);
+}
+
+.board .eyebrow {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: var(--fg-brand);
+  white-space: nowrap;
+}
+
+.board .title {
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.board .wash {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: color-mix(in oklab, var(--lamplight) 40%, var(--rice));
+}
+
+.board .stage {
+  position: absolute;
+}
+
+.board .text {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.board .text .headline {
+  line-height: 1.1;
+}
+
+.board .text .body {
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.board .text .times {
+  line-height: 1.05;
+}
+
+.board .sign-off {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.board .sign-off .thanks {
+  color: var(--fg-brand);
+}
+
+.board .sign-off .dot {
+  color: var(--fg-muted);
+}
+
+.board .sign-off .mark {
+  fill: var(--jar-orange);
+}
+
+.gif .board .times {
+  color: var(--fg-brand);
+}
+
+.still .band .WovenBand__band {
+  --band-height: 60px;
+}

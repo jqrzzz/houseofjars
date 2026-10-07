@@ -16,7 +16,7 @@ next-env.d.ts
 screenshots/
 coverage/
 
-# frames recorded by scripts/film.ts (the encoded films go to public/film/)
+# frames recorded by scripts/film.ts and scripts/social.ts (their encoded outputs go to public/film/, social/ and public/email/)
 film-frames/
 
 # misc
