@@ -172,6 +172,18 @@
   color: var(--text-soft);
 }
 
+/* A ranking, and Agoda's scores by category, under the tags. */
+.also {
+  margin-top: var(--space-m);
+  max-width: 48rem;
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+.also + .also {
+  margin-top: var(--space-2xs);
+}
+
 .note {
   margin-top: var(--space-l);
   max-width: 40rem;

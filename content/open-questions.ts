@@ -61,6 +61,10 @@ export const openQuestions: readonly OpenQuestion[] = [
     ask: "Bicycle or scooter rental near the house: where, and on what terms.",
     guestTopic: "renting a bicycle or scooter",
   },
+  {
+    ask: "Before launch: the home page quotes three Agoda reviews the owner picked (Jie, Satoshi, Joyce; content/reviews.ts, consent \"owner\"). Ask those guests, or swap in quotes guests have agreed to share (consent \"guest\").",
+    guestTopic: null,
+  },
   { ask: "A link to the Hostelz ranking page.", guestTopic: null },
   { ask: "The real story behind the name House of Jars (identity.nameStory).", guestTopic: null },
 ];

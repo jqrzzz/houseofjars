@@ -272,7 +272,7 @@
 
 /* The site's own logo, before its name. */
 .platform .platformMark {
-  width: 1.5rem;
+  width: auto;
   height: 1.5rem;
   border-radius: 0.25rem;
 }

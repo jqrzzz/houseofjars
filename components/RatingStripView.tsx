@@ -10,6 +10,8 @@ export interface SiteBadge {
   readonly platform: string;
   /** The site's logo, when the site has one yet. */
   readonly mark: SiteMark | null;
+  /** The logo spells the site's name, so the name is only read out, not written again. */
+  readonly wordmark: boolean;
   readonly url: string;
   readonly score: string | null;
   readonly outOf: string | null;
@@ -31,7 +33,13 @@ export function RatingStripView({ sites, asOf, className }: { sites: readonly Si
       <ul role="list">
         {sites.map((site) => (
           <li key={site.platform}>
-            <a href={site.url} target="_blank" rel="noopener noreferrer" data-named={site.mark ? undefined : ""}>
+            <a
+              href={site.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-named={site.mark ? undefined : ""}
+              data-wordmark={site.wordmark ? "" : undefined}
+            >
               {site.mark ? <BrandMark mark={site.mark} /> : null}
               <span>
                 <span>{site.platform}</span>

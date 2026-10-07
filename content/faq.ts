@@ -129,7 +129,9 @@ export const faq: readonly FaqGroup[] = [
       {
         id: "comfort",
         question: "Is there air-conditioning and Wi-Fi?",
-        answer: ["Yes: free Wi-Fi, and guests praise the strong air-conditioning."],
+        answer: [
+          "Yes: free Wi-Fi, and guests praise the strong air-conditioning. The dorms are kept cool on purpose, for sleep; if you sleep cold, ask the team for a bed further from the air-conditioning or an extra blanket.",
+        ],
       },
       {
         id: "quiet",

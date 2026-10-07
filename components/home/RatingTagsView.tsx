@@ -22,7 +22,7 @@ export interface RatingTag {
  * the boundary only so the page carries its markup once (the HTML is still
  * rendered on the server, with every word in it).
  */
-export function RatingTagsView({ ratings, praise }: { ratings: readonly RatingTag[]; praise: readonly string[] }) {
+export function RatingTagsView({ ratings, praise, notes }: { ratings: readonly RatingTag[]; praise: readonly string[]; notes: readonly string[] }) {
   return (
     <div className="container">
       <div className={styles.intro}>
@@ -60,6 +60,11 @@ export function RatingTagsView({ ratings, praise }: { ratings: readonly RatingTa
           ))}
         </ul>
       </div>
+      {notes.map((note) => (
+        <p key={note} className={styles.also}>
+          {note}
+        </p>
+      ))}
       <p className={styles.note}>Scores are as each site showed them on that date. They change, so follow the links for today’s figures.</p>
       <div className={styles.praise}>
         <h3>What guests mention most</h3>
