@@ -195,7 +195,7 @@
   --dur-lamps: 3840ms;
   --dur-phrase: 8s;
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* the splash curve */
-  --ease-lamp: cubic-bezier(0.3, 0, 0.1, 1); /* a filament warming */
+  --ease-lamp: cubic-bezier(0.3, 0, 0.1, 1); /* a filament warming; a lamp let down on its cord, taken up gently, settling long */
   --ease-sway: cubic-bezier(0.37, 0, 0.63, 1);
   /* Paper settling into place: a long glide with no overshoot. */
   --ease-paper: linear(0, 0.2 8%, 0.52 20%, 0.77 33%, 0.91 47%, 0.975 62%, 0.995 80%, 1);

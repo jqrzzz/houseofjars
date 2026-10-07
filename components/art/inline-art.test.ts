@@ -29,8 +29,9 @@ describe("house lamps", () => {
   it("draw a 32-wide lamp whose cord sets its height: a 28 by 20 bell under an 8 by 3 cap", () => {
     const markup = html(createElement(HouseLamp, { cord: 44, index: 0 }));
     expect(markup).toContain('viewBox="0 0 32 68"');
-    expect(markup).toContain('d="M16 0V44"');
-    expect(markup).toContain('<rect x="12" y="44" width="8" height="3">');
+    // The cord is the lamp's own line (its ::after), so it can pay out while the drawing is let down; the drawing starts at the cap.
+    expect(markup).not.toContain("M16 0V");
+    expect(markup).toMatch(/<svg [^>]+><rect x="12" y="44" width="8" height="3">/);
     const shade = /<path id="[^"]+" d="([^"]+)"/.exec(markup)![1]!;
     // From the cap's foot (y 47) down to a flat foot 20 below, from x 30 across to x 2: 28 wide.
     expect(shade).toMatch(/^M12 47H20/);

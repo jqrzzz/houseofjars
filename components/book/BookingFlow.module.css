@@ -671,8 +671,11 @@
 
 /*
  * One of the house's lamps, hung from the ticket's top edge, lights for the
- * guest (components/art/HouseLamp): lit by Day too, here. Its Lamplighting
- * waits until the thread below has drawn in, so one thing moves at a time.
+ * guest (components/art/HouseLamp): in full lamplight by Day too, here. Its
+ * Lamplighting waits until the thread below has drawn in, so one thing moves
+ * at a time; it is let down from the ticket's edge and catches light, and,
+ * the booking being motion-free, it never stutters afterwards (that is the
+ * hero's alone).
  */
 .doneLamp {
   margin-top: calc(-1 * var(--pad-top));
@@ -682,7 +685,6 @@
 
 .lamp.lamp {
   --shade: var(--lamplight);
-  --lit: 1;
   --t0: 1440ms;
   /* Lit by Day as well, its light a little stronger than a stage's so it reads on paper. */
   --glow-strength: 0.8;

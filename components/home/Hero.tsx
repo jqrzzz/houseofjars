@@ -11,7 +11,7 @@ import styles from "./Hero.module.css";
  * book direct, Book and Ask Shadow, and the house now; beside them the dorms,
  * drawn from the house's photograph, in the house's arch and its paper mat
  * (the page's largest image, fetched first), under three of the house's own
- * lamps, which drop into place and light up once (Lamplighting). The guests'
+ * lamps, which are let down into place and light up once (Lamplighting). The guests'
  * score sits on a paper plate at the arch's foot, on the mat beside the
  * caption.
  */

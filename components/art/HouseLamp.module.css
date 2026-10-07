@@ -1,14 +1,15 @@
 /*
- * A house lamp at rest: hanging, unlit stone by Day, lit by Evening. Units are
+ * A house lamp at rest: hanging, lit. By Day the stone shade glows softly, a
+ * café lamp left on in the afternoon; by Evening it is lamplight. Units are
  * pixels: the drawing is 32 wide and its cord plus 24 tall.
  */
 .lamp {
-  --shade: var(--stone);
+  /* Day: the alabaster warmed by its bulb, over stone. */
+  --shade: color-mix(in oklab, var(--lamplight) 70%, var(--stone));
   --unlit: var(--stone);
-  --lit: 0;
   --ink-line: #4a2f1b;
   --ink-hair: rgb(74 47 27 / 0.6);
-  /* When the Lamplighting starts: 300 ms after load, or after the splash's curtain. */
+  /* When the Lamplighting starts: 480 ms after load, or after the splash's curtain. */
   --t0: 480ms;
   position: relative;
   display: block;
@@ -23,10 +24,23 @@
   --t0: 2320ms;
 }
 
+/*
+ * How long after --t0 a lamp's bulb catches: 2080 ms in the first phrase,
+ * once it hangs still; 0 once that phrase is over (lamp-hung, below, marks
+ * the lamp [data-hung] in HouseLamp.tsx), so a lamp lit again by a theme
+ * switch, which isn't let down again, catches at once.
+ */
+.lamp {
+  --light-at: 2080ms;
+}
+
+.lamp[data-hung] {
+  --light-at: 0ms;
+}
+
 :global(:root[data-theme="dark"]) .lamp {
   --shade: var(--lamplight);
   --unlit: var(--stone-dark);
-  --lit: 1;
   --ink-line: #dccdb6;
   --ink-hair: rgb(220 205 182 / 0.6);
 }
@@ -35,10 +49,25 @@
   :global(:root:not([data-theme="light"])) .lamp {
     --shade: var(--lamplight);
     --unlit: var(--stone-dark);
-    --lit: 1;
     --ink-line: #dccdb6;
     --ink-hair: rgb(220 205 182 / 0.6);
   }
+}
+
+/*
+ * The cord: inner detail, 1 px at 60%, from the ceiling down to the cap. It
+ * is the lamp's own line rather than the drawing's, so it can pay out from
+ * the ceiling as the shade is let down (below). Drawn last, over the light.
+ */
+.lamp::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 15.5px;
+  width: 1px;
+  height: calc(100% - 24px);
+  background: var(--ink-hair);
+  transform-origin: 50% 0;
 }
 
 .lamp svg {
@@ -49,13 +78,6 @@
   stroke: var(--ink-line);
   stroke-width: 1.5;
   stroke-linejoin: round;
-}
-
-/* The cord: inner detail, 1 px at 60%. */
-.lamp path:first-child {
-  fill: none;
-  stroke: var(--ink-hair);
-  stroke-width: 1;
 }
 
 /* A vein in the stone: teak at 35%, which reads on stone and on lamplight. */
@@ -79,7 +101,7 @@
   translate: var(--edge-x) var(--edge-y);
 }
 
-/* Its light: centred on the shade, 2.2 times its width. */
+/* Its light: centred on the shade, 2.2 times its width; faint by Day, warm by Evening (--glow-strength). */
 .halo {
   position: absolute;
   left: 50%;
@@ -87,12 +109,11 @@
   width: 61.6px;
   aspect-ratio: 1;
   translate: -50% 0;
-  opacity: var(--lit);
 }
 
-/* Motes rise from the shade as it lights; by Day the lamps stay unlit, so there are none. */
+/* Motes rise from the shade as it lights; by Day its light is too soft to carry them, so there are none. */
 .motes {
-  --delay: calc(var(--t0) + 670ms + var(--i) * 220ms);
+  --delay: calc(var(--t0) + var(--light-at) + 160ms + var(--i) * 240ms);
   --motes-y: calc(100% - 20px);
   display: none;
 }
@@ -108,89 +129,292 @@
 }
 
 /*
- * Lamplighting (§4.3), as phrases that end on the rest frame:
- *   drop   12 px into place, 1120 ms on --ease-paper, 140 ms apart;
- *   light  the shade warms and its halo opens .9 to 1.03 to 1 (one 3% catch),
- *          960 ms on --ease-lamp, 220 ms apart, left to right;
- *   sway   ±1° once over 3.84 s, every lamp first to the right, 190 ms apart,
- *          like one breeze.
- * They start 480 ms after load, or 2320 ms under the splash, and the last ends
- * by 7.5 s (before the boot script lifts html.splash at 8 s). The pace is the
- * site's unhurried one (docs/DESIGN.md §10.6).
+ * Lamplighting (§4.3, §10.11), as phrases that end on the rest frame:
+ *   lower  each lamp is let down from its ceiling rose on its cord: the cord
+ *          pays out (scaled from the ceiling) as the drawing comes down its
+ *          whole length (translated by the cord: its height less the 24 px
+ *          shade), together, 2560 ms on --ease-lamp, taken up gently and
+ *          settling long, never past its rest; 240 ms apart, left to right;
+ *   sway   on the way down a breath of air turns it 1° to the right, then
+ *          half a degree back, and it settles, over 3840 ms on --ease-sway,
+ *          like one breeze;
+ *   light  once it hangs still (--light-at, 2080 ms in) its bulb catches:
+ *          up, two soft dips (to 40% and to 72% of its light, 320 ms apart),
+ *          then steady, the halo opening .9 to 1.03 to 1, 1600 ms on
+ *          --ease-sway, so every change is rounded; its mote rises from the
+ *          first catch;
+ *   hung   6600 ms in, with the last mote gone, the lamp is marked hung and
+ *          --light-at drops to 0 (moving the light's start any earlier would
+ *          make a running mote jump).
+ * They start 480 ms after load, or 2320 ms under the splash, and the last
+ * mote is gone by 8.7 s (before the boot script lifts html.splash at 9.6 s:
+ * lifting it moves --t0, so nothing may still be playing then).
+ * The pace is the site's unhurried one (docs/DESIGN.md §10.6). The light's
+ * dips are its only quick change of light, and small: a lamp, never the
+ * screen, and never more than three a second (WCAG 2.3.1).
  *
- * The light is Evening's only: by Day the shade stays stone and the halo dark,
- * so only the drop and the sway run. Switching to Evening adds the light, so
- * the lamps light again, left to right, with their motes, once the theme's
- * 720 ms cross-fade is done (it is held while the fade runs, so it never plays
- * inside it). The drop and the sway don't replay.
+ * Switching theme lights the lamps again, left to right, with their motes
+ * by Evening, 480 ms after the theme's 720 ms cross-fade (--light-at is 0 by
+ * then): the light's name differs by theme, so the switch restarts it, held
+ * while the fade runs, so it never plays inside it. The lowering and the
+ * sway don't replay.
+ *
+ * The stutter, afterwards, and only for a lamp given a --cycle and a --first
+ * (the hero's three, Hero.module.css; elsewhere the cycle is 0 s, so it never
+ * runs: the booking is motion-free): now and then, a little lo-fi, the bulb
+ * dims to 88% and back, then once more, faintly, to 94%, within half a
+ * second, and burns steady for the rest of its cycle. Only the light dips:
+ * the drawing's brightness (the shade, with its cap and line) and the halo's
+ * own opacity (as a filter, so it never fights the warm-up's), so by Day no
+ * grey ring is left where the light was, and the rose and cord stay as they
+ * are. Both are filters on small boxes, run by the compositor, never a blur.
+ * A lamp on a stage (the hero's row, HeroLamps.tsx) rests its stutter while
+ * the stage is off screen or the tab is hidden (StageLife's [data-live]).
+ * Still and reduced motion show the lamp burning steady.
  */
 @media (prefers-reduced-motion: no-preference) {
   :global(:root:not([data-motion="still"])) .lamp {
     animation:
-      lamp-drop 1120ms var(--ease-paper) calc(var(--t0) + var(--i) * 140ms) both,
-      lamp-sway 3840ms var(--ease-sway) calc(var(--t0) + 960ms + var(--i) * 190ms) both;
+      lamp-sway 3840ms var(--ease-sway) calc(var(--t0) + var(--i) * 240ms) both,
+      lamp-hung 0s calc(var(--t0) + 6600ms) forwards;
   }
 
-  /* On the drawing, whose fill the shade inherits (the edge's copy has its own). */
+  :global(:root:not([data-motion="still"])) .lamp::after {
+    animation: lamp-pay-out 2560ms var(--ease-lamp) calc(var(--t0) + var(--i) * 240ms) both;
+  }
+
+  /* The light is on the drawing, whose fill the shade inherits (the edge's copy has its own). */
+  :global(:root:not([data-motion="still"])) .lamp svg {
+    animation:
+      lamp-lower 2560ms var(--ease-lamp) calc(var(--t0) + var(--i) * 240ms) both,
+      lamp-light-day 1600ms var(--ease-sway) calc(var(--t0) + var(--light-at) + var(--i) * 240ms) both,
+      lamp-dim var(--cycle, 0s) var(--ease-sway) var(--first, 0s) infinite;
+  }
+
+  :global(:root:not([data-motion="still"])) .halo {
+    animation:
+      lamp-halo-day 1600ms var(--ease-sway) calc(var(--t0) + var(--light-at) + var(--i) * 240ms) both,
+      lamp-fade var(--cycle, 0s) var(--ease-sway) var(--first, 0s) infinite;
+  }
+
   :global(:root[data-theme="dark"]:not([data-motion="still"])) .lamp svg {
-    animation: lamp-light 960ms var(--ease-lamp) calc(var(--t0) + 670ms + var(--i) * 220ms) both;
+    animation-name: lamp-lower, lamp-light-evening, lamp-dim;
   }
 
   :global(:root[data-theme="dark"]:not([data-motion="still"])) .halo {
-    animation: lamp-halo 960ms var(--ease-lamp) calc(var(--t0) + 670ms + var(--i) * 220ms) both;
+    animation-name: lamp-halo-evening, lamp-fade;
   }
 }
 
 @media (prefers-reduced-motion: no-preference) and (prefers-color-scheme: dark) {
   :global(:root:not([data-theme="light"]):not([data-motion="still"])) .lamp svg {
-    animation: lamp-light 960ms var(--ease-lamp) calc(var(--t0) + 670ms + var(--i) * 220ms) both;
+    animation-name: lamp-lower, lamp-light-evening, lamp-dim;
   }
 
   :global(:root:not([data-theme="light"]):not([data-motion="still"])) .halo {
-    animation: lamp-halo 960ms var(--ease-lamp) calc(var(--t0) + 670ms + var(--i) * 220ms) both;
+    animation-name: lamp-halo-evening, lamp-fade;
   }
 }
 
-/* Held while the theme cross-fades (theme-store.ts). After the rules above, and as specific, so it wins. */
+/*
+ * Held while the theme cross-fades (theme-store.ts): the light, the halo,
+ * the stutter and the motes, never the lowering, which would leave its cord
+ * behind. Off screen, on a stage, only the stutter rests: the first phrase
+ * plays on, as it must before StageLife has started. After the rules above,
+ * and more specific, so they win.
+ */
 @media (prefers-reduced-motion: no-preference) {
-  :global(:root[data-theme-fade]:not([data-motion="still"])) .lamp svg,
+  :global(:root[data-theme-fade]:not([data-motion="still"])) .lamp svg {
+    animation-play-state: running, paused, paused;
+  }
+
   :global(:root[data-theme-fade]:not([data-motion="still"])) .halo,
   :global(:root[data-theme-fade]:not([data-motion="still"])) .lamp .motes i {
     animation-play-state: paused;
   }
-}
 
-@keyframes lamp-drop {
-  from {
-    translate: 0 -12px;
-    opacity: 0;
+  :global(:root:not([data-motion="still"]) [data-stage]:not([data-live])) .lamp svg {
+    animation-play-state: running, running, paused;
   }
 
-  30% {
-    opacity: 1;
+  :global(:root:not([data-motion="still"]) [data-stage]:not([data-live])) .halo {
+    animation-play-state: running, paused;
+  }
+}
+
+@keyframes lamp-pay-out {
+  from {
+    scale: 1 0;
+  }
+}
+
+@keyframes lamp-lower {
+  from {
+    translate: 0 calc(24px - 100%);
+  }
+}
+
+/* The stutter: the shade dims to 88%, then faintly to 94%, within 2% of its cycle (half a second at most), and its halo fades with it. */
+@keyframes lamp-dim {
+  0%,
+  0.9%,
+  2%,
+  to {
+    filter: brightness(1);
+  }
+
+  0.4% {
+    filter: brightness(0.88);
+  }
+
+  1.4% {
+    filter: brightness(0.94);
+  }
+}
+
+@keyframes lamp-fade {
+  0%,
+  0.9%,
+  2%,
+  to {
+    filter: opacity(1);
+  }
+
+  0.4% {
+    filter: opacity(0.8);
+  }
+
+  1.4% {
+    filter: opacity(0.9);
+  }
+}
+
+/* A moment, not a move: its end tells HouseLamp.tsx the first phrase is over. */
+@keyframes lamp-hung {
+  to {
+    --hung: 1;
   }
 }
 
 @keyframes lamp-sway {
-  25% {
+  30% {
     rotate: -1deg;
   }
 
-  75% {
-    rotate: 1deg;
+  70% {
+    rotate: 0.5deg;
   }
 }
 
-@keyframes lamp-light {
+/* The bulb catching, the same in either light (one per theme, so a theme switch restarts it). */
+@keyframes lamp-light-day {
   from {
     fill: var(--unlit);
   }
+
+  10% {
+    fill: color-mix(in oklab, var(--shade) 70%, var(--unlit));
+  }
+
+  18% {
+    fill: color-mix(in oklab, var(--shade) 40%, var(--unlit));
+  }
+
+  30% {
+    fill: color-mix(in oklab, var(--shade) 90%, var(--unlit));
+  }
+
+  38% {
+    fill: color-mix(in oklab, var(--shade) 72%, var(--unlit));
+  }
+
+  56% {
+    fill: var(--shade);
+  }
 }
 
-@keyframes lamp-halo {
+@keyframes lamp-light-evening {
+  from {
+    fill: var(--unlit);
+  }
+
+  10% {
+    fill: color-mix(in oklab, var(--shade) 70%, var(--unlit));
+  }
+
+  18% {
+    fill: color-mix(in oklab, var(--shade) 40%, var(--unlit));
+  }
+
+  30% {
+    fill: color-mix(in oklab, var(--shade) 90%, var(--unlit));
+  }
+
+  38% {
+    fill: color-mix(in oklab, var(--shade) 72%, var(--unlit));
+  }
+
+  56% {
+    fill: var(--shade);
+  }
+}
+
+/* Its halo follows the bulb, and opens with one 3% catch. */
+@keyframes lamp-halo-day {
   from {
     opacity: 0;
     scale: 0.9;
+  }
+
+  10% {
+    opacity: 0.7;
+  }
+
+  18% {
+    opacity: 0.4;
+  }
+
+  30% {
+    opacity: 0.9;
+  }
+
+  38% {
+    opacity: 0.72;
+  }
+
+  56% {
+    opacity: 1;
+  }
+
+  70% {
+    scale: 1.03;
+  }
+}
+
+@keyframes lamp-halo-evening {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+
+  10% {
+    opacity: 0.7;
+  }
+
+  18% {
+    opacity: 0.4;
+  }
+
+  30% {
+    opacity: 0.9;
+  }
+
+  38% {
+    opacity: 0.72;
+  }
+
+  56% {
+    opacity: 1;
   }
 
   70% {

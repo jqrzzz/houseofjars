@@ -112,10 +112,15 @@
   translate: -50% 0;
 }
 
-/* Each cord hangs from a small teak ceiling rose, so the lamps hang from a ceiling, not from the air. */
+/*
+ * Each cord hangs from a small teak ceiling rose, so the lamps hang from a
+ * ceiling, not from the air. It sits in front of its lamp: the cord pays out
+ * from inside it, and before the lamp is let down its cap is tucked up into it.
+ */
 .hang::before {
   content: "";
   position: absolute;
+  z-index: 1;
   left: 50%;
   top: -2px;
   width: 10px;
@@ -124,6 +129,27 @@
   border-radius: 1px 1px 3px 3px;
   background: color-mix(in oklab, var(--teak) 84%, var(--page));
   box-shadow: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+/*
+ * Now and then a bulb stutters (docs/DESIGN.md §10.11, the stutter in
+ * HouseLamp.module.css), each lamp on a cycle of its own: 23, 37 and 31 s,
+ * left to right, the first after 12, 27 and 19 s, so the three never keep
+ * time with each other. Only these lamps have a cycle, so only they stutter.
+ */
+.hang:nth-child(1) {
+  --cycle: 23s;
+  --first: 12s;
+}
+
+.hang:nth-child(2) {
+  --cycle: 37s;
+  --first: 27s;
+}
+
+.hang:nth-child(3) {
+  --cycle: 31s;
+  --first: 19s;
 }
 
 .photo {
@@ -170,14 +196,17 @@
 }
 
 /*
- * One move in this view: the Lamplighting (HouseLamp.module.css). The words
- * and the photograph stand still from the first frame. As the hero scrolls
- * away, the lamps are drawn up 24 px, linear, as the reader holds the clock.
+ * One move in this view: the Lamplighting (HouseLamp.module.css), and after
+ * it only the lamps' rare stutter (their cycles above). The words and the photograph stand
+ * still from the first frame. As the hero scrolls away, the lamps are drawn up
+ * 24 px, linear, as the reader holds the clock (its duration auto after the
+ * shorthand, which would otherwise set it to 0s, as in PhotoFrame).
  */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     :global(:root:not([data-motion="still"])) .lamps {
       animation: lamps-rise linear both;
+      animation-duration: auto;
       animation-timeline: --hero;
       animation-range: exit 0% exit 100%;
     }
