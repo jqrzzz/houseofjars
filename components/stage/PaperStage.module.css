@@ -58,6 +58,25 @@
   height: calc(var(--u) * var(--vh));
 }
 
+/* The camera (StageDirector's camera): the world leans in on a stop and back out, slowly, from its top left corner. */
+.stage[data-camera] .world {
+  transform-origin: 0 0;
+  transform: translate(var(--cam-x, 0px), var(--cam-y, 0px)) scale(var(--cam-s, 1));
+  transition: transform 1100ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+:global(:root[data-motion="still"]) .stage[data-camera] .world {
+  transform: none;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage[data-camera] .world {
+    transform: none;
+    transition: none;
+  }
+}
+
 .house,
 .stage [data-layer],
 .stage [data-ov],

@@ -77,7 +77,7 @@ export function StageArt({ art }: { art: StageArtData }) {
     <div className={styles.frame}>
       <PaperSky phrase={scroll} />
       <span className={styles.fibre} />
-      <div className={styles.world} style={{ "--vx": vx, "--vy": vy, "--vw": vw, "--vh": vh, "--cx": cx, "--cy": cy, "--cw": cw, "--ch": ch } as Vars}>
+      <div className={styles.world} data-world="" style={{ "--vx": vx, "--vy": vy, "--vw": vw, "--vh": vh, "--cx": cx, "--cy": cy, "--cw": cw, "--ch": ch } as Vars}>
         <div className={styles.house}>
           {layers.map((l) => (
             <Fragment key={l[0]}>

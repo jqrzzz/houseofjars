@@ -33,6 +33,12 @@ const ACTS = ["none", "a", "b", "c", "d"];
  * reload part-way down) lands on the right step.
  * When none of the steps is shown (a still on phones), it leaves the stage at
  * rest.
+ *
+ * With `camera` (how close, 1.7 say), the stage leans in on the walk: at each
+ * stop it eases in on that stop, at the curtain on the last one, and before
+ * the walk it shows the whole house. A reader can also tap a stop in `marks`
+ * to look at it, on phones too. Under Still and reduced motion the stage keeps
+ * its whole view.
  */
 export function StageDirector({
   stage,
@@ -40,12 +46,14 @@ export function StageDirector({
   selector = "[data-act]",
   marks,
   line = 0.45,
+  camera,
 }: {
   stage: string;
   steps: string;
   selector?: string;
   marks?: string;
   line?: number;
+  camera?: number;
 }) {
   useEffect(() => {
     const figure = document.getElementById(stage);
@@ -55,6 +63,39 @@ export function StageDirector({
     const words = marks ? document.getElementById(marks) : null;
     // --walk drives only the transitions for browsers without scroll timelines; elsewhere writing it would restyle the whole stage.
     const fallback = !CSS.supports("animation-timeline: view()");
+    const world = camera ? figure.querySelector<HTMLElement>("[data-world]") : null;
+    if (world) figure.setAttribute("data-camera", "");
+    let aimed = -1;
+
+    // The camera: ease in on stop k (its ring, as the walk now on the stage draws it), or back to the whole house (k < 0).
+    const aim = (k: number) => {
+      aimed = k;
+      if (!world || !camera) return;
+      const frame = world.parentElement;
+      const still = document.documentElement.dataset.motion === "still" || matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const rings = figure.querySelectorAll<HTMLElement>("[data-ring]");
+      const ring = k >= 0 && rings.length > 0 ? rings[Math.min(k, rings.length - 1)] : undefined;
+      const set = (s: number, x: number, y: number) => {
+        figure.style.setProperty("--cam-s", String(s));
+        figure.style.setProperty("--cam-x", `${x}px`);
+        figure.style.setProperty("--cam-y", `${y}px`);
+      };
+      if (!frame || !ring || still || ring.getClientRects().length === 0) return set(1, 0, 0);
+      // Where the ring is in the world, unzoomed: the world's box shows how far the camera is in right now, even mid-move.
+      const w = world.getBoundingClientRect();
+      const r = ring.getBoundingClientRect();
+      const now = w.width / (world.offsetWidth || 1) || 1;
+      const lx = (r.left + r.width / 2 - w.left) / now;
+      const ly = (r.top + r.height / 2 - w.top) / now;
+      const W = frame.clientWidth;
+      const H = frame.clientHeight;
+      const z = camera;
+      // The stop to the middle of the frame, but never past the edge of what the whole view shows.
+      const fit = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+      const ox = world.offsetLeft;
+      const oy = world.offsetTop;
+      set(z, fit(W / 2 - ox - z * lx, (W - ox) * (1 - z), ox * (z - 1)), fit(H / 2 - oy - z * ly, (H - oy) * (1 - z), oy * (z - 1)));
+    };
 
     const direct = () => {
       if (!items.some((item) => item.getClientRects().length > 0)) return;
@@ -72,6 +113,7 @@ export function StageDirector({
       figure.dataset.act = act;
       figure.dataset.step = String(step);
       if (fallback) figure.style.setProperty("--walk", String(walk));
+      aim(step);
       for (const other of items) other.toggleAttribute("data-current", other === item);
       if (words) {
         words.dataset.act = act;
@@ -94,8 +136,25 @@ export function StageDirector({
     const below = 100 - Math.round(line * 100);
     const observer = new IntersectionObserver(direct, { rootMargin: `100000px 0px -${below}% 0px`, threshold: 0 });
     for (const item of items) observer.observe(item);
-    return () => observer.disconnect();
-  }, [stage, steps, selector, marks, line]);
+
+    // A stop tapped in the words: the camera goes to it (the next step of the story takes over again).
+    const look = (event: Event) => {
+      const item = (event.target as Element | null)?.closest<HTMLElement>("[data-stop]");
+      if (!camera || !words || !item || !words.contains(item)) return;
+      const k = Number(item.dataset.stop);
+      for (const stop of words.querySelectorAll<HTMLElement>("[data-stop]")) stop.toggleAttribute("data-current", stop.dataset.stop === String(k));
+      aim(aimed === k ? -1 : k);
+    };
+    words?.addEventListener("click", look);
+    // The frame changes size with the window: the camera keeps its stop in view.
+    const resized = world ? new ResizeObserver(() => aim(aimed)) : null;
+    if (world?.parentElement) resized?.observe(world.parentElement);
+    return () => {
+      observer.disconnect();
+      words?.removeEventListener("click", look);
+      resized?.disconnect();
+    };
+  }, [stage, steps, selector, marks, line, camera]);
 
   return null;
 }

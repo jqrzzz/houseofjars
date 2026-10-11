@@ -34,10 +34,10 @@ describe("CSS Modules for social pieces", () => {
     expect(css).toContain("0%, 96.5% { opacity: 0.5; }");
   });
 
-  it("draws the curtain with the Splash's own fibre", () => {
+  // The Splash now opens on the pods' woven curtains; the social pieces keep their paper theatre's own teak fibre.
+  it("draws the curtain with its teak fibre", () => {
     const fibre = (css: string) => /--fibre:\s*(url\("data:[^"]+"\))/.exec(css)?.[1];
     expect(fibre(read("scripts/social/theatre.css"))).toBeDefined();
-    expect(fibre(read("scripts/social/theatre.css"))).toBe(fibre(read("components/brand/Splash.module.css")));
   });
 
   it("greets in Lao as the Splash does", async () => {
