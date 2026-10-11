@@ -1,5 +1,6 @@
 import { airportTransport, immigration, location, plainOfJars } from "./area";
 import { identity } from "./identity";
+import { menu } from "./menu";
 import { privacy } from "./privacy";
 import { honestNotes, praise, ratings } from "./reviews";
 import { amenities, atmosphere, bathrooms, beds, breakfast, building, rules, services, staff, times } from "./stay";
@@ -13,6 +14,7 @@ export const content = {
   beds,
   bathrooms,
   breakfast,
+  menu,
   staff,
   amenities,
   atmosphere,

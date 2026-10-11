@@ -45,6 +45,14 @@ export const pages = {
       "Check-in from 14:00 and check-out until 11:30, the few rules that keep House of Jars calm, each with its reason, and what to bring to check-in.",
     teaser: "Check-in and check-out times, and the few rules that keep the house calm.",
   },
+  menu: {
+    path: "/menu",
+    nav: "Café menu",
+    title: "Café menu and breakfast",
+    description:
+      "The café menu at House of Jars in Vientiane: what breakfast includes for staying guests, eggs and baguettes, and coffee and tea, hot or iced, with prices.",
+    teaser: "Breakfast for staying guests, and coffee and tea, hot or iced, with prices.",
+  },
   vientiane: {
     path: "/vientiane",
     nav: "Vientiane",
