@@ -25,9 +25,30 @@ npm run dev                  # http://localhost:3000
 | `npm run smoke` | Browser smoke test against a running server (see below) |
 | `npm run fake-shadow` | A stand-in for Shadow Check-in's public API on port 4010, to try online booking locally ([docs/BOOKING_API.md](docs/BOOKING_API.md)) |
 | `npm run indexnow` | After a deploy: tells Bing and the other IndexNow search engines which pages changed (see [docs/SEO.md](docs/SEO.md)) |
+| `npm run menu:pdf` | Makes the café menu card's two PDFs in Chromium from the card the menu page shows, holds them to it (its words and prices, fonts, colours, fit, tags and paper edges), then writes them to `public/menu/` and review sheets to `film-frames/menu/` (`-- --only office\|shop` for one, `-- --check` to compare a fresh build with the committed files and write nothing) |
 | `npm run social -- house-rules` | Builds a social piece from `scripts/social/pieces/` in Chromium and ffmpeg: a 9:16 silent film, an email GIF and 4:5 still cards (`--only video\|gif\|still` for one format, `--check` to hold every output to the piece's spec: reading time, safe zones, a seamless loop, fonts, colour, the files' formats) |
 
 The film, its cover, the still cards and the post's caption and alt texts go to `social/{piece}/` (not served by the site); the email GIF (the `@2x` file ships; the exact `<img>` tag for the email is in the post file), its 1x fallback and a still of its first frame go to `public/email/`. A test fails when the post file no longer matches the piece's facts in `content/`: rebuild and commit every output then. Frames and review sheets (a contact sheet, the safe zones, the GIF's key frames, the cards side by side) go to `film-frames/social/{piece}/`, which git ignores.
+
+### Printing the menu
+
+The menu page links two PDFs of the café's menu card, front then back, made by `npm run menu:pdf` from the same card the page shows (`components/menu/MenuFaces.tsx`), in the house's own Figtree, embedded:
+
+- `public/menu/house-of-jars-menu-a4.pdf` (at `/menu/house-of-jars-menu-a4.pdf`) is for any office printer: A4, with the orange inside an 8 mm white mat, since office printers can't print to the edge. Print it at actual size (100%), on both sides of the paper; nothing has to line up through it.
+- `public/menu/house-of-jars-menu-a4-bleed.pdf` (at `/menu/house-of-jars-menu-a4-bleed.pdf`) is for a print shop: pages of 216 × 303 mm, the A4 trim with 3 mm of bleed on every side, the orange running to the edge, and the trim and bleed set in the file (TrimBox and BleedBox), with no crop marks, since shops add their own.
+
+Chromium writes sRGB colour only, with no CMYK or PDF/X, so the shop converts the colours: ask it for a printed proof of the orange, held next to a current card, before a full run. The site's own print of `/menu` prints both sides too, but embeds its variable Figtree as Type 3 fonts; for a file to send, use the PDFs.
+
+The engine needs a full Chromium at `CHROMIUM_PATH` (default `/opt/pw-browsers/chromium`): the headless shell has no PDF viewer, which it uses to check each page's edges. A run writes nothing unless every check passes, and the same card always makes the same bytes, so a rebuild with nothing changed leaves git clean. `film-frames/menu/` (ignored by git) gets each page at 150 dpi and `compare.png`, the new card beside the team's photographs of today's (`photos/menus/`).
+
+### Changing a price
+
+1. Edit `content/menu.ts`, `menu.asOf` included (the PDFs carry it as their date; the card never shows it).
+2. Run `npm run menu:pdf`.
+3. Look at the pages in `film-frames/menu/`.
+4. Commit `content/` and `public/menu/` together.
+
+Until the PDFs are made again, `npm test` fails, naming the file, the page and the line that is out of date (`scripts/menu-pdf/menu-pdf.test.ts`); a change to what the card is drawn from (its components and stylesheets, the colours, the mark, the icons) fails it too, by the fingerprint each PDF carries in its Keywords (`scripts/menu-pdf/fingerprint.ts`). `next build` never waits on the PDFs.
 
 ### Smoke test
 

@@ -1,0 +1,211 @@
+/*
+ * The menu card on the page (MenuCard.tsx), screen only: the side plates on
+ * phones, the two sides stacked or side by side, the turn's stage, the
+ * card's paper by Evening, its focus ring, and both sides on paper. The
+ * sides themselves are MenuFaces.module.css.
+ *
+ * [data-menu-card] has no state attribute without JavaScript, before
+ * hydration and from 60rem up: the sides stack, or sit side by side on wide
+ * screens. On a phone the island sets data-turn and data-side: both sides
+ * share one grid cell and the side not shown is hidden="until-found"
+ * (content-visibility: hidden, so it is out of the accessibility tree and the
+ * tab order, and find-in-page still reaches it). data-turning is the turn
+ * itself (turn.ts).
+ */
+
+.card {
+  display: grid;
+  gap: var(--space-m);
+}
+
+/* By Evening the card's white paper is warmed a little by lamplight (#fefbf5), so it sits in the lamplit page; brand-text on it is 4.83:1. */
+@media screen and (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .card {
+    --menu-paper: color-mix(in oklab, var(--white) 92%, var(--lamplight));
+  }
+}
+
+@media screen {
+  :global(:root[data-theme="dark"]) .card {
+    --menu-paper: color-mix(in oklab, var(--white) 92%, var(--lamplight));
+  }
+}
+
+/* The plates: each side's name on a square paper plate, a link to that side. */
+.plates {
+  display: flex;
+  gap: var(--space-s);
+}
+
+.plate {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.85rem 0.75rem;
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--rule-strong),
+    var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+  color: var(--text);
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+/* The side in small, 14 by 20 px: a card of jar orange for breakfast, of the card's white for the café. */
+.swatch {
+  flex: none;
+  width: 14px;
+  height: 20px;
+  box-shadow:
+    inset 0 0 0 1px var(--rule-strong),
+    var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+}
+
+.front {
+  background: var(--jar-orange);
+}
+
+.back {
+  background: var(--menu-paper, var(--white));
+}
+
+.words {
+  display: grid;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.note {
+  color: var(--text-soft);
+  font-size: var(--step--1);
+}
+
+/* The current plate is tied with the thread: drawn in from the left when its side comes up, drawn out to the right when it goes. */
+.plate::after {
+  content: "";
+  position: absolute;
+  inset: auto 0.85rem 0.3rem;
+  height: 2px;
+  background: var(--thread);
+  scale: 0 1;
+  transform-origin: right;
+}
+
+.plate[aria-current="true"]::after {
+  scale: 1 1;
+  transform-origin: left;
+}
+
+/* Pressed, a plate goes down a pixel at once, as the site's buttons do. */
+.plate:active {
+  translate: 0 1px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .plate {
+    transition: translate var(--dur-press) var(--ease-out);
+  }
+
+  :global(:root:not([data-motion="still"])) .plate::after {
+    transition: scale var(--dur-ui) var(--ease-out);
+  }
+}
+
+/*
+ * A side, and the stage for its turn. Inside the card the focus ring is ink
+ * in both themes: Evening's lamplight ring would be about 2:1 on the orange
+ * and 1.5:1 on the white.
+ */
+.wrap {
+  --focus: var(--ink);
+  position: relative;
+  min-width: 0;
+}
+
+/* Over a side as it turns: ink, clear at rest; turn.ts deepens it to 16% as the side stands edge-on. */
+.shade {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* On a phone with JavaScript: one side at a time, in one place under the plates. */
+.card[data-turn] .wrap {
+  grid-area: 2 / 1;
+}
+
+/*
+ * The side waiting behind the one shown keeps no height (content-visibility
+ * skips its contents): it never covers the side shown, so taps reach that
+ * side, and on hydration it never slides into view as a layout shift.
+ */
+.card[data-turn] .wrap[hidden] {
+  align-self: start;
+}
+
+/* The eye's distance for a turn (TURN_PERSPECTIVE_PX); turn.ts sets where it looks from. */
+.card[data-turning] {
+  perspective: 2000px;
+}
+
+/* Wide screens: the two sides side by side, as tall as each other. The island never hides a side here. */
+@media (min-width: 60rem) {
+  .card {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    gap: var(--space-l);
+  }
+
+  .plates {
+    display: none;
+  }
+
+  .wrap {
+    display: grid;
+  }
+}
+
+/* On paper, both sides, whichever one a phone was showing; on the card's own white. No plates, no shades. */
+@media print {
+  .card {
+    --menu-paper: var(--white);
+    display: block;
+  }
+
+  .plates,
+  .shade {
+    display: none;
+  }
+
+  .wrap {
+    display: block;
+    content-visibility: visible !important;
+  }
+}
+
+/* Forced colours: plain outlines for the plates and the swatches, the current plate ringed. No shade. */
+@media (forced-colors: active) {
+  .plate,
+  .swatch {
+    border: 1px solid CanvasText;
+  }
+
+  .plate[aria-current="true"] {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+  }
+
+  .shade {
+    display: none;
+  }
+}

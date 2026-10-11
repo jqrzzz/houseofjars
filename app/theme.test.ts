@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { breakfast, times } from "@/content/stay";
 import { MOTION_KEY } from "@/lib/motion/prefs";
+import { pages } from "@/lib/site";
 import { bootScript, SPLASH_KEY, SPLASH_MS, THEME_KEY, themeColor, vtPhaseStarts } from "@/lib/theme";
 
 const css = readFileSync(join(process.cwd(), "app/globals.css"), "utf8");
@@ -41,7 +42,7 @@ describe("Day and Evening", () => {
   });
 });
 
-/** Runs the boot script against a stand-in page, storage and clock. */
+/** Runs the boot script against a stand-in page, storage and clock, as the first page of a visit at `path`. */
 function boot({
   theme,
   motion,
@@ -51,6 +52,7 @@ function boot({
   localThrows = storageThrows,
   sessionThrows = storageThrows,
   now = Date.UTC(2026, 9, 5, 5, 0),
+  path = "/",
 }: {
   theme?: string;
   motion?: string;
@@ -60,6 +62,7 @@ function boot({
   localThrows?: boolean;
   sessionThrows?: boolean;
   now?: number;
+  path?: string;
 }) {
   const attributes = new Map<string, string>();
   const classes = new Set<string>();
@@ -83,13 +86,16 @@ function boot({
   const matchMedia = (query: string) => ({ matches: calm && query.includes("reduce") });
   const clock = { now: () => now };
   const setTimeout = (run: () => void, ms: number) => timers.push({ run, ms });
-  new Function("document", "localStorage", "sessionStorage", "matchMedia", "Date", "setTimeout", bootScript)(
+  // The browser gives the path without its hash: /menu#cafe is { pathname: "/menu" }.
+  const location = { pathname: path };
+  new Function("document", "localStorage", "sessionStorage", "matchMedia", "Date", "setTimeout", "location", bootScript)(
     document,
     localStorage,
     sessionStorage,
     matchMedia,
     clock,
     setTimeout,
+    location,
   );
   return {
     theme: attributes.get("data-theme"),
@@ -133,6 +139,18 @@ describe("the boot script", () => {
     expect(still.splash).toBe(false);
     expect(still.timers).toHaveLength(0);
     expect(still.seen).toBe(true);
+  });
+
+  it("skips the splash when a visit starts on the café menu, so a guest sent the menu link sees prices at once", () => {
+    expect(pages.menu.path).toBe("/menu");
+    const menu = boot({ path: "/menu" });
+    expect(menu.splash).toBe(false);
+    expect(menu.timers).toHaveLength(0);
+    // The visit has begun: the next page doesn't raise the curtain either.
+    expect(menu.seen).toBe(true);
+    expect(boot({ path: "/" }).splash).toBe(true);
+    expect(boot({ path: "/the-house" }).splash).toBe(true);
+    expect(boot({ path: "/menu", motion: "still" })).toMatchObject({ splash: false, seen: true, motion: "still" });
   });
 
   it("takes the splash class off after 9600 ms, once the curtain and the hero's lamps have finished", () => {

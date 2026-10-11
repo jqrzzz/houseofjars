@@ -1,6 +1,7 @@
 import { THEME_KEY } from "@/components/layout/theme-keys";
 import { breakfast, times } from "@/content/stay";
 import { MOTION_KEY } from "@/lib/motion/prefs";
+import { pages } from "@/lib/site";
 
 export { THEME_KEY, themeColor, type ThemeChoice } from "@/components/layout/theme-keys";
 
@@ -69,8 +70,11 @@ const phaseExpression =
  * - the logo splash on the first page of a visit (html.splash), unless the
  *   guest prefers reduced motion or chose Still; the class comes off after
  *   SPLASH_MS, so coming back to the home page later never waits for a curtain;
+ * - no splash when the visit starts on the café menu (pages.menu.path, with any
+ *   hash): a guest sent the menu link has come for the prices, so they see
+ *   them at once. The visit still counts as begun, so no later page shows it;
  * - the house now (data-vt-phase), from Vientiane time.
  * Every storage call is guarded: private windows and blocked storage simply
  * get Auto, Full and no splash.
  */
-export const bootScript = `(function(){var d=document.documentElement,s=0;try{var t=localStorage.getItem(${JSON.stringify(THEME_KEY)});if(t==="light"||t==="dark")d.setAttribute("data-theme",t);s=localStorage.getItem(${JSON.stringify(MOTION_KEY)})==="still";if(s)d.setAttribute("data-motion","still")}catch(e){}try{if(!sessionStorage.getItem(${JSON.stringify(SPLASH_KEY)})){sessionStorage.setItem(${JSON.stringify(SPLASH_KEY)},"1");if(!s&&!matchMedia("(prefers-reduced-motion: reduce)").matches){d.classList.add("splash");setTimeout(function(){d.classList.remove("splash")},${SPLASH_MS})}}}catch(e){}var m=Math.floor(Date.now()/6e4+${VIENTIANE_UTC_OFFSET_MINUTES})%1440;d.setAttribute("data-vt-phase",${phaseExpression})})()`;
+export const bootScript = `(function(){var d=document.documentElement,s=0;try{var t=localStorage.getItem(${JSON.stringify(THEME_KEY)});if(t==="light"||t==="dark")d.setAttribute("data-theme",t);s=localStorage.getItem(${JSON.stringify(MOTION_KEY)})==="still";if(s)d.setAttribute("data-motion","still")}catch(e){}try{if(!sessionStorage.getItem(${JSON.stringify(SPLASH_KEY)})){sessionStorage.setItem(${JSON.stringify(SPLASH_KEY)},"1");if(!s&&location.pathname!==${JSON.stringify(pages.menu.path)}&&!matchMedia("(prefers-reduced-motion: reduce)").matches){d.classList.add("splash");setTimeout(function(){d.classList.remove("splash")},${SPLASH_MS})}}}catch(e){}var m=Math.floor(Date.now()/6e4+${VIENTIANE_UTC_OFFSET_MINUTES})%1440;d.setAttribute("data-vt-phase",${phaseExpression})})()`;

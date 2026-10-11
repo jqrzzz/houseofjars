@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement, Fragment, type ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -65,6 +67,14 @@ describe("the arch wisp", () => {
     expect(markup).toContain('width="80" height="128"');
     expect(markup).toContain("--sw:1");
     expect(markup).toContain("data-play");
+  });
+
+  it("keeps its Day stroke by Evening over paper that stays white, and turns lamplight everywhere else", () => {
+    expect(html(createElement(ArchWisp, { onPaper: true }))).toMatch(/^<svg class="_wisp_[0-9a-f]+ _onPaper_[0-9a-f]+"/);
+    expect(html(createElement(ArchWisp, {}))).not.toContain("_onPaper_");
+    const css = readFileSync(join(process.cwd(), "components/art/ArchWisp.module.css"), "utf8");
+    const evening = [...css.matchAll(/^(.*)\{\s*--wisp: var\(--lamplight\);/gm)].map(([, selector]) => selector!.trim());
+    expect(evening).toEqual([':global(:root[data-theme="dark"]) .wisp:not(.onPaper)', ':global(:root:not([data-theme="light"])) .wisp:not(.onPaper)']);
   });
 });
 

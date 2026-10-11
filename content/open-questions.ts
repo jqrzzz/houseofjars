@@ -61,6 +61,17 @@ export const openQuestions: readonly OpenQuestion[] = [
     ask: "Bicycle or scooter rental near the house: where, and on what terms.",
     guestTopic: "renting a bicycle or scooter",
   },
+  // The menu cards give hours, not days (content/menu.ts, content/stay.ts).
+  {
+    ask: "Is the café open every day at its menu hours (coffee and tea 08:00–19:00, breakfast 08:00–10:30), holidays included?",
+    guestTopic: "whether the café is open every day, holidays included",
+  },
+  // The breakfast card's "Change your coffee or tea" names "Americano iced" and no other iced drink.
+  {
+    ask: "When a staying guest changes the breakfast drink to a cappuccino, latte, mocha or chocolate (18,000), does that price cover the iced drink too? The breakfast menu names the iced Americano but not the others.",
+    // Not "the breakfast": the content audit reads those words as the guests' praise in content/reviews.ts.
+    guestTopic: "whether an iced cappuccino, latte, mocha or chocolate can replace a staying guest's breakfast drink, and what it adds",
+  },
   {
     ask: "Before launch: the home page quotes three Agoda reviews the owner picked (Jie, Satoshi, Joyce; content/reviews.ts, consent \"owner\"). Ask those guests, or swap in quotes guests have agreed to share (consent \"guest\").",
     guestTopic: null,

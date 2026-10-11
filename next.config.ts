@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { EDITION_LIST } from "./lib/menu/print-spec";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -48,6 +49,15 @@ const securityHeaders = [
  */
 const keptAnHour = [{ key: "Cache-Control", value: "public, max-age=3600" }];
 
+/**
+ * The café menu card's two PDFs (public/menu/, named in lib/menu/print-spec.ts)
+ * stay out of search results: someone searching for the café's menu should
+ * find the menu page, with its booking card, rather than a file. Each is named
+ * here, so nothing else under /menu is caught; the security headers above
+ * still apply to them.
+ */
+const notIndexed = [{ key: "X-Robots-Tag", value: "noindex" }];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
@@ -59,6 +69,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       { source: "/brand/:path*", headers: keptAnHour },
       { source: "/shadow/:path*", headers: keptAnHour },
+      ...EDITION_LIST.map((edition) => ({ source: edition.url, headers: notIndexed })),
     ];
   },
 };
