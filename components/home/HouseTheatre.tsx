@@ -51,7 +51,7 @@ export function HouseTheatre() {
       <div className={styles.stage}>
         <PaperStage
           id="theatre"
-          floors={["ground", "floor1"]}
+          floors={["ground", "floor1", "floor2"]}
           route="arrival"
           open
           curtain="pod-H01"
@@ -66,7 +66,7 @@ export function HouseTheatre() {
           caption={CAPTION}
         />
       </div>
-      <StageDirector stage="theatre" steps="theatre-cues" marks="theatre-words" line={0.5} />
+      <StageDirector stage="theatre" steps="theatre-cues" marks="theatre-words" line={0.5} camera={1.6} />
     </section>
   );
 }

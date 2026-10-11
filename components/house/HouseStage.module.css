@@ -86,8 +86,29 @@
   line-height: 1.5;
 }
 
-.stops strong {
-  font-weight: 650;
+/* A stop's name is a button: tapped, the stage looks at it. */
+.stop {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-align: start;
+  text-decoration: underline dotted color-mix(in oklab, currentColor 45%, transparent);
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.stop:focus-visible {
+  outline: 2px solid var(--focus, currentColor);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.stops li[data-current] .stop {
+  color: var(--jar-orange);
+  text-decoration-color: currentColor;
 }
 
 .stops li::marker {
@@ -104,7 +125,7 @@
     --stage-timeline: --house;
     --act-b: contain 0% contain 42%;
     --act-c: contain 48% contain 94%;
-    height: 160svh;
+    height: 260svh;
     view-timeline: --house;
   }
 
@@ -152,7 +173,9 @@
     top: 12%;
   }
 
-  .steps span:last-child {
-    top: 40%;
+  /* While the walk plays beside the stage, only its current stop says what happens there: the others are their names. */
+  .walks[data-act="c"] .stops li:not([data-current]) .does,
+  .walks[data-act="d"] .stops li:not([data-current]) .does {
+    display: none;
   }
 }

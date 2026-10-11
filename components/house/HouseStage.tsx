@@ -55,11 +55,13 @@ export const HOUSE_PHOTOS: readonly PhotoKey[] = ["dormFan", "podCurtain", "podL
 /**
  * The house in section (docs/DESIGN.md §5.2), for /the-house#section: all
  * three floors in paper, the 2nd floor dimmed. On wide screens the floors lift
- * apart as the reader scrolls through a 160svh section and the arrival walk
- * draws itself; on phones the stage is a still, lifted. Chips choose a walk
- * (WalkPicker), and each walk's stops are listed beside the stage; without
- * JavaScript every walk is listed, in <details>. Notes on the house open
- * where they belong, and numbered dots link to the views drawn there.
+ * apart as the reader scrolls and the arrival walk draws itself stop by stop,
+ * the camera leaning in on each stop, and beside the stage only the current
+ * stop says what happens there; on phones the stage is a still, lifted. Chips
+ * choose a walk (WalkPicker), and each walk's stops are listed beside the
+ * stage: tapping one looks at it on the stage. Without JavaScript every walk is
+ * listed in full, in <details>. Notes on the house open where they belong, and
+ * numbered dots link to the views drawn there.
  */
 export function HouseStage({ photos = HOUSE_PHOTOS }: { photos?: readonly PhotoKey[] }) {
   const walks = WALKS.filter((w) => w.firm !== false).map((w) => {
@@ -69,7 +71,6 @@ export function HouseStage({ photos = HOUSE_PHOTOS }: { photos?: readonly PhotoK
     const place = route ? (route.name.split(": ")[1] ?? route.name) : undefined;
     return { ...w, place: place ? place[0]!.toUpperCase() + place.slice(1) : undefined, when: route?.when, stops: thread.stops };
   });
-  const last = walks[0]!.stops.length - 1;
   return (
     <div className={styles.house}>
       <div className={styles.sticky}>
@@ -94,8 +95,11 @@ export function HouseStage({ photos = HOUSE_PHOTOS }: { photos?: readonly PhotoK
                 </summary>
                 <ol className={styles.stops}>
                   {walk.stops.map((stop, k) => (
-                    <li key={k}>
-                      <strong>{stop.label}.</strong> {stop.does}
+                    <li key={k} data-stop={k}>
+                      <button type="button" className={styles.stop}>
+                        {stop.label}
+                      </button>
+                      {stop.does ? <span className={styles.does}> {stop.does}</span> : null}
                     </li>
                   ))}
                 </ol>
@@ -107,9 +111,13 @@ export function HouseStage({ photos = HOUSE_PHOTOS }: { photos?: readonly PhotoK
       {/* Where the acts fall, for browsers without scroll timelines (StageDirector); hidden on phones, where the stage is a still. */}
       <div id={`${ID}-steps`} className={styles.steps} aria-hidden="true">
         <span data-act="b" />
-        <span data-act="c" data-stop={last} />
+        {walks[0]!.stops.map((stop, k) => (
+          // Each stop where the thread reaches it: act C runs over 48–94% of the section's 160svh of scroll (260svh tall), and a step
+          // counts once it is 45svh down the screen. The camera leans in on each.
+          <span key={k} data-act="c" data-stop={k} style={{ top: `${((45 + 160 * (0.48 + 0.46 * stop.at)) / 2.6).toFixed(1)}%` }} />
+        ))}
       </div>
-      <StageDirector stage={ID} steps={`${ID}-steps`} />
+      <StageDirector stage={ID} steps={`${ID}-steps`} marks={`${ID}-walks`} camera={1.6} />
     </div>
   );
 }
