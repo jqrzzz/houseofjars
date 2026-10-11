@@ -1,0 +1,290 @@
+/*
+ * The café's menu card: the front (staying guests' breakfast) in the jar
+ * orange of the house's signs, the back (the café's prices) on white, the arch
+ * mark in the corner as on the cards in the café. Paper colours in Day and
+ * Evening alike: it is the card on the table. Ink on the orange (5.7:1);
+ * white only for the big title (3.1:1, large and bold).
+ */
+
+.sheets {
+  display: grid;
+  gap: var(--space-l);
+  padding-block: var(--space-xl) var(--space-2xl);
+}
+
+@media (min-width: 60rem) {
+  .sheets {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  padding: clamp(1.5rem, 1rem + 2.5vw, 2.75rem);
+  border-radius: 6px;
+  box-shadow: var(--shadow-soft);
+  color: var(--ink);
+  min-width: 0;
+}
+
+.front {
+  background: var(--jar-orange);
+}
+
+.back {
+  background: var(--white);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  font-size: clamp(2.6rem, 2rem + 2.2vw, 3.6rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.front .title {
+  color: var(--white);
+}
+
+.kicker {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.mark {
+  flex: none;
+  width: 2.6rem;
+  height: auto;
+  aspect-ratio: 600 / 900;
+  color: var(--ink);
+}
+
+.hours {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.part {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.partTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid currentColor;
+}
+
+.partNote {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plate {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.plate + .plate {
+  margin-top: -0.5rem;
+}
+
+.small {
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.prices {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.item {
+  font-weight: 600;
+}
+
+.back .item,
+.back .drinks tbody th {
+  color: var(--brand-text);
+}
+
+.detail {
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.leader {
+  flex: 1;
+  min-width: 1.25rem;
+  border-bottom: 2px dotted currentColor;
+  opacity: 0.35;
+  transform: translateY(-0.3em);
+}
+
+.amount,
+.drinks td {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.drinks {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.drinks th,
+.drinks td {
+  padding: 0.38rem 0;
+  vertical-align: baseline;
+}
+
+.drinks thead th {
+  padding-top: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.drinks tbody tr + tr {
+  border-top: 1px solid rgb(23 23 19 / 0.1);
+}
+
+.drinks tbody th {
+  font-weight: 600;
+  text-align: left;
+}
+
+.drinks td {
+  width: 5.5rem;
+  text-align: right;
+}
+
+.foot {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: auto;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgb(23 23 19 / 0.25);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.foot p:last-child {
+  font-weight: 700;
+}
+
+/*
+ * Printed: only the card, each side on an A4 page of its own (the front, then
+ * the back), edge to edge and in its colours, ready to laminate.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  :global(body) > :not(main, svg),
+  :global(#main) > :not(.sheets) {
+    display: none !important;
+  }
+
+  /* Over the page's .container: the card's own padding is the only margin. */
+  :global(#main) > .sheets {
+    display: block;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sheet {
+    box-sizing: border-box;
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
+    gap: 7mm;
+    padding: 20mm 20mm 16mm;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 13pt;
+    break-after: page;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .sheet:last-child {
+    break-after: auto;
+  }
+
+  .title {
+    font-size: 52pt;
+  }
+
+  .kicker,
+  .partNote {
+    font-size: 10pt;
+  }
+
+  .mark {
+    width: 17mm;
+  }
+
+  .partTitle {
+    font-size: 16pt;
+  }
+
+  .plate {
+    font-size: 15pt;
+  }
+
+  .small,
+  .foot {
+    font-size: 11pt;
+  }
+
+  .drinks thead th {
+    font-size: 9.5pt;
+  }
+
+  .drinks td {
+    width: 30mm;
+  }
+}

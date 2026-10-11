@@ -102,7 +102,7 @@ export const bathrooms = {
 export const breakfast = {
   included: fact(true, sources.booking),
   items: fact(["Two fried eggs", "Salad", "Baguette", "Fruit", "Coffee or tea"] as const, sources.signs, {
-    note: 'Breakfast menu for staying guests: "2 Fried Eggs, Salad, Baguette, Fruit. Hot Americano or Hot Espresso or Hot Lipton Tea." Other drinks cost extra (prices on the menu, not published here).',
+    note: 'Breakfast menu for staying guests: "2 Fried Eggs, Salad, Baguette, Fruit. Hot Americano or Hot Espresso or Hot Lipton Tea." Other drinks cost extra: the menu page (content/menu.ts) has the prices.',
   }),
   hours: fact("08:00–10:30", sources.signs, {
     note: 'Room rate sign and menus: "Breakfast is served from 8 AM to 10:30 AM." House rules board: "Breakfast: From 8 AM until 10.30 AM."',

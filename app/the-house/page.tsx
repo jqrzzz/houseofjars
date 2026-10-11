@@ -155,7 +155,11 @@ export default function TheHousePage() {
             </p>
             <p>
               After breakfast, the café is yours to relax or work in, with coffee and tea served{" "}
-              {building.cafeDrinks.value}.
+              {building.cafeDrinks.value}.{" "}
+              <Link href={pages.menu.path} transitionTypes={FORWARD}>
+                The café menu, with prices
+              </Link>
+              .
             </p>
           </Prose>
           <PhotoFrame caption="Breakfast in the café downstairs" drawing="cafe" />
