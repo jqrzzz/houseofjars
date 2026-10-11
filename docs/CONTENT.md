@@ -85,10 +85,15 @@ The frames waiting for photos are the bathroom, the café and the luggage storag
 
 `next/image` serves them as AVIF or WebP at the right size. Use photos the house owns; never copy them from booking sites.
 
+## The house profile for Shadow Check-in
+
+`shadow/house-profile.json` is what the site knows about the house, in the shape Shadow Check-in imports (its console, "House profiles"): the property's details, the dorms with every pod as a bed (top or bottom bunk), the FAQ and a few more facts for Shadow to answer from, and the house rules guests read on the tablet. `lib/shadow/profile.ts` builds it from `content/` and the house model, so it says what the pages say; the name's unconfirmed story and the concierge describing itself stay on the site. A test fails while the committed file differs from a fresh build, so run `npm run shadow:profile` after editing. Shadow keeps its own copy (its `lib/house-profile/profiles/`), refreshed from this file.
+
 ## After editing
 
 ```bash
 npm run content:check   # what is still unconfirmed
+npm run shadow:profile  # the house profile for Shadow Check-in
 npm test                # the content and Shadow's knowledge still build
 npm run build           # the site builds
 ```

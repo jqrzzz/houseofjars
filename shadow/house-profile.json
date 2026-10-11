@@ -1,0 +1,530 @@
+{
+  "format": "shadow-house-profile",
+  "version": 1,
+  "house": "House of Jars",
+  "from": "The House of Jars website: content/ and the house model (lib/house/)",
+  "property": {
+    "name": "House of Jars",
+    "type": "hostel",
+    "address": "005/4, Unit 2, Khun Bu Lom Rd, Ban Anou",
+    "district": "Chanthabouly District",
+    "province": "Vientiane Capital",
+    "phone": "+856 20 23 978 946",
+    "country": "LA",
+    "timezone": "Asia/Vientiane",
+    "currency": "LAK"
+  },
+  "rooms": [
+    {
+      "name": "Dorm H",
+      "kind": "mixed_dorm",
+      "bathroom": "shared",
+      "floor": 1,
+      "description": "14 pods on the 1st floor, in stacks of two. Every pod is its own cubicle with a privacy curtain, a reading light and a personal power socket, and a locker with the pod's number. Bathrooms are shared: the women's on the 1st floor and the men's on the 2nd floor.",
+      "features": [
+        "Pods with privacy curtains",
+        "Reading light and socket in every pod",
+        "A numbered locker for every pod",
+        "Air-conditioning"
+      ],
+      "staffNotes": "Pods are numbered as on the bed register, without 4, 13 and 14, so no guest is given an unlucky bed. Top bunks, up a ladder: H01, H03, H06, H09, H11, H15, H17. Each locker has its pod's number.",
+      "beds": [
+        {
+          "name": "H01",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H02",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H03",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H05",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H06",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H07",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H08",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H09",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H10",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H11",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H12",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H15",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H16",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "H17",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dorm J",
+      "kind": "mixed_dorm",
+      "bathroom": "shared",
+      "floor": 2,
+      "description": "14 pods on the 2nd floor, in stacks of two. Every pod is its own cubicle with a privacy curtain, a reading light and a personal power socket, and a locker with the pod's number. Bathrooms are shared: the women's on the 1st floor and the men's on the 2nd floor.",
+      "features": [
+        "Pods with privacy curtains",
+        "Reading light and socket in every pod",
+        "A numbered locker for every pod",
+        "Air-conditioning"
+      ],
+      "staffNotes": "Pods are numbered as on the bed register, without 4, 13 and 14, so no guest is given an unlucky bed. Top bunks, up a ladder: J01, J03, J06, J09, J11, J15, J17. Each locker has its pod's number.",
+      "beds": [
+        {
+          "name": "J01",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J02",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J03",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J05",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J06",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J07",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J08",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J09",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J10",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J11",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J12",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J15",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J16",
+          "type": "bottom_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        },
+        {
+          "name": "J17",
+          "type": "top_bunk",
+          "features": [
+            "curtain",
+            "reading_light",
+            "socket"
+          ]
+        }
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "content": "What time is check-in and check-out? Check-in is from 14:00 until 21:00, and check-out is until 11:30. Early check-in is possible when a bed is free, so tell us your arrival time. Arriving after 21:00? Message the team before you travel.",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (check-in-times)"
+    },
+    {
+      "content": "What if I come back late at night? The front door is locked from 23:30 until 07:00. Knock on the glass door and the night staff will let you in.",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (late-at-night)"
+    },
+    {
+      "content": "Do I take my shoes off? Yes, before you go upstairs. Shoes are fine on the ground floor, in the café and at the front desk. Take them off at the foot of the stairs and carry them up to the shoe cubbies on the 1st floor landing: the 1st and 2nd floors, where the dorms are, are shoes-off. The house rules (https://www.houseofjars.la/house-rules).",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (shoes)"
+    },
+    {
+      "content": "Is there a deposit? Yes: 100,000 kip for your padlock and towel, refunded at reception when you return them at check-out. A second towel is 15,000 kip, not refunded.",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (deposit)"
+    },
+    {
+      "content": "Can I leave my bags before check-in or after check-out? Yes. The house has luggage storage, so you can drop your bags and head out.",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (luggage)"
+    },
+    {
+      "content": "Do I need my passport at check-in? Yes. Guesthouses in Laos register foreign guests with the local authorities, so please have your passport with you at check-in.",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (passport)"
+    },
+    {
+      "content": "Do I need to fill in an immigration form before arriving in Laos? Travellers can complete the Lao Digital Immigration Form online before arrival. It was introduced in stages from September 2025 at some entry points, with wider rollout planned, so check the official page for your entry point. Official information from the Lao Department of Immigration (https://immigration.gov.la/en/registration/arrival/arrival-info). The form, in brief (https://www.houseofjars.la/guides/lao-digital-immigration-form).",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (ldif)"
+    },
+    {
+      "content": "How far is the airport, and can you arrange transport? Wattay International Airport is about 3 km (1.9 mi) from the house. Guests say the team can arrange transport from the airport. Message them with your arrival time. From the airport, step by step (https://www.houseofjars.la/guides/from-wattay-airport).",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (airport)"
+    },
+    {
+      "content": "Is reception open all night? Yes. The team is on site 24 hours, and reception speaks English, Lao and Thai.",
+      "category": "policies",
+      "audience": "guests",
+      "source": "The website's FAQ (reception)"
+    },
+    {
+      "content": "What are the beds like? Every bed is a pod, its own cubicle with a privacy curtain, a reading light, a personal power socket and a locker or safe.",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "The website's FAQ (beds)"
+    },
+    {
+      "content": "What kind of dorms do you have? All the beds are pods, and each dorm has 14 of them. Booking.com lists the beds as a mixed dorm. To see which beds are free on your dates, check Booking.com or Agoda, or ask us (https://www.houseofjars.la/book).",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "The website's FAQ (dorms)"
+    },
+    {
+      "content": "Is breakfast included? Yes. Breakfast is included and served 08:00–10:30 in the café on the ground floor: two fried eggs, salad, baguette, fruit and coffee or tea.",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "The website's FAQ (breakfast)"
+    },
+    {
+      "content": "Are the bathrooms shared? Yes. The bathrooms are shared, with hot showers, and guests say they are cleaned several times a day.",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "The website's FAQ (bathrooms)"
+    },
+    {
+      "content": "Is there air-conditioning and Wi-Fi? Yes: free Wi-Fi, and guests praise the strong air-conditioning. The dorms are kept cool on purpose, for sleep; if you sleep cold, ask the team for a bed further from the air-conditioning or an extra blanket.",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "The website's FAQ (comfort)"
+    },
+    {
+      "content": "Is it a party hostel? No. Calm, quiet and respectful. Guests describe it as a place to rest, not a party hostel. Hen and stag parties are not accepted, and there is no smoking in the house or on the terrace (smokers go out past it, to the small jar for cigarette butts). A quiet stay, in brief (https://www.houseofjars.la/guides/quiet-hostel-vientiane).",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "The website's FAQ (quiet)"
+    },
+    {
+      "content": "How much is a bed? Prices change with the dates and the season, so we don’t list them here. Booking direct costs less than on the booking sites, because there are no platform fees. Send the team your dates from the booking page (https://www.houseofjars.la/book) and ask, or see live prices on Booking.com and Agoda.",
+      "category": "pricing",
+      "audience": "guests",
+      "source": "The website's FAQ (prices)"
+    },
+    {
+      "content": "How do I book? Book direct with the house: choose your dates on the booking page (https://www.houseofjars.la/book) and send them to the team on WhatsApp or by email, and they will reply with what is free. Booking direct costs less than on the booking sites, because there are no platform fees. You can also book on Booking.com or Agoda.",
+      "category": "pricing",
+      "audience": "guests",
+      "source": "The website's FAQ (how-to-book)"
+    },
+    {
+      "content": "Can I cancel? If you cancel your stay after paying, there is no refund. If you booked on Booking.com or Agoda, check the cancellation terms in your booking there.",
+      "category": "pricing",
+      "audience": "guests",
+      "source": "The website's FAQ (cancel)"
+    },
+    {
+      "content": "What is nearby? The house is in Ban Anou, in Chanthabouly District, central Vientiane. The Mekong riverside is 7 minutes’ walk, and guests say the night food market is next door. What’s nearby (https://www.houseofjars.la/guides/whats-nearby).",
+      "category": "local_tips",
+      "audience": "guests",
+      "source": "The website's FAQ (nearby)"
+    },
+    {
+      "content": "Can I get my clothes washed? The house doesn’t do laundry, but several laundries within a 5-minute walk wash, dry and fold the same day, with detergent and softener included, from about 100,000 kip a load (prices vary).",
+      "category": "local_tips",
+      "audience": "guests",
+      "source": "The website's FAQ (laundry)"
+    },
+    {
+      "content": "How do I buy train tickets to Vang Vieng or Luang Prabang? Yourself, in LCR Ticket, the Laos–China Railway’s own app, or through the team, who book train tickets for guests. Travel sites report that tickets for trains within Laos go on sale 7 days before the train, so book early. How to buy Laos–China Railway tickets (https://www.houseofjars.la/guides/laos-china-railway-tickets).",
+      "category": "local_tips",
+      "audience": "guests",
+      "source": "The website's FAQ (train-tickets)"
+    },
+    {
+      "content": "Can the house book tickets or tours for me? Yes. The team books train tickets, buses and tours for guests, usually for less than the prices online. Ask at the desk, or send them your trip (https://www.houseofjars.la/trips).",
+      "category": "local_tips",
+      "audience": "guests",
+      "source": "The website's FAQ (book-for-me)"
+    },
+    {
+      "content": "How do I get around Vientiane? Walk around the centre. For longer rides, book a taxi or tuk-tuk in LOCA, or agree the fare with a tuk-tuk driver before you get in, as is usual in Laos. Getting around Vientiane (https://www.houseofjars.la/guides/getting-around-vientiane).",
+      "category": "local_tips",
+      "audience": "guests",
+      "source": "The website's FAQ (getting-around)"
+    },
+    {
+      "content": "What can I do with a day in Vientiane? Temples in the morning, the COPE Visitor Centre at midday (free entry, and donations are welcome), Patuxai and Pha That Luang in the afternoon, and sunset by the Mekong. A day in Vientiane, step by step (https://www.houseofjars.la/guides/one-day-in-vientiane).",
+      "category": "local_tips",
+      "audience": "guests",
+      "source": "The website's FAQ (one-day)"
+    },
+    {
+      "content": "How do I get to Thailand from Vientiane? Cross the First Thai–Lao Friendship Bridge to Nong Khai: the Lao checkpoint is open daily from 06:00 to 22:00. Fill in the Lao Digital Immigration Form for leaving, and check Thailand’s entry rules first: they changed on 15 September 2026. Crossing to Thailand (https://www.houseofjars.la/guides/vientiane-to-thailand).",
+      "category": "local_tips",
+      "audience": "guests",
+      "source": "The website's FAQ (thailand)"
+    },
+    {
+      "content": "Who runs the house? House of Jars is run by its own team, on site day and night and speaking English, Lao and Thai.",
+      "category": "faqs",
+      "audience": "guests",
+      "source": "The website's FAQ (team)"
+    },
+    {
+      "content": "House of Jars is at 005/4, Unit 2, Khun Bu Lom Rd, Ban Anou, Chanthabouly District, Vientiane Capital, Laos. Phone and WhatsApp: +856 20 23 978 946. Email: houseofjarslaos@gmail.com.",
+      "category": "faqs",
+      "audience": "guests",
+      "source": "content/identity.ts"
+    },
+    {
+      "content": "Coffee and tea are served in the café on the ground floor from 08:00 to 19:00.",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "content/stay.ts (building.cafeDrinks)"
+    },
+    {
+      "content": "The house has three floors: the ground floor, with the café and its counter, which is also the front desk; the 1st floor, with Dorm H and the women's bathroom; and the 2nd floor, with Dorm J and the men's bathroom. Every guest leaves their shoes in the cubbies on the 1st floor landing.",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "The house model (lib/house/house-of-jars.ts)"
+    },
+    {
+      "content": "Each dorm has 14 pods in stacks of two, numbered 01 to 17 without 4, 13 and 14, so no guest is given an unlucky bed. Each pod has a locker with the same number.",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "content/stay.ts (beds.numbering) and the house model"
+    },
+    {
+      "content": "Each bathroom has 2 hot showers, 3 toilets and 2 basins, with a hand dryer and a hair dryer.",
+      "category": "facilities",
+      "audience": "guests",
+      "source": "The house model (lib/house/house-of-jars.ts)"
+    },
+    {
+      "content": "Quiet hours are 21:00 to 07:00, and guests keep their voices down at all times: most guests come here to sleep well.",
+      "category": "policies",
+      "audience": "guests",
+      "source": "content/stay.ts (times.quietHours)"
+    },
+    {
+      "content": "The team looks over and cleans the house about every hour.",
+      "category": "operations",
+      "audience": "team",
+      "source": "content/stay.ts (staff.housekeepingRound)"
+    }
+  ],
+  "houseRules": {
+    "title": "House rules",
+    "rules": [
+      "No shoes upstairs: wear them on the ground floor, then take them off at the foot of the stairs before you go up. Clean floors where everyone sleeps, as in most Lao homes.",
+      "No smoking anywhere in the house. Clean air in every dorm, and beds that smell fresh.",
+      "Smoke out past the terrace, by the small jar for cigarette butts, not on the terrace itself. Smoke from the terrace drifts straight into the café.",
+      "No outside guests upstairs: the dorm floors are for registered guests, one to a pod. Everyone sleeps among people the house knows.",
+      "No outside food or drink in the house. So the house stays clean and fresh.",
+      "Eat and drink in the café on the ground floor, not in the dorms. Clean dorms, with no crumbs or smells.",
+      "No strong-smelling food, such as durian or kimchi. A smell carries through a whole shared house.",
+      "No pets. The house is shared, and the dorms are for sleeping.",
+      "No drugs, weapons, flammable items or chemicals. For everyone’s safety.",
+      "No hen or stag parties. The house is built for rest, not for parties.",
+      "Leaving very early? Pack your bag on the ground floor. So the dorm can sleep on.",
+      "Keep your voice down at all times. Most guests come here to sleep well.",
+      "The front door is locked from 23:30 until 07:00. Back late? Knock on the glass door and the night staff will let you in. The house stays locked while guests sleep, and someone is always there to open it.",
+      "Check-in from 14:00 until 21:00. Time to clean every bed and make it up fresh.",
+      "Arriving after 21:00? Message the team before you travel. So the team knows when to expect you.",
+      "Early check-in is possible when a bed is free. It depends on who checked out and whether the bed is ready.",
+      "Bring your passport to check-in. Guesthouses in Laos register foreign guests with the local authorities.",
+      "A deposit of 100,000 kip for your padlock and towel, refunded at reception when you return them at check-out. Both are lent to you for your stay. A second towel is 15,000 kip, not refunded.",
+      "Check-out from 08:00 until 11:30. So beds are ready for the guests arriving that afternoon.",
+      "Leaving before 08:00? Tell the team beforehand, so they can return your deposit. Check-out at the desk starts at 08:00.",
+      "If you cancel your stay after paying, there is no refund. Your bed is kept for you from the moment you pay.",
+      "Coming by motorbike or bicycle? Tell reception. Overnight parking outside is not allowed."
+    ]
+  }
+}
