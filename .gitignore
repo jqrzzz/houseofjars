@@ -16,7 +16,8 @@ next-env.d.ts
 screenshots/
 coverage/
 
-# frames recorded by scripts/film.ts and scripts/social.ts (their encoded outputs go to public/film/, social/ and public/email/)
+# frames recorded by scripts/film.ts and scripts/social.ts (their encoded outputs go to public/film/, social/ and public/email/),
+# and the menu card's review sheets from scripts/menu-pdf.ts, in film-frames/menu/ (its PDFs go to public/menu/)
 film-frames/
 
 # misc

@@ -1,0 +1,456 @@
+/*
+ * The café's menu card, one side at a time (MenuFaces.tsx): the front, staying
+ * guests' breakfast, on the jar orange of the house's signs, with everything
+ * that costs extra on a white board; the back, the café's prices, on white.
+ * It is the card on the table, so it keeps its paper colours in Day and
+ * Evening alike (raw tokens, not the theme's roles); only its cut-paper edge
+ * follows the page. Ink on the orange (5.74:1), white only for the big title
+ * (3.13:1, 2.6rem and up, bold), brand-text on white (4.99:1), ink-soft on
+ * white (6.90:1). The back and the board take --menu-paper when the page sets
+ * it (MenuCard.module.css warms it a little by Evening), white otherwise.
+ *
+ * The same rules draw the printed card. Every size is a --card-* property:
+ * the screen values are here, and MenuSheet.module.css gives each its print
+ * value (in points and millimetres, @media print), so the page and the PDFs
+ * can't drift apart. Sentence case throughout: no capitals set by CSS and no
+ * letter-spaced labels. Nothing here moves but a link's thread on screen; the
+ * steam over the cup is ArchWisp's own phrase.
+ */
+
+/*
+ * The screen values. :where() gives them no specificity, so a print value
+ * set on the same sheet wins wherever its stylesheet lands.
+ */
+:where(.face) {
+  /* The sheet: its padding (the content box), the space between its parts, and its cut-paper edge on the page. */
+  --card-pad-top: clamp(1.5rem, 1rem + 2.5vw, 2.75rem);
+  --card-pad-x: clamp(1.5rem, 1rem + 2.5vw, 2.75rem);
+  --card-pad-bottom: clamp(1.5rem, 1rem + 2.5vw, 2.75rem);
+  --card-gap: 1.35rem;
+  --card-sheet-edge: var(--edge-x) var(--edge-y) 0 var(--paper-edge);
+
+  /* The title and the line under it, the mark beside them, and the hours. */
+  --card-title-size: clamp(2.6rem, 2rem + 2.2vw, 3.4rem);
+  --card-title-leading: 0.95;
+  --card-kicker-size: 0.95rem;
+  --card-kicker-leading: 1.3;
+  --card-kicker-gap: 0.6rem;
+  --card-mark: calc(var(--card-title-size) * 1.5);
+  --card-top-gap: 1rem;
+  --card-hours-size: 1rem;
+  --card-hours-leading: 1.4;
+
+  /* Sections: a head over its rule (and a note beside it), the plate, and the small print. */
+  --card-part-gap: 0.5rem;
+  --card-head-size: 1.15rem;
+  --card-head-leading: 1.25;
+  --card-head-rule: 2px;
+  --card-head-pad: 0.35rem;
+  --card-head-gap: 1rem;
+  --card-note-size: 0.875rem;
+  --card-plate-size: 1.15rem;
+  --card-plate-leading: 1.35;
+  --card-small-size: 0.875rem;
+  --card-small-leading: 1.45;
+
+  /* Prices: the lines of the lists and of the table, and the table's columns, heads and hairlines. */
+  --card-line-size: 1rem;
+  --card-line-leading: 1.5;
+  --card-list-gap: 0.25rem;
+  --card-row-pad: 0.38rem;
+  --card-col-width: clamp(4.25rem, 3rem + 4vw, 5.5rem);
+  --card-col-size: 0.875rem;
+  --card-col-icon: 1.25rem;
+  --card-col-icon-gap: 0.35rem;
+  --card-col-pad: 0.35rem;
+  --card-hairline: 1px;
+
+  /* The front's white board. */
+  --card-board-pad-y: 1.25rem;
+  --card-board-pad-x: 1.5rem;
+  --card-board-gap: 1.25rem;
+  --card-board-edge: 1.5px;
+
+  /* The foot of each side. */
+  --card-foot-rule: 1px;
+  --card-foot-pad: 0.9rem;
+  --card-foot-gap: 0.2rem;
+}
+
+/*
+ * A sheet. Square, as the house's menus and boards are. Its type and box are
+ * set here in full rather than left to the page's own styles, so the print
+ * engine, which draws it outside the site, sets it the same.
+ */
+.face {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+  min-width: 0;
+  margin: 0;
+  padding: var(--card-pad-top) var(--card-pad-x) var(--card-pad-bottom);
+  box-shadow: var(--card-sheet-edge);
+  color: var(--ink);
+  font-family: var(--font-brand-stack);
+  font-size: var(--card-line-size);
+  font-kerning: normal;
+  line-height: var(--card-line-leading);
+  text-align: left;
+}
+
+.front {
+  background: var(--jar-orange);
+}
+
+.back {
+  background: var(--menu-paper, var(--white));
+}
+
+/* The title and its line, with the arch mark at the top right, at least a quarter of its width clear of them. */
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--card-top-gap);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--card-title-size);
+  font-weight: 700;
+  line-height: var(--card-title-leading);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* The only white words on the card: large and bold enough for white on the orange. */
+.front .title {
+  color: var(--white);
+}
+
+.back .title {
+  color: var(--brand-text);
+}
+
+.kicker {
+  margin: var(--card-kicker-gap) 0 0;
+  font-size: var(--card-kicker-size);
+  font-weight: 600;
+  line-height: var(--card-kicker-leading);
+  letter-spacing: 0.01em;
+}
+
+/* White on the orange side and jar orange on the white side, so the two sides swap colours like a coin. */
+.mark {
+  display: block;
+  flex: none;
+  width: auto;
+  height: var(--card-mark);
+  aspect-ratio: 600 / 900;
+}
+
+.markWhite {
+  color: var(--white);
+}
+
+.markOrange {
+  color: var(--jar-orange);
+}
+
+.hours {
+  margin: 0;
+  font-size: var(--card-hours-size);
+  font-weight: 500;
+  line-height: var(--card-hours-leading);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A time and its label stay on one line: a narrow screen breaks the hours between them, never inside a range. */
+.together {
+  white-space: nowrap;
+}
+
+.part {
+  display: grid;
+  gap: var(--card-part-gap);
+}
+
+/* A section's head over its rule: ink on the front and on the board, jar orange on the back. */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: var(--card-head-gap);
+  margin: 0;
+  padding-bottom: var(--card-head-pad);
+  border-bottom: var(--card-head-rule) solid var(--ink);
+  font-size: var(--card-head-size);
+  font-weight: 700;
+  line-height: var(--card-head-leading);
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.back .head {
+  border-bottom-color: var(--jar-orange);
+}
+
+/* A head with a note beside it wraps its title, which takes the head's type. */
+.headTitle {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+.note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--card-note-size);
+  font-weight: 500;
+}
+
+/* What staying guests have: one paragraph, set as two lines. */
+.plate {
+  margin: 0;
+  font-size: var(--card-plate-size);
+  font-weight: 600;
+  line-height: var(--card-plate-leading);
+  text-wrap: pretty;
+}
+
+.small {
+  margin: 0;
+  font-size: var(--card-small-size);
+  line-height: var(--card-small-leading);
+  text-wrap: pretty;
+}
+
+/*
+ * The white board on the front: everything that costs extra, so a guest sees
+ * at a glance what they would pay, and no long text sits on the orange.
+ * Square, with a solid cut-paper edge below and to the right: #c26540 is
+ * color-mix(in oklab, var(--jar-orange) 70%, var(--teak-deep)), written out
+ * so the printed card gets exactly that colour.
+ */
+.board {
+  display: grid;
+  gap: var(--card-board-gap);
+  padding: var(--card-board-pad-y) var(--card-board-pad-x);
+  background: var(--menu-paper, var(--white));
+  box-shadow: var(--card-board-edge) var(--card-board-edge) 0 #c26540;
+}
+
+.list {
+  display: grid;
+  gap: var(--card-list-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A row: the name, the leader, the price. When a long name wraps on a phone, the dots and the price stay on its last line. */
+.row {
+  display: flex;
+  align-items: baseline;
+  align-items: last baseline;
+  font-size: var(--card-line-size);
+  line-height: var(--card-line-leading);
+}
+
+.name {
+  min-width: 0;
+  font-weight: 500;
+}
+
+/* The back is two-tone, as the house's own card is: names in brand-text, prices in ink. */
+.back .name {
+  color: var(--brand-text);
+}
+
+/* The small print after a name. Its own line height is kept small, so a row with small print is as tall as one without. */
+.detail {
+  color: var(--ink-soft);
+  font-size: 0.8em;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/*
+ * The leader: 0.09em dots on a 0.36em pitch (1.35 pt dots, 5.4 pt apart, on a
+ * 15 pt line), 0.4em clear of the name and of the price. Its box sits on the
+ * baseline and is one dot tall, so the dots stand where full stops would; its
+ * padding keeps the end dots inside it. #a2a2a1 is ink at 40% in white,
+ * written out.
+ */
+.leader {
+  display: block;
+  flex: 1 1 0;
+  min-width: 1em;
+  height: 0.09em;
+  margin-inline: 0.4em;
+  padding-inline: 0.045em;
+  overflow: visible;
+}
+
+.leader line {
+  stroke: #a2a2a1;
+  stroke-width: 0.09em;
+  stroke-linecap: round;
+  stroke-dasharray: 0 0.36em;
+}
+
+/* Prices sit in a column as wide as "+18,000" (4.02em at 600 with tabular figures), so every row's dots end together. */
+.price {
+  flex: none;
+  min-width: 4.02em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The drinks: a real table, its prices right-aligned in two fixed columns, with hairlines (ink at 12% in white) between rows. */
+.drinks {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--card-line-size);
+  line-height: var(--card-line-leading);
+}
+
+.drinks th,
+.drinks td {
+  padding: var(--card-row-pad) 0;
+  vertical-align: baseline;
+}
+
+.drinks thead th {
+  padding: 0 0 var(--card-col-pad);
+  font-size: var(--card-col-size);
+  font-weight: 600;
+  text-align: right;
+  vertical-align: bottom;
+}
+
+.drinks tbody tr + tr {
+  border-top: var(--card-hairline) solid #e3e3e3;
+}
+
+.drinks tbody th {
+  text-align: left;
+}
+
+.drinks td {
+  width: var(--card-col-width);
+  text-align: right;
+}
+
+.none {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+/* A column head: the house's cup or glass, in brand-text, then the word. Set on the line's foot, so the head row is no taller than its line. */
+.column {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--card-col-icon-gap);
+  vertical-align: bottom;
+}
+
+.cup {
+  position: relative;
+  flex: none;
+}
+
+.columnIcon {
+  display: block;
+  flex: none;
+  width: var(--card-col-icon);
+  height: var(--card-col-icon);
+  color: var(--brand-text);
+  fill: currentColor;
+}
+
+/*
+ * The steam over the cup, on screen only (MenuFaces.tsx draws it 28 px tall,
+ * 18 wide): its mouth, the foot of its box, sits on top of the cup's middle
+ * steam bar, at (120, 16) on the icon's 256 grid. It waits --wisp-delay, so
+ * on a phone it starts once the card has turned: the café side shows at
+ * 480 ms and the turn ends at 960 ms.
+ */
+.wisp {
+  --wisp-delay: 640ms;
+  position: absolute;
+  left: calc(var(--card-col-icon) * 120 / 256 - 9px);
+  top: calc(var(--card-col-icon) * 16 / 256 - 28px);
+  max-width: none;
+}
+
+/* The foot of each side, at the bottom of the sheet above a fine rule: on the orange, ink at 30% in the orange (#a95435). */
+.foot {
+  display: grid;
+  gap: var(--card-foot-gap);
+  margin-top: auto;
+  padding-top: var(--card-foot-pad);
+  border-top: var(--card-foot-rule) solid #e3e3e3;
+  font-size: var(--card-small-size);
+  line-height: var(--card-small-leading);
+}
+
+.front .foot {
+  border-top-color: #a95435;
+}
+
+.foot p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.footnote {
+  font-weight: 700;
+}
+
+/*
+ * The "on the other side" phrases, on screen: links in brand-text with the
+ * site's faint underline, over which a full-colour thread is drawn from the
+ * left when they are pointed at or focused, as the site's text links do
+ * (components/ui/button.module.css, .textLink). Their focus ring is the
+ * page's --focus, which the menu card sets to ink inside the faces.
+ */
+.sideLink {
+  color: var(--brand-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sideLink span {
+  padding-bottom: 1px;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: var(--underline-offset);
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  background: linear-gradient(currentColor, currentColor) no-repeat;
+  background-position: right calc(100% - (0.25em - var(--underline-offset)));
+  background-size: 0% 1px;
+}
+
+.sideLink:is(:hover, :focus-visible) span {
+  background-position-x: left;
+  background-size: 100% 1px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :global(:root:not([data-motion="still"])) .sideLink span {
+    transition: background-size var(--dur-ui) var(--ease-out);
+  }
+}
+
+/* Forced colours drop the paper's colours and its edges: a plain border keeps each sheet and the board apart. */
+@media (forced-colors: active) {
+  .face,
+  .board {
+    border: 1px solid CanvasText;
+  }
+}

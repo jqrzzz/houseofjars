@@ -1,0 +1,130 @@
+/*
+ * The café's menu card on paper: the two PDFs the print engine makes (npm run
+ * menu:pdf, scripts/menu-pdf/) and the menu page's own print. Each side
+ * becomes a sheet the size of the page, and every --card-* size takes its
+ * print value, in points and millimetres, from the brand's Signs and print
+ * scale (an A4 artboard at 96 dpi: the 64 px sign title is a 48 pt title, the
+ * 20 px menu item a 15 pt line). MenuFaces.module.css draws the card and keeps
+ * the screen values; this file only sets the paper, under @media print, so
+ * nothing here reaches the screen.
+ *
+ * The values sit on the sheet itself, not on a wrapper: the face declares its
+ * screen values on itself (with :where(), so these win), and a value inherited
+ * from a wrapper would lose to them.
+ *
+ * Two editions (lib/menu/print-spec.ts):
+ * - office, the default: A4, with the orange set 8 mm inside the paper's edge
+ *   on the front, a white mat, since office printers can't print to the edge;
+ * - shop, when the engine sets html[data-menu-output="shop"]: the A4 trim plus
+ *   3 mm of bleed on every side, with the orange running 1 mm past the page
+ *   and clipped, so it reaches the cut. Its padding grows by the bleed, so the
+ *   words sit 20 mm from the trim at the top and sides and 16 mm at the foot in
+ *   both editions, and every line breaks the same way.
+ *
+ * Flat and fully vector: solid colours only, with no opacity and no blurred
+ * shadow (the board keeps its solid cut-paper edge), so the PDFs print clean on
+ * any printer and Chromium writes them without transparency.
+ */
+@media print {
+  .sheet {
+    /* The content box: 20 mm from the trim at the top and sides, 16 mm at the foot. Sections 7 mm apart, no edge. */
+    --card-pad-top: 20mm;
+    --card-pad-x: 20mm;
+    --card-pad-bottom: 16mm;
+    --card-gap: 7mm;
+    --card-sheet-edge: none;
+
+    /* A 48 pt title and its 12 pt line, the 25 mm mark beside them (16.7 mm wide), and the hours. */
+    --card-title-size: 48pt;
+    --card-title-leading: 54pt;
+    --card-kicker-size: 12pt;
+    --card-kicker-leading: 15pt;
+    --card-kicker-gap: 3mm;
+    --card-mark: 25mm;
+    --card-top-gap: 8mm;
+    --card-hours-size: 13.5pt;
+    --card-hours-leading: 18pt;
+
+    /* Sections: 16 pt heads over a 1.5 pt rule, the plate, and 11 pt small print, the smallest type on the card. */
+    --card-part-gap: 2.6mm;
+    --card-head-size: 16pt;
+    --card-head-leading: 20pt;
+    --card-head-rule: 1.5pt;
+    --card-head-pad: 1.6mm;
+    --card-head-gap: 4mm;
+    --card-note-size: 11pt;
+    --card-plate-size: 16.5pt;
+    --card-plate-leading: 22.5pt;
+    --card-small-size: 11pt;
+    --card-small-leading: 15.5pt;
+
+    /* Prices: 15 pt lines; the drinks in rows 1.85 mm apart, with 30 mm price columns and 0.6 pt hairlines. */
+    --card-line-size: 15pt;
+    --card-line-leading: 21pt;
+    --card-list-gap: 0;
+    --card-row-pad: 1.85mm;
+    --card-col-width: 30mm;
+    --card-col-size: 11pt;
+    --card-col-icon: 6.35mm;
+    --card-col-icon-gap: 1.4mm;
+    --card-col-pad: 1.2mm;
+    --card-hairline: 0.6pt;
+
+    /* The board: padded 6 mm by 7 mm, with its cut-paper edge 1.2 mm right and down. */
+    --card-board-pad-y: 6mm;
+    --card-board-pad-x: 7mm;
+    --card-board-gap: 6mm;
+    --card-board-edge: 1.2mm;
+
+    /* The foot, above a 0.75 pt rule. */
+    --card-foot-rule: 0.75pt;
+    --card-foot-pad: 3.5mm;
+    --card-foot-gap: 1mm;
+
+    /*
+     * A sheet of paper, laid out from its top left as Chromium lays out the
+     * page. It clips what runs past its edge (the print shop's orange), so
+     * nothing spills onto the next page.
+     */
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
+    print-color-adjust: exact;
+  }
+
+  /* Front, then back: one side a page. */
+  .sheet[data-face="back"] {
+    break-before: page;
+  }
+
+  :global(html[data-menu-output="shop"]) .sheet {
+    --card-pad-top: 23mm;
+    --card-pad-x: 23mm;
+    --card-pad-bottom: 19mm;
+    width: 216mm;
+    height: 303mm;
+  }
+
+  /*
+   * The front is white paper with the orange field on it. html raises this
+   * over .front's own orange wherever the stylesheets land; z-index makes the
+   * sheet the field's stacking context, so the field lies under the words.
+   */
+  :global(html) .sheet[data-face="front"] {
+    z-index: 0;
+    background: var(--white);
+  }
+
+  .sheet[data-face="front"]::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 8mm;
+    background: var(--jar-orange);
+  }
+
+  :global(html[data-menu-output="shop"]) .sheet[data-face="front"]::before {
+    inset: -1mm;
+  }
+}

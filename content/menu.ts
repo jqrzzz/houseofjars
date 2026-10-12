@@ -7,8 +7,8 @@ import { sources } from "./sources";
  * the card, and breakfast-menu-staying-guests.jpg, its front). Prices are in
  * Lao kip, as the house's room rate sign writes them (LAK); the menu itself
  * prints the numbers alone. Names are the menu's, in sentence case ("Latte
- * Coffee" is a latte). The menu page (app/menu) shows them and prints the
- * card again.
+ * Coffee" is a latte). lib/menu/card.ts sets them out as the card, both
+ * sides, which the menu page (app/menu) shows and the two PDFs print.
  */
 
 /** A price in Lao kip, as the menu prints it (20,000). */
@@ -30,6 +30,14 @@ export interface MenuItem {
 }
 
 export const menu = {
+  /**
+   * The day these prices were read from the cards (YYYY-MM-DD). The PDFs keep it
+   * in their properties as their date; the card itself never shows it, since a
+   * dated card looks stale.
+   */
+  asOf: fact("2026-10-04", sources.signs, {
+    note: "The day the team photographed both menus; change it with the prices; the PDFs carry it as their date.",
+  }),
   /** The café menu's coffee and tea, hot and iced. */
   drinks: fact<readonly MenuDrink[]>(
     [

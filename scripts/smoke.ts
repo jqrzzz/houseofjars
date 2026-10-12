@@ -47,6 +47,14 @@
  * site's theme chosen against the device's (light-on-dark-*.png,
  * dark-on-light-*.png).
  *
+ * The café menu card has checks of its own (docs/DESIGN.md §10.14): on a
+ * phone, in Day and Evening, its sides turn over by the plates, by the card's
+ * own "on the other side" and by a hash, the hidden side waiting with
+ * hidden="until-found"; under Still the turn is a swap; it reads without
+ * JavaScript, side by side on a desktop and on paper; nothing shifts as it
+ * loads; its scripts stay within MENU_JS_BUDGET; and its two PDFs are served,
+ * readable and linked (menu-cafe-*.png).
+ *
  * Start the site afresh for each run against the fake: the site's own limits
  * (per server instance, 10 booking requests at once, then one every 6
  * minutes) would still count the last run's bookings.
@@ -67,12 +75,14 @@ import { encodeEvent, type AvailabilityCard, type ConciergeEvent } from "../lib/
 import { addDays, formatDay, houseToday, nightsBetween } from "../lib/dates";
 import { dateWindow } from "../lib/inquiry/dates";
 import { collectFacts, factsMentionedIn } from "../lib/content-audit";
+import { EDITION_LIST, PDF_TITLE } from "../lib/menu/print-spec";
 import { MOTION_KEY } from "../lib/motion/prefs";
 import { metaTitle, sitePages } from "../lib/pages";
 import { siteUrl } from "../lib/site";
 import { SPLASH_KEY, THEME_KEY, themeColor } from "../lib/theme";
 import { FAKE_ROOMS, FAKE_SHADOW_KEY, startFakeShadow, type FakeRoom, type FakeShadow } from "../test/fake-shadow";
 import { typesOf, isA, validateJsonLd } from "../test/schema-org";
+import { readPdf } from "./menu-pdf/pdf";
 
 const base = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 const executablePath = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
@@ -96,6 +106,12 @@ type Scheme = (typeof schemes)[number];
 /** Acceptance budgets (docs/DESIGN.md §1.6), in bytes: the home page's HTML as served, and its scripts gzipped. */
 const HOME_HTML_BUDGET = 150_000;
 const HOME_JS_BUDGET = 200_000;
+/**
+ * /menu's scripts, gzipped, as budgets() measures them: 161,689 bytes before
+ * its card turned over (measured on the production build of 11 October 2026),
+ * plus 3 kB for the card's island, MenuCard.tsx and turn.ts (§10.14).
+ */
+const MENU_JS_BUDGET = 161_689 + 3_072;
 
 /** Every page as the running build names it: /book is named for online booking when the build has it. */
 function routesFor(online: boolean) {
@@ -822,22 +838,35 @@ async function bookingClosedAndBusy(browser: Browser, fake: FakeShadow) {
 
 const kB = (bytes: number) => `${(bytes / 1000).toFixed(1)} kB`;
 
+/** A page's HTML as served (bytes), and the scripts it loads (all but nomodule ones), gzipped as a server sends them. */
+async function pageWeight(context: BrowserContext, path: string) {
+  const html = await (await context.request.get(base + path)).body();
+  const scripts = new Set(
+    [...html.toString("utf8").matchAll(/<script\b[^>]*>/g)]
+      .map(([tag]) => tag)
+      .filter((tag) => !/\snomodule\b/i.test(tag))
+      .flatMap((tag) => /\ssrc="([^"]+)"/.exec(tag)?.[1]?.replaceAll("&amp;", "&") ?? []),
+  );
+  let js = 0;
+  for (const src of scripts) js += gzipSync(await (await context.request.get(new URL(src, `${base}/`).toString())).body()).length;
+  return { html: html.length, scripts: scripts.size, js };
+}
+
 /**
  * The budgets (docs/DESIGN.md §1.6): the home page's HTML as served, and the
- * scripts it loads, gzipped as a server sends them. The house's two longest
- * pages are reported against the same HTML figure, as warnings.
+ * scripts it loads, gzipped as a server sends them; and the menu page's
+ * scripts, which its turning card may grow by 3 kB at most (§10.14). The
+ * house's two longest pages are reported against the home page's HTML
+ * figure, as warnings.
  */
 async function budgets(context: BrowserContext) {
-  const html = await (await context.request.get(`${base}/`)).body();
-  const scripts = [...html.toString("utf8").matchAll(/<script\b[^>]*>/g)]
-    .map(([tag]) => tag)
-    .filter((tag) => !/\snomodule\b/i.test(tag))
-    .flatMap((tag) => /\ssrc="([^"]+)"/.exec(tag)?.[1]?.replaceAll("&amp;", "&") ?? []);
-  let js = 0;
-  for (const src of new Set(scripts)) js += gzipSync(await (await context.request.get(new URL(src, `${base}/`).toString())).body()).length;
-  check(html.length <= HOME_HTML_BUDGET, `/: the HTML is ${html.length} bytes, over its budget of ${HOME_HTML_BUDGET}`);
-  check(js <= HOME_JS_BUDGET, `/: its ${new Set(scripts).size} scripts are ${js} bytes gzipped, over their budget of ${HOME_JS_BUDGET}`);
-  console.log(`Budgets: / HTML ${kB(html.length)} of ${kB(HOME_HTML_BUDGET)}; its scripts ${kB(js)} gzipped of ${kB(HOME_JS_BUDGET)}.`);
+  const home = await pageWeight(context, "/");
+  check(home.html <= HOME_HTML_BUDGET, `/: the HTML is ${home.html} bytes, over its budget of ${HOME_HTML_BUDGET}`);
+  check(home.js <= HOME_JS_BUDGET, `/: its ${home.scripts} scripts are ${home.js} bytes gzipped, over their budget of ${HOME_JS_BUDGET}`);
+  console.log(`Budgets: / HTML ${kB(home.html)} of ${kB(HOME_HTML_BUDGET)}; its scripts ${kB(home.js)} gzipped of ${kB(HOME_JS_BUDGET)}.`);
+  const menu = await pageWeight(context, "/menu");
+  check(menu.js <= MENU_JS_BUDGET, `/menu: its ${menu.scripts} scripts are ${menu.js} bytes gzipped, over their budget of ${MENU_JS_BUDGET}`);
+  console.log(`Budgets: /menu's scripts ${kB(menu.js)} gzipped of ${kB(MENU_JS_BUDGET)} (${menu.js} bytes).`);
   for (const path of ["/the-house", "/house-rules"]) {
     const size = (await (await context.request.get(base + path)).body()).length;
     const over = size > HOME_HTML_BUDGET;
@@ -1093,6 +1122,231 @@ async function chosenTheme(browser: Browser, routes: readonly Route[]) {
   }
 }
 
+/** Which of the menu card's sides show, its wrappers' hidden attributes, the hash, the history's length and the focus. */
+const menuSides = (page: Page) =>
+  page.evaluate(() => ({
+    front: document.getElementById("breakfast")?.checkVisibility() ?? false,
+    back: document.getElementById("cafe")?.checkVisibility() ?? false,
+    frontHidden: document.querySelector('[data-face-wrap="front"]')?.getAttribute("hidden") ?? null,
+    backHidden: document.querySelector('[data-face-wrap="back"]')?.getAttribute("hidden") ?? null,
+    hash: location.hash,
+    history: history.length,
+    focused: document.activeElement?.id ?? "",
+  }));
+
+const MENU_PLATES = 'nav[aria-label="Sides of the menu card"] a';
+
+/**
+ * The café menu card (docs/DESIGN.md §10.14). On a phone in Day and Evening,
+ * once the island has hydrated ([data-turn]): the café side waits behind
+ * breakfast with hidden="until-found", the plates are big enough to tap,
+ * Breakfast is the current one, and nothing on the hidden side takes focus.
+ * Tapping Café turns the card within 1.2 s, sets #cafe without a new history
+ * entry and focuses the café's title; the board's "on the other side" turns
+ * it too; a hash into the hidden side reveals it (beforematch). Under Still
+ * the turn is a swap with nothing animating, and /menu#cafe opens on the
+ * café. Then the card without JavaScript (both sides stacked, the plates
+ * jump links), on a desktop (side by side, no plates) and printed from a phone
+ * (both sides; no plates, panel or shades). Saved as menu-cafe-390-{scheme}.png.
+ */
+async function menuCard(browser: Browser) {
+  for (const scheme of schemes) {
+    const label = `/menu card (phone, ${scheme === "light" ? "Day" : "Evening"})`;
+    const { context, page, errors } = await open(browser, viewports[0], scheme, { theme: scheme });
+    await page.goto(`${base}/menu`, { waitUntil: "networkidle" });
+    await page.locator("[data-menu-card][data-turn]").waitFor({ state: "attached" });
+    let sides = await menuSides(page);
+    check(sides.front && !sides.back && sides.frontHidden === null && sides.backHidden === "until-found", `${label}: after hydration ${JSON.stringify(sides)}`);
+    const plates = await page.locator(MENU_PLATES).evaluateAll((links) =>
+      links.map((link) => [Math.round(link.getBoundingClientRect().width), Math.round(link.getBoundingClientRect().height)]),
+    );
+    check(plates.length === 2 && plates.every(([width = 0, height = 0]) => width >= 44 && height >= 44), `${label}: the plates measure ${JSON.stringify(plates)}, under 44 x 44`);
+    check((await page.locator(`${MENU_PLATES}[data-side-link="front"]`).getAttribute("aria-current")) === "true", `${label}: Breakfast isn't the current plate`);
+    const focusable = await page.evaluate(() => {
+      const link = document.querySelector<HTMLElement>("#cafe a[data-side-link]");
+      link?.focus();
+      return link !== null && document.activeElement === link;
+    });
+    check(!focusable, `${label}: a link on the hidden café side takes focus`);
+
+    // Tapping Café turns the card.
+    const before = sides.history;
+    await page.locator(`${MENU_PLATES}[data-side-link="back"]`).click();
+    const turned = await page
+      .waitForFunction(
+        () =>
+          document.getElementById("cafe")?.checkVisibility() &&
+          document.querySelector('[data-face-wrap="front"]')?.getAttribute("hidden") === "until-found" &&
+          location.hash === "#cafe" &&
+          document.activeElement?.id === "menu-back-title",
+        undefined,
+        { timeout: 1_200 },
+      )
+      .then(() => true, () => false);
+    sides = await menuSides(page);
+    check(turned && sides.history === before, `${label}: 1.2 s after tapping Café: ${JSON.stringify(sides)} (history ${before} before)`);
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${outDir}/menu-cafe-390-${scheme}.png` });
+
+    // Back to breakfast by its plate; then a hash into the hidden café side: the browser reveals it (beforematch) and the card follows.
+    const breakfastPlate = page.locator(`${MENU_PLATES}[data-side-link="front"]`);
+    const backToBreakfast = async () => {
+      await breakfastPlate.click();
+      await page.waitForFunction(() => document.activeElement?.id === "menu-front-title", undefined, { timeout: 2_000 }).catch(() => undefined);
+    };
+    await backToBreakfast();
+    await page.evaluate(() => {
+      location.hash = "#cafe";
+    });
+    const revealed = await page
+      .waitForFunction(
+        () => document.getElementById("cafe")?.checkVisibility() && document.querySelector('[data-face-wrap="front"]')?.getAttribute("hidden") === "until-found",
+        undefined,
+        { timeout: 2_000 },
+      )
+      .then(() => true, () => false);
+    check(revealed, `${label}: location.hash = "#cafe" doesn't reveal the café: ${JSON.stringify(await menuSides(page))}`);
+
+    // The card's own "on the other side", on the board.
+    await backToBreakfast();
+    await page.locator('#breakfast a[data-side-link="back"]').click();
+    const board = await page
+      .waitForFunction(() => document.getElementById("cafe")?.checkVisibility() && document.activeElement?.id === "menu-back-title", undefined, { timeout: 2_000 })
+      .then(() => true, () => false);
+    check(board, `${label}: the board's "on the other side" doesn't turn to the café's title: ${JSON.stringify(await menuSides(page))}`);
+    check(errors.length === 0, `${label}: console errors: ${errors.join(" | ")}`);
+    await context.close();
+  }
+
+  // Still: the card swaps at once, and nothing animates.
+  {
+    const { context, page, errors } = await open(browser, viewports[0], "light", { still: true });
+    await page.goto(`${base}/menu`, { waitUntil: "networkidle" });
+    await page.locator("[data-menu-card][data-turn]").waitFor({ state: "attached" });
+    await page.locator(`${MENU_PLATES}[data-side-link="back"]`).click();
+    const running = await page.evaluate(() => document.getAnimations().length);
+    const sides = await menuSides(page);
+    check(running === 0 && sides.back && sides.focused === "menu-back-title", `/menu card (phone, Still): ${running} animations right after tapping Café, ${JSON.stringify(sides)}`);
+    check(errors.length === 0, `/menu card (phone, Still): console errors: ${errors.join(" | ")}`);
+    await context.close();
+  }
+
+  // A link to the café side opens on it, its top in view.
+  {
+    const { context, page, errors } = await open(browser, viewports[0], "light");
+    await page.goto(`${base}/menu#cafe`, { waitUntil: "networkidle" });
+    await page.locator("[data-menu-card][data-turn]").waitFor({ state: "attached" });
+    await page.waitForTimeout(500);
+    const sides = await menuSides(page);
+    const top = await page.evaluate(() => Math.round(document.getElementById("cafe")?.getBoundingClientRect().top ?? NaN));
+    check(sides.back && !sides.front && top >= 0 && top < viewports[0].height / 2, `/menu#cafe (phone): ${JSON.stringify(sides)}, the café's top at ${top}px`);
+    check(errors.length === 0, `/menu#cafe (phone): console errors: ${errors.join(" | ")}`);
+    await context.close();
+  }
+
+  // Without JavaScript: both sides, stacked, and the plates are jump links.
+  {
+    const context = await browser.newContext({ viewport: { width: viewports[0].width, height: viewports[0].height }, javaScriptEnabled: false });
+    const page = await context.newPage();
+    await page.goto(`${base}/menu`, { waitUntil: "load" });
+    const found = await page.evaluate(() => ({
+      turn: document.querySelector("[data-menu-card]")?.hasAttribute("data-turn") ?? true,
+      hidden: document.querySelectorAll("[data-menu-card] [hidden]").length,
+      plates: [...document.querySelectorAll('nav[aria-label="Sides of the menu card"] a')].map((link) => link.getAttribute("href")),
+      front: document.getElementById("breakfast")?.getBoundingClientRect().toJSON() as DOMRect | undefined,
+      back: document.getElementById("cafe")?.getBoundingClientRect().toJSON() as DOMRect | undefined,
+    }));
+    check(
+      !found.turn && found.hidden === 0 && found.plates.join() === "#breakfast,#cafe" && Boolean(found.front?.height && found.back?.height) && (found.back?.top ?? 0) >= (found.front?.bottom ?? Infinity),
+      `/menu without JavaScript: ${JSON.stringify(found)}`,
+    );
+    await context.close();
+  }
+
+  // A desktop: the two sides side by side, no plates and no turning.
+  {
+    const { context, page, errors } = await open(browser, viewports[1], "light");
+    await page.goto(`${base}/menu`, { waitUntil: "networkidle" });
+    const found = await page.evaluate(() => ({
+      turn: document.querySelector("[data-menu-card]")?.hasAttribute("data-turn") ?? true,
+      plates: document.querySelector('nav[aria-label="Sides of the menu card"]')?.checkVisibility() ?? true,
+      front: document.getElementById("breakfast")?.getBoundingClientRect().toJSON() as DOMRect | undefined,
+      back: document.getElementById("cafe")?.getBoundingClientRect().toJSON() as DOMRect | undefined,
+    }));
+    check(
+      !found.turn && !found.plates && Math.abs((found.front?.top ?? 0) - (found.back?.top ?? 1)) < 1 && (found.back?.left ?? 0) >= (found.front?.right ?? Infinity),
+      `/menu (desktop): ${JSON.stringify(found)}`,
+    );
+    check(errors.length === 0, `/menu (desktop): console errors: ${errors.join(" | ")}`);
+    await context.close();
+  }
+
+  // Printed from a phone that shows one side: both sides print, without the plates, the PDFs' panel or the shades.
+  {
+    const { context, page } = await open(browser, viewports[0], "light");
+    await page.goto(`${base}/menu`, { waitUntil: "networkidle" });
+    await page.locator("[data-menu-card][data-turn]").waitFor({ state: "attached" });
+    await page.emulateMedia({ media: "print" });
+    const found = await page.evaluate(() => ({
+      front: document.getElementById("breakfast")?.getBoundingClientRect().height ?? 0,
+      back: document.getElementById("cafe")?.getBoundingClientRect().height ?? 0,
+      shown: [...document.querySelectorAll('nav[aria-label="Sides of the menu card"], #menu-print-title, [data-shade]')].filter((element) => element.checkVisibility()).length,
+    }));
+    check(found.front > 0 && found.back > 0 && found.shown === 0, `/menu printed (phone): ${JSON.stringify(found)}`);
+    await context.close();
+  }
+}
+
+/**
+ * Nothing on /menu shifts as it loads, the card's turn mode included: the sum
+ * of its layout shifts without recent input, after load and 2 s at rest.
+ */
+async function menuLayoutShifts(browser: Browser) {
+  for (const viewport of viewports) {
+    const { context, page } = await open(browser, viewport, "light");
+    await page.goto(`${base}/menu`, { waitUntil: "load" });
+    const shift = await page.evaluate(
+      () =>
+        new Promise<number>((resolve) => {
+          let sum = 0;
+          new PerformanceObserver((list) => {
+            for (const entry of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[]) {
+              if (!entry.hadRecentInput) sum += entry.value;
+            }
+          }).observe({ type: "layout-shift", buffered: true });
+          setTimeout(() => resolve(sum), 2_000);
+        }),
+    );
+    check(shift === 0, `/menu (${viewport.name}): layout shifts of ${shift.toFixed(4)} as it loads`);
+    await context.close();
+  }
+}
+
+/**
+ * The menu card's two PDFs (npm run menu:pdf, lib/menu/print-spec.ts) as the
+ * site serves them from public/menu: PDF 1.4, two pages, titled as the card
+ * (read with the engine's own reader), kept out of search results, and both
+ * linked from /menu.
+ */
+async function menuPdfs(context: BrowserContext) {
+  const menuPage = await (await context.request.get(`${base}/menu`)).text();
+  for (const edition of EDITION_LIST) {
+    const response = await context.request.get(base + edition.url);
+    const body = await response.body();
+    const type = response.headers()["content-type"] ?? "";
+    check(response.status() === 200 && type.startsWith("application/pdf"), `${edition.url}: HTTP ${response.status()} ${type}`);
+    check(body.subarray(0, 8).toString("latin1") === "%PDF-1.4", `${edition.url}: starts "${body.subarray(0, 8).toString("latin1")}", not "%PDF-1.4"`);
+    check(response.headers()["x-robots-tag"] === "noindex", `${edition.url}: X-Robots-Tag ${response.headers()["x-robots-tag"]}, expected noindex`);
+    try {
+      const pdf = readPdf(body);
+      check(pdf.pages.length === 2 && pdf.info.Title === PDF_TITLE, `${edition.url}: ${pdf.pages.length} pages titled "${pdf.info.Title}", expected 2 titled "${PDF_TITLE}"`);
+    } catch (error) {
+      check(false, `${edition.url}: unreadable (${error instanceof Error ? error.message : String(error)})`);
+    }
+    check(menuPage.includes(`href="${edition.url}"`), `/menu: no link to ${edition.url}`);
+  }
+}
+
 async function files(context: BrowserContext) {
   // The same paths with or without online booking.
   const allPages = sitePages(false);
@@ -1170,6 +1424,7 @@ async function main() {
     await files(context);
     await security(context);
     await budgets(context);
+    await menuPdfs(context);
     const mode = await bookingMode(context, fake);
     console.log(
       {
@@ -1201,6 +1456,8 @@ async function main() {
     await concierge(browser, viewports[1], "dark");
     await bookingPages(browser, mode);
     await bookingSoftNavigation(browser, mode, fake);
+    await menuCard(browser);
+    await menuLayoutShifts(browser);
     // Shadow has check_availability only when the site takes bookings online.
     if (mode !== "off") {
       let offset = 80;
