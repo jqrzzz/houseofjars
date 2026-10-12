@@ -35,8 +35,8 @@ const ACTS = ["none", "a", "b", "c", "d"];
  * rest.
  *
  * With `camera` (how close, 1.7 say), the stage leans in on the walk: at each
- * stop it eases in on that stop, at the curtain on the last one, and before
- * the walk it shows the whole house. A reader can also tap a stop in `marks`
+ * stop it eases in on that stop, and before the walk and at the curtain it
+ * shows the whole house, so the story ends on the frame Still rests on. A reader can also tap a stop in `marks`
  * to look at it, on phones too. Under Still and reduced motion the stage keeps
  * its whole view.
  */
@@ -113,7 +113,8 @@ export function StageDirector({
       figure.dataset.act = act;
       figure.dataset.step = String(step);
       if (fallback) figure.style.setProperty("--walk", String(walk));
-      aim(step);
+      // The curtain leans back out: the end frame is the whole house, as Still shows it.
+      aim(act === "d" ? -1 : step);
       for (const other of items) other.toggleAttribute("data-current", other === item);
       if (words) {
         words.dataset.act = act;
