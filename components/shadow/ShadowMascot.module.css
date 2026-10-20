@@ -1,0 +1,57 @@
+/*
+ * The 3D Shadow before his lamplight, as in the dock (ConciergeLauncher.module.css):
+ * jar orange warmed with lamplight, faint by Day and warm by Evening
+ * (--glow-strength, with a floor so it still reads by Day), and his own soft
+ * shadow under him. He stands still here: the dock is the one place he floats.
+ */
+.mascot {
+  --shadow-glow: color-mix(in oklab, var(--jar-orange) 62%, var(--lamplight));
+  --figure-shadow: rgb(23 23 19 / 0.24);
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+:global(:root[data-theme="dark"]) .mascot {
+  --figure-shadow: rgb(0 0 0 / 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .mascot {
+    --figure-shadow: rgb(0 0 0 / 0.5);
+  }
+}
+
+.figure {
+  display: block;
+  width: auto;
+  height: var(--mascot-height, 6.5rem);
+  max-width: none;
+  filter: drop-shadow(0 0.2rem 0.2rem var(--figure-shadow));
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.mascot::before {
+  --glow-heart: calc(18% + var(--glow-strength) * 52%);
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 52%;
+  width: calc(var(--mascot-height, 6.5rem) * 1.3);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--shadow-glow) var(--glow-heart), transparent) 0%,
+    color-mix(in srgb, var(--shadow-glow) calc(var(--glow-heart) * 0.48), transparent) 45%,
+    color-mix(in srgb, var(--shadow-glow) calc(var(--glow-heart) * 0.13), transparent) 75%,
+    transparent 100%
+  );
+  opacity: 0.85;
+  pointer-events: none;
+}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { OpenJar } from "@/components/art/OpenJar";
 import { AskShadowButton } from "@/components/concierge/AskShadowButton";
 import { FindYourPodLauncher } from "@/components/game/FindYourPodLauncher";
-import { ShadowFigure } from "@/components/shadow/ShadowFigure";
+import { ShadowMascot } from "@/components/shadow/ShadowMascot";
 import buttons from "@/components/ui/button.module.css";
 import { ArrowIcon } from "@/components/ui/icons";
 import { pages } from "@/lib/site";
@@ -30,7 +30,7 @@ export default function NotFound() {
     <section className={styles.section} aria-labelledby="not-found-title">
       <div className={`container ${styles.inner}`}>
         <div className={styles.scene}>
-          <ShadowFigure variant="bust" className={styles.peek} />
+          <ShadowMascot className={styles.peek} />
           <OpenJar className={styles.jar} />
         </div>
         <p className={styles.code}>404</p>
