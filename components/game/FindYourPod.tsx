@@ -30,7 +30,7 @@ import {
   steps,
 } from "@/lib/game/engine";
 import type { Dir, GameGraph, GameOption, GameState, Move, NudgeRule, Phase } from "@/lib/game/types";
-import { ShadowFigure } from "../shadow/ShadowFigure";
+import { ShadowMascot } from "../shadow/ShadowMascot";
 import buttons from "../ui/button.module.css";
 import styles from "./FindYourPod.module.css";
 
@@ -586,9 +586,7 @@ function Nudge({ graph, session, onCarryOn }: { graph: GameGraph; session: Sessi
   return (
     <div className={styles.nudge}>
       <div className={styles.nudgeFigure}>
-        <span className={styles.bust}>
-          <ShadowFigure variant="bust" />
-        </span>
+        <ShadowMascot size="small" className={styles.shadow} />
         <figure className={styles.sign}>
           <figcaption className={styles.signLabel}>Shadow’s nudge</figcaption>
           <p className={styles.rule}>{rule}</p>

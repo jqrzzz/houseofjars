@@ -31,7 +31,7 @@ import { identity, whatsappUrl } from "@/content/identity";
 import { pages, siteUrl } from "@/lib/site";
 import { uuid } from "@/lib/uuid";
 import { ContactDetails } from "../contact/ContactDetails";
-import { ShadowFigure } from "../shadow/ShadowFigure";
+import { ShadowMascot } from "../shadow/ShadowMascot";
 import { ShadowWriting } from "../shadow/ShadowWriting";
 import { CloseIcon, RestartIcon, SendIcon } from "../ui/icons";
 import { AvailabilityCard } from "./AvailabilityCard";
@@ -128,9 +128,11 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
     if (!streaming) saveChat(state);
   }, [state, streaming]);
 
+  // The newest message in view; before the first question, the top, where Shadow welcomes the guest. (The window
+  // can open in the same moment it first loads, laid out already, and a short screen would hide him.)
   useEffect(() => {
     const log = logRef.current;
-    if (log) log.scrollTop = log.scrollHeight;
+    if (log) log.scrollTop = state.messages.length > 0 || closed ? log.scrollHeight : 0;
   }, [state, closed]);
 
   const send = useCallback(
@@ -207,9 +209,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
       onClose={onClose}
     >
       <header className={styles.header}>
-        <span className={styles.avatar}>
-          <ShadowFigure variant="bust" />
-        </span>
+        <ShadowMascot size="small" className={styles.avatar} />
         <div className={styles.heading}>
           <h2 id={titleId} className={styles.title}>
             Shadow
@@ -240,7 +240,7 @@ export function ConciergePanel({ open, prefill, onClose }: ConciergePanelProps) 
       </p>
 
       <div ref={logRef} className={styles.log}>
-        {showStarters ? <ShadowFigure className={styles.welcome} /> : null}
+        {showStarters ? <ShadowMascot className={styles.welcome} /> : null}
         <Bubble role="assistant">{shadowLines.greeting}</Bubble>
 
         {state.messages.map((message, index) => (

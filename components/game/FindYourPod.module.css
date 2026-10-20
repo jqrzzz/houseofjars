@@ -785,17 +785,11 @@
   width: 100%;
 }
 
-.bust {
-  display: block;
-  width: 4.25rem;
-  height: 4.25rem;
-  margin-top: 0.35rem;
-}
-
-.bust svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+/* Shadow beside his sign, whole, as the dock shows him (ShadowMascot). */
+.shadow {
+  --mascot-height: 4.5rem;
+  justify-self: center;
+  margin-top: 0.2rem;
 }
 
 .sign {

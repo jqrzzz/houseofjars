@@ -506,7 +506,7 @@ The home page gains about 14 kB of HTML and ≤ 4 kB gzip of new JS.
 - **404:**
   - "This jar is empty." `OpenJar` becomes paper.
   - A tap or Enter wobbles it (±3°, 420 ms) and sends up one arch wisp *(spirits, lamplit)*.
-  - `ShadowFigure` peers over the rim.
+  - Shadow peers over the rim: the 3D mascot (`ShadowMascot`), the jar in front of him.
   - A `FindYourPodLauncher` button reads "Play Find your pod".
 - **/privacy:** unchanged.
 
@@ -516,7 +516,7 @@ The home page gains about 14 kB of HTML and ≤ 4 kB gzip of new JS.
 
 **What it is.** Turn-based wayfinding on the paper plans. You are a small lamp light, never a person, and you cannot lose *(day)*.
 
-**Nudges.** A mistake brings a nudge: Shadow's bust holds up the rule and its reason, word for word from `content/stay`. For example: "No shoes upstairs, on the dorm floors. Clean floors, as in most Lao homes."
+**Nudges.** A mistake brings a nudge: Shadow (the 3D mascot, `ShadowMascot`) holds up the rule and its reason, word for word from `content/stay`. For example: "No shoes upstairs, on the dorm floors. Clean floors, as in most Lao homes."
 
 **Errands:**
 1. **"16:20, you've arrived: find pod H12."** The steps are:
@@ -832,3 +832,6 @@ These override the sections above where they disagree.
    - **Steam from the cup, once.** Over the café side's Hot column the arch wisp rises from the house's cup the first time the head is 35% in view (StageLife's phrase), after `--wisp-delay` (640 ms), so on a phone it starts once the turn has landed. It keeps its Day stroke by Evening (`onPaper`), plays once per page view, and is gone under Still, reduced motion and in print. No price, row or table cell ever moves.
    - **Straight to the menu.** A visit that starts on /menu skips the opening splash (the boot script still counts the visit as begun), so a guest sent the menu link sees prices at once.
    - **Printed true.** `npm run menu:pdf` prints the same sides into two committed PDFs in `public/menu/`: A4 for any printer, with an 8 mm white mat around the orange, and A4 with 3 mm bleed for a print shop, its TrimBox and BleedBox set. Figtree is embedded, colour is flat and vector, the files are tagged, and the menu's date is in their properties rather than on the card. Before it writes them, the engine checks fonts, glyphs, fit, type sizes, contrast and palette, and every line and price against `cardText()` and `cardPrices()`. The menu page links both under the card ("Print the menu card", kept out of search results). If a price changes and the PDFs aren't made again, `npm test` fails and names the line that is out of date.
+15. **One Shadow everywhere (20 October 2026).** The owner found the chat window's Shadow "not where it needs to be" next to the 3D Shadow of the home page and the dock, and asked for the update to reach the whole site:
+   - **The 3D Shadow, wherever he appears.** `components/shadow/ShadowMascot.tsx` shows the mascot of ④ whole, trimmed to his outline, before the dock's lamplight disc (faint by Day, warm by Evening), standing still. It is in the chat window's header (the dock's cut, 3.5rem, standing into the header's padding so it is no taller), above the greeting before the first question (6.5rem), behind the 404's jar with his cap, eyes and clipboard hand above the rim, and beside the game's nudge sign. `scripts/export-mascot.mjs --figure` cuts the larger size: 81 × 120 and 162 × 240 WebP, under 14 kB together. The flat `ShadowFigure` stays only as the scrim's silhouette and in the social films; its bust is gone.
+   - **The welcome stays in view.** The window could open in the same moment it first loaded, already laid out, and then jumped to the end of the conversation: on a short screen that hid Shadow and the top of the greeting. Before the first question the conversation now opens at the top; once there are messages it still shows the newest.

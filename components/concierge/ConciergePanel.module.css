@@ -125,20 +125,15 @@
   color: var(--deep-text);
 }
 
+/*
+ * Shadow himself, whole and free of any frame, as the dock shows him
+ * (ShadowMascot): the window opens on the Shadow the guest tapped. His
+ * negative margins let him stand into the header's padding without making
+ * it taller.
+ */
 .avatar {
-  display: block;
-  flex: none;
-  width: 2.75rem;
-  height: 2.75rem;
-  overflow: hidden;
-  -webkit-clip-path: url(#arch-frame);
-  clip-path: url(#arch-frame);
-  background: var(--teak-night);
-}
-
-.avatar svg {
-  width: 100%;
-  height: 100%;
+  --mascot-height: 3.5rem;
+  margin-block: -0.35rem;
 }
 
 .heading {
@@ -246,16 +241,11 @@
   font-size: var(--step--1);
 }
 
-/* Before the first question: Shadow himself, on a soft arch. */
+/* Before the first question: Shadow himself, whole, before his lamplight (ShadowMascot). */
 .welcome {
+  --mascot-height: 6.5rem;
   align-self: center;
-  width: 6.25rem;
-  height: auto;
   margin: var(--space-xs) 0 var(--space-2xs);
-  padding: 0.6rem 0.9rem 0.3rem;
-  -webkit-clip-path: url(#arch-frame);
-  clip-path: url(#arch-frame);
-  background: var(--surface);
 }
 
 .starters {

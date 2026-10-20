@@ -5,13 +5,13 @@ import styles from "./ShadowFigure.module.css";
  * Shadow, the house's AI concierge, drawn flat in the site's own language:
  * a cream ghost in a brown vest with two orange buttons, an orange bow tie,
  * a caramel bellhop cap with an orange band and knob, and his brown
- * clipboard. Faithful to the 3D mascot, which stays as the feature image of
- * the home page's "Ask Shadow" section.
+ * clipboard. Faithful to the 3D mascot, which is how the site shows him
+ * wherever he appears (ShadowMascot).
  *
- * One drawing, two crops: "full" for empty states and the 404, "bust" (head
- * and bow tie) for the floating button and the chat window's header; and
- * "silhouette", his outline in one fill for the home page's lamplit scrim.
- * Always decorative: the button or heading beside it carries the name.
+ * One drawing, two forms: "full", for the social films
+ * (scripts/social/theatre.ts), and "silhouette", his outline in one fill for
+ * the home page's lamplit scrim, behind the 3D mascot. Always decorative:
+ * whatever holds him carries the name.
  */
 
 const BODY =
@@ -23,7 +23,7 @@ const DOME = "M39 30C39 17 47 11 58 11C69 11 77 17 77 30Z";
 const STEM = "M56.5 9.5h3v3h-3Z";
 const TILT = "rotate(9 93.5 112.5)";
 
-const VIEWBOX = { full: "4 0 110 152", bust: "2 3 112 112", silhouette: "4 0 110 152" } as const;
+const VIEWBOX = { full: "4 0 110 152", silhouette: "4 0 110 152" } as const;
 
 /**
  * Shadow on a lamplit scrim: the full figure's outline (body, arm, cap and
@@ -47,7 +47,7 @@ function Silhouette({ className }: { className?: string }) {
 }
 
 export function ShadowFigure({ variant = "full", className }: { variant?: keyof typeof VIEWBOX; className?: string }) {
-  // Unique per drawing: the button and the chat window's header can show him at once.
+  // Unique per drawing, so two on one page never share a clip.
   const id = useId();
   if (variant === "silhouette") return <Silhouette className={className} />;
   const body = `${id}body`;
