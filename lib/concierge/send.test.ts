@@ -83,3 +83,46 @@ describe("POST /api/concierge/send (R4-05)", () => {
     expect((await setup(201, { configured: false }).handle(post(valid))).status).toBe(503);
   });
 });
+
+describe("the house's numbers in Shadow (Insights › Website)", () => {
+  it("counts a talk sent to the team once: not a resend, nor one that failed", async () => {
+    const counted: string[][] = [];
+    const tally = () => {
+      const measures: string[] = [];
+      counted.push(measures);
+      return { add: (...more: ("chat" | "question" | "check" | "handoff")[]) => void measures.push(...more) };
+    };
+    for (const status of [201, 200, 500]) {
+      const fetch = vi
+        .fn<typeof globalThis.fetch>()
+        .mockImplementation(async () => new Response(JSON.stringify({ id: "b1", status: "received" }), { status }));
+      const handle = createDraftSendHandler({
+        signer: () => signer,
+        config: () => ({ apiUrl: "https://shadow.example", key: "sck_test" }),
+        gate: createInquiryGate(),
+        siteUrl,
+        fetch,
+        tally,
+      });
+      await handle(post(valid));
+    }
+    expect(counted).toEqual([["handoff"]]);
+  });
+
+  it("counts nothing for a browser that asks not to be followed", async () => {
+    const counted: string[] = [];
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockImplementation(async () => new Response(JSON.stringify({ id: "b1", status: "received" }), { status: 201 }));
+    const handle = createDraftSendHandler({
+      signer: () => signer,
+      config: () => ({ apiUrl: "https://shadow.example", key: "sck_test" }),
+      gate: createInquiryGate(),
+      siteUrl,
+      fetch,
+      tally: () => ({ add: (...more) => void counted.push(...more) }),
+    });
+    expect((await handle(post(valid, { "sec-gpc": "1" }))).status).toBe(201);
+    expect(counted).toEqual([]);
+  });
+});

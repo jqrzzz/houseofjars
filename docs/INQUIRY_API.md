@@ -102,3 +102,25 @@ curl -i "$SHADOW_API_URL/api/public/inquiries" \
 ```
 
 Sending the same body again returns `200` with the same `id`.
+
+## Website counts (Insights › Website in Shadow)
+
+With a key of the house's (its own, or the inquiry key), the website tells Shadow how it is used: each page it shows and, on the first page of a visit, where the visit came from, its country and the kind of device; and for Shadow the concierge, each talk begun, each question, each look at free beds and each talk sent to the team. Nothing about the visitor is sent or kept: no IP address, no cookie, no identifier, nothing anyone typed. Shadow keeps only each day's totals (its `migrations/086_site_counts.sql`; the contract is in its `docs/INQUIRY_API.md`, "Website counts").
+
+`POST {SHADOW_API_URL}/api/public/site-counts`, `Authorization: Bearer <SHADOW_STATS_KEY or SHADOW_INQUIRY_KEY>`:
+
+```jsonc
+{ "counts": [
+  { "measure": "view" },
+  { "measure": "page", "value": "/menu" },          // one of the site's own paths (lib/pages.ts), else "other"
+  { "measure": "visit" },                           // the first page of a visit only, with the three below
+  { "measure": "source", "value": "chatgpt" },      // lib/stats/sources.ts: a name Shadow knows, another site's domain, or "direct"
+  { "measure": "country", "value": "th" },          // Vercel's x-vercel-ip-country, when it says
+  { "measure": "device", "value": "phone" }         // "phone", "tablet" or "computer", from the user agent
+] }
+```
+
+- **Pages** → `components/stats/PageCounter.tsx` (in the root layout) posts `{path}` to the site's own `POST /api/page-view` on every page, and on the first page the browser loads also `landing`, where it came from (`document.referrer` without its path) and the link's `utm_source` (ChatGPT adds `utm_source=chatgpt.com` to the links it gives; the house can label its own links, such as `?utm_source=qr` on a printed menu). Nothing is stored in the browser. A browser sending Do Not Track or Global Privacy Control sends nothing. A page reloaded or reached with Back is not a new visit, and nor is a page opened from another of the site's pages.
+- **The route** (`lib/stats/handler.ts`) accepts only `application/json` from the site's own pages (as the other routes), skips robots and scripts by their user agent and browsers that send `DNT: 1` or `Sec-GPC: 1`, rate-limits per client (60 at once, then one every 2 seconds), reduces the address the visitor came from to a name or a domain (`lib/stats/sources.ts`), and answers 204. It sends the counts after the response (`after()`), so a visitor never waits for Shadow.
+- **Shadow the concierge** → `app/api/concierge/route.ts` counts a question for each guest message that reaches Claude (and a talk begun for the first), and each `check_availability` lookup; `app/api/concierge/send/route.ts` counts a talk sent to the team (not a resend). One call to Shadow per request, after the reply has streamed (`lib/stats/tally.ts`).
+- **Where it counts** (`statsConfig` in `lib/stats/send.ts`): with `SHADOW_API_URL` and a key, in production on Vercel or on a server off Vercel (a local one with `npm run fake-shadow`); never on a preview deployment. The key is `SHADOW_STATS_KEY` (any active key of the house's, from Shadow's **Settings → Website**), else `SHADOW_INQUIRY_KEY`: with `SHADOW_API_URL` and `SHADOW_STATS_KEY` alone, the site counts while online booking and the message form stay off (they follow `SHADOW_INQUIRY_KEY`). `SITE_STATS=off` stops it anywhere. Shadow's answer is not waited for by anyone and not retried: its `503` before its database update and its `429` (the house's 20,000 calls a day) are not logged; anything else is, as one line.

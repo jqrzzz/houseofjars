@@ -3,6 +3,7 @@ import { conciergeSigner } from "@/lib/concierge/signing";
 import { sharedInquiryGate } from "@/lib/inquiry/gate";
 import { readShadowConfig } from "@/lib/inquiry/submit";
 import { siteUrl } from "@/lib/site";
+import { tallyAfterResponse } from "@/lib/stats/tally";
 
 export const runtime = "nodejs";
 
@@ -11,4 +12,5 @@ export const POST = createDraftSendHandler({
   config: () => readShadowConfig(),
   gate: sharedInquiryGate(),
   siteUrl,
+  tally: () => tallyAfterResponse(),
 });

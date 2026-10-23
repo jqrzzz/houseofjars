@@ -9,6 +9,7 @@ import { conciergeSigner } from "@/lib/concierge/signing";
 import { readShadowConfig } from "@/lib/inquiry/submit";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { siteUrl } from "@/lib/site";
+import { tallyAfterResponse } from "@/lib/stats/tally";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -31,4 +32,6 @@ export const POST = createConciergeHandler({
   onlineBooking: () => onlineBookingConfigured(),
   // The very cache and lookup limits /api/availability uses (one per server process).
   availability: { config: () => readShadowConfig(), cache: sharedAvailabilityCache(), limiters: sharedLookupLimiters() },
+  // The house's numbers in Shadow, sent once the reply has streamed.
+  tally: () => tallyAfterResponse(),
 });

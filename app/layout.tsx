@@ -6,6 +6,7 @@ import { StageLife } from "@/components/motion/StageLife";
 import { ConciergeLauncher } from "@/components/concierge/ConciergeLauncher";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { PageCounter } from "@/components/stats/PageCounter";
 import { identity } from "@/content/identity";
 import { pages, siteUrl } from "@/lib/site";
 import { bootScript, themeColor } from "@/lib/theme";
@@ -54,6 +55,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ConciergeLauncher />
         {/* Wakes stages and phrases as they come into view, and pauses ambient motion off screen (components/motion). */}
         <StageLife />
+        {/* Counts each page seen for the house's numbers in Shadow, without cookies (components/stats). */}
+        <PageCounter />
       </body>
     </html>
   );

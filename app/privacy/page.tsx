@@ -36,7 +36,7 @@ export default function PrivacyPage() {
       <PageHeader
         eyebrow="Privacy"
         title="Privacy notice"
-        lede={`What the booking page and Shadow, our AI concierge, collect, why, who handles it and how to ask us to delete it. Last updated ${formatDate(PRIVACY_UPDATED)}.`}
+        lede={`What the booking page and Shadow, our AI concierge, collect, how we count visits, why, who handles it and how to ask us to delete it. Last updated ${formatDate(PRIVACY_UPDATED)}.`}
       />
 
       <Block id="who" title="Who we are">
@@ -106,16 +106,29 @@ export default function PrivacyPage() {
           <h3>Your IP address</h3>
           <p>
             Our server keeps it in memory for a short time, to stop{" "}
-            {online ? "the booking and message forms and Shadow" : "Shadow"} being flooded with requests, and does not
-            save it. Like any website, the server hosting this one may also record it in short-term logs.
+            {online ? "the booking and message forms, Shadow and the page counter" : "Shadow and the page counter"} being
+            flooded with requests, and does not save it. Like any website, the server hosting this one may also record it
+            in short-term logs.
           </p>
 
-          <h3>No cookies or tracking</h3>
+          <h3>Counting visits, without tracking you</h3>
           <p>
-            The website sets no cookies and uses no analytics or advertising trackers. Your browser keeps your
-            conversation with Shadow in session storage, which it clears when you close the tab. It also remembers your
-            Day or Evening and Still choices (in local storage), and that you have seen the opening curtain this visit
-            (in session storage); these stay on your device.
+            To see how the website is used, our server counts each page it shows. With the first page of a visit it also
+            counts where you came from, by name only (a search engine, an AI assistant such as ChatGPT, a booking site,
+            or another website’s address; never what you searched for or the page you were on), your country as our
+            host works it out from your IP address, and whether you use a phone, tablet or computer. Conversations with
+            Shadow are counted the same way: how many, never what was said. These become daily totals in Shadow
+            Check-in, the house’s own system, with nothing that could identify you: no IP address, no cookie and no
+            identifier, so a visit cannot be linked to you or to another visit. If your browser sends Do Not Track or
+            Global Privacy Control, nothing is counted.
+          </p>
+
+          <h3>No cookies or trackers</h3>
+          <p>
+            The website sets no cookies and uses no advertising trackers or outside analytics services. Your browser
+            keeps your conversation with Shadow in session storage, which it clears when you close the tab. It also
+            remembers your Day or Evening and Still choices (in local storage), and that you have seen the opening
+            curtain this visit (in session storage); these stay on your device.
           </p>
 
           <h3>Please don’t send</h3>
@@ -141,8 +154,8 @@ export default function PrivacyPage() {
         <Prose>
           <p>
             {online ? "Booking requests and messages you send on this website" : "Messages you send through Shadow"} reach
-            the team through Shadow Check-in, the system the house uses to run the front desk. Shadow Check-in is hosted
-            by Vercel and Supabase.
+            the team through Shadow Check-in, the system the house uses to run the front desk, which also keeps the
+            website’s daily visit counts. Shadow Check-in is hosted by Vercel and Supabase.
           </p>
           <p>
             Anthropic processes your conversations with Shadow to write his replies. The team may also use Shadow
