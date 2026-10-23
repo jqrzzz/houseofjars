@@ -145,6 +145,8 @@ export interface FakeShadow {
   readonly bookings: Map<string, FakeBooking>;
   /** Inquiries received, by client_ref. */
   readonly inquiries: Map<string, Record<string, unknown>>;
+  /** The website's counts received (Insights › Website), as "measure:value" → total. */
+  readonly siteCounts: Map<string, number>;
   /** Takes beds for other guests on the nights [from, to), as a booking elsewhere would. */
   occupy(roomId: string, from: string, to: string, beds: number): void;
   /** The house changes a room's rate (null: no rate set), until reset. */
@@ -199,6 +201,7 @@ export async function startFakeShadow(
   const calls: FakeShadow["calls"] = [];
   const bookings = new Map<string, FakeBooking>();
   const inquiries = new Map<string, Record<string, unknown>>();
+  const siteCounts = new Map<string, number>();
   /** Beds taken per room and night, by bookings here and elsewhere. */
   const taken = new Map<string, number>();
   const takenOn = (roomId: string, night: string) => taken.get(`${roomId}|${night}`) ?? 0;
@@ -396,6 +399,19 @@ export async function startFakeShadow(
     return [201, response];
   }
 
+  // Shadow's own check is stricter (its lib/site-counts/contract.ts); this one only adds up what arrives.
+  function siteCount(body: Record<string, unknown>): [number, unknown] {
+    const lines = body.counts;
+    if (!Array.isArray(lines) || lines.length < 1 || lines.length > 20) {
+      return [400, { error: "invalid_request", issues: [{ field: "counts", message: "1 to 20 lines." }] }];
+    }
+    for (const line of lines as Record<string, unknown>[]) {
+      const name = `${String(line?.measure)}:${typeof line?.value === "string" ? line.value : ""}`;
+      siteCounts.set(name, (siteCounts.get(name) ?? 0) + (typeof line?.n === "number" ? line.n : 1));
+    }
+    return [200, { status: "counted" }];
+  }
+
   function inquiry(body: Record<string, unknown>): [number, unknown] {
     if (!isUuid(body.client_ref) || typeof body.name !== "string" || typeof body.message !== "string" || body.consent !== true) {
       return [400, { error: "invalid_request", issues: [{ field: "body", message: "Not an inquiry." }] }];
@@ -424,7 +440,7 @@ export async function startFakeShadow(
   async function answer(request: IncomingMessage): Promise<[number, unknown]> {
     const url = new URL(request.url ?? "/", "http://fake-shadow");
     const route = `${request.method} ${url.pathname}`;
-    const known = ["GET /api/public/availability", "POST /api/public/booking-requests", "POST /api/public/inquiries"];
+    const known = ["GET /api/public/availability", "POST /api/public/booking-requests", "POST /api/public/inquiries", "POST /api/public/site-counts"];
     if (!known.includes(route)) return [404, { error: "not_found" }];
 
     if (state.mode === "not_configured") return [503, { error: "not_configured" }];
@@ -442,6 +458,7 @@ export async function startFakeShadow(
       return [400, { error: "invalid_request", issues: [{ field: "body", message: "The body must be a JSON object." }] }];
     }
     const json = body.json as Record<string, unknown>;
+    if (route === "POST /api/public/site-counts") return siteCount(json);
     return route === "POST /api/public/booking-requests" ? bookingRequest(json) : inquiry(json);
   }
 
@@ -470,6 +487,7 @@ export async function startFakeShadow(
     calls,
     bookings,
     inquiries,
+    siteCounts,
     occupy(roomId, from, to, beds) {
       take(roomId, nightsOf(from, to), beds);
     },
@@ -481,6 +499,7 @@ export async function startFakeShadow(
       calls.length = 0;
       bookings.clear();
       inquiries.clear();
+      siteCounts.clear();
       taken.clear();
       rates.clear();
     },

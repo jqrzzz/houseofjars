@@ -6,6 +6,8 @@ import { MAX_INQUIRY_BYTES } from "../inquiry/handler";
 import { replyChannel } from "../inquiry/reply";
 import { buildPayload, inquiryDraftSchema } from "../inquiry/schema";
 import { submitErrorStatus, submitInquiry, type ShadowConfig } from "../inquiry/submit";
+import type { Tally } from "../stats/lines";
+import { asksNotToBeCounted } from "../stats/visitor";
 import type { Signer } from "./signing";
 
 const sendRequestSchema = z.strictObject({
@@ -26,6 +28,8 @@ export interface DraftSendDeps {
   readonly gate: InquiryGate;
   readonly siteUrl: string;
   readonly fetch?: typeof fetch;
+  /** Counts the talk sent to the team for the house's numbers in Shadow (lib/stats/tally.ts). */
+  readonly tally?: () => Tally;
 }
 
 /**
@@ -58,6 +62,7 @@ export function createDraftSendHandler(deps: DraftSendDeps) {
       fetch: deps.fetch,
     });
     if (!result.ok) return json({ error: result.error }, submitErrorStatus[result.error]);
+    if (!result.duplicate && !asksNotToBeCounted(request.headers)) deps.tally?.().add("handoff");
 
     const content = `Thank you, ${draft.name}. Your message is with the team, and they’ll reply ${replyChannel(
       draft.preferred_contact,

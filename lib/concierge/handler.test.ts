@@ -6,6 +6,7 @@ import { createAvailabilityCache } from "../booking/cache";
 import { createAvailabilityHandler, type AvailabilityDeps } from "../booking/handler";
 import { createLookupLimiters, LOOKUP_LIMITS } from "../booking/limits";
 import { createRateLimiter } from "../rate-limit";
+import type { ChatMeasure, Tally } from "../stats/lines";
 import { createDailyBudget } from "./budget";
 import { MAX_CONVERSATION_TURNS } from "./limits";
 import { createConciergeHandler } from "./handler";
@@ -60,8 +61,10 @@ function handler(
   log: (message: string) => void = () => {},
   onlineBooking = false,
   availability: AvailabilityDeps = bookingPath(onlineBooking),
+  tally?: () => Tally,
 ) {
   return createConciergeHandler({
+    tally,
     onlineBooking: () => onlineBooking,
     streamer: () => streamer,
     signer: () => (streamer ? signer : null),
@@ -343,5 +346,66 @@ describe("free beds in the chat (check_availability)", () => {
     const on = fakeClaude([{ text: ["Which dates?"], stopReason: "end_turn" }]);
     await (await handler(on.streamer, 5, undefined, () => {}, true)(post(asked))).text();
     expect(on.calls[0]!.tools?.map((tool) => (tool as { name: string }).name)).toEqual(["prepare_inquiry", "check_availability"]);
+  });
+});
+
+describe("the house's numbers in Shadow (Insights › Website)", () => {
+  function counter() {
+    const counted: ChatMeasure[][] = [];
+    const tally = () => {
+      const measures: ChatMeasure[] = [];
+      counted.push(measures);
+      return { add: (...more: ChatMeasure[]) => void measures.push(...more) };
+    };
+    return { counted, tally };
+  }
+
+  it("counts a talk begun with its first question, then each question, never what was said", async () => {
+    const { counted, tally } = counter();
+    const first = fakeClaude([{ text: ["From 14:00."], stopReason: "end_turn" }]);
+    await (await handler(first.streamer, 5, undefined, () => {}, false, undefined, tally)(post(body))).text();
+    const later = {
+      ...body,
+      messages: [
+        { role: "user", content: "What time is check-in?" },
+        { role: "assistant", content: "From 14:00.", sig: signer.signReply(body.session_id, "From 14:00.") },
+        { role: "user", content: "And check-out?" },
+      ],
+    };
+    const second = fakeClaude([{ text: ["By 11:30."], stopReason: "end_turn" }]);
+    await (await handler(second.streamer, 5, undefined, () => {}, false, undefined, tally)(post(later))).text();
+    expect(counted).toEqual([["chat", "question"], ["question"]]);
+  });
+
+  it("counts each look at free beds", async () => {
+    const { counted, tally } = counter();
+    const stay = { check_in: "2026-10-03", check_out: "2026-10-05", guests: 2 };
+    const { streamer } = fakeClaude([
+      { blocks: [toolUse(stay, "check_availability")], stopReason: "tool_use" },
+      { text: ["Beds are free."], stopReason: "end_turn" },
+    ]);
+    await (await handler(streamer, 5, undefined, () => {}, true, undefined, tally)(post(body))).text();
+    expect(counted).toEqual([["chat", "question", "check"]]);
+  });
+
+  it("counts nothing for a browser that asks not to be followed", async () => {
+    const { counted, tally } = counter();
+    const asks: Record<string, string>[] = [{ dnt: "1" }, { "sec-gpc": "1" }];
+    for (const header of asks) {
+      const { streamer } = fakeClaude([{ text: ["From 14:00."], stopReason: "end_turn" }]);
+      const response = await handler(streamer, 5, undefined, () => {}, false, undefined, tally)(post(body, header));
+      expect(response.status).toBe(200);
+      await response.text();
+    }
+    expect(counted).toEqual([]);
+  });
+
+  it("counts nothing that never reaches Claude", async () => {
+    const { counted, tally } = counter();
+    const { streamer } = fakeClaude([]);
+    const handle = handler(streamer, 0, undefined, () => {}, false, undefined, tally);
+    expect((await handle(post(body))).status).toBe(429);
+    expect((await handle(post({ ...body, messages: [] }))).status).toBe(400);
+    expect(counted).toEqual([]);
   });
 });

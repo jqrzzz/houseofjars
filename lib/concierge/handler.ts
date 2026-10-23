@@ -1,7 +1,9 @@
 import type { AvailabilityDeps } from "../booking/handler";
 import { json, readJsonBody, rejectCrossSite } from "../http";
 import { clientKey, type RateLimitDecision } from "../rate-limit";
-import { availabilityChecker } from "./availability";
+import type { Tally } from "../stats/lines";
+import { asksNotToBeCounted } from "../stats/visitor";
+import { availabilityChecker, type CheckAvailability } from "./availability";
 import { worstCaseCost, type SpendBudget } from "./budget";
 import { trustedHistory } from "./history";
 import { bookingPriceLine } from "./guard";
@@ -30,6 +32,8 @@ export interface ConciergeHandlerDeps {
   readonly onlineBooking?: () => boolean;
   /** /api/availability's own lookup (its cache and limits), which check_availability goes through. */
   readonly availability: AvailabilityDeps;
+  /** Counts each talk for the house's numbers in Shadow, never what was said (lib/stats/tally.ts). */
+  readonly tally?: () => Tally;
   readonly now?: () => Date;
   readonly log?: (message: string) => void;
 }
@@ -84,6 +88,19 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
     const turn = deps.conversations.take(sessionId);
     if (!turn.allowed) return json({ error: "conversation_limit" }, 429);
 
+    // The house's numbers: a question, the first one a talk begun, and each look at free beds
+    // (not for a browser that asks not to be followed).
+    const tally = asksNotToBeCounted(request.headers) ? undefined : deps.tally?.();
+    if (parsed.data.messages.length === 1) tally?.add("chat");
+    tally?.add("question");
+    const lookUp: CheckAvailability | undefined =
+      checkAvailability && tally
+        ? (input) => {
+            tally.add("check");
+            return checkAvailability(input);
+          }
+        : checkAvailability;
+
     const encoder = new TextEncoder();
 
     const events = new ReadableStream<Uint8Array>({
@@ -105,7 +122,7 @@ export function createConciergeHandler(deps: ConciergeHandlerDeps) {
             model,
             systemPrompt: prompt,
             priceLine,
-            checkAvailability,
+            checkAvailability: lookUp,
             now,
             signal: request.signal,
           });
